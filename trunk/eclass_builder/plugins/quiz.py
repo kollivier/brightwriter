@@ -10,7 +10,16 @@ from conman.HTMLFunctions import *
 from conman import plugins
 from conman.file_functions import *
 from StringIO import StringIO
-from xml.dom.ext.reader.Sax import FromXmlFile
+
+USE_MINIDOM=0
+try:
+	from xml.dom.ext.reader.Sax import FromXmlFile
+except:
+	USE_MINIDOM=1
+
+if USE_MINIDOM:
+	from xml.dom import minidom
+
 from threading import *
 import traceback
 #from xml.dom.minidom import parse
@@ -79,8 +88,10 @@ class QuizPage:
 		"""
 		self.filename = filename
 		self.directory = os.path.split(filename)[0]
-		#try:	
-		doc = FromXmlFile(filename)
+		if USE_MINIDOM:
+			doc = minidom.parse(open(filename))	
+		else:
+			doc = FromXmlFile(filename)
 		self.LoadDoc(doc)
 		#except:
 		#	raise RuntimeError, `sys.exc_value.args`

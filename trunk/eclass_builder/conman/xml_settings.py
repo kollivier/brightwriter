@@ -4,7 +4,15 @@
 #Author: Kevin Ollivier
 #Date: 4/5/01
 
-from xml.dom.ext.reader.Sax import FromXmlFile
+USE_MINIDOM=0
+try:
+	from xml.dom.ext.reader.Sax import FromXmlFile
+except:
+	USE_MINIDOM=1
+
+if USE_MINIDOM:
+	from xml.dom import minidom
+
 import sys
 
 class XMLSettings:
@@ -47,7 +55,11 @@ class XMLSettings:
 	def LoadFromXML(self, filename):
 		self.settings = {}
 		self.filename = filename
-		doc = FromXmlFile(filename)
+		if USE_MINIDOM:
+			doc = minidom.parse(open(filename))
+		else:
+			doc = FromXmlFile(filename)
+
 		settings = doc.getElementsByTagName("Setting")
 		for item in settings:
 			if item.attributes:
