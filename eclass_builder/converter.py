@@ -2,101 +2,126 @@ import getopt,sys
 import os
 import cStringIO
 import string
+import tempfile
 
-import uno
-from unohelper import Base,systemPathToFileUrl, absolutize
-from com.sun.star.beans import PropertyValue
-from com.sun.star.beans.PropertyState import DIRECT_VALUE
-from com.sun.star.uno import Exception as UnoException
-from com.sun.star.io import IOException,XInputStream, XOutputStream
+hasOOo = True
+hasMSOffice = False
+wordApp = None
 
-class OutputStream( Base, XOutputStream ):
-	def __init__( self):
-		self.closed = 0
-		self.data = ""
-
-	def closeOutput(self):
-		self.closed = 1
-
-	def writeBytes( self, seq ):
-		self.data = self.data + seq.value
-
-	def flush( self ):
-		pass
-		
+try: 
+	import win32com
+	wordapp = win32com.client.gencache.EnsureDispatch("Word.Application")
+	hasMSOffice = True
+except:
+	hasMSOffice = False
 
 class DocConverter:
 	def __init__(self, parent):
 		self.parent = parent
 		self.infile = ""
 		self.outformat = "html"
-		self.outfilters = {"html": "HTML (StarWriter)",
-							"txt": "Text (Encoded)",
-							"pdf": "writer_pdf_Export"}
-		self.infilters = {"doc":"MS Word 97",
-						"html": "HTML (StarWriter)", 
-						"rtf":"Rich Text Format",
-						"txt":"Text"}
-		self.url = "uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext"
-		
+
 	def ConvertFile(self, filename, outformat="html"):
-		outfile = OutputStream()
-		ctxLocal = uno.getComponentContext()
-		smgrLocal = ctxLocal.ServiceManager
-
 		try:
-			resolver = smgrLocal.createInstanceWithContext(
-				 "com.sun.star.bridge.UnoUrlResolver", ctxLocal )
-			ctx = resolver.resolve( self.url )
-			smgr = ctx.ServiceManager
+			ext = os.path.splitext(filename)[1][1:]
+			converter = None
+			if ext in ["doc", "rtf"]:
+				if hasMSOffice:
+					converter = WordDocConverter(self.parent)
+				elif hasOOo:
+					converter = OOoDocConverter(self.parent)
+    
+			elif ext == "pdf":
+				converter = PDFConverter(self.parent)
+    
+			if converter: 
+				return converter.ConvertFile(filename, outformat)
+			else:
+				print "No converter found!"
+				return ""
 		except:
-			try:
-				os.system(os.path.join(self.parent.settings["OpenOffice"], "program", "soffice"))
-				resolver = smgrLocal.createInstanceWithContext(
-					 "com.sun.star.bridge.UnoUrlResolver", ctxLocal )
-				ctx = resolver.resolve( self.url )
-				smgr = ctx.ServiceManager
-			except:
-				print "error... could not start openoffice."
+			import traceback
+			print traceback.print_exc()
 
+class PDFConverter:
+	def __init__(self, parent):
+		self.parent = parent
+		self.infile = ""
+		self.outformat = "html"
 
-		desktop = smgr.createInstanceWithContext("com.sun.star.frame.Desktop", ctx )
-		directory, file = os.path.split(filename)
-		print "My directory = " + directory + ", my file = " + file
-		cwd = systemPathToFileUrl(directory)
-		self.outformat = outformat
-		outProps = (
-			PropertyValue( "FilterName" , 0, self.outfilters[string.lower(self.outformat)] , 0 ),
-			PropertyValue( "OutputStream",0, outfile,0))
-		filebase, fileext = os.path.splitext(file)
-		fileext = fileext[1:]
-		if fileext == "htm":
-			fileext == "html"
-		elif fileext == "text":
-			fileext = "txt"
-		
+	def ConvertFile(self, filename, outformat="html"):
+		import tempfile
+		handle, htmlfile = tempfile.mkstemp()
+		os.close(handle)
+		thirdpartydir = self.parent.parent.ThirdPartyDir
+		pdfconvert = "pdftohtml"
+		if os.name == "nt":
+			pdfconvert = pdfconvert + ".exe"
+		path = os.path.join(thirdpartydir, pdfconvert)
+		if os.path.exists(path):
+			os.system(path + " " + filename + " " + htmlfile)
+		return htmlfile
+			
+			
+class WordDocConverter:
+	def __init__(self, parent):
+		self.parent = parent
+		self.infile = ""
+		self.outformat = "html"
+		self.outfilters = {"html": win32com.client.constants.wdFormatHTML,
+							"txt": win32com.client.constants.wdFormatText}
+
+	def ConvertFile(self, filename, outformat="html"):
 		try:
-			inProps = PropertyValue( "Hidden" , 0 , True, 0 ),
-			inProps = inProps + ( PropertyValue( "FilterName", 0, self.infilters[string.lower(fileext)], 0 ),)
-			url = filename
-			if not ( filename.startswith( "ftp:" ) or \
-					filename.startswith( "http:" ) or \
-					filename.startswith("file:") ):
-				url = uno.absolutize( cwd, systemPathToFileUrl(filename) )
-			doc = desktop.loadComponentFromURL( url , "_blank", 0,inProps)
-			
-			if not doc:
-				raise UnoException( "Couldn't open stream for unknown reason", None )		  
-			doc.storeToURL(systemPathToFileUrl(os.path.join(os.getcwd(), "temp", filebase + "." + self.outformat)),outProps)
-			return os.path.join(os.getcwd(), "temp", filebase + "." + self.outformat)
-			
-		except IOException, e:
-			sys.stderr.write( "Error during conversion: " + e.Message + "\n" )
-			retVal = 1
-		except UnoException, e:
-			sys.stderr.write( "Error ("+repr(e.__class__)+") during conversion:" + e.Message + "\n" )
-			retVal = 1
-		
-		if doc:
-			doc.dispose()
+			wordapp.Documents.Open(os.path.join(self.node.dir, self.node.content.filename))
+
+			handle, htmlfile = tempfile.mkstemp()
+			os.close(handle)
+			wordapp.ActiveDocument.SaveAs(htmlfile, FileFormat=self.outfilters[outformat])
+			wordapp.ActiveDocument.Close()
+			return htmlfile
+		except:
+			import traceback
+			print traceback.print_exc()
+			return ""
+
+if hasOOo:
+    class OOoDocConverter:
+    	def __init__(self, parent):
+    		self.parent = parent
+    		self.infile = ""
+    		self.outformat = "html"
+    		self.outfilters = {"html": "HTML (StarWriter)",
+    							"txt": "Text (Encoded)",
+    							"pdf": "writer_pdf_Export"}
+    		self.infilters = {"doc":"MS Word 97",
+    						"html": "HTML (StarWriter)", 
+    						"rtf":"Rich Text Format",
+    						"txt":"Text"}
+    		self.url = "uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext"
+    		
+    	def ConvertFile(self, filename, outformat="html"):
+			oodir = self.parent.parent.settings["OpenOffice"]
+			print "oodir = " + oodir
+			if oodir != "":
+				oldcwd = os.getcwd()
+				os.chdir(self.parent.parent.AppDir)
+				import win32api
+				#get the output and send it to a file
+				command = "ooconvert.bat \"" + win32api.GetShortPathName(oodir) + "\" \"" + win32api.GetShortPathName(filename) + "\""
+				print command
+				import win32pipe
+				myin, mystream = win32pipe.popen4(command)
+				filetext = mystream.read()
+				mystream.close()
+				print "text = " + filetext
+				handle, htmlfile = tempfile.mkstemp()
+				os.close(handle)
+				myfile = open(htmlfile, "wb")
+				myfile.write(filetext)
+				myfile.close()
+				os.chdir(oldcwd)
+				return htmlfile
+
+			return ""
 		
