@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <book xmlns='http://documancer.sourceforge.net/bookfile-0.2.4'>
   <title><!-- insert title here--></title>
-  <provider>HTML</provider>
+  <provider>html</provider>
   <attributes>
     <attr name='rootfile'>index.htm</attr>
     <attr name='basedir'>.</attr>
