@@ -7,6 +7,7 @@ import os
 import sys
 #import HTMLPublish
 import xml_settings
+import vcard
 from validate import *
 USE_MINIDOM=0
 try:
@@ -194,6 +195,89 @@ class ConMan:
 
 				myres = self.content.AddItem(myid, self.language)
 				myres.filename = myurl
+				if myres.filename.find("/") == -1:
+					ext = os.path.splitext(myres.filename)[1]
+					if ext.lower() == ".ecp" or ext.lower() == ".quiz":
+						myres.filename = "EClass/" + myres.filename
+					elif string.find(ext.lower(), "htm") != -1:
+						myres.filename = "Text/" + myres.filename
+					else:
+						myres.filename = "File/" + myres.filename 
+				myres.filename = myres.filename.replace("/", os.sep)
+
+				#general metadata
+				general = resource.getElementsByTagName("General")
+				if general:
+					general = general[0]
+
+					nametag = general.getElementsByTagName("Title")
+					if nametag and nametag[0].childNodes:
+						myres.metadata.name = nametag[0].childNodes[0].nodeValue
+
+					desctag = general.getElementsByTagName("Description")
+					if desctag and desctag[0].childNodes:
+						myres.metadata.description = desctag[0].childNodes[0].nodeValue
+
+					keytag = general.getElementsByTagName("Keywords")
+					if keytag and keytag[0].childNodes:
+						myres.metadata.keywords = keytag[0].childNodes[0].nodeValue 
+
+				#rights metadata
+				rights = resource.getElementsByTagName("Rights")
+				if rights:
+					rights = rights[0]
+
+					desctag = rights.getElementsByTagName("Description")
+					if desctag and desctag[0].childNodes:
+						myres.metadata.rights.description = desctag[0].childNodes[0].nodeValue
+
+				#lifecycle metadata
+				lifecycle = resource.getElementsByTagName("Lifecycle")
+				if lifecycle:
+					lifecycle = lifecycle[0]
+
+					versiontag = lifecycle.getElementsByTagName("Version")
+					if versiontag and versiontag[0].childNodes:
+						myres.metadata.lifecycle.version = versiontag[0].childNodes[0].nodeValue
+
+					statustag = lifecycle.getElementsByTagName("Status")
+					if statustag and statustag[0].childNodes:
+						myres.metadata.lifecycle.status = statustag[0].childNodes[0].nodeValue
+
+					contribtag = lifecycle.getElementsByTagName("Contribute")
+					if len(contribtag) > 0:
+						print "Found contrib!"
+						for contrib in contribtag:
+							newContrib = Contributor()
+							role = contrib.getElementsByTagName("Role")
+							if role and role[0].childNodes:
+								newContrib.role = role[0].childNodes[0].nodeValue
+							
+							entity = contrib.getElementsByTagName("Entity")
+							if entity and entity[0].childNodes:
+								myvcard = vcard.VCard()
+								#nasty hack alert - minidom is converting line endings
+								#but vcard is specific about what line endings it uses
+								#so I need to "unconvert" them here
+								myvcard.parseString(string.replace(entity[0].childNodes[0].nodeValue, "\n", "\r\n"))
+								newContrib.entity = myvcard
+
+							date = contrib.getElementsByTagName("Datetime")
+							if date and date[0].childNodes:
+								newContrib.date = date[0].childNodes[0].nodeValue
+
+							myres.metadata.lifecycle.contributors.append(newContrib)
+
+				#classification metadata
+				classification = resource.getElementsByTagName("Classification")
+				if classification:
+					#classification = classification[0]
+					if classification[0].childNodes:
+						taxonpath = classification[0].getElementsByTagName("Taxonpath")
+						if taxonpath:
+							for cat in taxonpath[0].getElementsByTagName("Taxon"):
+								if cat.childNodes:
+									myres.metadata.classification.categories.append(cat.childNodes[0].nodeValue)
 	
 	def _GetNodes(self, root, parent):
 		id = ""
@@ -238,9 +322,10 @@ class ConMan:
 			if mycontent == None:
 				mycontent = self.content.AddItem(contentid, self.language)
 
-			mycontent.name = name
-			mycontent.keywords = keywords
-			mycontent.description = description
+			if mycontent.metadata.name == "": #we're an old course
+				mycontent.metadata.name = name
+				mycontent.metadata.keywords = keywords
+				mycontent.metadata.description = description
 			mycontent.template = template
 			mycontent.public = public
 			
@@ -255,7 +340,6 @@ class ConMan:
 			else:        				
 				mynode = ConNode(id, mycontent, None)
 				mynode.dir = self.directory
-				#print "My node id = " + mynode.id
 				self.nodes = []
 				self.nodes.append(mynode)
 				self.CurrentNode = mynode
@@ -279,16 +363,6 @@ class ConMan:
 				self.keywords = XMLCharToText(root.getElementsByTagName("imsmd:Keywords")[0].childNodes[0].nodeValue)
 			else:
 				self.keywords = ""
-		
-			#if root.getElementsByTagName("contribute"):
-			#	print "We have contribute elements..."
-			#	for contrib in root.getElementsByTagName("contribute"):
-			#		ctx = xpath.Context.Context(contrib, 1, 1)
-			#		isAuthor = xpath.Evaluate("/contribute/role/value/langstring/text()", context=ctx)
-			#		print "Result is " + `isAuthor`
-			#		if isAuthor:
-			#			vcard = xpath.Evaluate("centity/vcard/text()", contrib)
-			#			print vcard.nodeValue
 
 	def SaveAsXML(self, filename, encoding="ISO-8859-1"):
 		if filename == "":
@@ -317,7 +391,7 @@ class ConMan:
 			raise IOError, message
 
 		try:
-			myfile = open(filename, "w")
+			myfile = open(filename, "wb")
 			myfile.write(myxml)
 			myfile.close()
 		except:
@@ -337,7 +411,7 @@ class ConMan:
 		return mymetadata
 
 	def _TOCAsXML(self, root):
-		mytoc = """<item identifier="%s" identifierref="%s" title="%s" description="%s" keywords="%s" template="%s" public="%s" """ % (TextToXMLAttr(self.namespace + root.id), TextToXMLAttr(self.namespace + root.content.id), TextToXMLAttr(root.content.name), TextToXMLAttr(root.content.description), TextToXMLAttr(root.content.keywords), TextToXMLAttr(root.content.template), TextToXMLAttr(root.content.public))
+		mytoc = """<item identifier="%s" identifierref="%s" template="%s" public="%s" """ % (TextToXMLAttr(self.namespace + root.id), TextToXMLAttr(self.namespace + root.content.id), TextToXMLAttr(root.content.template), TextToXMLAttr(root.content.public))
 		if len(root.children) > 0:
 			mytoc = mytoc + ">"
 			for child in root.children:
@@ -352,7 +426,7 @@ class ConMan:
 	def _ResourcesAsXML(self):
 		myres = ""
 		for item in self.content:				
-			myres = myres + """<resource identifier="%s" href="%s"/>\n""" % (self.namespace + item.id, TextToXMLAttr(item.filename))
+			myres = myres + """<resource identifier="%s" href="%s">\n%s\n</resource>\n""" % (self.namespace + item.id, TextToXMLAttr(string.replace(item.filename, os.sep, "/")), item.metadata.asXMLString())
 		return myres
 
 	def PublishAsHTML(self, parent, joustdir, gsdlcollection='', useswishe=0):
@@ -479,16 +553,19 @@ class Content:
 	"""
 	def __init__(self, id, lang):
 		self.encoding = "ISO-8859-1"
-		#print self.encoding
 		self.id = id
-		self.language = lang
 		self.name = ""
+
+		#These three below are for backwards compatibility with old EClasses.
 		self.keywords = ""
 		self.description = ""
+		self.language = lang
+
 		self.permissions = ""
 		self.template = ""
 		self.public = "true"
 		self.filename = ""
+		self.metadata = Metadata()
 
 	def __setattr__(self, name, value):
 		if not name == "encoding" and isinstance(value, str) or isinstance(value, unicode):
@@ -496,6 +573,156 @@ class Content:
 		else:
 			self.__dict__[name] = value
 		
+class Metadata:
+	""" 
+	Class: conman.Metadata
+	Description: Stores metadata for Content items (Resources)
+	"""
+	def __init__(self):
+		self.name = ""
+		self.keywords = ""
+		self.description = ""
+		self.language = "en"
+		self.lifecycle = Lifecycle()
+		self.technical = Technical()
+		self.educational = Educational()
+		self.rights = Rights()
+		self.classification = Classification()
+
+	def asXMLString(self):
+		result = """<Metadata>
+		%(metadata)s
+		%(lifecycle)s
+		%(rights)s
+		%(classification)s
+</Metadata>""" % {"metadata":self.generalAsXMLString(), "lifecycle":self.lifecycle.asXMLString(), "rights":self.rights.asXMLString(), "classification": self.classification.asXMLString()}
+		return result
+
+	def generalAsXMLString(self):
+		result = "<General>"
+		if self.name != "":
+			result = result + "<Title>" + TextToXMLChar(self.name) + "</Title>\n"
+		if self.keywords != "":
+			result = result + "<Keywords>" + TextToXMLChar(self.keywords) + "</Keywords>\n"
+		if self.description != "":
+			result = result + "<Description>" + TextToXMLChar(self.description) + "</Description>\n"
+		result = result + "</General>\n"
+
+		return result
+
+
+class Lifecycle:
+	def __init__(self):
+		self.version = ""
+		self.status = ""
+		self.contributors = []
+
+	def asXMLString(self):
+		if self.version == "" and self.status == "" and len(self.contributors) == 0:
+			print "No contributors."
+			return ""
+		result = "<Lifecycle>"
+		if self.version != "":
+			result = result + "<Version>" + TextToXMLChar(self.version) + "</Version>\n"
+		if self.status != "":
+			result = result + "<Status>" + TextToXMLChar(self.status) + "</Status>\n"
+		for person in self.contributors:
+			result = result + person.asXMLString() 
+		result = result + "</Lifecycle>"
+
+		return result
+
+class Contributor:
+	""" 
+	Class: conman.Contributor
+	Description: Stores contributor information for Content items (Resources)
+	"""
+	def __init__(self):
+		self.role = ""
+		self.entity = vcard.VCard()
+		self.date = ""
+
+	def asXMLString(self):
+		if self.role == "" and self.entity.name == "" and self.date == "":
+			return ""
+
+		result = "<Contribute>"
+		if self.role != "":
+			result = result + "<Role>" + TextToXMLChar(self.role) + "</Role>\n"
+		if self.date != "":
+			result = result + "<Date><Datetime>" + TextToXMLChar(self.date) + "</Datetime></Date>\n"
+		if self.entity != None:
+			result = result + "<Entity>\n" + self.entity.asString() + "\n</Entity>\n"
+		result = result + "</Contribute>"
+		return result
+
+class Technical:
+	""" 
+	Class: conman.Technical
+	Description: Stores technical requirement information for an EClass
+	"""
+	def __init__(self):
+		self.requirements = []
+		self.install_instructions = ""
+		self.other_requirements = []
+
+class TechRequirements:
+	""" 
+	Class: conman.TechRequirements
+	Description: Stores technical requirement information for an EClass
+	"""
+	def __init__(self):
+		self.type = ""
+		self.name = ""
+		self.minversion = ""
+		self.maxversion = ""
+
+class Educational:
+	""" 
+	Class: conman.Educational
+	Description: Stores educational information for an EClass
+	"""
+	def __init__(self):
+		self.context = ""
+		self.ageGroup = ""
+		self.difficulty = ""
+
+class Rights:
+	"""
+	Class: conman.Rights
+	Description: Stores information about copyright restrictions
+	and any necessary credits for a particular resource
+	"""
+	def __init__(self):
+		self.description = ""
+
+	def asXMLString(self):
+		if self.description == "":
+			return ""
+
+		result = "<Rights>\n"
+		if self.description != "":
+			result = result + "<Description>" + TextToXMLChar(self.description) + "</Description>"
+		result = result + "</Rights>"
+		return result 
+
+class Classification:
+	""" 
+	Class: conman.Contributor
+	Description: Stores classification information for Content items (Resources)
+	"""
+	def __init__(self):
+		self.categories = []
+
+	def asXMLString(self):
+		if len(self.categories) == 0:
+			return ""
+
+		result = "<Classification>\n<Taxonpath>"
+		for cat in self.categories:
+			result = result + "<Taxon>" + cat + "</Taxon>"
+		result = result + "</Taxonpath>\n</Classification>"
+		return result
 		
 class ContentList:
 	"""
