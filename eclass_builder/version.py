@@ -2,8 +2,8 @@
 
 major = 2
 minor = 5
-release = 4
-build = 19
+release = 5
+build = 1
 
 def asString():
 	return `major` + "." + `minor` + "." + `release` + "." + `build`
