@@ -3,7 +3,7 @@
 major = 2
 minor = 5
 release = 4
-build = 12
+build = 17
 
 def asString():
 	return `major` + "." + `minor` + "." + `release` + "." + `build`
