@@ -18,7 +18,8 @@ import sys, urllib2, cPickle
 import string, time, cStringIO, os, re, glob, csv
 import conman
 import version
-
+import utils
+import utils.log as log
 import indexer
 
 import xml.dom.minidom
@@ -182,12 +183,6 @@ class MainFrame2(wxFrame):
 		self.CopyNode = None
 		self.ftppass = ""
 		self.themes = themes.ThemeList(os.path.join(self.AppDir, "themes"))
-		#for item in os.listdir(os.path.join(self.AppDir, "themes")):
-		#	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
-		#		theme = string.replace(item, ".py", "")
-		#		if theme != "BaseTheme":
-		#			exec("import themes." + theme)
-		#			exec("self.themes.append([themes." + theme + ".themename, '" + theme + "', themes." + theme + "])") 
 		self.currentTheme = self.themes.FindTheme("Default (no frames)")
 		self.settings = xml_settings.XMLSettings()
 		wxInitAllImageHandlers()
@@ -305,12 +300,8 @@ class MainFrame2(wxFrame):
 		self.statusBar = self.CreateStatusBar()
 
 		if wxPlatform == '__WXMSW__':
-			self.outlog = open(os.path.join(self.AppDir, "errlog.txt"), "a")
-			self.oldstdout = sys.stdout
-			self.oldstderr = sys.stderr
-			sys.stdout = self.outlog
-			sys.stderr = self.outlog
-			print time.strftime("%B %d, %Y %H:%M:%S - starting EClass.Builder...\n\n", time.localtime())
+			self.logfile = log.LogFile("errlog.txt")
+			self.logfile.write(time.strftime("%B %d, %Y %H:%M:%S - starting EClass.Builder...\n\n", time.localtime()))
 
 		#load icons
 		icnNewProject = wxBitmap(os.path.join(self.AppDir, "icons", "book_green16.gif"), wxBITMAP_TYPE_GIF)
@@ -637,7 +628,7 @@ class MainFrame2(wxFrame):
 			if myitem.parent.children.count(myitem) > 0:
 				myitem.parent.children.remove(myitem)
 			else:
-				print "Item's parent doesn't have it as a child?!"
+				self.logfile.write("Item's parent doesn't have it as a child?!")
 
 			self.wxTree.Delete(self.CutNode)
 			self.dirtyNodes.append(myitem.back())
@@ -861,10 +852,10 @@ class MainFrame2(wxFrame):
 		
 		self.settings.SaveAsXML(os.path.join(self.PrefDir,"settings.xml"))
 		#self.PasteMenu.Destroy()
-		if wxPlatform == '__WXMSW__':
-			self.outlog.close()
-			sys.stdout = self.oldstdout
-			sys.stderr = self.oldstderr
+		#if wxPlatform == '__WXMSW__':
+			#self.outlog.close()
+			#sys.stdout = self.oldstdout
+			#sys.stderr = self.oldstderr
 		self.Destroy()	
 
 	def PublishToWeb(self, event):
@@ -941,36 +932,7 @@ class MainFrame2(wxFrame):
 		if int(searchEnabled) == 1:
 			gsdl = self.settings["GSDL"]
 			collect = os.path.join(gsdl, "collect")
-			if self.pub.settings["SearchProgram"] == "Swish-e":
-				#use SWISH-E! =)
-				
-				if True:
-					try:
-						conf = open(os.path.join(self.AppDir, "swishe.conf"), "r")
-						data = conf.read()
-						conf.close()
-						path = os.path.join(self.ThirdPartyDir, "SWISH-E", "")
-						if os.name == "nt":
-							path = win32api.GetShortPathName(path)
-						path = string.replace(path, "\\", "/")
-						data = string.replace(data, "<MyFilterDir>", path)
-						conf = open(os.path.join(self.pub.directory, "swishe.conf"), "w")
-						conf.write(data)
-						conf.close()
-					except:
-						print "Could not update swishe.conf file."
-						return
-						
-					#files.CopyFile("swishe.conf", os.path.join(self.AppDir, "SWISH-E"), self.pub.directory)
-					cddialog = UpdateIndexDialog(self, False)
-					cddialog.UpdateIndex("","")
-					result = self.PublishEClass(self.pub.pubid)
-
-					
-				#dialog = wxMessageDialog(self, _("To publish your EClass to Greenstone, you must first tell E-Class where it can find Greenstone. To do this, select 'Options->Preferences' from the main menu."), _("Greenstone Directory Not Specified"), wxOK)
-				#dialog.ShowModal()
-				#dialog.Destroy()
-			elif self.pub.settings["SearchProgram"] == "Lucene":
+			if self.pub.settings["SearchProgram"] == "Lucene":
 				cddialog = UpdateIndexDialog(self, False)
 				cddialog.UpdateIndex("", "")
 
@@ -991,9 +953,8 @@ class MainFrame2(wxFrame):
 							cddialog.UpdateIndex(gsdl, eclassdir)
 						except:	
 							message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
-							print message
 							import traceback
-							print traceback.print_exc()
+							self.logfile.write(traceback.print_exc())
 							dialog = wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK)
 							dialog.ShowModal()
 							dialog.Destroy()
@@ -1065,9 +1026,8 @@ class MainFrame2(wxFrame):
 
 		except:
 			message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
-			print message
 			import traceback
-			print traceback.print_exc()
+			self.logfile.write(traceback.print_exc())
 			wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK).ShowModal()
 			return False
 		del busy
@@ -1092,13 +1052,17 @@ class MainFrame2(wxFrame):
 		ftp.filelist = files
 		self.SetStatusText(_("Uploading files..."))
 		
-		#import threading
-		#self.mythread = threading.Thread(None, ftp.UploadFiles)
-		#self.mythread.start()
 		busy = wxBusyCursor()
-		ftp.UploadFiles()
+		try:
+			ftp.UploadFiles()
+		except ftplib.all_errors, e:
+			wxMessageBox(ftp.getFtpErrorMessage(e))
+		except:
+			self.SetStatusText(_("Unknown error uploading file(s)."))
+			import traceback
+			self.logfile.write(traceback.print_exc())
+		self.SetStatusText("")
 		del busy
-		#self.SetStatusText(_("Finished uploading."))
 
 	def SaveProject(self, event):
 		"""
@@ -1185,7 +1149,7 @@ class MainFrame2(wxFrame):
 				dlg.Destroy()
 			except:
 				import traceback
-				print traceback.print_exc()
+				self.logfile.write(traceback.print_exc())
 				wxMessageBox(_("There was an unknown error when creating the new page. The page was not created. Detailed error information is in the 'errlog.txt' file."))
 	
 	def AddNewEClassPage(self, event, name="", isroot=False):
@@ -1230,7 +1194,7 @@ class MainFrame2(wxFrame):
 							self.CurrentItem.parent.children.remove(self.CurrentItem)
 					except:
 						import traceback
-						print traceback.print_exc()
+						self.logfile.write(traceback.print_exc())
 						wxMessageBox(_("There was an unknown error when creating the new page. The page was not created. Detailed error information is in the 'errlog.txt' file."))
 	
 				self.isNewCourse = False
@@ -1269,7 +1233,7 @@ class MainFrame2(wxFrame):
 					self.UploadPage()
 			except:
 				import traceback
-				print traceback.print_exc()
+				self.logfile.write(traceback.print_exc())
 
 	def UploadPage(self, event = None):
 		ftpfiles = []
@@ -1379,7 +1343,7 @@ class MainFrame2(wxFrame):
 					self.isDirty = True
 		except:
 			import traceback
-			print traceback.print_exc()
+			self.logfile.write(traceback.print_exc())
 			wxMessageBox(_("There was an unknown error when attempting to start the page editor. Detailed error information is in the 'errlog.txt' file."))
 	
 	
@@ -1486,7 +1450,7 @@ class MainFrame2(wxFrame):
 	def OnTreeDoubleClick(self, event):
 		pt = event.GetPosition()
 		item = self.wxTree.HitTest(pt)
-		#print self.wxTree.GetPyData(item)
+
 		if item[1] & wxTREE_HITTEST_ONITEMLABEL:
 			self.CurrentTreeItem = item[0]
 			self.CurrentItem = self.wxTree.GetPyData(item[0])
@@ -1502,7 +1466,6 @@ class MainFrame2(wxFrame):
 
 		pt = event.GetPosition()
 		item = self.wxTree.HitTest(pt)
-		#print self.wxTree.GetPyData(item)
 		
 		if item[1] & wxTREE_HITTEST_ONITEMLABEL:
 			self.CurrentTreeItem = item[0]
@@ -1531,7 +1494,6 @@ class MainFrame2(wxFrame):
 			self.toolbar.EnableTool(ID_ADD_MENU, False)
 			self.toolbar.EnableTool(ID_TREE_REMOVE, False)
 			pageMenu = self.menuBar.FindMenu("&" + _("Page"))
-			print pageMenu
 			self.menuBar.EnableTop(pageMenu, False)
 		event.Skip()
 
@@ -1565,7 +1527,7 @@ class MainFrame2(wxFrame):
 				self.browser.LoadPage(filename) 
 		else:
 			#self.status.SetStatusText("Cannot find file: "+ filename)
-			print "Error previewing file: " + filename
+			self.logfile.write("Error previewing file: " + filename)
 		
 
 	def BindTowxTree(self, root):
@@ -1596,7 +1558,6 @@ class MainFrame2(wxFrame):
 			if child.pub:
 				child = child.pub.nodes[0]
 			myname = child.content.metadata.name
-			#print myname
 			NewwxNode = self.wxTree.AppendItem(wxTreeNode,
 					myname,
 					-1,-1,
@@ -1931,7 +1892,7 @@ class UpdateIndexDialog(wxDialog):
 		Dialog for creating a full-text index of an EClass.
 
 		"""
-		wxDialog.__init__ (self, parent, -1, _("Indexing EClass"), wxPoint(100,100),wxSize(400,230))
+		wxDialog.__init__ (self, parent, -1, _("Indexing EClass"), wxPoint(100,100),wxSize(400,230), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
 		height = 20
 		if wxPlatform == "__WXMAC__":
 			height = 25
@@ -1949,32 +1910,19 @@ class UpdateIndexDialog(wxDialog):
 		self.status = wxStaticText(self, -1, _("Updating full-text index..."), wxPoint(lblstart, 12))
 		self.txtProgress = wxTextCtrl(self, -1, "", wxPoint(lblstart, 40), wxSize(360, height*6), wxTE_MULTILINE|wxTE_READONLY)
 
-		#self.btnViewFolder = wxButton(self, -1, _("Open Folder"))
-		#self.btnTestCD = wxButton(self, -1, _("View EClass"))
-		#self.btnCloseWindow = wxButton(self, -1, _("Close"))
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		self.mysizer.Add(self.status, 0, wxALL, 4)
 		self.mysizer.Add(self.txtProgress, 1, wxEXPAND | wxALL, 4)
-		#self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		#self.buttonsizer.Add(self.btnViewFolder, 0, wxALIGN_CENTER | wxALL, 4)
-		#self.buttonsizer.Add(self.btnCloseWindow, 0, wxALIGN_CENTER | wxALL, 4)
-		#self.mysizer.Add(self.buttonsizer, 0, wxALIGN_CENTER)
+
 		self.SetAutoLayout(True)
 		self.SetSizerAndFit(self.mysizer)
 		self.Layout()
  
-		#self.btnViewFolder.Enable(False)
-		#self.btnTestCD.Enable(False)
-
-		#EVT_BUTTON(self.btnViewFolder, self.btnViewFolder.GetId(), self.btnViewFolderClicked)
-		#EVT_BUTTON(self.btnTestCD, self.btnTestCD.GetId(), self.btnTestCDClicked)
-		#EVT_BUTTON(self.btnCloseWindow, self.btnCloseWindow.GetId(), self.OnClose)
 		EVT_CLOSE(self, self.OnClose)
 		EVT_OUTPUT_UPDATE(self, self.OnOutputUpdate)
 		EVT_INDEXING_FINISHED(self, self.OnIndexingFinished)
 		EVT_INDEXING_CANCELED(self, self.OnIndexingCanceled)
 		self.Show(True)
-		#wxSleep(1)
 
 	def OnOutputUpdate(self, event):
 		self.txtProgress.WriteText("\n" + event.text)
@@ -2035,11 +1983,6 @@ class UpdateIndexDialog(wxDialog):
 				if captureoutput:	 
 					self.mythread = threading.Thread(None, self.cmdline)
 					self.mythread.start()
-					#while self.mythread.isAlive():
-					#	wxSleep(1)
-					#self.mythread = None
-					#if self.stopthread == True:
-					#	self.EndModal(wxID_OK)
 				else:
 					doscall = win32api.GetShortPathName(os.path.join(self.parent.AppDir, "greenstone", "buildcol.bat"))
 					os.spawnv(os.P_WAIT, doscall, [doscall, self.parent.pub.pubid, win32api.GetShortPathName(gsdl)])
@@ -2089,11 +2032,7 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 			engine = indexer.SearchEngine(self, os.path.join(self.parent.CurrentDir, "index.pylucene"))
 			engine.IndexFiles(self.parent.pub.nodes[0])
 			
-		#self.btnViewFolder.Enable(True)
-		#self.btnTestCD.Enable(True)
-		#self.btnCloseWindow.Enable(True)
 		self.exportfinished = True
-		#self.EndModal(wxID_OK)
 
 	def cmdline(self):
 		import time
@@ -2114,9 +2053,6 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 				evt = UpdateOutputEvent(text = line)
 				wxPostEvent(self, evt)
 			time.sleep(0.01)
-				#self.dialogtext = self.dialogtext + "\n" + line 
-				#print line
-				#self.txtProgress.WriteText(line)
 			
 		evt = IndexingFinishedEvent()
 		wxPostEvent(self, evt)
@@ -2155,6 +2091,9 @@ class FTPUpload:
 		self.Password = parent.ftppass #munge(parent.pub.settings["FTPUsername"], "foobar")
 		self.stopupload = False
 		self.useSearch = 0
+		self.projpercent = 0
+		self.filepercent = 0
+
 		if parent.pub.settings["FTPPassive"] == "yes":
 			self.usePasv = True
 		else:
@@ -2164,28 +2103,19 @@ class FTPUpload:
 			self.useSearch = int(parent.pub.settings["SearchEnabled"])
 
 	def StartFTP(self):
-		try:
-			#self.txtProgress.WriteText(_("Connecting to ") + self.txtFTPSite.GetValue() + "...\n")
-			if self.Password == "":
-				dialog = wxTextEntryDialog(self.parent, _("Please enter a password to upload to FTP."), _("Enter Password"), "", wxTE_PASSWORD | wxOK | wxCANCEL)
-				if dialog.ShowModal() == wxID_OK:
-					self.Password = dialog.GetValue()
-				else:
-					return False
-			#print "Username is: " + self.Username
-			#print "Password is: " + self.Password
-			self.host = ftplib.FTP(self.FTPSite, self.Username, self.Password)
-			self.host.set_pasv(self.usePasv)
-			self.host.sock.setblocking(1)
-			self.host.set_debuglevel(2)
-			self.host.sock.settimeout(60)
-			return True
-		except ftplib.all_errors, e:
-			message = _("EClass was unable to connect to the specified FTP server. Please check to ensure your server name, username and password are correct. The error message returned was:") + "\n\n" + str(e)
-			print message
-			if self.isDialog:
-				wxMessageDialog(self, message, _("FTP Login Error"), wxOK).ShowModal()
-			return False
+		if self.Password == "":
+			dialog = wxTextEntryDialog(self.parent, _("Please enter a password to upload to FTP."), _("Enter Password"), "", wxTE_PASSWORD | wxOK | wxCANCEL)
+			if dialog.ShowModal() == wxID_OK:
+				self.Password = dialog.GetValue()
+			else:
+				return False
+
+		self.host = ftplib.FTP(self.FTPSite, self.Username, self.Password)
+		self.host.set_pasv(self.usePasv)
+		self.host.sock.setblocking(1)
+		self.host.set_debuglevel(2)
+		self.host.sock.settimeout(60)
+		return True
 
 	def GenerateFileList(self, indir):
 		if self.useSearch == 0 and string.find(indir, "cgi-bin") != -1:
@@ -2221,6 +2151,17 @@ class FTPUpload:
 			elif os.path.isdir(myitem):
 				self.GenerateFileList(myitem)
 
+	def CreateDirectories(self):
+		self.StartFTP()
+		ftpdir = self.Directory
+		if not ftpdir == "" and not ftpdir[0] == "/":
+			ftpdir = "/" + ftpdir 
+		if not ftpdir == "" and not ftpdir[-1] == "/":
+			ftpdir = ftpdir + "/"
+		self.cwd(ftpdir)
+		for item in self.dirlist:
+			self.cwd(item) #create the folders if they don't already exist
+
 	def UploadFiles(self):
 		import time
 		if self.stopupload:
@@ -2228,6 +2169,7 @@ class FTPUpload:
 			return
 		self.StartFTP()
 		self.CreateDirectories()
+
 		#lastdir = self.Directory #this should have gotten created already
 		if self.Directory == "" or not self.Directory[-1] == "/":
 			self.Directory = self.Directory + "/"
@@ -2236,18 +2178,16 @@ class FTPUpload:
 				self.projGauge.SetRange(len(self.filelist))
 		myfile = None
 		for item in self.filelist[:]:
-			#self.cwd(self.txtDirectory.GetValue())
 			try:
 				if self.stopupload:
 					self.host.close()
 					evt = UploadCanceledEvent()
 					wxPostEvent(self, evt)
 					return
-				#wxSleep(1)
+
 				myitem = os.path.join(self.parent.CurrentDir, item)
 				myfile = open(myitem, "rb")
 				bytes = os.path.getsize(myitem)
-				print "bytes for " + myitem + " = " + `bytes`
 				dir = self.Directory
 				if not dir[-1] == "/":
 					dir = dir + "/"
@@ -2260,28 +2200,20 @@ class FTPUpload:
 						dir = dir + "/"
 				else:
 					myitem = item
-				#self.StartFTP()
-				#print "dir = " + dir + ", lastdir = " + lastdir
-				#if not dir == lastdir:
-				#	mydir = string.replace(dir, lastdir, "")
-				#	print "mydir = " + mydir
-				#self.cwd(dir)
-				#lastdir = dir
+		
 				self.host.voidcmd('TYPE I')
-				#print "item = " + dir + myitem
 				self.mysocket = self.host.transfercmd('STOR ' + dir + myitem)
 				self.filepercent = 0
-				if self.isDialog:
-					#if wxPlatform != "__WXMAC__":
-					evt = UpdateFTPDialogEvent(projpercent = self.projpercent, filepercent = self.filepercent)
-					wxPostEvent(self, evt)
+
+				evt = UpdateFTPDialogEvent(projpercent = self.projpercent, filepercent = self.filepercent)
+				wxPostEvent(self, evt)
+
 				onepercent = bytes/100
 				if onepercent == 0:
-					print "bytes == " + `bytes`
 					onepercent = 1
 				if self.mysocket:
 					#self.mysocket.setblocking(1)
-					self.mysocket.settimeout(60)
+					self.mysocket.settimeout(30)
 					if self.isDialog:
 						self.txtProgress.SetLabel(_("Current File: ") + myitem)
 					elif self.parent:
@@ -2299,7 +2231,6 @@ class FTPUpload:
 							self.filepercent = bytesuploaded/onepercent
 							evt = UpdateFTPDialogEvent(projpercent = self.projpercent, filepercent = self.filepercent)
 							wxPostEvent(self, evt)
-							#self.fileGauge.SetValue(self.filepercent)
 						elif self.parent:
 							self.parent.SetStatusText(_("Uploaded %(current)d of %(total)d bytes for file %(filename)s." % {"current":bytesuploaded, "total":bytes, "filename":myitem})) 
 						wxYield()
@@ -2308,88 +2239,47 @@ class FTPUpload:
 					self.host.voidresp()
 					myindex = self.filelist.index(item)
 					self.filelist.remove(item)
-					#self.lstFiles.Delete(myindex)
+
 				myfile.close()
-				if self.isDialog:
-					self.projpercent = self.projpercent + 1
-					#if wxPlatform != "__WXMAC__":
-					#	self.projGauge.SetValue(self.projGauge.GetValue() + 1)
-					#else:
-					evt = UpdateFTPDialogEvent(projpercent = self.projpercent, filepercent = self.filepercent)
-					wxPostEvent(self, evt)
-						#time.sleep(1)
+
+				self.projpercent = self.projpercent + 1
+				evt = UpdateFTPDialogEvent(projpercent = self.projpercent, filepercent = self.filepercent)
+				wxPostEvent(self, evt)
+
 			except ftplib.all_errors, e:
 				if myfile:
 					myfile.close()
-				if string.find(`e`, "425") != -1:
-					wxMessageBox(_("Cannot open a data connection. Try changing the \"Use Passive FTP\" setting and uploading again."))
-					return 
-				elif string.find(`e`, "426") != -1:
-					wxMessageBox(_("Connection closed by server. Click Upload again to resume upload."))
-					return
-				elif string.find(`e`, "452") != -1:
-					wxMessageBox(_("Server is full. You will need to either delete files from the server or ask for more server space from your system administrator.")) 
-					return 
-				else: 
-					wxMessageBox(_("Server unexpectedly closed the connection. Please click 'Upload' again to attempt to resume uploading."))
-					import traceback
-					print traceback.print_exc()
-					return
-				#else:
-				#	if self.isDialog:
-				#		self.txtProgress.SetLabel(_("Upload Failed."))
-				#	elif self.parent:
-				#		self.parent.SetStatusText(_("Upload Failed."))
+				raise
+
 		self.host.quit()
-		if self.parent:
-			self.parent.SetStatusText(_("Finished uploading."))
 		evt = UploadFinishedEvent()
 		wxPostEvent(self, evt)
-		#if len(self.filelist) > 0:
-			#try uploading the files that didn't make it
-			#self.UploadFiles()
 
-	def CreateDirectories(self):
-		if 1: 
-			self.StartFTP()
-			ftpdir = self.Directory
-			if not ftpdir == "" and not ftpdir[0] == "/":
-				ftpdir = "/" + ftpdir 
-			if not ftpdir == "" and not ftpdir[-1] == "/":
-				ftpdir = ftpdir + "/"
-			self.cwd(ftpdir)
-			for item in self.dirlist:
-				self.cwd(item) #create the folders if they don't already exist
-		#except ftplib.all_errors, e:
-		#	try:
-		#		#self.txtProgress.WriteText(_("Making directory ") + self.txtDirectory.GetValue() + "...\n")
-		#		self.host.mkd(self.Directory)
-		#		self.host.cwd(self.Directory)
-		#	except ftplib.error_temp, e:
-		#		try:
-		#			#self.txtProgress.WriteText("Connection to server lost. Trying to reconnect...\n")
-		#			self.StartFTP()
-		#			self.host.mkd(self.Directory)
-		#			self.host.cwd(self.Directory)
-		#		except ftplib.all_errors, e:
-		#			message = _("Unable to create or change directory on the FTP server. Ensure that you have the proper upload permissions. The error message returned was:") + "\n\n" + str(e)
-		#			print message 
-		#			wxMessageDialog(self, message, _("FTP Upload Error"), wxOK).ShowModal()
-		#	except ftplib.all_errors, e:
-		#		message = _("Unable to create or change directory on the FTP server. Ensure that the directory exists you have the proper upload permissions. The error message returned was:") + "\n\n" + str(e)
-		#		print message 
-		#		if self.isDialog:
-		#			self.txtProgress.WriteText(message)
-		#		wxMessageDialog(self, message, _("FTP Upload Error"), wxOK).ShowModal()
-		#		if self.isDialog:
-		#			self.btnOK.Enable(True)
-		#		return False
-			
-	def cwd(self, item):
-		#self.StartFTP()
+	def getFtpErrorMessage(self, e):
+		""" Given an ftplib error object, generate some common error messages. """
+		code = ""
 		try:
-			print item
-			myitem = item
+			code = e.args[0][:3]
+		except:
+			code = repr(e)[:3]
+
+		if code == "550":
+			return _("Attempt to create a file or directory on the server failed. Please check your file permissions. The error reported was: \n\n" + str(e.args[0]))
+		elif code == "530":
+			return _("EClass was unable to connect to the specified FTP server. Please check to ensure your server name, username and password are correct. The error message returned was:") + "\n\n" + str(e)
+		elif code == "425":
+			return _("Cannot open a data connection. Try changing the \"Use Passive FTP\" setting and uploading again.")
+		elif code == "426":
+			return _("Connection closed by server. Click Upload again to resume upload.")
+		elif code == "452":
+			return _("Server is full. You will need to either delete files from the server or ask for more server space from your system administrator.")
+		else: 
+			return _("An unexpected error has occurred while uploading. Please click 'Upload' again to attempt to resume uploading. The error reported was: \n\n" + repr(e)) 
+			#self.parent.logfile.write(str(e))
+
+	def cwd(self, item):
+		myitem = item
+		try:
 			if not string.rfind(myitem, "/") == 0:
 				myitem = myitem + "/"
 			self.host.cwd(myitem)
@@ -2397,9 +2287,8 @@ class FTPUpload:
 			try:
 				self.host.mkd(myitem)
 				self.host.cwd(myitem)
-			except:
-				import traceback
-				traceback.print_exc()
+			except ftplib.all_errors, e:
+				raise
 
 class FTPUploadDialog(wxDialog, FTPUpload):
 	def __init__(self, parent):
@@ -2483,6 +2372,7 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		
 	def OnUploadFinished(self, event):
 		self.txtProgress.SetLabel(_("Finished uploading.\n"))
+		self.parent.SetStatusText(_("Finished uploading."))
 		self.fileGauge.SetValue(0)
 		self.projGauge.SetValue(0)
 		self.btnCancel.SetLabel(_("Close"))
@@ -2497,7 +2387,6 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 			self.EndModal(wxID_OK)
 		
 	def OnUpdateDialog(self, event):
-		print "Called!"
 		self.projGauge.SetValue(event.projpercent)
 		self.fileGauge.SetValue(event.filepercent)
 
@@ -2532,39 +2421,26 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		else:
 			self.usePasv = False
 
-		result = self.StartFTP()
-		if not result:
-			return 
+		try:
+			self.StartFTP()
+		except ftplib.all_errors, e:
+			message = self.getFtpErrorMessage(e)
+			self.parent.logfile.write(message)
+			wxMessageDialog(self, message, _("FTP Login Error"), wxOK).ShowModal()
+			return
 
-		#for item in self.filelist:
-		#	self.lstFiles.Append(item)
-
-		#self.CreateDirectories()
-						
-		#try:
-		#self.UploadFiles()
 		self.btnOK.Enable(False)
 		self.btnCancel.SetLabel(_("Cancel"))
 		if self.makefilelist:
 			self.GenerateFileList(self.parent.CurrentDir)
 			self.makefilelist = False
 		self.mythread = threading.Thread(None, self.UploadFiles)
-		self.mythread.start()
-		#while self.mythread.isAlive():
-			#wxSleep(1)
-		#	if wxPlatform == "__WXMAC__":
-		#		#need to update GUI in the main thread
-		#		self.fileGauge.SetValue(self.filepercent)	
-		#		self.projGauge.SetValue(self.projpercent)
-		#except:
-		#	message = "There was an unexpected error publishing your course. Details on the error message are located in the file: '" + os.path.join(self.AppDir, "errlog.txt") + "', or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app."
-		#	print message
-		#	dialog = wxMessageDialog(self, message, "Problem publishing course", wxOK)
-		#	dialog.ShowModal()
-		#	dialog.Destroy()
-		#	self.btnCancel.SetLabel("Close")
-		#	return False  
-
+		try:
+			self.mythread.run()
+		except ftplib.all_errors, e:
+			self.host.close()
+			wxMessageBox(self.getFtpErrorMessage(e))
+			self.OnUploadCanceled(None)
 		return
 
 #--------------------------- PreferencesEditor Class --------------------------------------
@@ -2590,10 +2466,7 @@ class PreferencesEditor(wxDialog):
 		self.btnGSDL = wxBitmapButton(self, -1, icnFolder, wxPoint(250, 10 + (height*2)), wxSize(20, 18))
 		self.lblLanguage = wxStaticText(self, -1, _("Language"))
 		self.languages = ["English", "Francais", "Espanol"]
-		#langdir = os.path.join(os.path.abspath(sys.path[0]), "labels")
-		#for item in os.listdir(langdir):
-		#	if not os.path.isdir(os.path.join(langdir,item)):
-		#		self.languages.append(string.replace(item, ".xml", ""))
+
 		self.cmbLanguage = wxChoice(self, -1, wxDefaultPosition, wxDefaultSize, self.languages)
 		if parent.settings["Language"] != "":
 			self.cmbLanguage.SetStringSelection(parent.settings["Language"])
@@ -2606,11 +2479,6 @@ class PreferencesEditor(wxDialog):
 		self.cmbDefaultPlugin = wxChoice(self, -1, wxDefaultPosition, wxDefaultSize, self.pluginnames)
 		if parent.settings["DefaultPlugin"] != "":
 			self.cmbDefaultPlugin.SetStringSelection(parent.settings["DefaultPlugin"])
-		#self.chkAutoName = wxCheckBox(self, -1, _("Let EClass Automatically Name Files"))
-		#if parent.settings["AutoNameFiles"] == "True" or parent.settings["AutoNameFiles"] == "":
-		#	self.chkAutoName.SetValue(True)
-		#elif parent.settings["AutoNameFiles"] == "False":
-		#	self.chkAutoName.SetValue(True)
 
 		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(100, 140),wxSize(76, 24))
 		self.btnOK.SetDefault()
@@ -3294,7 +3162,6 @@ class PageEditorDialog (wxDialog):
 			
 		f = wxFileDialog(self, _("Select a file"), os.path.join(self.parent.CurrentDir), "", filtertext, wxOPEN)
 		if f.ShowModal() == wxID_OK:
-			self.txtExistingFile.SetValue(f.GetFilename())
 			self.filedir = f.GetDirectory()
 			self.filename = f.GetFilename()
 			isEClassPluginPage = False
@@ -3305,11 +3172,10 @@ class PageEditorDialog (wxDialog):
 				if (fileext in myplugin["Extension"]):
 					isEClassPluginPage = True
 					page_plugin = myplugins[myplugins.index(myplugin)]
-					print "page plugin = " + `page_plugin`
 					break
 
 			if isEClassPluginPage and page_plugin:
-				print "In here..."
+				overwrite = False 
 				if os.path.join(self.parent.CurrentDir, page_plugin["Directory"], self.filename) == os.path.join(self.filedir, self.filename):
 					pass
 				elif os.path.exists(os.path.join(self.parent.CurrentDir, page_plugin["Directory"], self.filename)):
@@ -3317,27 +3183,19 @@ class PageEditorDialog (wxDialog):
 					answer = msg.ShowModal()
 					msg.Destroy()
 					if answer == wxID_YES:
-						file = open(os.path.join(self.filedir, self.filename), "r")
-						myXML = file.read()
-						file.close()
-
-						file = open(os.path.join(self.parent.CurrentDir, page_plugin["Directory"], self.filename), "w")
-						file.write(myXML)
-						file.close()
+						overwrite = True
 				else:
-					file = open(os.path.join(self.filedir, self.filename), "r")
-					myXML = file.read()
-					file.close()
-
-					file = open(os.path.join(self.parent.CurrentDir, page_plugin["Directory"], self.filename), "w")
-					file.write(myXML)
-					file.close()
+					overwrite = True
+				files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.CurrentDir, page_plugin["Directory"], self.filename))
+				self.filename = os.path.join(page_plugin["Directory"], self.filename)
 			elif self.filename == "imsmanifest.xml": #another publication
 				self.node = conman.conman.ConMan()
 				self.node.LoadFromXML(os.path.join(self.filedir, self.filename))
-				#print self.node.PrintNodes([self.node.nodes[0]], 0)
 			else:
 				files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.CurrentDir, "File"))
+				self.filename = os.path.join("File", self.filename)
+			
+			self.txtExistingFile.SetValue(self.filename)
 		f.Destroy()
 
 	def btnOKClicked(self, event):
