@@ -711,7 +711,7 @@ class MainFrame2(wxFrame):
 		import webbrowser
 		url = os.path.join(self.AppDir, "docs", self.langdir, "index.htm")
 		if not os.path.exists(url):
-			url = os.path.join(self.AppDir, "docs", "en", "index.htm")
+			url = os.path.join(self.AppDir, "docs", "en", "manual", "index.htm")
 		webbrowser.open_new("file://" + url)
 
 	def NewProject(self, event):
