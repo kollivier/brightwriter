@@ -158,6 +158,8 @@ class MainFrame2(wxFrame):
 		else:
 			self.Platform = "linux"
 		self.ThirdPartyDir = os.path.join(self.AppDir, "3rdparty", self.Platform)
+		if wxPlatform == '__WXMSW__':
+			self.ThirdPartyDir = win32api.GetShortPathName(self.ThirdPartyDir)
 		self.PrefDir = self.AppDir
 		self.DragItem = None
 		self.IsCtrlDown = False
