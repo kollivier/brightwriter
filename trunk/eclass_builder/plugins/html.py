@@ -18,9 +18,9 @@ import traceback
 import sys
 #from xml.dom.minidom import parse
 
-if wxPlatform == '__WXMSW__':
-	from wxPython.mozilla import *
-	from wxPython.stc import *
+#if wxPlatform == '__WXMSW__':
+from wxPython.mozilla import *
+from wxPython.stc import *
 
 ID_NEW = wxNewId()
 ID_OPEN = wxNewId()
@@ -286,10 +286,25 @@ class EditorFrame (wxFrame):
 
 		#wxMessageBox("Loading wxMozilla...")
 		self.notebook = wxNotebook(self, -1)
-		self.mozilla = wxMozillaBrowser(self.notebook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
+		notebooksizer = wxNotebookSizer(self.notebook)
+		mozillapanel = wxPanel(self.notebook, -1)
+		self.notebook.AddPage(mozillapanel, "Edit")
+		self.mozilla = wxMozillaBrowser(mozillapanel, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
+		mozpanelsizer = wxBoxSizer(wxHORIZONTAL)
+		mozpanelsizer.Add(self.mozilla, 1, wxEXPAND)
+		mozillapanel.SetAutoLayout(True)
+		mozillapanel.SetSizerAndFit(mozpanelsizer)
+
 		self.mozilla.MakeEditable()
-		self.notebook.AddPage(self.mozilla, "Edit")
-		self.source = wxStyledTextCtrl(self.notebook, -1)
+		sourcepanel = wxPanel(self.notebook, -1)
+		self.notebook.AddPage(sourcepanel, "HTML")
+
+		self.source = wxStyledTextCtrl(sourcepanel, -1)
+		sourcepanelsizer = wxBoxSizer(wxHORIZONTAL)
+		sourcepanelsizer.Add(self.source, 1, wxEXPAND)
+		sourcepanel.SetAutoLayout(True)
+		sourcepanel.SetSizerAndFit(sourcepanelsizer)
+
 		self.source.SetLexer(wxSTC_LEX_HTML)
 		#self.source.SetCodePage(wxSTC_CP_DBCS)
 		#self.source.StyleClearAll()
@@ -299,8 +314,6 @@ class EditorFrame (wxFrame):
 		self.source.StyleSetSpec(wxSTC_H_ATTRIBUTE, "fore:#009900")
 		self.source.StyleSetSpec(wxSTC_H_VALUE, "fore:#009900")
 		self.source.SetProperty("fold.html", "1")
-
-		self.notebook.AddPage(self.source, "HTML")
 
 		accelerators = wxAcceleratorTable([(wxACCEL_CTRL, ord('B'), ID_BOLD),(wxACCEL_CTRL, ord('I'), ID_ITALIC), (wxACCEL_CTRL, ord('U'), ID_UNDERLINE), (wxACCEL_CTRL, ord('S'), ID_SAVE)]) 
 		self.SetAcceleratorTable(accelerators)
