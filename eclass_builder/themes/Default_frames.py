@@ -7,7 +7,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 		self.themedir = os.path.join(self.appdir, "themes", themename)
 
 	def CreateTOC(self):
-		filename = "pub/" + self._GetFilename(self.pub.nodes[0].content.filename)
+		filename = self._GetFilename(self.pub.nodes[0].content.filename)
 
 		text = """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename, string.replace(self.pub.nodes[0].content.name, "\"", "\\\""))
 		text = text + self.AddJoustItems(self.pub.nodes[0], 1)
@@ -21,8 +21,8 @@ class HTMLPublisher(BaseHTMLPublisher):
 		data = file.read()
 		file.close()
 		file = open(os.path.join(self.dir, "index.htm"), "w")
-		data = string.replace(data, "<!-- INSERT INDEX PAGE HERE -->", filename)
-		data = string.replace(data, "<!-- INSERT CLASS TITLE HERE -->", self.pub.nodes[0].content.name)
+		data = string.replace(data, "<!-- INSERT INDEX PAGE HERE -->", "pub/" + os.path.basename(filename))
+		data = string.replace(data, "<!-- INSERT CLASS TITLE HERE -->", self.pub.nodes[0].content.metadata.name)
 		data = string.replace(data, "<!-- INSERT MENU ITEMS HERE -->", text)
 		file.write(data)
 		file.close()
@@ -38,7 +38,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			if string.find(root.content.filename, "imsmanifest.xml") != -1:
 					root = root.pub.nodes[0]
 
-			filename = "pub/" + self._GetFilename(root.content.filename) 
+			filename = self._GetFilename(root.content.filename) 
 
 			if not root.content.public == "false":
 				if len(root.children) > 0:
