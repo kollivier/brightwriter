@@ -45,6 +45,16 @@ for item in modfinder.modules.items():
     if filename and string.find(filename, sys.prefix) != -1:
         deps.append(filename)
 
+mpdir = "minipython"
+
+if os.path.exists(mpdir):
+    shutil.rmtree(mpdir)
+
+os.mkdir(mpdir)
+os.mkdir(os.path.join(mpdir, "lib"))
+os.mkdir(os.path.join(mpdir, "lib", "site-packages"))
+os.mkdir(os.path.join(mpdir, "lib", "encodings"))
+
 encodingsdir = os.path.join(sys.prefix, "lib", "encodings", "*")
 deps = deps + glob.glob(encodingsdir)
 deps = deps + glob.glob(os.path.join(sys.prefix, "*.txt"))
@@ -66,17 +76,31 @@ if os.path.exists(wxpth_file):
 if os.name == "nt":
     deps.append(os.path.join(sys.prefix, "python.exe"))
     deps.append(os.path.join(sys.prefix, "w9xpopen.exe"))
+    import win32com
+    win32com.SetupEnvironment()
+    import win32api
+    sysdir = win32api.GetSystemDirectory()
+    #if the below file exists, then the dependency checking will copy it over
+    #if not, we need to check the Windows system dir for it
+    if not os.path.exists(os.path.join(sys.prefix, "python23.dll")):
+        syspython = os.path.join(sysdir, "python23.dll")
+        if os.path.exists(syspython):
+            shutil.copyfile(syspython, os.path.join(mpdir, "python23.dll"))
 
-mpdir = "minipython"
+    pywindlls = ["PyWinTypes23.dll", "PythonCOM23.dll"]
+    for dll in pywindlls:
+        pywindll = os.path.join(sysdir, dll)
+        if os.path.exists(pywindll):
+            shutil.copyfile(pywindll, os.path.join(mpdir, dll))
 
-if os.path.exists(mpdir):
-    shutil.rmtree(mpdir)
+    #we need this to make sure win32 modules are on the path.
+    myfile = open(os.path.join(mpdir, "lib", "site-packages", "win32.pth"), "w")
+    myfile.write("win32")
+    myfile.close()
 
-os.mkdir(mpdir)
-os.mkdir(os.path.join(mpdir, "lib"))
-os.mkdir(os.path.join(mpdir, "lib", "site-packages"))
-os.mkdir(os.path.join(mpdir, "lib", "encodings"))
-#shutil.copytree(os.path.join(libdir, "xml"), os.path.join(mpdir, "lib", "xml"))
+    myfile = open(os.path.join(mpdir, "lib", "site-packages", "win32lib.pth"), "w")
+    myfile.write("win32/lib")
+    myfile.close()
 
 for filename in deps:
     destfilename = string.replace(filename, sys.prefix, mpdir)
@@ -91,12 +115,12 @@ for filename in deps:
         for datum in data:
             if string.find(datum, ".dll") != -1:
                 thisfile = string.strip(datum)
-                thisdir = os.path.dirname(filename)
+                filename = os.path.join(os.path.dirname(filename), thisfile)
                 destdir = os.path.dirname(destfilename)
                 #if the DLL is not in the extension's directory
                 #that means it's on the path somewhere, so it should
                 #not be copied in
-                if os.path.exists(os.path.join(thisdir, thisfile)):
-                    shutil.copyfile(os.path.join(thisdir, thisfile), os.path.join(destdir, thisfile))
+                if os.path.exists(filename):
+                    shutil.copyfile(filename, os.path.join(destdir, thisfile))
 
 print `modfinder.any_missing_maybe()`
