@@ -4,6 +4,8 @@ class LogFile:
 		self.filename = filename
 
 	def write(self, message):
+		if message == None:
+			return
 		print message
 		myfile = open(self.filename, "a")
 		myfile.write(message + "\n")
