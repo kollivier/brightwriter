@@ -549,7 +549,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		for term in mypage.terms:
 			myfilename = ""
 			if term.type == "Page":
-				myfilename = string.replace(filename, ".htm", "")
+				myfilename = string.replace(os.path.basename(filename), ".ecp", "")
 				myfilename = myfilename + "hw" + `counter` + ".htm"
 				html = self._CreateEClassPage(term.page, myfilename, True)
 			elif term.type == "URL":
