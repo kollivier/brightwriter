@@ -31,6 +31,16 @@ def makedir(path):
         if not os.path.exists(fullpath):
             os.mkdir(fullpath)
 
+if os.name == "nt": 
+    import win32com
+    for p in win32com.__path__[1:]:
+        modulefinder.AddPackagePath("win32com", p)
+    for extra in ["win32com.shell"]:
+        __import__(extra)
+        m = sys.modules[extra]
+        for p in m.__path__[1:]:
+            modulefinder.AddPackagePath(extra, p)
+
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "..", "src"))
 modfinder = modulefinder.ModuleFinder(excludes=["Tkinter"])
 #modulefinder.ReplacePackage("_xmlplus", "xml")
@@ -76,8 +86,6 @@ if os.path.exists(wxpth_file):
 if os.name == "nt":
     deps.append(os.path.join(sys.prefix, "python.exe"))
     deps.append(os.path.join(sys.prefix, "w9xpopen.exe"))
-    import win32com
-    win32com.SetupEnvironment()
     import win32api
     sysdir = win32api.GetSystemDirectory()
     #if the below file exists, then the dependency checking will copy it over
