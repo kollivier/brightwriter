@@ -5,7 +5,7 @@ import re
 import os
 import glob
 import version
-build = version.build + 1
+build = version.build
 
 mydir = os.getcwd()
 os.chdir("..")
