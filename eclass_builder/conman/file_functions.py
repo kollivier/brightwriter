@@ -41,6 +41,12 @@ def CopyFile(filename, indir, outdir):
 
 	return 1
 
+def DeleteFiles(pattern):
+	import glob
+	for afile in glob.glob(pattern):
+		if os.path.exists(afile):
+			os.remove(afile)
+
 def DeleteFolder(folder):
 	if not os.path.exists(folder):
 		return False
