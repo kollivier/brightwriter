@@ -103,7 +103,7 @@ class SearchEngine:
 				myconverter = converter.DocConverter(self.parent)
 				thefilename = myconverter.ConvertFile(os.path.join(node.dir, node.content.filename), "html")
 				data = open(thefilename, "rb").read()
-				convert = TextConvertor()
+				convert = TextConverter()
 				convert.feed(data)
 				convert.close()
 				return convert.getText()
