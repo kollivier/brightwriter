@@ -64,6 +64,19 @@ class VCard:
 
 			counter = counter + 1
 
+	def saveAsFile(self):
+		if self.filename == "":
+			print "No filename, can't save to disk."
+			return
+		
+		try:
+			myfile = open(self.filename, "wb")
+			myfile.write(self.asString())
+			myfile.close()
+		except:
+			print "Unable to write file %s to disk." % (self.filename)
+
+
 	def asString(self):
 		content = """BEGIN:VCARD\r\n%(props)sEND:VCARD""" % {"props": self.getPropsAsString()}
 		return content
