@@ -380,13 +380,22 @@ class ConNode:
 	"""
 
 	def __init__(self, id, content, parent):
-		self.id = id
+		if id == "":
+			self.id = GetUUID()
+		else:
+			self.id = id
 		#contentid variable makes it possible to have several nodes pointing to the same resource - NYI
-		self.content = content
+		if content == None:
+			self.content = Content(id, "")
+		else:
+			self.content = content
 		self.parent = parent
 		self.pub = None
 		self.children = []
-		self.dir = ""
+		if self.parent:
+			self.dir = self.parent.dir
+		else:
+			self.dir = ""
 
 	def back(self):
 		back = None
@@ -511,6 +520,9 @@ class ContentList:
 
 	def __len__(self):
 		return len(self.content)
+
+	def append(self, newcontent):
+		self.content.append(newcontent)
 		
 	def GetItem(self, id, lang="English"):
 		myitem = None

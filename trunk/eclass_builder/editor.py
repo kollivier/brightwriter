@@ -1032,9 +1032,11 @@ class MainFrame2(wxFrame):
 	def AddNewItem(self, event):
 		if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
 			parent = self.CurrentTreeItem
-			newnode = self.pub.AddChild("", "")
+			newnode = conman.conman.ConNode(conman.conman.GetUUID(),None, self.pub.CurrentNode)
 			dlg = PageEditorDialog(self, newnode, newnode.content, os.path.join(self.CurrentDir, "File"))
 			if dlg.ShowModal() == wxID_OK:
+				self.pub.CurrentNode.children.append(newnode)
+				self.pub.content.append(newnode.content)
 				self.CurrentItem = newnode
 				newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.name, -1, -1, wxTreeItemData(self.CurrentItem))
 				if not self.wxTree.IsExpanded(self.CurrentTreeItem):
@@ -1043,7 +1045,7 @@ class MainFrame2(wxFrame):
 				self.wxTree.SelectItem(newitem)
 				self.Update()
 				self.Preview()
-				self.isDirty = True
+				self.isDirty = True				
 			dlg.Destroy()
 	
 	def AddNewEClassPage(self, event, name="", isroot=False):
