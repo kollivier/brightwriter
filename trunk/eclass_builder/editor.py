@@ -109,12 +109,20 @@ ID_REFRESH_THEME = wxNewId()
 ID_UPLOAD_PAGE = wxNewId()
 ID_CONTACTS = wxNewId()
 
+eclassdirs = ["EClass", "Audio", "Video", "Text", "pub", "Graphics", "includes", "File", "Present"]
+
 useie = True
-if wxPlatform == '__WXMSW__':
+try:
 	import win32api
 	import win32pipe
 	from wxPython.iewin import *
+except:
+	pass
 
+try:
+	import pythoncom
+except:
+	pass
 #A function to provide simple password encryption
 #not meant to deter hackers, but just to deter
 #people looking in config files.
@@ -626,19 +634,23 @@ class MainFrame2(wxFrame):
 
 		if self.CutNode:
 			myitem = self.wxTree.GetPyData(pastenode)
-			myitem.parent.children.remove(myitem)
+			if myitem.parent.children.count(myitem) > 0:
+				myitem.parent.children.remove(myitem)
+			else:
+				print "Item's parent doesn't have it as a child?!"
+
 			self.wxTree.Delete(self.CutNode)
 			self.dirtyNodes.append(myitem.back())
 			self.dirtyNodes.append(myitem.next())
 			self.CutNode = None
 
 	def CopyChildrenRecursive(self, sel_item, new_item):
-		thisnode = self.wxTree.GetFirstChild(sel_item, 0)[0]
+		thisnode = self.wxTree.GetFirstChild(sel_item)[0]
 		while (thisnode.IsOk()):
 			thisitem = self.wxTree.AppendItem(new_item, self.wxTree.GetItemText(thisnode), -1, -1, wxTreeItemData(self.wxTree.GetPyData(thisnode)))
 			if not self.wxTree.GetChildrenCount(thisnode, False) == 0:
 				self.CopyChildrenRecursive(thisnode, thisitem)
-			thisnode = self.wxTree.GetNextSibling(thisnode)
+			thisnode = self.wxTree.GetNextSibling(thisnode) 
 
 	def OnPageChanged(self, evt):
 		pagename = self.previewbook.GetPageText(evt.GetSelection())
@@ -802,8 +814,8 @@ class MainFrame2(wxFrame):
 				self.CurrentFilename = os.path.join(self.CurrentDir, "imsmanifest.xml")
 				self.CurrentItem = self.pub.NewPub(self.pub.name, "English", self.CurrentDir)
 				self.isDirty = True
-				dirs = ["EClass", "Audio", "Video", "Text", "pub", "Graphics", "includes", "File", "Present"]
-				for dir in dirs:
+				global eclassdirs
+				for dir in eclassdirs:
 					if not os.path.exists(os.path.join(self.CurrentDir, dir)):
 						os.mkdir(os.path.join(self.CurrentDir, dir))
 				if wxPlatform == '__WXMSW__':
@@ -822,7 +834,7 @@ class MainFrame2(wxFrame):
 				#	if mytheme[0] == "Default (frames)":
 				#		theme = mytheme
 				
-				self.currentTheme = self.theme.FindTheme("Default (frames)")
+				self.currentTheme = self.themes.FindTheme("Default (frames)")
 				self.AddNewEClassPage(None, self.pub.name, True)
 				#exec("plugins." + dplugin + ".EditorDialog(self, self.CurrentItem).ShowModal()")
 				#self.Update()
@@ -878,48 +890,49 @@ class MainFrame2(wxFrame):
 				result.close()
 
 	def PublishToIMS(self, event):
-
-		oldtheme = self.currentTheme
-		imstheme = self.themes.FindTheme("IMS Package")
-		#for theme in self.themes:
-		#	if theme[0] == "IMS Package":
-		#		self.currentTheme = theme
-		publisher = imstheme.HTMLPublisher(self)
-		publisher.Publish()		
-
 		import zipfile
 		import tempfile
-		handle, zipname = tempfile.mkstemp()
-		os.close(handle)
 		#zipname = os.path.join(self.CurrentDir, "myzip.zip")
-		if os.path.exists(os.path.join(self.CurrentDir, "myzip.zip")):
-			os.remove(os.path.join(self.CurrentDir, "myzip.zip"))
-		myzip = zipfile.ZipFile(zipname, "w")
-		self._DirToZipFile("", myzip)
-		handle, imsfile = tempfile.mkstemp()
-		os.close(handle)
-		oldfile = self.pub.filename
-		self.pub.SaveAsXML(imsfile, exporting=True)
-		self.pub.filename = oldfile
-		myzip.write(imsfile, "imsmanifest.xml")
-		myzip.close()
-		os.rename(zipname, os.path.join(self.CurrentDir, "myzip.zip"))
+		deffilename = MakeFileName2(self.pub.name) + ".zip"
+		dialog = wxFileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wxSAVE)
+		if dialog.ShowModal() == wxID_OK: 
+			oldtheme = self.currentTheme
+			imstheme = self.themes.FindTheme("IMS Package")
+			self.currentTheme = imstheme
+			publisher = imstheme.HTMLPublisher(self)
+			publisher.Publish()	
 
-		self.currentTheme = oldtheme
-		publisher = self.currentTheme.HTMLPublisher(self)
-		publisher.Publish()
-		#self.PublishEClass(self.pub.pubid)
+			handle, zipname = tempfile.mkstemp()
+			os.close(handle)
+			if os.path.exists(dialog.GetPath()):
+				os.remove(dialog.GetPath())
+		
+			myzip = zipfile.ZipFile(zipname, "w")
+			self._DirToZipFile("", myzip)
+			handle, imsfile = tempfile.mkstemp()
+			os.close(handle)
+			oldfile = self.pub.filename
+			self.pub.SaveAsXML(imsfile, exporting=True)
+			self.pub.filename = oldfile
+			myzip.write(imsfile, "imsmanifest.xml")
+			myzip.close()
+			os.rename(zipname, dialog.GetPath())
+
+			self.currentTheme = oldtheme
+			publisher = self.currentTheme.HTMLPublisher(self)
+			publisher.Publish()
 
 		wxMessageBox("Finished exporting!")
 		
 	def _DirToZipFile(self, dir, myzip):
 		mydir = os.path.join(self.CurrentDir, dir)
-		for file in os.listdir(mydir):
-			mypath = os.path.join(mydir, file)
-			if os.path.isfile(mypath) and string.find(file, "imsmanifest.xml") == -1:
-				myzip.write(mypath, os.path.join(dir, file))
-			elif os.path.isdir(mypath):
-				self._DirToZipFile(os.path.join(dir, file), myzip)
+		if not os.path.basename(dir) in ["installers", "cgi-bin"]:
+			for file in os.listdir(mydir):
+				mypath = os.path.join(mydir, file)
+				if os.path.isfile(mypath) and string.find(file, "imsmanifest.xml") == -1:
+					myzip.write(mypath, os.path.join(dir, file))
+				elif os.path.isdir(mypath):
+					self._DirToZipFile(os.path.join(dir, file), myzip)
 		
 	def UpdateTextIndex(self):
 		searchEnabled = 0
@@ -1118,7 +1131,7 @@ class MainFrame2(wxFrame):
 		bookdata = open(os.path.join(self.AppDir,"bookfile.book.in")).read()
 		bookdata = string.replace(bookdata, "<!-- insert title here-->", self.pub.name)
 		if self.pub.settings["SearchEnabled"] == "1" and self.pub.settings["SearchProgram"] == "Lucene":
-			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "<attr name='indexed'>1</attr>\n    <attr name='cachedir'>Index</attr>")
+			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "<attr name='indexed'>1</attr>\n    <attr name='cachedir'>.</attr>")
 		else: 
 			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "")
 		myfile = open(os.path.join(self.CurrentDir, "eclass.dmbk"), "w")
@@ -1155,20 +1168,25 @@ class MainFrame2(wxFrame):
 		if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
 			parent = self.CurrentTreeItem
 			newnode = conman.conman.ConNode(conman.conman.GetUUID(),None, self.pub.CurrentNode)
-			dlg = PageEditorDialog(self, newnode, newnode.content, os.path.join(self.CurrentDir, "File"))
-			if dlg.ShowModal() == wxID_OK:
-				self.pub.CurrentNode.children.append(newnode)
-				self.pub.content.append(newnode.content)
-				self.CurrentItem = newnode
-				newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.metadata.name, -1, -1, wxTreeItemData(self.CurrentItem))
-				if not self.wxTree.IsExpanded(self.CurrentTreeItem):
-					self.wxTree.Expand(self.CurrentTreeItem)
-				self.CurrentTreeItem = newitem
-				self.wxTree.SelectItem(newitem)
-				self.Update()
-				self.Preview()
-				self.isDirty = True				
-			dlg.Destroy()
+			try:
+				dlg = PageEditorDialog(self, newnode, newnode.content, os.path.join(self.CurrentDir, "File"))
+				if dlg.ShowModal() == wxID_OK:
+					self.pub.CurrentNode.children.append(newnode)
+					self.pub.content.append(newnode.content)
+					self.CurrentItem = newnode
+					newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.metadata.name, -1, -1, wxTreeItemData(self.CurrentItem))
+					if not self.wxTree.IsExpanded(self.CurrentTreeItem):
+						self.wxTree.Expand(self.CurrentTreeItem)
+					self.CurrentTreeItem = newitem
+					self.wxTree.SelectItem(newitem)
+					self.Update()
+					self.Preview()
+					self.isDirty = True				
+				dlg.Destroy()
+			except:
+				import traceback
+				print traceback.print_exc()
+				wxMessageBox(_("There was an unknown error when creating the new page. The page was not created. Detailed error information is in the 'errlog.txt' file."))
 	
 	def AddNewEClassPage(self, event, name="", isroot=False):
 		if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem) or self.isNewCourse:
@@ -1194,21 +1212,27 @@ class MainFrame2(wxFrame):
 					self.CurrentItem = newnode
 					newnode.content.metadata.name = dialog.txtTitle.GetValue() #"New Page"
 					newnode.content.filename = os.path.join(plugin["Directory"], dialog.txtFilename.GetValue())
-					myplugin = eval("plugins." + plugin["Name"])		
-					if myplugin.EditorDialog(self,self.CurrentItem).ShowModal() == wxID_OK:
-						if not isroot:
-							newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.metadata.name, -1, -1, wxTreeItemData(self.CurrentItem))
-							if not self.wxTree.IsExpanded(self.CurrentTreeItem):
-								self.wxTree.Expand(self.CurrentTreeItem)
-							self.CurrentTreeItem = newitem
-							self.wxTree.SelectItem(newitem)
+					myplugin = eval("plugins." + plugin["Name"])
+					try: 		
+						if myplugin.EditorDialog(self,self.CurrentItem).ShowModal() == wxID_OK:
+							if not isroot:
+								newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.metadata.name, -1, -1, wxTreeItemData(self.CurrentItem))
+								if not self.wxTree.IsExpanded(self.CurrentTreeItem):
+									self.wxTree.Expand(self.CurrentTreeItem)
+								self.CurrentTreeItem = newitem
+								self.wxTree.SelectItem(newitem)
+							else:
+								self.wxTree.SetPyData(self.CurrentTreeItem, newnode)
+							self.UpdateContents()
+							self.Update()
+							self.isDirty = True
 						else:
-							self.wxTree.SetPyData(self.CurrentTreeItem, newnode)
-						self.UpdateContents()
-						self.Update()
-						self.isDirty = True
-					else:
-						self.CurrentItem.parent.children.remove(self.CurrentItem)
+							self.CurrentItem.parent.children.remove(self.CurrentItem)
+					except:
+						import traceback
+						print traceback.print_exc()
+						wxMessageBox(_("There was an unknown error when creating the new page. The page was not created. Detailed error information is in the 'errlog.txt' file."))
+	
 				self.isNewCourse = False
 			dialog.Destroy()
 
@@ -1334,24 +1358,30 @@ class MainFrame2(wxFrame):
 		#if not os.path.exists(os.path.join(self.pub.directory, "EClass", self.CurrentItem.content.filename)) and not os.path.exists(os.path.join(self.pub.directory, "Text", self.CurrentItem.content.filename)):
 		#	wxMessageDialog(self,_("The file cannot be found. Please ensure that the file exists and is located in the EClass subdirectory of your project."), _("File Not Found"), wxOK).ShowModal()
 		#	return
-		if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
-			isplugin = False
-			result = wxID_CANCEL
-			for plugin in myplugins:
-				extension = string.split(self.CurrentItem.content.filename, ".")
-				extension = extension[-1]
-				if extension in plugin["Extension"]:
-					isplugin = True
-					exec("mydialog = plugins." + plugin["Name"] + ".EditorDialog(self, self.CurrentItem)")
-					result = mydialog.ShowModal()
+		try:
+			if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
+				isplugin = False
+				result = wxID_CANCEL
+				for plugin in myplugins:
+					extension = string.split(self.CurrentItem.content.filename, ".")
+					extension = extension[-1]
+					if extension in plugin["Extension"]:
+						isplugin = True
+						exec("mydialog = plugins." + plugin["Name"] + ".EditorDialog(self, self.CurrentItem)")
+						result = mydialog.ShowModal()
 	
-			if not isplugin:
-				result = PageEditorDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
+				if not isplugin:
+					result = PageEditorDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
 	
-			if result == wxID_OK:
-				self.Update()
-				self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
-				self.isDirty = True
+				if result == wxID_OK:
+					self.Update()
+					self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
+					self.isDirty = True
+		except:
+			import traceback
+			print traceback.print_exc()
+			wxMessageBox(_("There was an unknown error when attempting to start the page editor. Detailed error information is in the 'errlog.txt' file."))
+	
 	
 	def OnOpen(self,event):
 		"""
@@ -1383,6 +1413,11 @@ class MainFrame2(wxFrame):
 				wxMessageDialog(self, result, _("Error loading XML file."), wxOK).ShowModal()
 			else:
 				self.pub.directory = self.CurrentDir
+				global eclassdirs
+				for dir in eclassdirs:
+					subdir = os.path.join(self.pub.directory, dir)
+					if not os.path.exists(subdir):
+						os.mkdir(subdir)
 				self.BindTowxTree(self.pub.nodes[0])
 				self.CurrentItem = self.pub.nodes[0]
 				self.CurrentTreeItem = self.wxTree.GetRootItem()
@@ -2051,7 +2086,7 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 				self.EndModal(wxID_OK)
 			self.status.SetLabel(_("Finished exporting!"))
 		elif self.parent.pub.settings["SearchProgram"] == "Lucene":
-			engine = indexer.SearchEngine(self, os.path.join(self.parent.CurrentDir, "Index"))
+			engine = indexer.SearchEngine(self, os.path.join(self.parent.CurrentDir, "index.pylucene"))
 			engine.IndexFiles(self.parent.pub.nodes[0])
 			
 		#self.btnViewFolder.Enable(True)
@@ -3045,12 +3080,12 @@ class PageEditorDialog (wxDialog):
 		self.txtTitle = wxTextCtrl(mypanel, -1, self.content.metadata.name)
 		self.txtDescription = wxTextCtrl(mypanel, -1, self.content.metadata.description, style=wxTE_MULTILINE)
 		self.txtKeywords = wxTextCtrl(mypanel, -1, self.content.metadata.keywords, size=wxSize(160, -1))
-		public_values = [_("true"), _("false")]
-		self.txtPublic = wxChoice(mypanel, -1, wxDefaultPosition, wxSize(160,-1), public_values)
-		if self.content.public == "True":
-			self.txtPublic.SetSelection(0)
-		else:
-			self.txtPublic.SetSelection(1)
+		#public_values = [_("true"), _("false")]
+		#self.txtPublic = wxChoice(mypanel, -1, wxDefaultPosition, wxSize(160,-1), public_values)
+		#if self.content.public == "True":
+		#	self.txtPublic.SetSelection(0)
+		#else:
+		#	self.txtPublic.SetSelection(1)
 
 		self.txtTitle.SetFocus()
 		self.txtTitle.SetSelection(-1, -1)
@@ -3067,8 +3102,8 @@ class PageEditorDialog (wxDialog):
    		self.gridSizer.Add(self.txtDescription, 1, wxEXPAND|wxALL, 4)
    		self.gridSizer.Add(self.lblKeywords, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
    		self.gridSizer.Add(self.txtKeywords, 1, wxEXPAND|wxALL, 4)
-   		self.gridSizer.Add(self.lblPublic, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-   		self.gridSizer.Add(self.txtPublic, 1, wxEXPAND|wxALL, 4)
+   		#self.gridSizer.Add(self.lblPublic, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
+   		#self.gridSizer.Add(self.txtPublic, 1, wxEXPAND|wxALL, 4)
    		#self.gridSizer.Add(self.lblTemplate, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
    		#self.gridSizer.Add(self.cmbTemplate, 1, wxEXPAND|wxALL, 4)
    		self.gridSizer.Add(self.lblContent, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
@@ -3098,15 +3133,15 @@ class PageEditorDialog (wxDialog):
 		self.txtOrganization = wxComboBox(mypanel, -1)
 		self.btnOrganization = wxBitmapButton(mypanel, -1, peopleIcon, size=wxSize(20, 18))
 
-		self.lblContributors = wxStaticText(mypanel, -1, _("Contributors"))
-		self.lstContributors = wxListCtrl(mypanel, -1, style=wxLC_REPORT)
-		self.lstContributors.InsertColumn(0, _("Role"))
-		self.lstContributors.InsertColumn(1, _("Entity"))
-		self.lstContributors.InsertColumn(2, _("Date"))
+		#self.lblContributors = wxStaticText(mypanel, -1, _("Contributors"))
+		#self.lstContributors = wxListCtrl(mypanel, -1, style=wxLC_REPORT)
+		#self.lstContributors.InsertColumn(0, _("Role"))
+		#self.lstContributors.InsertColumn(1, _("Entity"))
+		#self.lstContributors.InsertColumn(2, _("Date"))
 
-		self.btnAdd = wxButton(mypanel, -1, _("Add"))
-		self.btnEdit = wxButton(mypanel, -1, _("Edit"))
-		self.btnRemove = wxButton(mypanel, -1, _("Remove"))
+		#self.btnAdd = wxButton(mypanel, -1, _("Add"))
+		#self.btnEdit = wxButton(mypanel, -1, _("Edit"))
+		#self.btnRemove = wxButton(mypanel, -1, _("Remove"))
 
 		self.lblCredit = wxStaticText(mypanel, -1, _("Credits"))
 		self.txtCredit = wxTextCtrl(mypanel, -1, self.content.metadata.rights.description, style=wxTE_MULTILINE)
@@ -3127,13 +3162,13 @@ class PageEditorDialog (wxDialog):
 		orgsizer.Add(self.btnOrganization, 0, wxALL, 4)
 		mysizer.Add(orgsizer, 0, wxEXPAND)
 
-		mysizer.Add(self.lblContributors, 0, wxALL, 4)
-		mysizer.Add(self.lstContributors, 0, wxEXPAND | wxALL, 4)
-		buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		buttonsizer.Add(self.btnAdd)
-		buttonsizer.Add(self.btnEdit)
-		buttonsizer.Add(self.btnRemove)
-		mysizer.Add(buttonsizer, 0, wxALIGN_CENTRE)
+		#mysizer.Add(self.lblContributors, 0, wxALL, 4)
+		#mysizer.Add(self.lstContributors, 0, wxEXPAND | wxALL, 4)
+		#buttonsizer = wxBoxSizer(wxHORIZONTAL)
+		#buttonsizer.Add(self.btnAdd)
+		#buttonsizer.Add(self.btnEdit)
+		#buttonsizer.Add(self.btnRemove)
+		#mysizer.Add(buttonsizer, 0, wxALIGN_CENTRE)
 		
 		mysizer.Add(self.lblCredit, 0, wxALL, 4)
 		mysizer.Add(self.txtCredit, 0, wxALL | wxEXPAND, 4)
@@ -3315,23 +3350,25 @@ class PageEditorDialog (wxDialog):
 			wxMessageBox(_("Please select a file to provide the content for this page."))
 			return 
 
-		if self.txtPublic.GetSelection() == 1:
-			public = "False"
-		else:
-			public = "True"
+		#if self.txtPublic.GetSelection() == 1:
+		#	public = "False"
+		#else:
+		#	public = "True"
 
-		if self.content.public != public:
-			self.content.public = public
-			self.parent.Update()
+		self.content.public = "True"
+
+		#if self.content.public != public:
+		#	self.content.public = public
+		#	self.parent.Update()
 		self.content.metadata.keywords = self.txtKeywords.GetValue()
 		self.content.metadata.description = self.txtDescription.GetValue()
 		self.content.metadata.name = self.txtTitle.GetValue()
 		self.content.metadata.rights.description = self.txtCredit.GetValue()
-		if not self.txtAuthor.GetValue() == "":
-			self.UpdateContactInfo(self.txtAuthor.GetValue(), "Author")
+		#if not self.txtAuthor.GetValue() == "":
+		self.UpdateContactInfo(self.txtAuthor.GetValue(), "Author")
 
-		if not self.txtOrganization.GetValue() == "":
-			self.UpdateContactInfo(self.txtOrganization.GetValue(), "Content Provider")
+		#if not self.txtOrganization.GetValue() == "":
+		self.UpdateContactInfo(self.txtOrganization.GetValue(), "Content Provider")
 
 		if not self.txtDate.GetValue() == "":
 			for person in self.content.metadata.lifecycle.contributors:
@@ -3390,11 +3427,10 @@ class ContactsDialog(wxDialog):
 		self.btnImport = wxButton(self, -1, _("Import"))
 		self.btnClose = wxButton(self, wxID_CANCEL, _("Close"))
 
-		for name in parent.vcardlist.keys():
-			self.lstContacts.Append(name, parent.vcardlist[name])
-
+		EVT_BUTTON(self.btnAdd, self.btnAdd.GetId(), self.OnAdd)
 		EVT_BUTTON(self.btnImport, self.btnImport.GetId(), self.OnImport)
 		EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.OnEdit)
+		EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.OnRemove)
 
 		mysizer = wxBoxSizer(wxVERTICAL)
 		contactsizer = wxBoxSizer(wxHORIZONTAL)
@@ -3417,7 +3453,23 @@ class ContactsDialog(wxDialog):
 
 		self.SetSizer(mysizer)
 		self.SetAutoLayout(True)
+
+		self.LoadContacts()
 		self.Layout()
+
+	def LoadContacts(self):
+		self.lstContacts.Clear()
+		for name in self.parent.vcardlist.keys():
+			if not string.strip(name) == "":
+				self.lstContacts.Append(name, self.parent.vcardlist[name])
+
+	def OnAdd(self, event):
+		thisvcard = vcard.VCard()
+		editor = ContactEditor(self, thisvcard)
+		if editor.ShowModal() == wxID_OK:
+			thisname = editor.vcard.fname.value
+			self.parent.vcardlist[thisname] = editor.vcard
+			self.lstContacts.Append(thisname, self.parent.vcardlist[thisname])
 
 	def OnImport(self, event):
 		dialog = wxFileDialog(self, _("Choose a vCard"), "", "", _("vCard Files") + " (*.vcf)|*.vcf", wxOPEN)
@@ -3436,7 +3488,6 @@ class ContactsDialog(wxDialog):
 	def OnEdit(self, event):
 		thisvcard = self.lstContacts.GetClientData(self.lstContacts.GetSelection())
 		name = thisvcard.fname.value
-		print "Name = " + name
 		editor = ContactEditor(self, thisvcard)
 		if editor.ShowModal() == wxID_OK:
 			thisname = editor.vcard.fname.value
@@ -3445,6 +3496,19 @@ class ContactsDialog(wxDialog):
 			self.parent.vcardlist[thisname] = editor.vcard
 			self.lstContacts.SetClientData(self.lstContacts.GetSelection(), editor.vcard)
 		editor.Destroy()
+
+	def OnRemove(self, event):
+		result = wxMessageDialog(self, _("This action cannot be undone. Would you like to continue?"), _("Remove Contact?"), wxYES_NO).ShowModal()
+		if result == wxID_YES:
+			thisvcard = self.lstContacts.GetClientData(self.lstContacts.GetSelection())
+			try:
+				os.remove(thisvcard.filename)
+			except:
+				wxMessageBox(_("The contact could not be deleted. Please ensure you have the proper permissions to access the EClass.Builder data directory."))
+				return
+
+			del self.parent.vcardlist[thisvcard.fname.value]
+			self.lstContacts.Delete(self.lstContacts.GetSelection())
 
 class ContactEditor(wxDialog):
 	def __init__(self, parent, myvcard):
@@ -3515,6 +3579,9 @@ class ContactEditor(wxDialog):
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.OnOK)
 
 	def OnOK(self, event):
+		if self.txtFullName.GetValue() == "":
+			wxMessageBox(_("You must enter a full name for this contact."))
+
 		self.myvcard.fname.value = self.txtFullName.GetValue()
 		self.myvcard.name.prefix = self.txtPrefix.GetValue()
 		self.myvcard.name.suffix = self.txtSuffix.GetValue()
@@ -3526,9 +3593,23 @@ class ContactEditor(wxDialog):
 		if len(self.myvcard.emails) == 0: 
 			self.myvcard.emails.append(vcard.Email())
 		self.myvcard.emails[0].value = self.txtEmail.GetValue()
+		if self.myvcard.filename == "":
+			prefdir = self.parent.parent.PrefDir
+			thisfilename = os.path.join(prefdir, "Contacts", MakeFileName2(self.myvcard.fname.value) + ".vcf")
+			if os.path.exists(thisfilename):
+				result = wxMessageDialog(self, _("A contact with this name already exists. Overwrite existing contact file?"), _("Overwrite contact?"), wxYES_NO).ShowModal()
+				if result == wxID_YES: 
+					self.myvcard.filename = thisfilename
+				else:
+					return 
+			else:
+				self.myvcard.filename = thisfilename
+
 		myfile = open(self.myvcard.filename, "wb")
 		myfile.write(self.myvcard.asString())
 		myfile.close()
+
+		self.vcard = self.myvcard
 		self.EndModal(wxID_OK)
 
 class EClassAboutDialog(wxDialog):
