@@ -51,9 +51,10 @@ lang_dict = {
 myplugins = []
 for item in os.listdir(os.path.join(os.path.abspath(sys.path[0]), "plugins")):
 	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
-		plugin = string.replace(item, ".py", "")
-		exec("import plugins." + plugin)
-		exec("myplugins.append(plugins." + plugin + ".plugin_info)") 
+		if string.find(item, "html.py") == -1 or hasmozilla:
+			plugin = string.replace(item, ".py", "")
+			exec("import plugins." + plugin)
+			exec("myplugins.append(plugins." + plugin + ".plugin_info)") 
 
 #eventually we will load all publishers, like plugins, dynamically
 #mypublishers = []
