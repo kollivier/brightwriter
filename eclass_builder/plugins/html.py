@@ -766,9 +766,9 @@ class EditorFrame (wxFrame):
 		dialog = wxFileDialog(self, _("Choose a file"), "", "", _("Macromedia Flash Files") + " (*.swf)|*.swf", wxOPEN)
 		if dialog.ShowModal() == wxID_OK:
 			if os.path.exists(dialog.GetPath()):
-				CopyFile(dialog.GetFilename(), dialog.GetDirectory(), os.path.join(self.parent.pub.directory, "Files"))
+				CopyFile(dialog.GetFilename(), dialog.GetDirectory(), os.path.join(self.parent.pub.directory, "File"))
 			code = HTMLTemplates.flashTemp
-			code = string.replace(code, "_filename_", "../Files/" + dialog.GetFilename())
+			code = string.replace(code, "_filename_", "../File/" + dialog.GetFilename())
 			code = string.replace(code, "_autostart_", "True")
 			self.mozilla.InsertHTML(code)
 		dialog.Destroy()
