@@ -124,7 +124,7 @@ class MsgPopup(wxDialog):
 		wxDialog.__init__ (self, parent, -1, _("Message"), wxPoint(200,200),wxSize(200,80), wxCAPTION|wxDEFAULT_DIALOG_STYLE|wxCLIP_CHILDREN)
 		label=wxStaticText(self, -1, message, wxPoint(35,10))
 		if accept == 1:
-			self.btnOK = wxButton(self,-1,_("OK"),wxPoint(62, 30),wxSize(76, 24))
+			self.btnOK = wxButton(self,-1,_("OK"))#,wxPoint(62, 30),wxSize(76, 24))
 			EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.close)
 	def close(self,event):
 		self.Destroy()
@@ -234,7 +234,7 @@ class MainFrame2(wxFrame):
 			elif wxPlatform == '__WXMAC__':
 				coursefolder = os.path.join(os.path.expanduser("~"),"Documents","EClass Projects")
 			else:
-				coursefolder = "~/eclass_projects"
+				coursefolder = os.path.join(os.path.expanduser("~"), "eclass_projects")
 
 			if not os.path.exists(coursefolder):
 				os.mkdir(coursefolder)
@@ -430,7 +430,7 @@ class MainFrame2(wxFrame):
 
 		self.previewbook = wxNotebook(self.splitter1, -1, style=wxCLIP_CHILDREN)
 		#self.booksizer = wxNotebookSizer(self.previewbook)
-	
+		self.previewpanel = wxPanel(self.previewbook, -1)
 		self.splitter1.SplitVertically(self.wxTree, self.previewbook, 200)
 
 		if hasmozilla: 
@@ -440,13 +440,11 @@ class MainFrame2(wxFrame):
 				self.previewbook.AddPage(self.ie, "Internet Explorer")
 			else:
 				self.browser = None
-			
+			self.previewbook.AddPage(self.previewpanel, "Mozilla/Netscape")
 			self.mozilla = wxMozillaBrowser(self.previewbook, -1, style = wxSIMPLE_BORDER | wxCLIP_CHILDREN) 
 			self.mozilla.Navigate = self.mozilla.LoadURL
 			if not self.browser: #if IE isn't loaded
 				self.browser = self.mozilla
-
-			self.previewbook.AddPage(self.mozilla, "Mozilla/Netscape")
 		else:
 			if wxPlatform == '__WXMSW__':
 				self.ie = wxIEHtmlWin(self.previewbook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
@@ -1384,7 +1382,7 @@ class MainFrame2(wxFrame):
 			filename = os.path.join(self.CurrentItem.dir, "File", filename)
 		
 		if os.path.exists(filename):
-			if wxPlatform == "__WXMSW__":
+			if wxPlatform == "__WXMSW__" or hasmozilla:
 				self.browser.Navigate(filename)
 				#self.mozilla.Navigate(filename)
 			else:
@@ -1518,11 +1516,11 @@ class ProjectPropsDialog(wxDialog):
 		if wxPlatform == '__WXMAC__':
 			self.notebook.SetSelection(0)
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"),wxPoint(210, 350),wxSize(76, 24))
+		self.btnOK = wxButton(self,wxID_OK,_("OK"))#wxPoint(210, 350),wxSize(76, 24))
 		self.btnOK.SetDefault()
 		self.txtname.SetFocus()
 		self.txtname.SetSelection(-1,-1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"),wxPoint(300, 350),wxSize(76,24))
+		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(300, 350),wxSize(76,24))
 
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		self.notesizer = wxNotebookSizer(self.notebook)
@@ -2352,10 +2350,10 @@ class PreferencesEditor(wxDialog):
 		#elif parent.settings["AutoNameFiles"] == "False":
 		#	self.chkAutoName.SetValue(True)
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"),wxPoint(100, 140),wxSize(76, 24))
+		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(100, 140),wxSize(76, 24))
 		self.btnOK.SetDefault()
 
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"),wxPoint(190, 140),wxSize(76,24))
+		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(190, 140),wxSize(76,24))
 
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		#create the grid sizer
@@ -2518,11 +2516,11 @@ class NewPubDialog(wxDialog):
 		self.lblKeywords = wxStaticText(self, -1, _("Keywords"), wxPoint(10, 12 + (height*4)))
 		self.txtKeywords = wxTextCtrl(self, -1, "", wxPoint(80, 10 + (height*4)), wxDefaultSize) #wxSize(160, height))
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"),wxPoint(100, 12 + (height*6)),wxSize(76, 24))
+		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(100, 12 + (height*6)),wxSize(76, 24))
 		self.btnOK.SetDefault()
 		self.txtTitle.SetFocus()
 		self.txtTitle.SetSelection(0, -1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"),wxPoint(190, 12 + (height*6)),wxSize(76,24))
+		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(190, 12 + (height*6)),wxSize(76,24))
 
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		self.TitleSizer = wxFlexGridSizer(0, 2, 4, 4)
@@ -2591,11 +2589,11 @@ class NewPageDialog(wxDialog):
 		self.txtFilename.SetValue(self.txtTitle.GetValue())
 		self.UpdateFilename(None)
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"),wxPoint(100, 12 + (height*6)),wxSize(76, 24))
+		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(100, 12 + (height*6)),wxSize(76, 24))
 		self.btnOK.SetDefault()
 		self.txtTitle.SetFocus()
 		self.txtTitle.SetSelection(0, -1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"),wxPoint(190, 12 + (height*6)),wxSize(76,24))
+		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(190, 12 + (height*6)),wxSize(76,24))
 
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		self.TitleSizer = wxFlexGridSizer(0, 2, 4, 4)
@@ -2805,11 +2803,11 @@ class PageEditorDialog (wxDialog):
 		#self.cmbTemplate = wxChoice(self, -1, wxPoint(80, 10 + (height*6)), wxDefaultSize, parent.templates.keys())		
 		#self.cmbTemplate.SetStringSelection(mytemplate)
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"),wxPoint(70, 20 + (height*10)),wxSize(76, 24))
+		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(70, 20 + (height*10)),wxSize(76, 24))
 		self.btnOK.SetDefault()
 		self.txtTitle.SetFocus()
 		self.txtTitle.SetSelection(-1, -1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"),wxPoint(160, 20 + (height*10)),wxSize(76,24))
+		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(160, 20 + (height*10)),wxSize(76,24))
 
 		self.btnSelectFile = wxBitmapButton(self, -1, icnFolder, wxPoint(180, 10 + (height*9)), wxSize(20, 18))
 		self.txtExistingFile = wxTextCtrl(self, -1, "", wxPoint(10, 10 + (height*9)), wxSize(160, -1))
@@ -2961,7 +2959,7 @@ class EClassAboutDialog(wxDialog):
 			self.browser = wxHtmlWindow(self, -1, wxDefaultPosition, wxSize(456,300))
 			self.browser.LoadPage(os.path.join(parent.AppDir,"about", parent.langdir, "about_eclass.html"))
 		
-		self.btnOK = wxButton(self,wxID_OK,_("OK"),wxPoint(200, 340),wxSize(76, 24))
+		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(200, 340),wxSize(76, 24))
 		self.btnOK.SetDefault()
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		self.mysizer.Add(self.browser, 1, wxEXPAND|wxALL, 4)
