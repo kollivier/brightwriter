@@ -24,7 +24,7 @@ class ImportFiles:
 		self.sourcedir = mysourcedir
 		#print "self.sourcedir = " + self.sourcedir
 		self.currentdir = mycurrentdir
-		imagelinks = re.compile("src\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
+		imagelinks = re.compile("<body>.*src\\s*=\\s*\"([^\"]*)\".*</body>", re.IGNORECASE|re.DOTALL)
 		myhtml = imagelinks.sub(self.CopyLink,myhtml)
 		weblinks = re.compile("href\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
 		myhtml = weblinks.sub(self.CopyLink, myhtml)
@@ -82,7 +82,8 @@ class ImportFiles:
 				subdir = "File"
 			destdir = os.path.join(self.currentdir,subdir)
 			#print destdir
-			if not string.find(string.lower(link), "file://") == -1:
+			result = 0
+			if string.find(string.lower(link), "file://") != -1:
 				#try:
 				if os.name == "posix" and sys.platform[:6] == "darwin":
 					#not yet supported
@@ -103,11 +104,14 @@ class ImportFiles:
 					#result = files.CopyFile(filename, filedir, destdir)
 					result = 0
 				else:
-					mytuple = urllib.urlretrieve(link, os.path.join(destdir, filename))
-					if mytuple[0] == os.path.join(destdir, filename):
-						result = 1
-					else: 
-						result = 0
+					try:
+						mytuple = urllib.urlretrieve(link, os.path.join(destdir, filename))
+						if mytuple[0] == os.path.join(destdir, filename):
+							result = 1
+						else: 
+							result = 0
+					except:
+						pass
 			else:
 				result = files.CopyFile(filename, filedir, destdir)
 			

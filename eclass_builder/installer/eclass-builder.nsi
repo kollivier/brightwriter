@@ -1,5 +1,5 @@
 !define MUI_PRODUCT "EClass.Builder" ;Define your own software name here
-!define MUI_VERSION "2.5.4.23" ;Define your own software version here
+!define MUI_VERSION "2.5.4.17" ;Define your own software version here
 !include "${NSISDIR}\Contrib\Modern UI\System.nsh"
 !include "path_functions.nsi"
 !define MUI_ICON "${NSISDIR}\contrib\Icons\new_nsis_2.ico"
@@ -46,6 +46,7 @@ Section "Program Files" SecCopyUI
   File "disteditor\*.*"
   File "editor.exe.manifest"
   File "..\converter.py"
+  File "..\swishe.conf"
   File /r "..\convert"
   File /r "..\about"
   File /r "..\autorun"
@@ -61,6 +62,7 @@ Section "Program Files" SecCopyUI
   File "..\plugins\eclass.py"
   File "..\plugins\quiz.py"
   File "..\plugins\html.py"
+  File /r "..\plugins\Quiz"
 
   SetOutPath "$INSTDIR\themes"
   File "..\themes\__init__.py"

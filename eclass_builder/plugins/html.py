@@ -524,20 +524,21 @@ class EditorFrame (wxFrame):
 		linkProps = []
 		if self.mozilla.IsElementInSelection("a"):
 			if self.mozilla.GetElementAttribute("a", "href") != "":
+				mydialog = LinkPropsDialog(self, linkProps)
 				linkProps.append(self.mozilla.GetElementAttribute("a", "href"))
 				linkProps.append(self.mozilla.GetElementAttribute("a", "target"))
-				mydialog = LinkPropsDialog(self, linkProps)
 				if mydialog.ShowModal() == wxID_OK:
 					self.mozilla.SetElementAttribute("href", mydialog.linkProps[0])
 					self.mozilla.SetElementAttribute("target", mydialog.linkProps[1])
 					self.dirty = true
+				mydialog.Destroy()
 			elif self.mozilla.GetElementAttribute("a", "name") != "":
 				linkProps.append(self.mozilla.GetElementAttribute("a", "name"))
 				mydialog = BookmarkPropsDialog(self, linkProps)
 				if mydialog.ShowModal() == wxID_OK:
 					self.mozilla.SetElementAttribute("href", mydialog.linkProps[0])
 					self.dirty = true
-			mydialog.Destroy()
+				mydialog.Destroy()
 
 	def OnListProps(self, evt):
 		listProps = []
@@ -730,19 +731,16 @@ class EditorFrame (wxFrame):
 		self.dirty = true
 
 	def OnLinkButton(self, evt):	
-		self.mozilla.EditCommand("cmd_insertLinkNoUI", "about:blank")
-		self.OnLinkProps(evt)
-		#if self.mozilla.IsElementInSelection("href"):
-		#	self.mozilla.SelectElement("href")
-		#	dialog = LinkPropsDialog(self, ["",""])
-		#	result = dialog.ShowModal()
-		#	if result == wxID_OK:
-		#		self.mozilla.SetElementAttribute("href", dialog.linkProps[0])
-		#		self.mozilla.SetElementAttribute("target", dialog.linkProps[1])
-		#		self.dirty = true
-		#	else:
-		#		self.mozilla.EditCommand("cmd_removeLinks")
-		#	dialog.Destroy()
+		if 1:
+			linkProps = []
+			linkProps.append("")
+			linkProps.append("")
+			mydialog = LinkPropsDialog(self, linkProps)
+			if mydialog.ShowModal() == wxID_OK:
+				self.mozilla.EditCommand("cmd_insertLinkNoUI", mydialog.linkProps[0])
+				self.mozilla.SelectElement("a")
+				self.mozilla.SetElementAttribute("target", mydialog.linkProps[1])
+			mydialog.Destroy()
 
 	def OnBookmarkButton(self, evt):	
 		dialog = BookmarkPropsDialog(self, [""])

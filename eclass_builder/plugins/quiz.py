@@ -447,7 +447,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			if not os.path.exists(os.path.join(self.dir, "Graphics", "Quiz")):
 				os.mkdir(os.path.join(self.dir, "Graphics", "Quiz"))
 			
-			CopyFiles(os.path.join(self.parent.AppDir, "plugins", "Quiz", "Files"), self.dir, 1)
+			CopyFiles(os.path.join(self.parent.AppDir, "plugins", "Quiz", "Files", "Graphics"), os.path.join(self.dir, "Graphics", "Quiz"), 1)
 
 		except: 
 			message = "Could not copy Quiz files from " + os.path.join(self.parent.AppDir, "plugins", "Quiz", "Files")  + " to your EClass. Please check that you have enough hard disk space to write this file and that you have permission to write to the file."

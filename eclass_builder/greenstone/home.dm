@@ -1,5 +1,11 @@
 package home
 
+_header_ {<html>
+<head>
+<meta http-equiv="refresh" content="0; URL=/eclass/index.htm">
+</head>
+}
+
 #######################################################################
 # java images/scripts
 #######################################################################
@@ -44,5 +50,5 @@ _imagehelp_ {_gsimage_(_home:httppagehomehelp_,_httpiconchelpof_,_httpiconchelpo
 #######################################################################
 
 _content_ {
-<h1 align="center"><a href="eclass/index.htm">Start E-Class</a></h1>
+<h1 align="center"><a href="eclass/index.htm">Start EClass</a></h1>
 }
