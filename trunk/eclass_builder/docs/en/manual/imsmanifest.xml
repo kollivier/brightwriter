@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="iso8859-1"?>
+<manifest identifier="URN:IMS-PLIRID-V0:7F95D166370742019DE382F0B274692E" xmlns:imsmd="http://www.imsproject.org">
+	<metadata>
+		<PublicationID></PublicationID>
+		<imsmd:General>
+			<imsmd:Title>EClass.Builder 2.5 Documentation</imsmd:Title>
+			<imsmd:Description></imsmd:Description>
+			<imsmd:Keywords></imsmd:Keywords>
+		</imsmd:General>		
+		</metadata>
+	<organizations default="URN:IMS-PLIRID-V0:4B8E1A5FAA05484C98C2ECE68B0C5051">
+		<tableofcontents identifier="URN:IMS-PLIRID-V0:4B8E1A5FAA05484C98C2ECE68B0C5051" title="EClass.Builder 2.5 Documentation">
+		<item identifier="URN:IMS-PLIRID-V0:E224935A7719403AA486352B67EC5EA0" identifierref="URN:IMS-PLIRID-V0:FEDEF7F54D6E41368CB30B8931045768" title="EClass.Builder 2.5 Documentation" description="" keywords="" template="" public="true" ><item identifier="URN:IMS-PLIRID-V0:82398B2899A74C3388DF0DA470E59508" identifierref="URN:IMS-PLIRID-V0:9CC71042BAEE4D19AE73BF4666512758" title="Why EClass?" description="" keywords="" template="Default" public="true" /><item identifier="URN:IMS-PLIRID-V0:966CA18BBEED4900A060453D64B237D1" identifierref="URN:IMS-PLIRID-V0:AF2D2464C33D4806808C177F4E22A64A" title="Getting Started" description="" keywords="" template="" public="true" ><item identifier="URN:IMS-PLIRID-V0:A479EED45B1342109C15E1DB0A70088F" identifierref="URN:IMS-PLIRID-V0:476E1FC38A864EEA8E6DA04CEAB41D52" title="Installing EClass.Builder" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:362A5DF60E4F464B859FF097F32F7082" identifierref="URN:IMS-PLIRID-V0:04DD88B77B1041B89F7566FA80C1507D" title="System Requirements" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:03F9D383249949C9ACB9AF90A187C8CD" identifierref="URN:IMS-PLIRID-V0:D7FE756B661D430E824CBCF4FDBA4A86" title="How EClass Works" description="" keywords="" template="Default" public="False" /></item><item identifier="URN:IMS-PLIRID-V0:6BF4973F98674196BF1B7C70D16ABCAB" identifierref="URN:IMS-PLIRID-V0:FA0A7EA47C4D425BA6EF9D69C6D777FC" title="Tutorial" description="" keywords="" template="Default" public="true" ><item identifier="URN:IMS-PLIRID-V0:657C9C6943404B47B64F027934FC310F" identifierref="URN:IMS-PLIRID-V0:97D62C7F134341E985819F6761BF2B7D" title="Create a New Project" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:7CA0AACFED92499A9B1A3BA3D68C7F87" identifierref="URN:IMS-PLIRID-V0:95A35816B20746B7929E22CCD09EE5E6" title="Choose a Theme" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:AF5195C27557481A8F95C09E99FD99E1" identifierref="URN:IMS-PLIRID-V0:A3D1F9CBF43D4E0FAD4F3CCBEE621A83" title="Add and Edit Pages" description="" keywords="" template="" public="true" ><item identifier="URN:IMS-PLIRID-V0:87492E0C7729436B83BBE5BF8EAD089B" identifierref="URN:IMS-PLIRID-V0:34E5430042C44253828FC30A61C7A9FD" title="EClass Page Editor" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:5D0C67A0F9A34C56AB2526C20FC3DD05" identifierref="URN:IMS-PLIRID-V0:BB76F57BD82A4A27AC25EFC91D596635" title="Web Page" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:7E244FCFA6344FC79D197D2EC856AC34" identifierref="URN:IMS-PLIRID-V0:FF3E4AF17ADB493389844538310AE5BC" title="Quiz Page Editor" description="" keywords="" template="" public="true" /></item><item identifier="URN:IMS-PLIRID-V0:1CCFCB0B4F214F029BFC94AACD406CD0" identifierref="URN:IMS-PLIRID-V0:288FE5EA2C804052B4886FF0E1C5E46B" title="Publish Your EClass" description="" keywords="" template="" public="true" /></item><item identifier="URN:IMS-PLIRID-V0:7B2B54DB19C34DE7B6B28760FDF83D73" identifierref="URN:IMS-PLIRID-V0:F1A086B9B4A34682A49CB4470B8CD9BF" title="Advanced Options" description="" keywords="" template="" public="true" ><item identifier="URN:IMS-PLIRID-V0:D577D82A23B8491EA1FA18AB2A7A8F44" identifierref="URN:IMS-PLIRID-V0:496FE103266B48349C7A9E536BE1A68B" title="Changing Project Settings" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:04D84DE93FF9443A9304180E74CB3193" identifierref="URN:IMS-PLIRID-V0:A436267DF4384DC389E465E8BAEDB5C7" title="Changing Page Properties" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:02829F690C9E4AFA8FBCD4D7B2EAE800" identifierref="URN:IMS-PLIRID-V0:524A092B0AB14AC99AA74B8D21577349" title="Working With Themes" description="" keywords="" template="" public="true" /></item><item identifier="URN:IMS-PLIRID-V0:37C8F2ADDC0349C99B43960961BF9C9B" identifierref="URN:IMS-PLIRID-V0:451BA54D47FB4F1BBFFBC2B5B4592708" title="For Developers" description="" keywords="" template="" public="true" ><item identifier="URN:IMS-PLIRID-V0:3A939936BA6C4E5ABC5D4D5B5F995674" identifierref="URN:IMS-PLIRID-V0:DAEDFA73F6AC48218B2C73B64C0CD34E" title="Base Concepts" description="" keywords="" template="Default" public="true" /><item identifier="URN:IMS-PLIRID-V0:2DF71A6ADE164DD989730A0BD2566560" identifierref="URN:IMS-PLIRID-V0:68ADC1230B8C44E4933D5F7A38201941" title="Plugin API" description="" keywords="" template="" public="true" /><item identifier="URN:IMS-PLIRID-V0:F5C38075E50D4436A957C1AD34E3681E" identifierref="URN:IMS-PLIRID-V0:38471C43538E44FD936820BBD4B9DA9F" title="Localizing EClass" description="" keywords="" template="Default" public="False" /></item></item>
+		</tableofcontents>
+	</organizations>
+	<resources><resource identifier="URN:IMS-PLIRID-V0:FEDEF7F54D6E41368CB30B8931045768" href="EClass.Builder 2.5 Documenta 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:AF2D2464C33D4806808C177F4E22A64A" href="Getting Started 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:476E1FC38A864EEA8E6DA04CEAB41D52" href="Installing EClass.Builder 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:9CC71042BAEE4D19AE73BF4666512758" href="Why EClass 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:D7FE756B661D430E824CBCF4FDBA4A86" href="How EClass Works 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:451BA54D47FB4F1BBFFBC2B5B4592708" href="For Developers 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:E7446BC2080D4C9AB0295DAC87728445" href="API Overview 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:DAEDFA73F6AC48218B2C73B64C0CD34E" href="Architecture 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:FA0A7EA47C4D425BA6EF9D69C6D777FC" href="Walkthrough 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:97D62C7F134341E985819F6761BF2B7D" href="Create a New Project 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:A3D1F9CBF43D4E0FAD4F3CCBEE621A83" href="Add and Edit Pages 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:384488AEFD2A48F2A196EC5ECAC10ED6" href=""/>
+<resource identifier="URN:IMS-PLIRID-V0:F1A086B9B4A34682A49CB4470B8CD9BF" href="Advanced Options 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:DC2F30C9A28C4F40B4C55EB21C9A9B84" href="Full-text Search 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:34E5430042C44253828FC30A61C7A9FD" href="EClass Page Editor 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:95A35816B20746B7929E22CCD09EE5E6" href="Choose a Theme 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:BB76F57BD82A4A27AC25EFC91D596635" href="Web Page 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:FF3E4AF17ADB493389844538310AE5BC" href="Quiz Page Editor 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:68ADC1230B8C44E4933D5F7A38201941" href="Plugin API 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:288FE5EA2C804052B4886FF0E1C5E46B" href="Publish Your EClass 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:A436267DF4384DC389E465E8BAEDB5C7" href="Changing Page Properties 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:496FE103266B48349C7A9E536BE1A68B" href="Changing Project Settings 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:04DD88B77B1041B89F7566FA80C1507D" href="System Requirements 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:81E00B3E7E024320B7135714B3F2EB62" href="Components 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:2F96815B09D64ADC891A66020727FF2D" href="Publishing API 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:19744E908F614DA58D6D583FE35C0944" href="New Page 1.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:38471C43538E44FD936820BBD4B9DA9F" href="translating.htm"/>
+<resource identifier="URN:IMS-PLIRID-V0:524A092B0AB14AC99AA74B8D21577349" href="working_with_themes.htm"/>
+
+	</resources>
+</manifest>

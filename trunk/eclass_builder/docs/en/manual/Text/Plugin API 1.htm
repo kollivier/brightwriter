@@ -1,0 +1,164 @@
+<html><head><base href="about:blank"></head><body><b>About EClass Plugins</b><br>
+
+
+
+
+
+<br>
+
+
+
+
+
+EClass Plugins allow you to provide specialized handling for your own
+custom data objects, as defined by a unique filetype, such as a "quiz"
+object (.quiz). The plugin includes an interface to edit the file and
+also the logic for publishing the file to HTML (and possibly other
+formats in the future). Currently page data cannot exist in a database
+as each page created in EClass.Builder expects there to be a filename
+associated with it. In concrete terms the user could understand,
+plugins may include a "photo album" (.photo) plugin, a "quiz" (.quiz)
+plugin, a "web page" (.htm/.html) plugin, etc. The plugin should be
+able to handle the creation of new items as well as the editing of
+existing items, and the file should be self-contained - all that should
+be needed to delete the object is to delete the file associated with it.<br>
+
+
+
+
+
+<br>
+
+
+
+
+
+Any data not handled by a plugin is treated like a simple file -
+double-clicking on it in the tree view will start the default editor on
+the user's system, and no HTML conversion will take place. EClass will
+link directly to the file itself.<br>
+
+
+
+
+
+<br>
+
+
+<b>Creating an EClass Plugin<br>
+<br>
+</b>
+
+
+
+To create a plugin for EClass, the plugin developer needs to specify three things:<br>
+
+
+
+
+
+<br>
+
+
+
+
+ 1. <b>A file-based data format</b> and classes required to load and save
+the data format. This can be in XML, CSV, etc. EClass doesn't
+particularly care, because it expects your plugin to contain the logic
+for editing and converting the file. There also aren't any naming
+conventions because these classes will only be used internally by the
+plugin.<br>
+
+
+
+
+
+<br>
+
+
+
+
+ 2. <b>An editing interface. </b>Currently this is a wxPython-based dialog
+for editing the file data. There is really no requirement here for how
+the dialog should appear, except that it should be a true wxDialog
+which supports ShowModal, as EClass expects the plugin to act like a
+dialog - it waits for the result from ShowModal to update the preview
+window, etc. Note that I had to hack ShowModal support for the "web
+page" plugin, which needed its own menu and thus needed to be a wxFrame
+instead.<br>
+
+
+
+
+
+<br>
+
+
+
+
+
+The dialog constructor (__init__) needs to be of the following format:<br>
+
+
+
+
+
+<br>
+
+
+
+
+
+<code>class EditorDialog:<br></code><code>  def __init__(self, parent, item)<br></code><code></code><code>   
+</code><code>
+</code><code>#initialization code goes here<br></code>
+
+
+<b>
+parent </b>is the window which called the dialog, and is where you can
+access system properties like the current project directory (parent.CurrentDir), the
+application directory (parent.AppDir), etc. You will also need this when you call the
+wxDialog constructor.<br>
+
+
+
+
+
+<br>
+
+<b>
+
+
+
+item</b> is a connode containing information on the EClass Page that is
+being created or edited. item.content.filename will be an empty string
+when a new page is being created. See the conman/conman.py for
+definitions of the various data structures used here. More
+documentation will be forthcoming.<br>
+
+
+
+
+
+<br>
+
+
+
+
+
+3. <b>A publishing interface. </b>This is the interface that takes your data
+and converts it into HTML for viewing in the resulting EClass. It
+contains a definition of the following form:<br>
+
+
+
+
+
+<br>
+
+
+
+
+
+<font face="Times New Roman, Times, serif"><code>class HTMLPublisher:<br>??? def __init__(self):<br>??????? #initialization code here<br>
+<br>??? def Publish(self, parent, node, dir):<br>??????? #parent is the calling window, which contains system properties<br>??????? #node is the connode with all the info pertaining to the page<br>??????? #dir is the current project root directory</code></font></body></html>
