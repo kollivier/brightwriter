@@ -2,15 +2,12 @@
 # Designer: Kevin Ollivier
 # Organization: Tulane University
 # License: EClass.Builder Open Source License
-import string
-import os
-import sys
-#import HTMLPublish
+import string, os, sys
 import xml_settings
 import vcard
 import plugins
 from validate import *
-from wxPython.wx import *
+
 USE_MINIDOM=0
 try:
 	from xml.dom.ext.reader.Sax import FromXmlFile
@@ -260,7 +257,6 @@ class ConMan:
 
 					contribtag = lifecycle.getElementsByTagName("Contribute")
 					if len(contribtag) > 0:
-						print "Found contrib!"
 						for contrib in contribtag:
 							newContrib = Contributor()
 							role = contrib.getElementsByTagName("Role")
@@ -672,7 +668,6 @@ class Lifecycle:
 
 	def asXMLString(self):
 		if self.version == "" and self.status == "" and len(self.contributors) == 0:
-			print "No contributors."
 			return ""
 		result = "<Lifecycle>"
 		if self.version != "":
