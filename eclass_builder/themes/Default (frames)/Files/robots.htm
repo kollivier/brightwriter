@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<HTML>
+
+<HEAD>
+
+<TITLE>The Joust Outliner</TITLE>
+
+
+
+<META NAME="ROBOTS" CONTENT="NOINDEX">
+
+
+
+<script language="JavaScript">
+
+<!--
+
+function buildRobotshtm() {
+
+	var e = null;
+
+	theMenu = parent.theMenu;
+
+	
+
+	var theWin = window.open("", "Robots", "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=400");
+
+	theWin.focus();
+
+		
+
+	var d = theWin.document;
+
+	d.open()
+
+	d.writeln('<HTML><HEAD><TITLE>robots.htm</TITLE></HEAD><BODY>\n');
+
+	d.writeln('Copy and paste the following links into your robots.htm file\n');
+
+	d.writeln('<PRE STYLE="background=#FFFFCC; font-family:"Courier New","Courier",monospace; font-size:8pt;">\n');
+
+	
+
+
+
+	d.writeln('&lt;!-- Links for the search engines to follow... --&gt;');
+
+
+
+	var oktolist = true
+
+	for (var i = 0; i <= theMenu.count; i++) {
+
+		e = theMenu.entry[i];
+
+		if (e) {
+
+			if (e.url != '') {
+
+				oktolist = true;
+
+				for (var j  = 0; j < i; j++) {
+
+					if (theMenu.entry[j].url == e.url) {
+
+						oktolist = false;
+
+						break;
+
+					}
+
+				}
+
+				if (oktolist) {	
+
+					d.writeln('&lt;A HREF="' + e.url + '"&gt; &lt;/A&gt;');
+
+				}
+
+			}
+
+		}
+
+	}
+
+
+
+	d.writeln('</PRE>\n</BODY>\n</HTML>');
+
+}
+
+
+
+//-->
+
+</script>
+
+</HEAD>
+
+<BODY BGCOLOR="#FFFFCC">
+
+<H1>Robots.htm</H1>
+
+
+
+<P>This page provides a list of pages on this site for search engines to use when indexing the
+
+site.  It should not actually appear in any Search Engine list.</P>
+
+
+
+<P>Please <a HREF="index.htm">click here</a> to go to the correct page.</P>
+
+
+
+<script language="JavaScript">
+
+<!--
+
+if (parent.theMenu) {
+
+	document.writeln('<p><a href="#" onClick="buildRobotshtm();return false;">Click here</a> to build a new list of links.</p>');
+
+}
+
+//-->
+
+</script>
+
+	
+
+<HR>
+
+
+
+<!-- To update this list, load this file inside your Joust frameset -->
+
+
+
+<!-- Links for the search engines to follow... -->
+
+
+
+
+
+
+
+
+
+</BODY>
+
+</HTML>
+
+
+
+
+

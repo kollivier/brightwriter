@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<HTML>
+
+<HEAD>
+
+<TITLE>Help</TITLE>
+
+
+
+<SCRIPT LANGUAGE="JavaScript">
+
+<!--
+
+if ((self != top) && (parent.theMenu)) {
+
+	var eID = parent.theMenu.findEntry(location.pathname, "url", "right", 0);
+
+	if (eID >= 0) {
+
+		parent.theMenu.selectEntry(eID);
+
+		if (parent.theMenu.setEntry(eID, true)) {
+
+			parent.theMenu.refresh();
+
+		}
+
+	}
+
+} else {
+
+	var navPrinting = false;
+
+	if ((navigator.appName + navigator.appVersion.substring(0, 1)) == "Netscape4") {
+
+		navPrinting = (self.innerHeight == 0) && (self.innerWidth == 0);}
+
+	if ((self.name != 'text') && (self.location.protocol != "file:") && (document.cookie.indexOf('mode=NoFrames') < 0) && !navPrinting) {
+
+		var newLoc = "index.htm?page=" + escape(self.location.pathname);
+
+		if (parseInt(navigator.appVersion) >= 3) {self.location.replace(newLoc);} else {self.location.href = newLoc;}
+
+	}
+
+}
+
+
+
+var floatingMode = (document.cookie.indexOf("mode=Floating") >= 0);
+
+var platform = 'Win';
+
+if (navigator.userAgent.indexOf('Mac') >= 0) {platform = 'Mac';}
+
+if (navigator.userAgent.indexOf('OS/2') >= 0) {platform = 'OS/2';}
+
+if (navigator.userAgent.indexOf('X11') >= 0) {platform = 'UNIX';}
+
+var ip = 'images/menu/';
+
+ip += (platform == 'Mac') ? 'mac/' : ((platform == 'OS/2') ? 'os2/' : 'win/')
+
+var plusIcon = ip + 'plusonly.gif'
+
+var minusIcon = ip + 'minusonly.gif'
+
+//-->
+
+</script>
+
+
+
+</HEAD>
+
+
+
+<BODY BGCOLOR=#FFFFCC>
+
+
+
+<H1><A NAME="top">Help with using this Site</A></H1><HR>
+
+
+
+<P>
+
+<SCRIPT LANGUAGE="JavaScript">
+
+<!--
+
+if (floatingMode) {
+
+	document.write('The outline in the seperate "Site Plan" window ');
+
+} else {
+
+	document.write('The outline to the left ');
+
+}
+
+document.write('contains a plan of our entire site, allowing you to view any page without getting lost and ');
+
+document.write('without having to repeatedly return to the Home Page.');
+
+if (floatingMode == false) {
+
+	document.write(' The size of the frame containing this page may be increased by reducing the width ');
+
+	document.write('of the Site Plan frame (drag the vertical bar to the left). ');
+
+}
+
+document.write('To expand a section click on the +');
+
+document.write(' icon. ');
+
+document.write('To collapse a section click on the -');
+
+document.write(' icon.');
+
+//-->
+
+</SCRIPT>
+
+</P>
+
+
+
+<H2>Buttons</H2>
+
+
+
+<P>Below the outline is a control panel with 7 options:</P>
+
+
+
+<TABLE WIDTH="88%" ALIGN="CENTER" BORDER="0">
+
+<TR VALIGN="TOP"><TD><B><NOBR>Expand All:</NOBR></B></TD>
+
+<TD>Expands all section headings in the outline.</TD></TR>
+
+<TR VALIGN="TOP"><TD><B><NOBR>Collapse All:</NOBR></B></TD>
+
+<TD>Collapses all expanded section headings in the outline.</TD></TR>
+
+<TR VALIGN="TOP"><TD><B>Help:</B></TD><TD>Displays this page.</TD></TR>
+
+<TR VALIGN="TOP"><TD><B>Home:</B></TD><TD>Displays the Home Page.</TD></TR>
+
+<TR VALIGN="TOP"><TD><B><NOBR>No Frames:</NOBR></B></TD>
+
+<TD>Goes to the &quot;No Frames&quot; version of this site (with no menu).</TD></TR>
+
+<TR VALIGN="TOP"><TD><B><NOBR>Frames:</NOBR></B></TD>
+
+<TD>Closes the floating menu.</TD></TR>
+
+<TR VALIGN="TOP"><TD><B><NOBR>Floating Menu:</NOBR></B></TD>
+
+<TD>Displays this site with a separate window for the site outline.</TD></TR>
+
+</TABLE>
+
+
+
+<P><I><B>Note:</B></I> There is a known bug in Internet Explorer 4 that MAY cause the error</P>
+
+
+
+<BLOCKQUOTE>Due to security restrictions imposed by your browser, I cannot change modes while
+
+a page from another server is being displayed. The default home page for this site will be
+
+displayed instead.</BLOCKQUOTE>
+
+
+
+<P>even when the displayed page is <b>not</b> from another server.  This problem is caused by a bug in MSIE which you can fix this problem by downloading and installing <A HREF="http://www.microsoft.com/ie/download/sp1.htm">Service Pack 1</A> from the Microsoft Web Site, or upgrading to Internet Explorer 4.01.</I></P>
+
+
+
+<P><I><B>Note:</B></I> There is a known bug in Opera that can result in a large outline with a lot of opened sections being truncated.  If you encounter this, try closing a few sections.</I></P>
+
+
+
+<P>This site is designed to be viewed with a Frames and JavaScript capable browser such 
+
+as Microsoft Internet Explorer version 3 or Netscape Navigator version 2.</P>
+
+
+
+<DIV CLASS="Footer">
+
+<HR>
+
+&copy; Copyright 1996 - 2001 <A HREF="http://www.mitem.com/" TARGET="_top">MITEM (Europe) Ltd.</A>  All rights reserved.
+
+</DIV>
+
+
+
+</BODY>
+
+</HTML>
+
