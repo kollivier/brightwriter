@@ -6,10 +6,9 @@ rmAudioTemp = """<CENTER>
 	<Param name="AUTOSTART" value="_autostart_"/>
 	<Param name="SRC" value="_filename_"/>
 	<Param name="LOOP" value="0"/>
-	<Param name="CONSOLE" value="Clip1">
 	<Param name="CONTROLS" value="ControlPanel">
 	<Param name="BACKGROUNDCOLOR" value="#000000"/>
-	<embed src="_filename_" width="320" height="32" autostart="_autostart_" controls="ControlPanel" console="Clip1"/>
+	<embed src="_filename_" width="320" height="32" autostart="_autostart_" controls="ControlPanel" />
 </OBJECT>
 </CENTER>
 		"""
@@ -25,10 +24,18 @@ rmVideoTemp = """
 	<Param name="BACKGROUNDCOLOR" value="#000000"/>
 	<embed src="_filename_" type="_mimetype_" controls="ImageWindow" width="320" height="240" autostart="_autostart_" console="Clip1"/><br>
 </OBJECT>
-</CENTER>
 <br>
+<OBJECT classid=clsid:CFCDAA03-8BE4-11CF-B84B-0020AFBBCCFA width="320" height="32">
+	<Param name="AUTOSTART" value="_autostart_"/>
+	<Param name="SRC" value="_filename_"/>
+	<Param name="LOOP" value="0"/>
+	<Param name="CONSOLE" value="Clip1">
+	<Param name="CONTROLS" value="ControlPanel">
+	<Param name="BACKGROUNDCOLOR" value="#000000"/>
+	<embed src="_filename_" width="320" height="32" autostart="_autostart_" controls="ControlPanel" console="Clip1"/>
+</OBJECT>
+</CENTER>
 		"""
-rmVideoTemp = rmVideoTemp + rmAudioTemp
 
 wmTemp = """
 <CENTER>
