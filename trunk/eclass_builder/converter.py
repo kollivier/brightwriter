@@ -102,19 +102,16 @@ if hasOOo:
     		
     	def ConvertFile(self, filename, outformat="html"):
 			oodir = self.parent.parent.settings["OpenOffice"]
-			print "oodir = " + oodir
 			if oodir != "":
 				oldcwd = os.getcwd()
 				os.chdir(self.parent.parent.AppDir)
 				import win32api
 				#get the output and send it to a file
 				command = "ooconvert.bat \"" + win32api.GetShortPathName(oodir) + "\" \"" + win32api.GetShortPathName(filename) + "\""
-				print command
 				import win32pipe
 				myin, mystream = win32pipe.popen4(command)
-				filetext = mystream.read()
+				filetext = mystream.read() 				
 				mystream.close()
-				print "text = " + filetext
 				handle, htmlfile = tempfile.mkstemp()
 				os.close(handle)
 				myfile = open(htmlfile, "wb")
