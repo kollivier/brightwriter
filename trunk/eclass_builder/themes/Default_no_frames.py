@@ -7,7 +7,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 		self.themedir = os.path.join(self.appdir, "themes", themename)
 
 	def CreateTOC(self):
-		filename = "../pub/" + self._GetFilename(self.pub.nodes[0].content.filename)
+		filename = self._GetFilename(self.pub.nodes[0].content.filename)
 
 		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
 		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
@@ -29,7 +29,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 		data = file.read()
 		file.close()
 		file = open(os.path.join(self.dir, "index.htm"),"w")
-		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", "pub/" + self._GetFilename(self.pub.nodes[0].content.filename))
+		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", "pub/" + os.path.basename(self._GetFilename(self.pub.nodes[0].content.filename)))
 		file.write(data)
 		file.close()
 
@@ -40,7 +40,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			if string.find(root.content.filename, "imsmanifest.xml") != -1:
 					root = root.pub.nodes[0]
 
-			filename = "../pub/" + self._GetFilename(root.content.filename) 
+			filename = self._GetFilename(root.content.filename) 
 
 			if not root.content.public == "false":
 				nodeName = "foldersTree"
@@ -53,10 +53,10 @@ class HTMLPublisher(BaseHTMLPublisher):
 				self.counter = self.counter + 1                            
 			
 				if len(root.children) > 0:
-					text = text + """level%sNode = insFld(%s, gFld("%s", "%s"))\n""" % (level + 1, nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), "../Pub/" + filename)
+					text = text + """level%sNode = insFld(%s, gFld("%s", "%s"))\n""" % (level + 1, nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
 					text = text + self.AddTOCItems(root, level + 1)
 				else:
-					text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), "../Pub/" + filename)
+					text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
 			else:
 				print "Item " + root.content.name + " is marked private and was not published."
 		return text

@@ -61,6 +61,11 @@ class BaseHTMLPublisher:
 	def Publish(self):
 		self.progress = None
 		try:
+			#delete old HTML files in case we've switched themes, etc.
+			#files.DeleteFiles(os.path.join(self.dir, "*.htm"))
+			#files.DeleteFiles(os.path.join(self.dir, "*.html"))
+			#files.DeleteFiles(os.path.join(self.dir, "pub", "*.*"))
+
 			if isinstance(self.parent, wxFrame):
 				self.progress = wxProgressDialog(_("Updating EClass"), _("Preparing to update EClass..."), self.parent.wxTree.GetCount() + 1, None, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT)
 			self.CopySupportFiles()
@@ -81,7 +86,7 @@ class BaseHTMLPublisher:
 		files.CopyFiles(os.path.join(self.themedir, "Files"), self.dir, 1)
 
 	def CreateTOC(self):
-		filename = "../pub/" + self._GetFilename(self.pub.nodes[0].content.filename)
+		filename = self._GetFilename(self.pub.nodes[0].content.filename)
         
 		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
 		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
@@ -107,7 +112,7 @@ class BaseHTMLPublisher:
 		data = file.read()
 		file.close()
 		file = open(os.path.join(self.dir, "index.htm"),"w")
-		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", "pub/" + self._GetFilename(self.pub.nodes[0].content.filename))
+		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", "pub/" + os.path.basename(self._GetFilename(self.pub.nodes[0].content.filename)))
 		file.write(data)
 		file.close()
 
@@ -118,7 +123,7 @@ class BaseHTMLPublisher:
 			if string.find(root.content.filename, "imsmanifest.xml") != -1:
 					root = root.pub.nodes[0]
 
-			filename = "../pub/" + self._GetFilename(root.content.filename) 
+			filename = self._GetFilename(root.content.filename) 
 
 			if not root.content.public == "false":
 				nodeName = "foldersTree"
@@ -147,11 +152,11 @@ class BaseHTMLPublisher:
 				publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
 		if publisher: 
 			try:
-				filename = publisher.GetFilename(filename)
+				filename = "../pub/" + publisher.GetFilename(filename)
 			except: 
 				pass
 		else:
-			filename = "../File/" + filename
+			filename = "../" + string.replace(filename, "\\", "/")
 		return filename
 
 	def GetContentsPage(self):
