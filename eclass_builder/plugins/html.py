@@ -18,9 +18,6 @@ import traceback
 import sys
 #from xml.dom.minidom import parse
 
-from wxPython.mozilla import *
-from wxPython.stc import *
-
 ID_NEW = wxNewId()
 ID_OPEN = wxNewId()
 ID_SAVE = wxNewId()
@@ -145,6 +142,8 @@ if __name__ != "__main__":
 
 class EditorFrame (wxFrame):
 	def __init__(self, parent):
+		from wxPython.mozilla import *
+		from wxPython.stc import *
 		self.running = true
 		wxFrame.__init__(self,NULL, -1, "Document Editor")
 		self.current = "about:blank"
