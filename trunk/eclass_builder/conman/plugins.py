@@ -81,6 +81,9 @@ class BaseHTMLPublisher:
 
 	def GetCreditString(self):
 		if self.node:
+			if self.node.content.metadata.rights.description == "" and len(self.node.content.metadata.lifecycle.contributors) == 0:
+				return ""
+
 	  		creditstring = string.replace(self.node.content.metadata.rights.description, "\r\n", "<br>")#mac
 	  		creditstring = string.replace(creditstring, "\n", "<br>")#win
 	  		creditstring = string.replace(creditstring, "\r", "<br>")#unix
@@ -134,8 +137,9 @@ class BaseHTMLPublisher:
 		self.data['SCORMAction'] = ""
 		backnode = self.node.back()
 		#since we're publishing, we only want public nodes
-		while backnode != None and backnode.content.public != "true":
-			backnode = backnode.back()
+		#while backnode != None and backnode.content.public != "true":
+		#	print "We're in here! Node: " + backnode.content.metadata.name
+		#	backnode = backnode.back()
 		backlink = ""
 		if backnode != None:
 			backlink = self.GetFilename(backnode.content.filename)
@@ -144,8 +148,8 @@ class BaseHTMLPublisher:
 			self.data['backlink'] = ""
 			self.data['SCORMAction'] = "onload=\"initAPI(window)\""
 		nextnode = self.node.next()
-		while nextnode != None and nextnode.content.public != "true":
-			nextnode = nextnode.next()
+		#while nextnode != None and nextnode.content.public != "true":
+		#	nextnode = nextnode.next()
 		if nextnode != None:
 			nextlink = self.GetFilename(nextnode.content.filename)
 			self.data['nextlink'] = "<a href=\"" + nextlink + "\">Next </a>"
