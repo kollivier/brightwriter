@@ -20,6 +20,11 @@ except:
 if USE_MINIDOM:
 	from xml.dom import minidom
 
+try:
+	import pythoncom
+except:
+	pass
+
 class ConMan:
 	"""
 	Class: conman.ConMan()
@@ -645,6 +650,12 @@ class Lifecycle:
 		self.status = ""
 		self.contributors = []
 
+	def addContributor(self, name="", role="Author"):
+		newcontrib = Contributor()
+		newcontrib.role = role
+		newcontrib.entity.fname.value = name
+		self.contributors.append(newcontrib)
+
 	def getAuthor(self):
 		for contrib in self.contributors:
 			if contrib.role == "Author":
@@ -824,7 +835,6 @@ def GetUUID():
 	"""
 	id = ""
 	if sys.platform == "win32" or sys.platform == "nt":
-		import pythoncom
 		id = pythoncom.CreateGuid()
 		id = str(id)
 		id = string.replace(id, "'", "")
