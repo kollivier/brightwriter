@@ -628,6 +628,16 @@ class EditorDialog(wxDialog):
 		self.item = item
 		self.parent = parent
 
+		wxDialog.__init__(self, parent, -1, _("Quiz Editor"), wxPoint(100, 100))
+
+		self.lblList = wxStaticText(self, -1, _("Question List"))
+		self.lstQuestions = wxListBox(self, -1)
+		self.btnAdd = wxButton(self, -1, _("Add"))
+		self.btnEdit = wxButton(self, -1, _("Edit"))
+		self.btnRemove = wxButton(self, -1, _("Remove"))
+		self.btnOK = wxButton(self, wxID_OK, _("OK"))
+		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
+
 		if len(self.item.content.filename) > 0:	
 			try:
 				print self.item.content.filename
@@ -649,17 +659,6 @@ class EditorDialog(wxDialog):
 				counter = counter + 1
 
 			self.item.content.filename = filename
-
-		wxDialog.__init__(self, parent, -1, _("Quiz Editor"), wxPoint(100, 100))
-
-		self.lblList = wxStaticText(self, -1, _("Question List"))
-		self.lstQuestions = wxListBox(self, -1)
-		self.btnAdd = wxButton(self, -1, _("Add"))
-		self.btnEdit = wxButton(self, -1, _("Edit"))
-		self.btnRemove = wxButton(self, -1, _("Remove"))
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
-
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		self.mysizer.Add(self.lblList, 0, wxALL, 4)
 		self.mysizer.Add(self.lstQuestions, 1, wxEXPAND | wxALL, 4)
