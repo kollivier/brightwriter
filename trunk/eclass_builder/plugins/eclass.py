@@ -1610,7 +1610,7 @@ class EditorDialog (wxDialog):
 		busy = wxBusyCursor()
 		self.page.name = self.txtTitle.GetValue()
 		if isinstance(self.item, conman.conman.ConNode):
-			self.item.content.name = self.page.name
+			self.item.content.metadata.name = self.page.name
 		else:
 			self.item.name = self.page.name
 
@@ -1618,9 +1618,16 @@ class EditorDialog (wxDialog):
 		self.page.credit = self.txtCredit.GetValue()
 		self.page.media.image = self.selectImage.filename
 		self.page.media.video = self.selectVideo.filename
-		self.page.media.videoautostart = self.chkVideoAutostart.GetValue()
+		if self.chkVideoAutostart.IsChecked():
+			self.page.media.videoautostart = 1
+		else:
+			self.page.media.videoautostart = 0
+
 		self.page.media.audio = self.selectAudio.filename
-		self.page.media.audioautostart = self.chkAudioAutostart.GetValue()		
+		if self.chkAudioAutostart.IsChecked():
+			self.page.media.audioautostart = 1
+		else:
+			self.page.media.audioautostart = 0		
 		#self.page.media.Introduction = self.selectIntroduction.filename
 		self.page.media.text = self.selectText.filename
 		self.page.media.powerpoint = self.selectPowerPoint.filename
