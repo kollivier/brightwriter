@@ -1285,8 +1285,20 @@ class EditorDialog (wxDialog):
 		self.lblCredit = wxStaticText(self, -1, _("Credit"), wxPoint(10, 5 + (height*2)))
 		
 		self.txtTitle = wxTextCtrl(self, -1, self.page.name, wxPoint(80, 5), wxSize(280, -1))
-		self.txtAuthor = wxTextCtrl(self, -1, self.page.author, wxPoint(80, 25), wxSize(280, -1))
-		self.txtCredit = wxTextCtrl(self, -1, self.page.credit, wxDefaultPosition, wxSize(280, height*3), wxTE_MULTILINE)
+		if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
+			self.item.content.metadta.lifecycle.addContributor(self.page.author, "Author")
+
+		authorname = ""
+		author = self.item.content.metadata.lifecycle.getAuthor()
+		if author:
+			authorname = author.entity.fname.value
+ 
+		self.txtAuthor = wxTextCtrl(self, -1, authorname, wxPoint(80, 25), wxSize(280, -1))
+		
+		if self.page.credit and self.item.content.metadata.rights.description == "":
+			self.item.content.metadata.rights.description = self.page.credit
+
+		self.txtCredit = wxTextCtrl(self, -1, self.item.content.metadata.rights.description, wxDefaultPosition, wxSize(280, height*3), wxTE_MULTILINE)
 
 		#Left Input Labels
 		self.selectImage = wxSelectBox(self, _("Image:"), self.page.media.image, _("Graphics"), 10, 100, 160)
@@ -1431,7 +1443,6 @@ class EditorDialog (wxDialog):
 		self.SetSizer(self.mysizer)
 		self.mysizer.Fit(self)
 		self.Layout()
-
 
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 		EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
@@ -1614,8 +1625,20 @@ class EditorDialog (wxDialog):
 		else:
 			self.item.name = self.page.name
 
-		self.page.author = self.txtAuthor.GetValue()
-		self.page.credit = self.txtCredit.GetValue()
+		#self.page.author = self.txtAuthor.GetValue()
+		author = self.item.content.metadata.lifecycle.getAuthor()
+		if not author:
+			self.item.content.metadata.lifecycle.addContributor(self.txtAuthor.GetValue(), "Author")
+			author = self.item.content.metadata.lifecycle.getAuthor()
+		
+		author.entity.fname.value = self.txtAuthor.GetValue()
+		if author.entity.filename == "":
+			afilename = os.path.join(self.parent.PrefDir, "Contacts", MakeFileName2(author.entity.fname.value) + ".vcf")
+			author.entity.filename = afilename
+			
+		author.entity.saveAsFile()
+
+		self.item.content.metadata.rights.description = self.txtCredit.GetValue()
 		self.page.media.image = self.selectImage.filename
 		self.page.media.video = self.selectVideo.filename
 		if self.chkVideoAutostart.IsChecked():
