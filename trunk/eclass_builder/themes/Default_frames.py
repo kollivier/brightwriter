@@ -9,7 +9,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 	def CreateTOC(self):
 		filename = "pub/" + self._GetFilename(self.pub.nodes[0].content.filename)
 
-		text = """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(self.pub.nodes[0].content.name, "\"", "\\\""), filename, string.replace(self.pub.nodes[0].content.name, "\"", "\\\""))
+		text = """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename, string.replace(self.pub.nodes[0].content.name, "\"", "\\\""))
 		text = text + self.AddJoustItems(self.pub.nodes[0], 1)
 		if self.pub.settings["SearchEnabled"] != "" and int(self.pub.settings["SearchEnabled"]):
 			if self.pub.settings["SearchProgram"] == "Swish-e":
@@ -45,7 +45,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 					nodeType = "Book"
 				else:
 					nodeType = "Document"
-				text = text + """level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, string.replace(root.content.name, "\"", "\\\""), filename, string.replace(root.content.name, "\"", "\\\""))
+				text = text + """level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, string.replace(root.content.metadata.name, "\"", "\\\""), filename, string.replace(root.content.name, "\"", "\\\""))
 
 				if len(root.children) > 0:
 					text = text + self.AddJoustItems(root, level + 1)

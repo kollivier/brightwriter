@@ -8,7 +8,9 @@ import sys
 #import HTMLPublish
 import xml_settings
 import vcard
+import plugins
 from validate import *
+from wxPython.wx import *
 USE_MINIDOM=0
 try:
 	from xml.dom.ext.reader.Sax import FromXmlFile
@@ -65,7 +67,8 @@ class ConMan:
 		self.description = ""
 		self.keywords = ""
 		self.directory = ""
-		self.CurrentNode = None  
+		self.CurrentNode = None
+		self.exporting = False
 		self.settings = xml_settings.XMLSettings()
 
 	def __str__(self):
@@ -161,7 +164,13 @@ class ConMan:
 			self._GetMetadata(metadata)
 		resources = doc.getElementsByTagName("resource")
 		self._GetResources(resources)
-		toc = doc.getElementsByTagName("tableofcontents")[0]
+		toc = doc.getElementsByTagName("tableofcontents")
+		if not toc:
+			toc = doc.getElementsByTagName("organization")
+			if toc:
+				toc = toc[0]
+		else:
+			toc = toc[0]
 		if toc.attributes:
 			for i in range(0, len(toc.attributes)):
 				attr = toc.attributes.item(i)
@@ -187,9 +196,9 @@ class ConMan:
 					if attr.name == "identifier":
 						myid = string.replace(attr.value, self.namespace, "")
 						myid = string.replace(myid, "-", "")
-						if len(myid) < 32: #Created before IMS identifiers used
-							self.updatedids[myid] = GetUUID()
-							myid = self.updatedids[myid]
+						#if len(myid) < 32: #Created before IMS identifiers used
+						#	self.updatedids[myid] = GetUUID()
+						#	myid = self.updatedids[myid]
 					elif attr.name == "href":
 						myurl = XMLAttrToText(attr.value)
 
@@ -312,6 +321,13 @@ class ConMan:
 				elif attr.name == "public":
 					public = XMLAttrToText(attr.value) 
 
+			#later versions of IMS make title an tag rather than an 
+			#attribute, so override title here. 
+			titleNode = root.getElementsByTagName("title")
+			if titleNode:
+				if titleNode[0].childNodes:
+					name = titleNode[0].childNodes[0].nodeValue
+
 			#Content should already be loaded, so try to get the item first      		
 			if self.updatedids.has_key(contentid):
 				mycontent = self.content.GetItem(self.updatedids[contentid], self.language)
@@ -364,7 +380,10 @@ class ConMan:
 			else:
 				self.keywords = ""
 
-	def SaveAsXML(self, filename, encoding="ISO-8859-1"):
+	def SaveAsXML(self, filename, encoding="ISO-8859-1", exporting=False):
+		if exporting:
+			self.exporting = True
+
 		if filename == "":
 			filename = self.filename
 		else:
@@ -375,19 +394,21 @@ class ConMan:
 <manifest identifier="%s" xmlns:imsmd="http://www.imsproject.org">
 	<metadata>%s</metadata>
 	<organizations default="%s">
-		<tableofcontents identifier="%s" title="%s">
+		<organization identifier="%s" title="%s">
+		<title>%s</title>
 		%s
-		</tableofcontents>
+		</organization>
 	</organizations>
 	<resources>%s
 	</resources>
 </manifest>
-""" % (encoding, self.namespace + self.id, self._MetadataAsXML(), self.namespace + self.orgid, self.namespace + self.orgid, TextToXMLAttr(self.name), self._TOCAsXML(self.nodes[0]), self._ResourcesAsXML())		
+""" % (encoding, self.namespace + self.id, self._MetadataAsXML(), self.namespace + self.orgid, self.namespace + self.orgid, TextToXMLAttr(self.name), TextToXMLAttr(self.name), self._TOCAsXML(self.nodes[0]), self._ResourcesAsXML())		
 		try:	
 			self.settings.SaveAsXML(os.path.join(self.directory, "settings.xml"))
 		except:
 			message = "There was an error saving the file " + os.path.join(self.directory, "settings.xml") + ". Please check to make sure you have write access to this file and try saving again."
 			print message
+			self.exporting = False
 			raise IOError, message
 
 		try:
@@ -397,7 +418,10 @@ class ConMan:
 		except:
 			message = "There was an error saving the file" + filename + ". Please check to make sure you have write access to this file and try saving again."
 			print message
+			self.exporting = False
 			raise IOError, message
+        
+		self.exporting = False
 
 	def _MetadataAsXML(self):
 		mymetadata = """
@@ -411,22 +435,26 @@ class ConMan:
 		return mymetadata
 
 	def _TOCAsXML(self, root):
-		mytoc = """<item identifier="%s" identifierref="%s" template="%s" public="%s" """ % (TextToXMLAttr(self.namespace + root.id), TextToXMLAttr(self.namespace + root.content.id), TextToXMLAttr(root.content.template), TextToXMLAttr(root.content.public))
+		mytoc = """\t\t<item identifier="%s" identifierref="%s" template="%s" public="%s">\n""" % (TextToXMLAttr(self.namespace + root.id), TextToXMLAttr(self.namespace + root.content.id), TextToXMLAttr(root.content.template), TextToXMLAttr(root.content.public))
+		mytoc = mytoc + "\t\t<Title>" + TextToXMLChar(root.content.metadata.name) + "</Title>\n"
 		if len(root.children) > 0:
-			mytoc = mytoc + ">"
 			for child in root.children:
 				if child.pub:
 					child.pub.SaveAsXML(child.content.filename)
 				mytoc = mytoc +	self._TOCAsXML(child)
-			mytoc = mytoc + "</item>"
-		else:
-			mytoc = mytoc + "/>"
+		mytoc = mytoc + "</item>\n"
 		return mytoc
 
 	def _ResourcesAsXML(self):
 		myres = ""
-		for item in self.content:				
-			myres = myres + """<resource identifier="%s" href="%s">\n%s\n</resource>\n""" % (self.namespace + item.id, TextToXMLAttr(string.replace(item.filename, os.sep, "/")), item.metadata.asXMLString())
+		publisher = plugins.BaseHTMLPublisher()
+		for item in self.content:
+			filename = item.filename
+			#HACK ALERT!!! This hardcodes current plugins...
+			fileext = os.path.splitext(filename)[1][1:]
+			if self.exporting and fileext in ["htm", "html", "ecp", "quiz"]:
+				filename = "pub/" + publisher.GetFilename(filename)
+			myres = myres + """<resource identifier="%s" href="%s">\n%s\n</resource>\n""" % (self.namespace + item.id, TextToXMLAttr(string.replace(filename, os.sep, "/")), item.metadata.asXMLString())
 		return myres
 
 	def PublishAsHTML(self, parent, joustdir, gsdlcollection='', useswishe=0):
@@ -616,6 +644,20 @@ class Lifecycle:
 		self.version = ""
 		self.status = ""
 		self.contributors = []
+
+	def getAuthor(self):
+		for contrib in self.contributors:
+			if contrib.role == "Author":
+				return contrib
+
+		return None
+
+	def getOrganization(self):
+		for contrib in self.contributors:
+			if contrib.role == "Content Provider":
+				return contrib
+
+		return None
 
 	def asXMLString(self):
 		if self.version == "" and self.status == "" and len(self.contributors) == 0:

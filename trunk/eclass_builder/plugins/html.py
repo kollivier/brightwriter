@@ -78,7 +78,13 @@ ID_SELECTNONE = wxNewId()
 # This info is used so that EClass can be dynamically be added into
 # EClass.Builder's plugin registry.
 
-plugin_info = {"Name":"html", "FullName":"Web Page", "Directory": "Text", "Extension": ["htm", "html"], "Mime Type": "text/html","Requires":""}
+plugin_info = {	"Name":"html", 
+				"FullName":"Web Page", 
+				"Directory": "Text", 
+				"Extension": ["htm", "html"], 
+				"Mime Type": "text/html",
+				"Requires":"", 
+				"CanCreateNew":True}
 
 #-------------------------- DATA CLASSES ----------------------------
 
@@ -108,16 +114,17 @@ if __name__ != "__main__":
 			"""
 
 			#filename = string.replace(filename, ".html", "")
-			filename = os.path.splitext(filename)[0] #filename = string.replace(filename, ".htm", "")
+			filename = os.path.splitext(filename)[0]
+			filename = os.path.basename(filename)
 			filename = filename[:28]
 			filename = filename + ".htm"
 			filename = string.replace(filename, " ", "_")
 			return filename
 
 		def GetData(self):
-			if os.path.exists(os.path.join(self.dir, "Text", self.node.content.filename)):
+			if os.path.exists(os.path.join(self.dir, string.replace(self.node.content.filename, "/", os.sep))):
 				myfile = None
-				myfile = open(os.path.join(self.dir, "Text", self.node.content.filename), 'r')
+				myfile = open(os.path.join(self.dir, self.node.content.filename), 'r')
 				
 				#if myfile:
 				myhtml = GetBody(myfile)
@@ -136,7 +143,7 @@ if __name__ != "__main__":
 				print traceback.print_exc()
 
 			self.data['content'] = myhtml
-			self.data['credit'] = ""
+			#self.data['credit'] = ""
 
 #-------------------------- EDITOR INTERFACE ----------------------------------------
 
@@ -875,11 +882,14 @@ class EditorFrame (wxFrame):
 	def OnSave(self, event):
 		if self.notebook.GetSelection() == 1:
 			self.mozilla.SetPage(self.source.GetText())
-		filename = os.path.join(self.parent.pub.directory, "Text", self.currentItem.content.filename)
-		self.mozilla.SavePage(filename, False)
-		self.mozilla.UpdateBaseURI()
-		self.mozilla.Reload()
-		self.dirty = False
+		filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
+		result = self.mozilla.SavePage(filename, False)
+		if result:
+			self.mozilla.UpdateBaseURI()
+			self.mozilla.Reload()
+			self.dirty = False
+		else:
+			wxMessageBox(_("Unable to save the file %(filename)s to disk. Please make sure you have sufficient disk space and access permissions to the location you are saving to.") % {"filename": filename}, _("Unable to Save File"), wxICON_ERROR)
 
 	def logEvt(self, name, event):
 		self.log.write('%s: %s\n' %
@@ -1409,9 +1419,9 @@ if __name__ != "__main__":
 			self.frame = EditorFrame(self.parent)
 			#self.frame.mozilla.LoadURL("about:blank")
 			self.frame.currentItem = self.currentItem
-			if not os.path.exists(os.path.join(self.parent.pub.directory, "Text", self.currentItem.content.filename)):
+			if not os.path.exists(os.path.join(self.parent.pub.directory, self.currentItem.content.filename)):
 				
-				self.filename = os.path.join(self.parent.pub.directory, "Text", self.currentItem.content.filename)
+				self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
 				if 1: #self.currentItem.content.filename != "":
 					html = """
 	<html>
@@ -1426,7 +1436,7 @@ if __name__ != "__main__":
 					self.frame.mozilla.LoadURL(self.filename)
 	
 			else:
-				self.filename = os.path.join(self.parent.pub.directory, "Text", self.currentItem.content.filename)
+				self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
 				self.frame.mozilla.LoadURL(self.filename)
 	
 			self.frame.MakeModal(True)

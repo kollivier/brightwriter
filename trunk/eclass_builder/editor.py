@@ -25,18 +25,24 @@ import conman
 import version
 import glob
 
+import indexer
+
 #these 2 are needed for McMillan Installer to find these modules
 import conman.plugins
 import conman.HTMLTemplates
 
 import ftplib
-import themes
+#import themes
+import themes.themes as themes
 import conman.HTMLFunctions
 import conman.xml_settings as xml_settings
 import conman.file_functions as files
 import conman.vcard as vcard
 from conman.validate import *
 from convert.PDF import PDFPublisher
+
+#for indexing
+import PyLucene
 
 rootdir = os.path.abspath(sys.path[0])
 localedir = os.path.join(rootdir, 'locale')
@@ -91,6 +97,7 @@ ID_IMPORT_FILE = wxNewId()
 ID_PUBLISH = wxNewId()
 ID_PUBLISH_CD = wxNewId()
 ID_PUBLISH_PDF = wxNewId()
+ID_PUBLISH_IMS = wxNewId()
 ID_PUBLISH_MENU = wxNewId()
 ID_TREE_MOVEUP = wxNewId()
 ID_TREE_MOVEDOWN = wxNewId()
@@ -147,6 +154,7 @@ class MainFrame2(wxFrame):
 		self.CurrentItem = None #current node
 		self.CurrentDir = ""
 		self.CurrentTreeItem = None
+		self.myplugins = myplugins
 		self.pub = conman.conman.ConMan()
 		#dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
 		self.dirtyNodes = []
@@ -168,14 +176,14 @@ class MainFrame2(wxFrame):
 		self.CutNode = None
 		self.CopyNode = None
 		self.ftppass = ""
-		self.themes = []
-		for item in os.listdir(os.path.join(self.AppDir, "themes")):
-			if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
-				theme = string.replace(item, ".py", "")
-				if theme != "BaseTheme":
-					exec("import themes." + theme)
-					exec("self.themes.append([themes." + theme + ".themename, '" + theme + "'])") 
-		self.currentTheme = self.themes[0]
+		self.themes = themes.ThemeList(os.path.join(self.AppDir, "themes"))
+		#for item in os.listdir(os.path.join(self.AppDir, "themes")):
+		#	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
+		#		theme = string.replace(item, ".py", "")
+		#		if theme != "BaseTheme":
+		#			exec("import themes." + theme)
+		#			exec("self.themes.append([themes." + theme + ".themename, '" + theme + "', themes." + theme + "])") 
+		self.currentTheme = self.themes.FindTheme("Default (no frames)")
 		self.settings = xml_settings.XMLSettings()
 		wxInitAllImageHandlers()
 		if wxPlatform == '__WXMSW__':
@@ -400,6 +408,7 @@ class MainFrame2(wxFrame):
 		PubMenu.Append(ID_PUBLISH, _("To web site"), _("Publish EClass to a web server"))
 		PubMenu.Append(ID_PUBLISH_CD, _("To CD-ROM"), _("Publish EClass to a CD-ROM"))
 		PubMenu.Append(ID_PUBLISH_PDF, _("To PDF"))
+		PubMenu.Append(ID_PUBLISH_IMS, _("IMS Package"))
 		FileMenu.AppendMenu(ID_PUBLISH_MENU, "&" + _("Publish"), PubMenu, "") 
 		FileMenu.AppendSeparator()
 		FileMenu.Append(ID_PROPS, _("Project Settings"), _("View and edit project settings"))
@@ -514,6 +523,7 @@ class MainFrame2(wxFrame):
 		EVT_MENU(self, ID_PUBLISH, self.PublishToWeb)
 		EVT_MENU(self, ID_PUBLISH_CD, self.PublishToCD)
 		EVT_MENU(self, ID_PUBLISH_PDF, self.PublishToPDF)
+		EVT_MENU(self, ID_PUBLISH_IMS, self.PublishToIMS)
 		#EVT_MENU(self, ID_CREATE_ECLS_LINK, self.CreateCourseLink)
 		EVT_MENU(self, ID_BUG, self.ReportBug)
 		EVT_MENU(self, ID_THEME, self.ManageThemes)
@@ -719,10 +729,10 @@ class MainFrame2(wxFrame):
 		self.SwitchMenus(False)
 
 	def OnRefreshTheme(self, event):
-		mythememodule = self.currentTheme
-		exec("mytheme = themes." + mythememodule[1])
-		self.currentTheme = mythememodule
-		publisher = mytheme.HTMLPublisher(self)
+		#mythememodule = self.currentTheme
+		#exec("mytheme = themes." + mythememodule[1])
+		#self.currentTheme = mythememodule
+		publisher = self.currentTheme.HTMLPublisher(self)
 		result = publisher.Publish()
 		
 	#def SplitterSize(self, event):
@@ -794,17 +804,18 @@ class MainFrame2(wxFrame):
 				#		if plugin["FullName"] == self.settings["DefaultPlugin"]:
 				#			dplugin = plugin["Name"]
 
-				theme = self.themes[0]
-				for mytheme in self.themes:
-					if mytheme[0] == "Default (frames)":
-						theme = mytheme
-				self.currentTheme = theme
+				#theme = self.themes[0]
+				#for mytheme in self.themes:
+				#	if mytheme[0] == "Default (frames)":
+				#		theme = mytheme
+				
+				self.currentTheme = self.theme.FindTheme("Default (frames)")
 				self.AddNewEClassPage(None, self.pub.name, True)
 				#exec("plugins." + dplugin + ".EditorDialog(self, self.CurrentItem).ShowModal()")
 				#self.Update()
 				self.SaveProject(event)  
-				exec("mytheme = themes." + self.currentTheme[1])
-				publisher = mytheme.HTMLPublisher(self)
+				#exec("mytheme = themes." + self.currentTheme[1])
+				publisher = self.currentTheme.HTMLPublisher(self)
 				publisher.CopySupportFiles()
 				publisher.CreateTOC()
 				self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
@@ -852,6 +863,50 @@ class MainFrame2(wxFrame):
 			elif wxPlatform == "__WXMAC__":
 				result = os.popen("open " + string.replace(self.pdffile, " ", "\ "))
 				result.close()
+
+	def PublishToIMS(self, event):
+
+		oldtheme = self.currentTheme
+		imstheme = self.themes.FindTheme("IMS Package")
+		#for theme in self.themes:
+		#	if theme[0] == "IMS Package":
+		#		self.currentTheme = theme
+		publisher = imstheme.HTMLPublisher(self)
+		publisher.Publish()		
+
+		import zipfile
+		import tempfile
+		handle, zipname = tempfile.mkstemp()
+		os.close(handle)
+		#zipname = os.path.join(self.CurrentDir, "myzip.zip")
+		if os.path.exists(os.path.join(self.CurrentDir, "myzip.zip")):
+			os.remove(os.path.join(self.CurrentDir, "myzip.zip"))
+		myzip = zipfile.ZipFile(zipname, "w")
+		self._DirToZipFile("", myzip)
+		handle, imsfile = tempfile.mkstemp()
+		os.close(handle)
+		oldfile = self.pub.filename
+		self.pub.SaveAsXML(imsfile, exporting=True)
+		self.pub.filename = oldfile
+		myzip.write(imsfile, "imsmanifest.xml")
+		myzip.close()
+		os.rename(zipname, os.path.join(self.CurrentDir, "myzip.zip"))
+
+		self.currentTheme = oldtheme
+		publisher = self.currentTheme.HTMLPublisher(self)
+		publisher.Publish()
+		#self.PublishEClass(self.pub.pubid)
+
+		wxMessageBox("Finished exporting!")
+		
+	def _DirToZipFile(self, dir, myzip):
+		mydir = os.path.join(self.CurrentDir, dir)
+		for file in os.listdir(mydir):
+			mypath = os.path.join(mydir, file)
+			if os.path.isfile(mypath) and string.find(file, "imsmanifest.xml") == -1:
+				myzip.write(mypath, os.path.join(dir, file))
+			elif os.path.isdir(mypath):
+				self._DirToZipFile(os.path.join(dir, file), myzip)
 		
 	def UpdateTextIndex(self):
 		searchEnabled = 0
@@ -889,7 +944,11 @@ class MainFrame2(wxFrame):
 				#dialog = wxMessageDialog(self, _("To publish your EClass to Greenstone, you must first tell E-Class where it can find Greenstone. To do this, select 'Options->Preferences' from the main menu."), _("Greenstone Directory Not Specified"), wxOK)
 				#dialog.ShowModal()
 				#dialog.Destroy()
-			else:
+			elif self.pub.settings["SearchProgram"] == "Lucene":
+				cddialog = UpdateIndexDialog(self, False)
+				cddialog.UpdateIndex("", "")
+
+			elif self.pub.settings["SearchProgram"] == "Greenstone":
 				if wxPlatform == "__WXMSW__":	
 					wxYield()
 					if True:
@@ -966,7 +1025,7 @@ class MainFrame2(wxFrame):
 					files.CopyFile("w9xpopen.exe", self.ThirdPartyDir, self.CurrentDir)
 					files.CopyFile("pcre.dll",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
 					files.CopyFile("zlib.dll",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("default.tpl", os.path.join(self.AppDir, "themes", self.currentTheme[0]), os.path.join(self.CurrentDir, "cgi-bin"))
+					files.CopyFile("default.tpl", os.path.join(self.AppDir, "themes", self.currentTheme.themename), os.path.join(self.CurrentDir, "cgi-bin"))
 			#mytheme = self.pub.settings["Theme"]
 				files.CopyFiles(os.path.join(self.ThirdPartyDir, "karrigell"), self.CurrentDir)
 				files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
@@ -978,7 +1037,27 @@ class MainFrame2(wxFrame):
 					os.mkdir(os.path.join(cddir, "gsdl", "eclass"))
 				files.CopyFiles(self.CurrentDir, os.path.join(cddir, "gsdl", "eclass"), True)
 				files.CopyFile("home.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
-				files.CopyFile("style.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros")) 
+				files.CopyFile("style.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
+			elif self.pub.settings["SearchProgram"] == "Lucene":
+				bookdata = open(os.path.join(self.AppDir,"bookfile.book.in")).read()
+				bookdata = string.replace(bookdata, "<!-- insert title here-->", self.pub.name)
+
+				myfile = open(os.path.join(self.CurrentDir, MakeFileName2(self.pub.name) + ".dmbk"), "w")
+				myfile.write(bookdata)
+				myfile.close()
+
+				#files.CopyFiles(os.path.join(self.ThirdPartyDir, "karrigell"), self.CurrentDir)
+				#files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
+				#if os.path.exists(os.path.join(self.CurrentDir, "Karrigell.ini")):
+				#	os.remove(os.path.join(self.CurrentDir, "Karrigell.ini"))
+
+				#if not os.path.exists(os.path.join(self.CurrentDir, "cgi-bin")):
+				#	os.mkdir(os.path.join(self.CurrentDir, "cgi-bin"))
+				#searchfile = os.path.join(self.CurrentDir, "cgi-bin", "search.py")
+				#if os.path.exists(searchfile):
+				#	os.remove(searchfile)
+				#files.CopyFile("searchLucene.py",os.path.join(self.AppDir, "cgi-bin"), os.path.join(self.CurrentDir, "cgi-bin"))
+				#os.rename(os.path.join(self.CurrentDir, "cgi-bin", "searchLucene.py"), searchfile)
 		except:
 			message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
 			print message
@@ -1186,26 +1265,28 @@ class MainFrame2(wxFrame):
 				ftpfiles.append("pub/" + publisher.GetFilename(nextnode.content.filename))
 			else:
 				ftpfiles.append("File/" + nextnode.content.filename)
-		exec("mytheme = themes." + self.currentTheme[1])
-		publisher = mytheme.HTMLPublisher(self)
+		#exec("mytheme = themes." + self.currentTheme[1])
+		publisher = self.currentTheme.HTMLPublisher(self)
 		if publisher.GetContentsPage() != "":
 			ftpfiles.append(publisher.GetContentsPage())
 		self.UploadFiles(ftpfiles)
 
 	def UpdateContents(self):
 		self.statusBar.SetStatusText(_("Updating table of contents..."))
-		mythememodule = ""
-		mytheme = self.currentTheme
-		if not mytheme == "":
-			for theme in self.themes:
-				if mytheme[0] == theme[0]:
-					mythememodule = theme[1]
-					self.currentTheme = theme
-		else:
-			mythememodule = self.themes[0][1]
-			self.currentTheme = self.themes[0]
-		exec("mytheme = themes." + mythememodule)
-		publisher = mytheme.HTMLPublisher(self)
+		#mythememodule = ""
+		#mytheme = self.currentTheme
+		#if not mytheme == "":
+		#	for theme in self.themes:
+		#		if mytheme[0] == theme[0]:
+		#			mythememodule = theme[1]
+		#			self.currentTheme = theme
+		#else:
+		#	mythememodule = self.themes[0][1]
+		#	self.currentTheme = self.themes[0]
+		#exec("mytheme = themes." + mythememodule)
+		if not self.currentTheme:
+			self.currentTheme = self.themes.FindTheme("Default (frames)")
+		publisher = self.currentTheme.HTMLPublisher(self)
 		result = publisher.CreateTOC()
 		self.statusBar.SetStatusText("")
 
@@ -1301,11 +1382,15 @@ class MainFrame2(wxFrame):
 				self.CurrentItem = self.pub.nodes[0]
 				self.CurrentTreeItem = self.wxTree.GetRootItem()
 				mytheme = self.pub.settings["Theme"]
-				self.currentTheme = self.themes[0]
-				if mytheme != "":
-					for theme in self.themes:
-						if theme[0] == mytheme:
-							self.currentTheme = theme
+				self.currentTheme = self.themes.FindTheme(mytheme)
+				if not self.currentTheme:
+					self.currentTheme = self.themes.FindTheme("Default (frames)")
+
+				#self.currentTheme = self.themes[0]
+				#if mytheme != "":
+				#	for theme in self.themes:
+				#		if theme[0] == mytheme:
+				#			self.currentTheme = theme
 				self.isDirty = False
 				if os.path.exists(os.path.join(self.CurrentDir, "ftppass.txt")):
 					file = open(os.path.join(self.CurrentDir, "ftppass.txt"), "r")
@@ -1695,16 +1780,23 @@ class ProjectPropsDialog(wxDialog):
 		ischecked = self.parent.pub.settings["SearchEnabled"]
 		searchtool = ""
 		if not ischecked == "":
-			self.chkSearch.SetValue(int(ischecked))
-			if int(ischecked) == 1:
+			try:
+				searchbool = int(ischecked)
+			except:
+				searchbool = 0
+
+			self.chkSearch.SetValue(searchbool)
+			if searchbool:
 				searchtool = self.parent.pub.settings["SearchProgram"]
 				if searchtool == "": #since there wasn't an option selected, must be Greenstone
 					searchtool = "Greenstone"
 		
-		self.options = [_("Use SWISH-E for searching (Default)"), _("Use Greenstone for searching")]
+		self.options = [_("Use SWISH-E for searching (Default)"), _("Use Greenstone for searching"), _("Use Lucene for searching")]
 		self.whichSearch = wxRadioBox(panel, -1, _("Search Engine"), wxDefaultPosition, wxDefaultSize, self.options, 1)
 		if searchtool == "Greenstone":
 			self.whichSearch.SetStringSelection(self.options[1])
+		elif searchtool == "Lucene":
+			self.whichSearch.SetStringSelection(self.options[2])
 		else:
 			self.whichSearch.SetStringSelection(self.options[0])
 		
@@ -1747,14 +1839,17 @@ class ProjectPropsDialog(wxDialog):
 		self.parent.pub.description = self.txtdescription.GetValue()
 		self.parent.pub.keywords = self.txtkeywords.GetValue()
 
-		self.parent.pub.settings["SearchEnabled"] = self.chkSearch.GetValue()
+		self.parent.pub.settings["SearchEnabled"] = int(self.chkSearch.GetValue())
 		useswishe = False
 		updatetheme = False
 		if self.whichSearch.GetStringSelection() == self.options[0]:
 			self.parent.pub.settings["SearchProgram"] = "Swish-e"
 			useswishe = True
-		else:
+		elif self.whichSearch.GetStringSelection() == self.options[1]:
 			self.parent.pub.settings["SearchProgram"] = "Greenstone"
+		else:
+			self.parent.pub.settings["SearchProgram"] = "Lucene"
+
 		if self.searchchanged:
 			self.parent.Update()
 		if self.chkFilename.GetValue() == True:
@@ -1846,7 +1941,7 @@ class UpdateIndexDialog(wxDialog):
 	def UpdateIndex(self, gsdl, eclassdir):
 		import threading
 		captureoutput = True
-		if self.usegsdl:
+		if self.parent.pub.settings["SearchProgram"] == "Greenstone":
 			self.gsdl = self.parent.settings["GSDL"]
 			self.eclassdir = os.path.join(self.gsdl, "collect", self.parent.pub.pubid) 
 			self.processfinished = False
@@ -1904,7 +1999,7 @@ class UpdateIndexDialog(wxDialog):
 					files.CopyFile("style.dm", os.path.join(self.parent.AppDir, "greenstone"), os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pubid, "gsdl", "macros"))
 					self.status.SetLabel(_("""Finished exporting. You can find the exported 
 collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pubid))
-		else:
+		elif self.parent.pub.settings["SearchProgram"] == "Swish-E":
 			olddir = ""
 			swishedir = os.path.join(self.parent.ThirdPartyDir, "SWISH-E")
 			swisheconf = os.path.join(self.parent.pub.directory, "swishe.conf")
@@ -1935,16 +2030,15 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 			if self.stopthread == True:
 				self.EndModal(wxID_OK)
 			self.status.SetLabel(_("Finished exporting!"))
-		#message = _("Your Greenstone CD is finished. Click the 'View Folder' button to open all files that must be published to CD-ROM. Start your CD-Recording program and copy all files in this window to that program, and your CD will be ready for burning. Users must run setup.exe from the CD-ROM to install the CD to their computer.")
-		#dialog = wxMessageDialog(self, message, _("Export to CD Finished"), wxOK)
-		#dialog.ShowModal()
-		#dialog.Destroy()
+		elif self.parent.pub.settings["SearchProgram"] == "Lucene":
+			engine = indexer.SearchEngine(self, os.path.join(self.parent.CurrentDir, "Index"))
+			engine.IndexFiles(self.parent.pub.nodes[0])
 			
 		#self.btnViewFolder.Enable(True)
 		#self.btnTestCD.Enable(True)
 		#self.btnCloseWindow.Enable(True)
 		self.exportfinished = True
-		self.EndModal(wxID_OK)
+		#self.EndModal(wxID_OK)
 
 	def cmdline(self):
 		myin, myout = win32pipe.popen4(self.call)
@@ -2400,7 +2494,8 @@ class PreferencesEditor(wxDialog):
 		self.lblDefaultPlugin = wxStaticText(self, -1, _("New Page Default"))
 		self.pluginnames = []
 		for plugin in myplugins:
-			self.pluginnames.append(plugin["FullName"])
+			if plugin["CanCreateNew"]:
+				self.pluginnames.append(plugin["FullName"])
 		self.cmbDefaultPlugin = wxChoice(self, -1, wxDefaultPosition, wxDefaultSize, self.pluginnames)
 		if parent.settings["DefaultPlugin"] != "":
 			self.cmbDefaultPlugin.SetStringSelection(parent.settings["DefaultPlugin"])
@@ -2638,7 +2733,8 @@ class NewPageDialog(wxDialog):
 		
 		extension = ".ecp"
 		for plugin in myplugins:
-			self.cmbType.Append(plugin["FullName"])
+			if plugin["CanCreateNew"]:
+				self.cmbType.Append(plugin["FullName"])
 			if self.parent.settings["DefaultPlugin"] != "" and plugin["FullName"] == self.parent.settings["DefaultPlugin"]:
 				extension = "." + plugin["Extension"][0]
 		
@@ -3563,10 +3659,12 @@ class ThemeManager(wxDialog):
 		wxDialog.__init__ (self, parent, -1, _("Theme Manager"),wxDefaultPosition, wxSize(760, 540), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
 		self.parent = parent
 		self.lblThemeList = wxStaticText(self, -1, _("Installed Themes"))
-		themelist = []
-		for theme in self.parent.themes:
-			themelist.append(theme[0])
-		self.lstThemeList = wxListBox(self, -1, choices=themelist)
+		#themelist = []
+		#for theme in self.parent.themes:
+		#	if theme[2].isPublic:
+		#		themelist.append(theme[0])
+
+		self.lstThemeList = wxListBox(self, -1, choices=self.parent.themes.GetPublicThemeNames())
 		self.lstThemeList.SetSelection(0)
 		self.AppDir = parent.AppDir
 		self.CurrentDir = os.path.join(self.parent.AppDir, "themes", "ThemePreview")
@@ -3622,12 +3720,17 @@ class ThemeManager(wxDialog):
 		self.sizer.Add(mainsizer, 1, wxEXPAND | wxALL, 4)
 		self.SetAutoLayout(True)
 		self.SetSizer(self.sizer)
-		if self.parent.pub.settings["Theme"] != "":
-			for theme in themelist:
-				if theme[0] == self.parent.pub.settings["Theme"]:
-					self.lstThemeList.SetStringSelection(self.parent.pub.settings["Theme"])
+		#if self.parent.pub.settings["Theme"] != "":
+		#	for theme in themelist:
+		#		if theme[0] == self.parent.pub.settings["Theme"]:
+		#			self.lstThemeList.SetStringSelection(self.parent.pub.settings["Theme"])
+		#else:
+		
+		if self.parent.currentTheme and self.parent.currentTheme.themename in self.parent.themes.GetPublicThemeNames():
+			self.lstThemeList.SetStringSelection(self.parent.currentTheme.themename)
 		else:
 			self.lstThemeList.SetStringSelection("Default (frames)")
+
 		self.OnThemeChanged(None)
 		self.Layout()
 
@@ -3641,13 +3744,13 @@ class ThemeManager(wxDialog):
 
 	def OnThemeChanged(self, event):
 		themename = self.lstThemeList.GetStringSelection()
-		mythememodule = self.parent.themes[0]
-		for theme in self.parent.themes:
-			if theme[0] == themename:
-				mythememodule = theme
-		exec("mytheme = themes." + mythememodule[1])
-		self.currentTheme = mythememodule
-		publisher = mytheme.HTMLPublisher(self)
+		#mythememodule = self.parent.themes[0]
+		#for theme in self.parent.themes:
+		#	if theme[0] == themename:
+		#		mythememodule = theme
+		#exec("mytheme = themes." + mythememodule[1])
+		self.currentTheme = self.parent.themes.FindTheme(themename)
+		publisher = self.currentTheme.HTMLPublisher(self)
 		result = publisher.Publish()
 		if result:
 			self.browser.LoadPage(os.path.join(self.CurrentDir, "index.htm"))
@@ -3656,27 +3759,23 @@ class ThemeManager(wxDialog):
 		self.UpdateTheme()
 
 	def ReloadThemes(self):
-		self.parent.ReloadThemes()
-		themelist = []
+		self.parent.themes.LoadThemes()
 		self.lstThemeList.Clear()
-		for theme in self.parent.themes:
-			self.lstThemeList.Append(theme[0])
-			themelist.append(theme[0])
+		for theme in self.parent.themes.GetPublicThemeNames():
+			self.lstThemeList.Append(theme)
 
 	def UpdateTheme(self):
 		mythememodule = ""
 		mytheme = self.lstThemeList.GetStringSelection()
 		if not mytheme == "":
-			for theme in self.parent.themes:
-				if mytheme == theme[0]:
-					mythememodule = theme[1]
-					self.parent.currentTheme = theme
-					self.parent.pub.settings["Theme"] = mytheme
+			theme = self.parent.themes.FindTheme(mytheme)
+			self.parent.currentTheme = theme
+			self.parent.pub.settings["Theme"] = mytheme
 		else:
-			mythememodule = self.themes[0][1]
-			self.parent.currentTheme = self.themes[0]
-		exec("mytheme = themes." + mythememodule)
-		publisher = mytheme.HTMLPublisher(self.parent)
+			self.parent.currentTheme = self.parent.themes.FindTheme("Default (frames)")
+			
+		#exec("mytheme = themes." + mythememodule)
+		publisher = self.parent.currentTheme.HTMLPublisher(self.parent)
 		result = publisher.Publish()
 		self.parent.Preview()
 		self.updateTheme = False
@@ -3707,10 +3806,12 @@ class HTMLPublisher(BaseHTMLPublisher):
 
 			#copy support files from Default (no frames)
 			files.CopyFiles(os.path.join(themedir, "Default (no frames)"), os.path.join(themedir, foldername), 1)
-			self.lstThemeList.Append(dialog.GetValue())
-			modulename = string.replace(filename, ".py", "")
-			exec("import themes." + modulename)
-			self.parent.themes.append([dialog.GetValue(), modulename])
+			#self.lstThemeList.Append(dialog.GetValue())
+			self.parent.themes.LoadThemes()
+			self.ReloadThemes()
+			#modulename = string.replace(filename, ".py", "")
+			#exec("import themes." + modulename)
+			#self.parent.themes.append([dialog.GetValue(), modulename])
 		dialog.Destroy()
 
 	def OnDeleteTheme(self, event):
@@ -3731,8 +3832,11 @@ class HTMLPublisher(BaseHTMLPublisher):
 			if os.path.exists(foldername):
 				files.DeleteFolder(foldername)
 			
-			self.parent.themes.remove([self.lstThemeList.GetStringSelection(), modulename])
-			self.lstThemeList.Delete(self.lstThemeList.GetSelection())
+			self.parent.themes.LoadThemes()
+			self.ReloadThemes()
+
+			#self.parent.themes.remove([self.lstThemeList.GetStringSelection(), modulename])
+			#self.lstThemeList.Delete(self.lstThemeList.GetSelection())
 
 		dialog.Destroy()
 
@@ -3764,10 +3868,12 @@ class HTMLPublisher(BaseHTMLPublisher):
 
 			#copy support files from Default (no frames)
 			files.CopyFiles(os.path.join(themedir, self.lstThemeList.GetStringSelection()), os.path.join(themedir, foldername), 1)
-			self.lstThemeList.Append(dialog.GetValue())
-			modulename = string.replace(filename, ".py", "")
-			exec("import themes." + modulename)
-			self.parent.themes.append([dialog.GetValue(), modulename])
+			self.parent.themes.LoadThemes()
+			self.ReloadThemes()
+			#self.lstThemeList.Append(dialog.GetValue())
+			#modulename = string.replace(filename, ".py", "")
+			#exec("import themes." + modulename)
+			#self.parent.themes.append([dialog.GetValue(), modulename])
 		dialog.Destroy()
 
 	def ExportTheme(self, event=None):

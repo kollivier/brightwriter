@@ -9,6 +9,7 @@ from wxPython.wx import *
 import conman.file_functions as files
 from conman.HTMLFunctions import *
 
+isPublic = True
 myDictionary={}
 #import plugins.eclass as eclass
 myplugins = []
@@ -82,7 +83,7 @@ class BaseHTMLPublisher:
 	def CreateTOC(self):
 		filename = "../pub/" + self._GetFilename(self.pub.nodes[0].content.filename)
         
-		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.name, "\"", "\\\""), filename)
+		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
 		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
 		searchenabled = False
 		if self.pub.settings["SearchEnabled"] != "":
@@ -130,10 +131,10 @@ class BaseHTMLPublisher:
 				self.counter = self.counter + 1                            
 			
 				if len(root.children) > 0:
-					text = text + """level%sNode = insFld(%s, gFld("%s", "%s"))\n""" % (level + 1, nodeName, string.replace(root.content.name, "\"", "\\\""), filename)
+					text = text + """level%sNode = insFld(%s, gFld("%s", "%s"))\n""" % (level + 1, nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
 					text = text + self.AddTOCItems(root, level + 1)
 				else:
-					text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.content.name, "\"", "\\\""), filename)
+					text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
 			else:
 				print "Item " + root.content.name + " is marked private and was not published."
         	return text					

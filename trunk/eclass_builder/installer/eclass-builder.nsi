@@ -1,5 +1,5 @@
 !define MUI_PRODUCT "EClass.Builder" ;Define your own software name here
-!define MUI_VERSION "2.5.4.17" ;Define your own software version here
+!define MUI_VERSION "2.5.4.19" ;Define your own software version here
 !include "${NSISDIR}\Contrib\Modern UI\System.nsh"
 !include "path_functions.nsi"
 !define MUI_ICON "${NSISDIR}\contrib\Icons\new_nsis_2.ico"

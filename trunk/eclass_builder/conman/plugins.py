@@ -74,6 +74,7 @@ class BaseHTMLPublisher:
 		self.dir = dir
 		self.templates = None
 		self.mypage = None
+		#isPublic determines if this theme is selectable from EClass.Builder
 		self.rename = None #should we rename long files if found?
 		self.data = {} #data dictionary used to hold template variables
 		#self.language, self.encoding = locale.getdefaultlocale()			
@@ -113,7 +114,7 @@ class BaseHTMLPublisher:
 		filename = self.GetFilename(node.content.filename)
 		self.GetLinks()
 		self.GetData()
-		templatefile = os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme[0], "default.tpl")
+		templatefile = os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme.themename, "default.tpl")
 		myhtml = self.ApplyTemplate(templatefile, self.data)
 		try:		
 			myfile = open(os.path.join(self.dir, "pub", os.path.basename(filename)), "w")
@@ -130,6 +131,7 @@ class BaseHTMLPublisher:
 		"""
 		Retrieve the back and next links for the page.
 		"""
+		self.data['SCORMAction'] = ""
 		backnode = self.node.back()
 		#since we're publishing, we only want public nodes
 		while backnode != None and backnode.content.public != "true":
@@ -140,6 +142,7 @@ class BaseHTMLPublisher:
 			self.data['backlink'] = "<a href=\"" + backlink + "\">Back </a>"
 		else:
 			self.data['backlink'] = ""
+			self.data['SCORMAction'] = "onload=\"initAPI(window)\""
 		nextnode = self.node.next()
 		while nextnode != None and nextnode.content.public != "true":
 			nextnode = nextnode.next()
@@ -148,6 +151,7 @@ class BaseHTMLPublisher:
 			self.data['nextlink'] = "<a href=\"" + nextlink + "\">Next </a>"
 		else:
 			self.data['nextlink'] = ""
+			
 
 	def GetFilename(self, filename):
 		"""
@@ -168,7 +172,7 @@ class BaseHTMLPublisher:
 		filename = filename[:28]
 		filename = filename + ".htm"
 		filename = string.replace(filename, " ", "_")
-		return "../pub/" + filename
+		return filename
 
 	def _CreateHTMLPage(self, mypage, filename):
 		pass #overridden in child classes
@@ -176,7 +180,7 @@ class BaseHTMLPublisher:
 	def ApplyTemplate(self, template="default.tpl", data={}):
 		if template == "default.tpl":
 			#get the template file from the current theme
-			template = os.path.join(self.parent.AppDir,  "themes", self.parent.currentTheme[0], template)
+			template = os.path.join(self.parent.AppDir,  "themes", self.parent.currentTheme.themename, template)
 		temp = open(template, "r")
 		html = temp.read()
 		temp.close()
