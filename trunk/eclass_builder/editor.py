@@ -822,7 +822,7 @@ class MainFrame2(wxFrame):
 				
 				if True:
 					try:
-						conf = open(os.path.join(self.ThirdPartyDir, "SWISH-E", "swishe.conf"), "r")
+						conf = open(os.path.join(self.AppDir, "swishe.conf"), "r")
 						data = conf.read()
 						conf.close()
 						path = os.path.join(self.ThirdPartyDir, "SWISH-E", "")
@@ -1861,6 +1861,7 @@ class UpdateIndexDialog(wxDialog):
 					self.status.SetLabel(_("""Finished exporting. You can find the exported 
 collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pubid))
 		else:
+			olddir = ""
 			swishedir = os.path.join(self.parent.ThirdPartyDir, "SWISH-E")
 			swisheconf = os.path.join(self.parent.pub.directory, "swishe.conf")
 			swisheindex = os.path.join(self.parent.pub.directory, "index.swish-e")
@@ -1871,6 +1872,11 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 				swisheindex = os.path.join(win32api.GetShortPathName(self.parent.pub.directory), "index.swish-e")
 				#swisheinclude = win32api.GetShortPathName(self.parent.pub.directory)
 				self.call = win32api.GetShortPathName(os.path.join(swishedir, "swish.bat")) + " " + win32api.GetShortPathName(self.parent.pub.directory) + " " + win32api.GetShortPathName(os.path.join(swishedir, "swish-e.exe"))
+			else:
+				swishedir = os.path.join(swishedir, "bin")
+				olddir = os.getcwd()
+				os.chdir(self.parent.pub.directory)
+				self.call = os.path.join(swishedir, "swish-e") + "-c .\swishe.conf -f index.swish-e"				
 			#self.call = swishedir + " -c \"" + swisheconf + "\" -f \"" + swisheindex + "\"" # -i \"" + swisheinclude + "\""
 			#self.txtProgress.WriteText("Using swish-e!\n")
 			self.txtProgress.WriteText(self.call + "\n")
@@ -1880,6 +1886,8 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 			while self.mythread.isAlive():
 				wxSleep(1)
 			self.mythread = None
+			if wxPlatform != '__WXMSW__' and os.path.exists(olddir):
+				os.chdir(olddir)
 			if self.stopthread == True:
 				self.EndModal(wxID_OK)
 			self.status.SetLabel(_("Finished exporting!"))
