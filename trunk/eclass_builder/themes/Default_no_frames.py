@@ -16,7 +16,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 				searchscript = "../cgi-bin/search.py"
 				text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", searchscript)
 			elif self.pub.settings["SearchProgram"] == "Greenstone" and self.pub.pubid != "":
-				text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", "../gsdl?site=127.0.0.1&a=p&p=about&c=" + self.pub.pubid + "&ct=0")
+				text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", "/gsdl?site=127.0.0.1&a=p&p=about&c=" + self.pub.pubid + "&ct=0")
 		file = open(os.path.join(self.themedir,"eclassNodes.js"), "r")
 		data = file.read()
 		file.close()

@@ -2,7 +2,7 @@
 
 <HEAD>
 
-<TITLE><!-- INSERT CLASS TITLE HERE --></TITLE>
+<TITLE>ThemePreview</TITLE>
 
 
 
@@ -1722,7 +1722,7 @@ var index1 = 'index.htm';
 
 var index2 = 'index2.htm';
 
-var index3 = "<!-- INSERT INDEX PAGE HERE -->";
+var index3 = "pub/ThemePreview_1.htm";
 
 var smCallerWin;
 
@@ -1848,7 +1848,7 @@ function initialise() {
 
 	index2 = 'index2.htm';
 
-	index3 = "<!-- INSERT INDEX PAGE HERE -->";
+	index3 = "pub/ThemePreview_1.htm";
 
 	
 
@@ -1898,7 +1898,10 @@ function initialise() {
 
 	
 
-<!-- INSERT MENU ITEMS HERE -->
+level1ID = theMenu.addEntry(-1, "Book", "ThemePreview", "pub/ThemePreview_1.htm", "ThemePreview");
+level2ID = theMenu.addChild(level1ID,"Document", "Preview Page 2", "pub/Preview_Page_2.htm", "Preview Page 2");
+level2ID = theMenu.addChild(level1ID,"Document", "Quiz Preview", "pub/Quiz_Preview.htm", "Quiz Preview");
+
 
 	theMenu.openAll();
 
@@ -1933,7 +1936,7 @@ if (self.name == 'menu') {
 } else {
 
 	initialise();
-	var thePage = pageFromSearch("<!-- INSERT INDEX PAGE HERE -->", theMenu, true);
+	var thePage = pageFromSearch("pub/ThemePreview_1.htm", theMenu, true);
 	pageURL = this.location.href;
 	var argsindex = pageURL.indexOf('?');
 	args = pageURL.substring(argsindex + 1);

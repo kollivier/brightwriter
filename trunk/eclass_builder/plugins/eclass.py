@@ -692,8 +692,8 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			regexterm = string.replace(regexterm, " ", "[\s&nbsp;]+")
 			regexterm = string.replace(regexterm, "\"", "&quot;")
 			#print "Regex term = " + regexterm
-			#myterm = re.compile("(<[^>]*>[^<]*)(" + regexterm  +")(.*<[^>]*>)", re.IGNORECASE|re.DOTALL)
-			myterm = re.compile("([^<\w]*)(" + regexterm +")([^<\w]*)", re.IGNORECASE|re.DOTALL)
+			myterm = re.compile("(<[^>]*>[^<]*)(" + regexterm  +")(.*<[^>]*>)", re.IGNORECASE|re.DOTALL)
+			#myterm = re.compile("([^<\w]*)(" + regexterm +")([^<\w]*)", re.IGNORECASE|re.DOTALL)
 
 			mymatch = myterm.match(myhtml)
 			#if mymatch:
@@ -970,7 +970,7 @@ class wxSelectBox:
 		elif self.type == "Audio":
 			filter = _("Audio Files") + "(*.wav,*.aif,*.mp3,*.asf,*.wma,*.rm,*.ram)|*.wav;*.aif;*.mp3;*.asf;*.wma;*.rm;*.ram"
 		elif self.type == "Text":
-			filter = _("Document Files") + "(*.htm,*.html,*.rtf,*.doc)|*.htm;*.html;*.doc;*.rtf"
+			filter = _("Document Files") + "(*.htm,*.html)|*.htm;*.html"
 		elif self.type == "Present":
 			filter = _("Presentation Files") + "(*.ppt,*.htm,*.html,*.swf)|*.ppt;*.htm;*.html;*.swf"
 		else:
@@ -1037,7 +1037,7 @@ class wxSelectBox:
 			message =  _("Could not read file '%(filename)s from disk. Please check that the file exists in the location specified and that you have permission to open/view the file.") % {"filename":path} 
 			print message
 			if showgui:
-				wxMessageDialog(self, message, _("File Read Error"), wxOK).ShowModal()
+				wxMessageDialog(self.parent, message, _("File Read Error"), wxOK).ShowModal()
 				
 		if not error:
 			if not os.path.exists(destdir):
