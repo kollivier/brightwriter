@@ -12,7 +12,9 @@ from conman.validate import *
 myDictionary={}
 #import plugins.eclass as eclass
 myplugins = []
-rootdir = os.path.join(os.path.abspath(sys.path[0]))
+rootdir = os.path.abspath(sys.path[0])
+if not os.path.isdir(rootdir):
+	rootdir = os.path.dirname(rootdir)
 sys.path.append(rootdir)
 for item in os.listdir(os.path.join(rootdir, "plugins")):
 	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
@@ -85,7 +87,7 @@ class PDFPublisher:
 			raise
 		
 		#self.myfile.close()
-		self.pdffile = os.path.join(self.pdfdir, MakeFileName2(self.pub.nodes[0].content.name + ".pdf"))
+		self.pdffile = os.path.join(self.pdfdir, MakeFileName2(self.pub.nodes[0].content.metadata.name + ".pdf"))
 		bookfile = "#HTMLDOC\n"
 		bookfile = bookfile + "-f " + string.replace(self.pdffile, "\\", "/") + " -t pdf --no-toc --no-links --compression=9 --jpeg=90 --verbose\n" 
 		for file in self.files:
