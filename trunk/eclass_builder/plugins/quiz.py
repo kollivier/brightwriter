@@ -454,7 +454,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 	def GetData(self):
 		self.quiz = QuizPage()
-		self.quiz.LoadPage(os.path.join(self.dir, "EClass", self.node.content.filename))
+		self.quiz.LoadPage(os.path.join(self.dir, self.node.content.filename))
 
 		self.data['content'] = self._ItemsAsHTML()
 		#self.data['credit'] = ""
@@ -642,10 +642,10 @@ class EditorDialog(wxDialog):
 			for item in self.quiz.items:
 				self.lstQuestions.Append(item.presentation.text, item)
 		else:
-			filename = self.item.content.name[:27] + ".quiz"
+			filename = self.item.content.metadata.name[:27] + ".quiz"
 			counter = 1
 			while os.path.exists(os.path.join(self.parent.pub.directory, "EClass", filename)):
-				filename = "EClass/" + self.item.content.name[:27] + " " + `counter` + ".quiz"
+				filename = "EClass/" + self.item.content.metadata.name[:27] + " " + `counter` + ".quiz"
 				counter = counter + 1
 
 			self.item.content.filename = filename
