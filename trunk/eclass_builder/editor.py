@@ -796,10 +796,15 @@ class MainFrame2(wxFrame):
 		self.Destroy()	
 
 	def PublishToWeb(self, event):
+		value = self.pub.settings["SearchEnabled"]
+		self.pub.settings["SearchEnabled"] = ""
 		self.UpdateTextIndex()
+		self.UpdateContents()
 		mydialog = FTPUploadDialog(self)
 		mydialog.ShowModal()
 		mydialog.Destroy()
+		self.pub.settings["SearchEnabled"] = value
+		self.UpdateContents()
 
 	def PublishToPDF(self, event):
 		myPublisher = PDFPublisher(self)
@@ -1947,6 +1952,7 @@ class FTPUpload:
 		self.Directory = parent.pub.settings["FTPDirectory"]
 		self.Password = parent.ftppass #munge(parent.pub.settings["FTPUsername"], "foobar")
 		self.stopupload = False
+		self.useSearch = 0
 		if parent.pub.settings["FTPPassive"] == "yes":
 			self.usePasv = True
 		else:
@@ -1992,12 +1998,15 @@ class FTPUpload:
 			mydir = string.replace(mydir, "\\", "/")
 		#if not mydir in self.dirlist:
 		if not string.find(mydir, "C:") == 0:
-			self.dirlist.append(self.Directory + "/" + mydir)
+			fulldir = self.Directory + "/" + mydir
+			if not fulldir[0] == "/":
+				fulldir = "/" + fulldir
+			self.dirlist.append(fulldir)
 
 		for item in os.listdir(indir):
 			myitem = os.path.join(indir, item)
 			
-			if os.path.isfile(myitem) and not string.find(item, "._") == 0 and string.find(item, "Karrigell") == -1 and string.find(item, "httpserver") == -1:
+			if os.path.isfile(myitem) and not string.find(item, "._") == 0 and string.find(item, "Karrigell") == -1 and string.find(item, "httpserver") == -1 and string.find(item, "ftppass.txt") == -1:
 				finalname = string.replace(myitem, parentdir, "")
 				if wxPlatform == "__WXMSW__":
 					finalname = string.replace(finalname, "\\", "/")
@@ -2016,11 +2025,12 @@ class FTPUpload:
 			return
 		self.StartFTP()
 		self.CreateDirectories()
-		lastdir = self.Directory #this should have gotten created already
-		if not lastdir[-1] == "/":
-			lastdir = lastdir + "/"
+		#lastdir = self.Directory #this should have gotten created already
+		if self.Directory == "" or not self.Directory[-1] == "/":
+			self.Directory = self.Directory + "/"
 		if self.isDialog:
 			self.projGauge.SetRange(len(self.filelist))
+		myfile = None
 		for item in self.filelist[:]:
 			#self.cwd(self.txtDirectory.GetValue())
 			try:
@@ -2035,6 +2045,8 @@ class FTPUpload:
 				dir = self.Directory
 				if not dir[-1] == "/":
 					dir = dir + "/"
+				if not dir[0] == "/":
+					dir = "/" + dir
 				if string.find(item, "/") != -1:
 					mydir, myitem = os.path.split(item)					
 					dir = dir + string.replace(mydir, "\\", "/")
@@ -2049,8 +2061,8 @@ class FTPUpload:
 				#	print "mydir = " + mydir
 				#self.cwd(dir)
 				#lastdir = dir
-				#self.host.voidcmd('TYPE I')
-				print "item = " + dir + myitem
+				self.host.voidcmd('TYPE I')
+				#print "item = " + dir + myitem
 				self.mysocket = self.host.transfercmd('STOR ' + dir + myitem)
 				if self.isDialog:
 					self.fileGauge.SetRange(100)
@@ -2060,7 +2072,7 @@ class FTPUpload:
 					print "bytes == " + `bytes`
 					onepercent = 1
 				if self.mysocket:
-					self.mysocket.setblocking(1)
+					#self.mysocket.setblocking(1)
 					self.mysocket.settimeout(60)
 					if self.isDialog:
 						self.txtProgress.SetLabel(_("Current File: ") + myitem)
