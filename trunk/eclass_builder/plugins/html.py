@@ -413,10 +413,16 @@ class EditorFrame (wxFrame):
 		pass
 
 	def OnSelectAll(self, evt):
-		self.mozilla.SelectAll()
+		if self.notebook.GetSelection() == 0:
+			self.mozilla.SelectAll()
+		else:
+			self.source.SelectAll()
 
 	def OnSelectNone(self, evt):
-		self.mozilla.SelectNone()
+		if self.notebook.GetSelection() == 0:
+			self.mozilla.SelectNone()
+		else:
+			self.source.SetSelection(-1, self.source.GetCurrentPos())
 
 	def OnSpellCheck(self, evt):
 		self.mozilla.StartSpellCheck()
@@ -728,15 +734,24 @@ class EditorFrame (wxFrame):
 		self.dirty = true
 
 	def OnCut(self, evt):
-		self.mozilla.EditCommand("cmd_cut")
+		if self.notebook.GetSelection() == 0:
+			self.mozilla.EditCommand("cmd_cut")
+		else:
+			self.source.Cut()
 		self.dirty = true
 
 	def OnCopy(self, evt):
-		self.mozilla.EditCommand("cmd_copy")
+		if self.notebook.GetSelection() == 0:
+			self.mozilla.EditCommand("cmd_copy")
+		else:
+			self.source.Copy()
 		self.dirty = true
 
 	def OnPaste(self, evt):
-		self.mozilla.EditCommand("cmd_paste")
+		if self.notebook.GetSelection() == 0:
+			self.mozilla.EditCommand("cmd_paste")
+		else:
+			self.source.Paste()
 		self.dirty = true
 
 	def OnLinkButton(self, evt):	
