@@ -160,7 +160,7 @@ class MainFrame2(wxFrame):
 		self.CurrentDir = ""
 		self.CurrentTreeItem = None
 		self.myplugins = myplugins
-		self.pub = conman.conman.ConMan()
+		self.pub = conman.ConMan()
 		#dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
 		self.dirtyNodes = []
 		self.version = version.asString()
@@ -359,10 +359,11 @@ class MainFrame2(wxFrame):
 
 		#create the PopUp Menu used when a user right-clicks on an item
 		self.PopMenu = wxMenu()
+		self.PopMenu.Append(ID_ADD_MENU, _("Add New"))
+		self.PopMenu.Append(ID_TREE_REMOVE, _("Remove Page"), _("Remove the current page"))
 		PasteMenu2 = wxMenu()
 		PasteMenu2.Append(ID_PASTE_BELOW, _("Paste Below")+"\tCTRL+V")
 		PasteMenu2.Append(ID_PASTE_CHILD, _("Paste As Child"))
-		self.PopMenu.Append(ID_TREE_REMOVE, _("Remove Page"), _("Remove the current page"))
 		#self.PopMenu.Append(ID_CREATE_ECLS_LINK, _("Link to EClass"), _("Create a link to another EClass"))
 		self.PopMenu.AppendSeparator()
 		self.PopMenu.Append(ID_IMPORT_FILE, _("Import file..."))
@@ -780,7 +781,7 @@ class MainFrame2(wxFrame):
 			msg.ShowModal()
 			msg.Destroy()
 		else:
-			self.pub = conman.conman.ConMan()
+			self.pub = conman.ConMan()
 			result = NewPubDialog(self).ShowModal()
 			if result == wxID_OK:
 				self.isNewCourse = True
@@ -1027,7 +1028,8 @@ class MainFrame2(wxFrame):
 		except:
 			self.SetStatusText(_("Unknown error uploading file(s)."))
 			import traceback
-			self.log.write(traceback.print_exc())
+			if traceback.print_exc() != None:
+				self.log.write(traceback.print_exc())
 		self.SetStatusText("")
 		del busy
 
@@ -1108,7 +1110,7 @@ class MainFrame2(wxFrame):
 	def AddNewItem(self, event):
 		if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
 			parent = self.CurrentTreeItem
-			newnode = conman.conman.ConNode(conman.conman.GetUUID(),None, self.pub.CurrentNode)
+			newnode = conman.ConNode(conman.GetUUID(),None, self.pub.CurrentNode)
 			try:
 				dlg = PageEditorDialog(self, newnode, newnode.content, os.path.join(self.CurrentDir, "File"))
 				if dlg.ShowModal() == wxID_OK:
@@ -1277,7 +1279,7 @@ class MainFrame2(wxFrame):
 				nodeid = "node" + str(len(self.CurrentItem.children) + 1)
 				newnode = self.pub.AddChild(nodeid, "content" + str(len(self.pub.content) + 1))
 				self.CurrentItem = newnode
-				newpub = conman.conman.ConMan()
+				newpub = conman.ConMan()
 				newpub.directory = f.GetPath()	
 				newpub.LoadFromXML(os.path.join(f.GetPath(), "imsmanifest.xml"))
 				newnode.pub = newpub
@@ -1344,7 +1346,7 @@ class MainFrame2(wxFrame):
 			#self.CurrentDir = OpenPubDialog.GetDirectory()
 			busy = wxBusyCursor()
 			self.CurrentFilename = os.path.join(self.CurrentDir, "imsmanifest.xml")
-			self.pub = conman.conman.ConMan()
+			self.pub = conman.ConMan()
 			result = self.pub.LoadFromXML(self.CurrentFilename)
 			if result != "":
 				wxMessageDialog(self, result, _("Error loading XML file."), wxOK).ShowModal()
@@ -1355,6 +1357,10 @@ class MainFrame2(wxFrame):
 					subdir = os.path.join(self.pub.directory, dir)
 					if not os.path.exists(subdir):
 						os.mkdir(subdir)
+				pylucenedir = os.path.join(self.pub.directory, "index.pylucene")
+				if os.path.exists(pylucenedir):
+					os.rename(pylucenedir, os.path.join(self.pub.directory, "index.lucene"))
+
 				self.BindTowxTree(self.pub.nodes[0])
 				self.CurrentItem = self.pub.nodes[0]
 				self.CurrentTreeItem = self.wxTree.GetRootItem()
@@ -1998,7 +2004,7 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 				self.EndModal(wxID_OK)
 			self.status.SetLabel(_("Finished exporting!"))
 		elif self.parent.pub.settings["SearchProgram"] == "Lucene":
-			engine = indexer.SearchEngine(self, os.path.join(self.parent.CurrentDir, "index.pylucene"))
+			engine = indexer.SearchEngine(self, os.path.join(self.parent.CurrentDir, "index.lucene"))
 			engine.IndexFiles(self.parent.pub.nodes[0])
 			
 		self.exportfinished = True
@@ -2392,6 +2398,9 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 
 		try:
 			self.StartFTP()
+		except IOError, e:
+			mesesage = utils.getStdErrorMessage(e, {"filename":e.filename})
+			wxMessageDialog(message)
 		except ftplib.all_errors, e:
 			message = self.getFtpErrorMessage(e)
 			self.parent.logfile.write(message)
@@ -3156,7 +3165,7 @@ class PageEditorDialog (wxDialog):
 				files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.CurrentDir, page_plugin["Directory"], self.filename))
 				self.filename = os.path.join(page_plugin["Directory"], self.filename)
 			elif self.filename == "imsmanifest.xml": #another publication
-				self.node = conman.conman.ConMan()
+				self.node = conman.ConMan()
 				self.node.LoadFromXML(os.path.join(self.filedir, self.filename))
 			else:
 				files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.CurrentDir, "File"))
@@ -3189,16 +3198,29 @@ class PageEditorDialog (wxDialog):
 		self.content.metadata.description = self.txtDescription.GetValue()
 		self.content.metadata.name = self.txtTitle.GetValue()
 		self.content.metadata.rights.description = self.txtCredit.GetValue()
-		#if not self.txtAuthor.GetValue() == "":
-		self.UpdateContactInfo(self.txtAuthor.GetValue(), "Author")
+		if not self.txtAuthor.GetValue() == "":
+			self.UpdateContactInfo(self.txtAuthor.GetValue(), "Author")
 
-		#if not self.txtOrganization.GetValue() == "":
-		self.UpdateContactInfo(self.txtOrganization.GetValue(), "Content Provider")
+		if not self.txtOrganization.GetValue() == "":
+			self.UpdateContactInfo(self.txtOrganization.GetValue(), "Content Provider")
 
 		if not self.txtDate.GetValue() == "":
 			for person in self.content.metadata.lifecycle.contributors:
 				if person.role == "Author":
 					person.date = self.txtDate.GetValue()
+		else:
+			#check if we can remove any empty contact info that might be there
+			for person in self.content.metadata.lifecycle.contributors:
+				try:
+					if person.role == "Author" and self.txtAuthor.GetValue() == "":
+						self.content.metadata.lifecycle.contributors.remove(person)
+					elif person.role == "Content Provider" and self.txtOrganization.GetValue() == "":
+						self.content.metadata.lifecycle.contributors.remove(person)
+				except:
+					import traceback
+					if traceback.print_exc() != None:
+						self.parent.log.write(traceback.print_exc())
+
 		
 		self.content.metadata.classification.categories = []
 		for num in range(0, self.lstCategories.GetCount()):
@@ -3234,7 +3256,7 @@ class PageEditorDialog (wxDialog):
 				person.entity = newcard
 
 		if not hasPerson:
-			contrib = conman.conman.Contributor()
+			contrib = conman.Contributor()
 			contrib.role = role
 			contrib.entity = newcard
 			self.content.metadata.lifecycle.contributors.append(contrib)
@@ -3650,7 +3672,7 @@ class ThemeManager(wxDialog):
 			self.CurrentDir = win32api.GetShortPathName(self.CurrentDir)
 		#self.templates = parent.templates
 		self.lblPreview = wxStaticText(self, -1, _("Theme Preview"))
-		self.pub = conman.conman.ConMan()
+		self.pub = conman.ConMan()
 		self.pub.LoadFromXML(os.path.join(self.CurrentDir, "imsmanifest.xml"))
 		self.btnOK = wxButton(self, wxID_OK, _("OK"))
 		self.oldtheme = self.parent.pub.settings["Theme"]
