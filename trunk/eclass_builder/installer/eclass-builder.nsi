@@ -1,5 +1,5 @@
 !define MUI_PRODUCT "EClass.Builder" ;Define your own software name here
-!define MUI_VERSION "2.5.5.1" ;Define your own software version here
+!define MUI_VERSION "2.5.5.2" ;Define your own software version here
 Name "${MUI_PRODUCT} ${MUI_VERSION}"
 !include "MUI.nsh"
 !include "path_functions.nsi"
@@ -66,6 +66,7 @@ Section "Program Files" SecCopyUI
   File "..\plugins\eclass.py"
   File "..\plugins\quiz.py"
   File "..\plugins\html.py"
+  File /r "..\plugins\Quiz"
 
   SetOutPath "$INSTDIR\themes"
   File "..\themes\__init__.py"
