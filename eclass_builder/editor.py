@@ -429,8 +429,9 @@ class MainFrame2(wxFrame):
 		#self.splitter1.sizer.Add(self.wxTree, 1) 
 
 		self.previewbook = wxNotebook(self.splitter1, -1, style=wxCLIP_CHILDREN)
-		#self.booksizer = wxNotebookSizer(self.previewbook)
+		self.booksizer = wxNotebookSizer(self.previewbook)
 		self.previewpanel = wxPanel(self.previewbook, -1)
+		panelsizer = wxBoxSizer(wxHORIZONTAL)
 		self.splitter1.SplitVertically(self.wxTree, self.previewbook, 200)
 
 		if hasmozilla: 
@@ -441,10 +442,11 @@ class MainFrame2(wxFrame):
 			else:
 				self.browser = None
 			self.previewbook.AddPage(self.previewpanel, "Mozilla/Netscape")
-			self.mozilla = wxMozillaBrowser(self.previewbook, -1, style = wxSIMPLE_BORDER | wxCLIP_CHILDREN) 
+			self.mozilla = wxMozillaBrowser(self.previewpanel, -1, style = wxSIMPLE_BORDER | wxCLIP_CHILDREN) 
 			self.mozilla.Navigate = self.mozilla.LoadURL
 			if not self.browser: #if IE isn't loaded
 				self.browser = self.mozilla
+			panelsizer.Add(self.mozilla, 1, wxEXPAND)
 		else:
 			if wxPlatform == '__WXMSW__':
 				self.ie = wxIEHtmlWin(self.previewbook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
@@ -453,11 +455,9 @@ class MainFrame2(wxFrame):
 				self.browser = wxHtmlWindow(self.previewbook, -1, wxDefaultPosition, wxDefaultSize)
 				self.previewbook.AddPage(self.browser, _("HTML Preview"))
 		
-		#splittersizer = wxBoxSizer(wxHORIZONTAL)
 		#splittersizer.Add(self.wxTree, 0, wxEXPAND)
-		#splittersizer.Add(self.previewbook, 1, wxEXPAND)
-		#self.splitter1.SetAutoLayout(True)
-		#self.splitter1.SetSizer(splittersizer)
+		self.previewpanel.SetAutoLayout(True)
+		self.previewpanel.SetSizerAndFit(panelsizer)
 		self.mysizer = wxBoxSizer(wxHORIZONTAL)
 		self.mysizer.Add(self.splitter1, 1, wxEXPAND)
 		self.SetSizer(self.mysizer)
