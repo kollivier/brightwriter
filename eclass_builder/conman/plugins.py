@@ -78,6 +78,21 @@ class BaseHTMLPublisher:
 		self.data = {} #data dictionary used to hold template variables
 		#self.language, self.encoding = locale.getdefaultlocale()			
 
+	def GetCreditString(self):
+		if self.node:
+	  		creditstring = string.replace(self.node.content.metadata.rights.description, "\r\n", "<br>")#mac
+	  		creditstring = string.replace(creditstring, "\n", "<br>")#win
+	  		creditstring = string.replace(creditstring, "\r", "<br>")#unix
+	  		creditstring = creditstring + "<h5 align=\'center\'>[ <a href=\'javascript:window.close()\'>" + _("Close") + "</a> ]</h5>"
+	  		creditstring = string.replace(creditstring, "'", "\\'")
+	  		creditText = """[ <b><a href="javascript:openCredit('newWin','%s')">%s</a></b> ]""" % (TextToHTMLChar(creditstring), _("Credit"))
+	  		thisauthor = ""
+	  		for contrib in self.node.content.metadata.lifecycle.contributors:
+	  			if contrib.role == "Author":
+	  				thisauthor = contrib.entity.fname.value
+	  		creditText = "<h5>" + thisauthor + " " + creditText + "</h5>"
+			return creditText
+			
 	def Publish(self, parent=None, node=None, dir=None):
 		"""
 		This function prepares the Page to be converted by putting variables into self.data
@@ -93,6 +108,7 @@ class BaseHTMLPublisher:
 		self.data['description'] = TextToXMLAttr(node.content.description)
 		self.data['keywords'] = TextToXMLAttr(node.content.keywords)
 		self.data['URL'] = "pub/" + self.GetFilename(node.content.filename)
+		self.data['credit'] = self.GetCreditString()
 		filename = os.path.join(self.dir, "Text", node.content.filename)
 		filename = self.GetFilename(node.content.filename)
 		self.GetLinks()
@@ -100,7 +116,7 @@ class BaseHTMLPublisher:
 		templatefile = os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme[0], "default.tpl")
 		myhtml = self.ApplyTemplate(templatefile, self.data)
 		try:		
-			myfile = open(os.path.join(self.dir, "pub", filename), "w")
+			myfile = open(os.path.join(self.dir, "pub", os.path.basename(filename)), "w")
 			myfile.write(myhtml)
 			myfile.close()
 		except: 
@@ -148,6 +164,7 @@ class BaseHTMLPublisher:
 
 		#filename = string.replace(filename, ".html", "")
 		filename = os.path.splitext(filename)[0] #filename = string.replace(filename, ".htm", "")
+		filename = os.path.basename(filename)
 		filename = filename[:28]
 		filename = filename + ".htm"
 		filename = string.replace(filename, " ", "_")
