@@ -555,7 +555,6 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 	def GetData(self):
 		filename = os.path.join(self.dir, self.node.content.filename)
-		print filename
 		if not os.path.exists(filename):
 			filename = os.path.join(self.dir, "EClass", self.node.content.filename)
 		self.mypage = EClassPage()
@@ -824,7 +823,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 	def _CreateHTMLShell(self, mypage, node, content, ishotword=False):
 		template = "default.tpl"
-		temp = open(os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme[0], template), "r")
+		temp = open(os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme.themename, template), "r")
 
 		html = unicode(temp.read(), 'iso8859-1', 'replace')
 		temp.close()
