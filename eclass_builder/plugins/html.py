@@ -934,7 +934,7 @@ class LinkPropsDialog(wxDialog):
 		self.sizer.Add(self.chkNewWindow)
 
 		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(100, 25, 1, wxEXPAND)
+		btnsizer.Add((100, 25), 1, wxEXPAND)
 		btnsizer.Add(self.btnOK)
 		btnsizer.Add(self.btnCancel)
 
@@ -1000,7 +1000,7 @@ class BookmarkPropsDialog(wxDialog):
 		self.sizer.Add(self.txtName, 1, wxEXPAND)
 
 		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(1, 1, 1, wxEXPAND)
+		btnsizer.Add((1, 1), 1, wxEXPAND)
 		btnsizer.Add(self.btnOK)
 		btnsizer.Add(self.btnCancel)
 
@@ -1054,7 +1054,7 @@ class OLPropsDialog(wxDialog):
 		self.sizer.Add(spinsizer)
 
 		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(1, 1, 1, wxEXPAND)
+		btnsizer.Add((1, 1), 1, wxEXPAND)
 		btnsizer.Add(self.btnOK)
 		btnsizer.Add(self.btnCancel)
 
@@ -1097,7 +1097,7 @@ class ULPropsDialog(wxDialog):
 		self.sizer.Add(self.lstListType, 1, wxEXPAND | wxALL, 4)
 
 		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(1, 1, 1, wxEXPAND)
+		btnsizer.Add((1, 1), 1, wxEXPAND)
 		btnsizer.Add(self.btnOK)
 		btnsizer.Add(self.btnCancel)
 
@@ -1161,7 +1161,7 @@ class ImagePropsDialog(wxDialog):
 		self.sizer.Add(boxsizer)
 
 		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(100, 25, 1, wxEXPAND | wxALL, 4)
+		btnsizer.Add((100, 25), 1, wxEXPAND | wxALL, 4)
 		btnsizer.Add(self.btnOK, 0, wxALL, 4)
 		btnsizer.Add(self.btnCancel, 0, wxALL, 4)
 		self.sizer.Add(btnsizer, 0, wxEXPAND, 4)
@@ -1237,7 +1237,7 @@ class CellPropsDialog(wxDialog):
 		self.sizer.Add(alignsizer, 0, wxEXPAND | wxALL, 4)
 
 		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(100, 25, 1, wxEXPAND | wxALL, 4)
+		btnsizer.Add((100, 25), 1, wxEXPAND | wxALL, 4)
 		btnsizer.Add(self.btnOK, 0, wxALL, 4)
 		btnsizer.Add(self.btnCancel, 0, wxALL, 4)
 		self.sizer.Add(btnsizer, 0, wxEXPAND, 4)
@@ -1320,7 +1320,7 @@ class TablePropsDialog(wxDialog):
 		#self.sizer.Add(colorsizer, 0, wxALL, 4)
 
 		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(100, 25, 1, wxEXPAND | wxALL, 4)
+		btnsizer.Add((100, 25), 1, wxEXPAND | wxALL, 4)
 		btnsizer.Add(self.btnOK, 0, wxALL, 4)
 		btnsizer.Add(self.btnCancel, 0, wxALL, 4)
 		self.sizer.Add(btnsizer, 0, wxEXPAND, 4)
@@ -1388,7 +1388,7 @@ class CreateTableDialog(wxDialog):
 		self.sizer.Add(boxsizer, 0)
 
 		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(100, 25, 1, wxEXPAND | wxALL, 4)
+		btnsizer.Add((100, 25), 1, wxEXPAND | wxALL, 4)
 		btnsizer.Add(self.btnOK, 0, wxALL, 4)
 		btnsizer.Add(self.btnCancel, 0, wxALL, 4)
 		self.sizer.Add(btnsizer, 0, wxALL, 4)
