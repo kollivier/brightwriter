@@ -10,6 +10,7 @@ from conman.HTMLFunctions import *
 from conman import plugins
 from conman.file_functions import *
 from StringIO import StringIO
+import utils 
 
 USE_MINIDOM=0
 try:
@@ -23,6 +24,8 @@ if USE_MINIDOM:
 from threading import *
 import traceback
 #from xml.dom.minidom import parse
+
+log = utils.LogFile("errlog.txt")
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into
@@ -271,8 +274,9 @@ class QuizPage:
 			myfile.write(myxml)
 			myfile.close()
 		except:
-			message = _("There was an error writing the file %(filename)s to disk. Please check that you have enough hard disk space to write this file and that you have the correct permissions to save the file.") % {"filename":filename}
-			print "Quiz Error: Could not save " + filename + " to disk." 
+			global log
+			message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": filename})
+			log.write(message)
 			raise IOError(message)
 
 		return ""
@@ -467,8 +471,9 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			CopyFiles(os.path.join(self.parent.AppDir, "plugins", "Quiz", "Files", "Graphics"), os.path.join(self.dir, "Graphics", "Quiz"), 1)
 
 		except: 
-			message = "Could not copy Quiz files from " + os.path.join(self.parent.AppDir, "plugins", "Quiz", "Files")  + " to your EClass. Please check that you have enough hard disk space to write this file and that you have permission to write to the file."
-			print `message`
+			global log
+			message = _("Could not copy Quiz files from %(directory)s to your EClass. Please check that you have enough hard disk space to write this file and that you have permission to write to the directory.") % {"directory":os.path.join(self.parent.AppDir, "plugins", "Quiz", "Files")}
+			log.write(message)
 			raise IOError, message
 			return ""	
 		return ""
@@ -640,7 +645,6 @@ class EditorDialog(wxDialog):
 
 		if len(self.item.content.filename) > 0:	
 			try:
-				print self.item.content.filename
 				if not os.path.exists(os.path.join(self.parent.CurrentDir, self.item.content.filename)):
 					self.quiz.SaveAsXML(os.path.join(self.parent.CurrentDir, self.item.content.filename))
 	
@@ -688,8 +692,13 @@ class EditorDialog(wxDialog):
 		EVT_LEFT_DCLICK(self.lstQuestions, self.btnEditClicked)
 
 	def btnOKClicked(self, event):
-		self.quiz.SaveAsXML(os.path.join(self.parent.CurrentDir, self.item.content.filename))
-		self.EndModal(wxID_OK)
+		filename = os.path.join(self.parent.CurrentDir, self.item.content.filename)
+		try:
+			self.quiz.SaveAsXML(filename)
+			self.EndModal(wxID_OK)
+		except IOError:
+			message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
+			wxMessageBox(message, _("Cannot Save File"), wxICON_ERROR)
 
 	def btnAddClicked(self,event):
 		editor = QuestionEditor(self)
