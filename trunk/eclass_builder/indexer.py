@@ -20,10 +20,8 @@ class SearchEngine:
 	def IndexDoc(self, node):
 		doc = PyLucene.Document()
 		statustext = "Indexing page " + node.content.metadata.name
-		print statustext
 		self.publisher = None
 		ext = os.path.splitext(node.content.filename)[1][1:]
-		print "ext = " + ext
 		for plugin in self.parent.parent.myplugins:
 			if ext in plugin["Extension"]:
 				exec("import plugins." + plugin["Name"])
@@ -50,9 +48,17 @@ class SearchEngine:
 		if org:
 			doc.add(PyLucene.Field("organization", author.entity.fname.value, True, True, True))
 
-		doc.add(PyLucene.Field("contents", self.GetTextToIndex(node), True, True, True))
+		mytext = ""
+		try: 
+			#unfortunately, sometimes conversion is hit or miss. Worst case, index the doc with
+			#no text.
+			mytext = self.GetTextToIndex(node)
+		except:
+			pass
 
-		print "Adding " + node.content.metadata.name + " to index."
+		doc.add(PyLucene.Field("contents", mytext, True, True, True))
+
+		#print "Adding " + node.content.metadata.name + " to index."
 		if self.writer:
 			self.writer.addDocument(doc)
 
@@ -64,8 +70,12 @@ class SearchEngine:
 		self.writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), True)
 		
 		#this will index the root node and all child nodes
-		self.IndexDoc(rootnode)
-
+		try:
+			self.IndexDoc(rootnode)
+		except:
+			import traceback
+			print traceback.print_exc()
+		print "Hello world!"
 		self.writer.optimize()
 		self.writer.close()
 
@@ -74,6 +84,7 @@ class SearchEngine:
 		Here we convert the contents to text for indexing by Lucene.
 		"""
 		filename = ""
+		data = ""
 		if self.publisher:
 			try:
 				self.publisher.Publish(self.parent.parent, node, node.dir)
@@ -81,19 +92,6 @@ class SearchEngine:
 				if self.publisher:
 					filename = self.publisher.GetFilename(node.content.filename)
 				data = open(os.path.join(node.dir, "pub", filename), "rb").read()
-				convert = TextConverter()
-				convert.feed(data)
-				convert.close()
-				encoding = "iso-8859-1"
-				if convert.encoding != "":
-					encoding = convert.encoding
-				text = convert.text
-
-				try: 
-					text = convert.text.decode(encoding)
-				except:
-					text = convert.text.decode(locale.getdefaultlocale()[1])
-				return text
 			except:
 				import traceback
 				print traceback.print_exc()
@@ -102,18 +100,30 @@ class SearchEngine:
 			try:
 				myconverter = converter.DocConverter(self.parent)
 				thefilename = myconverter.ConvertFile(os.path.join(node.dir, node.content.filename), "html")
-				data = open(thefilename, "rb").read()
-				convert = TextConverter()
-				convert.feed(data)
-				convert.close()
-				return convert.getText()
-				os.remove(thefilename)
+				myfile = open(thefilename, "rb")
+				data = myfile.read()
+				myfile.close()
 			except:
+				print "There was an error here."
 				import traceback
 				print traceback.print_exc()
-				if os.path.exists(thefilename):
-					os.remove(thefilename)
+				#if os.path.exists(thefilename):
+				#	os.remove(thefilename)
 				return ""
+
+		convert = TextConverter()
+		convert.feed(data)
+		convert.close()
+		encoding = "iso-8859-1"
+		if convert.encoding != "":
+			encoding = convert.encoding
+		text = convert.text
+
+		try: 
+			text = convert.text.decode(encoding)
+		except:
+			text = convert.text.decode(locale.getdefaultlocale()[1])
+		return text
 
 	def SearchFiles(self, query):
 		return []
@@ -145,6 +155,9 @@ class TextConverter(HTMLParser):
         tagname = string.lower(tag)
         if tagname == self.currentTag:
             self.currentTag = ""
+
+	def handle_comment(self, data):
+		pass 
 
     def handle_data(self, data):
         if self.currentTag == "title":
