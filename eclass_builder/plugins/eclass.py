@@ -10,12 +10,19 @@ from conman import plugins
 from conman.HTMLFunctions import *
 from conman.HTMLTemplates import *
 from StringIO import StringIO
-from xml.dom.ext.reader.Sax import FromXmlFile
+
+USE_MINIDOM=0
+try:
+	from xml.dom.ext.reader.Sax import FromXmlFile
+except: 
+	USE_MINIDOM=1
+
+if USE_MINIDOM:
+	from xml.dom import minidom
+
 from threading import *
 import traceback
 import sys
-
-#from xml.dom.minidom import parse
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into
@@ -99,8 +106,11 @@ class EClassPage:
 		"""
 		self.filename = filename
 		self.directory = os.path.split(filename)[0]
-		try:	
-			doc = FromXmlFile(filename)
+		try:
+			if USE_MINIDOM:
+				doc = minidom.parse(open(filename))
+			else:	
+				doc = FromXmlFile(filename)
 			self.LoadDoc(doc)
 		except:
 			print traceback.print_exc()

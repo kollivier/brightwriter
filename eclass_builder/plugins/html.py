@@ -12,11 +12,9 @@ if __name__ != "__main__":
 	from conman import plugins
 	#from conman.colorbutton import *
 from StringIO import StringIO
-from xml.dom.ext.reader.Sax import FromXmlFile
 from threading import *
 import traceback
 import sys
-#from xml.dom.minidom import parse
 
 ID_NEW = wxNewId()
 ID_OPEN = wxNewId()

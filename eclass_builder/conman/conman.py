@@ -8,9 +8,14 @@ import sys
 #import HTMLPublish
 import xml_settings
 from validate import *
-from xml.dom.ext.reader.Sax import FromXmlFile
+USE_MINIDOM=0
+try:
+	from xml.dom.ext.reader.Sax import FromXmlFile
+except:
+	USE_MINIDOM=1
 #from xml import xpath
-#from xml.dom.minidom import parse
+if USE_MINIDOM:
+	from xml.dom import minidom
 
 class ConMan:
 	"""
@@ -125,7 +130,10 @@ class ConMan:
 		self.updatedids = {}
 		self.nodes = []
 		try: 
-			doc = FromXmlFile(filename)
+			if USE_MINIDOM:
+				doc = minidom.parse(open(filename))
+			else:
+				doc = FromXmlFile(filename)
 		except:
 			return "The EClass project file cannot be loaded. The error message is: " + `sys.exc_value.args`
 
