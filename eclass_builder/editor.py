@@ -19,7 +19,6 @@ import string, time, cStringIO, os, re, glob, csv
 import conman
 import version
 import utils
-import utils.log as log
 import indexer
 
 import xml.dom.minidom
@@ -186,6 +185,10 @@ class MainFrame2(wxFrame):
 		self.currentTheme = self.themes.FindTheme("Default (no frames)")
 		self.settings = xml_settings.XMLSettings()
 		wxInitAllImageHandlers()
+
+		self.log = utils.LogFile("errlog.txt")
+		self.log.write(time.strftime("%B %d, %Y %H:%M:%S - starting EClass.Builder...\n\n", time.localtime()))
+
 		if wxPlatform == '__WXMSW__':
 			import _winreg as wreg
 			key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
@@ -289,7 +292,7 @@ class MainFrame2(wxFrame):
 				self.vcardlist[myvcard.fname.value] = myvcard
 			except:
 				import traceback
-				print traceback.print_exc()
+				self.log.write(traceback.print_exc())
 				errOccurred = True
 				errCards.append(card)
 
@@ -298,11 +301,8 @@ class MainFrame2(wxFrame):
 			wxMessageBox(message)
 
 		self.statusBar = self.CreateStatusBar()
-
-		if wxPlatform == '__WXMSW__':
-			self.logfile = log.LogFile("errlog.txt")
-			self.logfile.write(time.strftime("%B %d, %Y %H:%M:%S - starting EClass.Builder...\n\n", time.localtime()))
-
+		if self.Platform == "win32":
+			self.SetIcon(wxIcon(os.path.join(self.AppDir, "icons", "eclass_builder.ico"), wxBITMAP_TYPE_ICO))
 		#load icons
 		icnNewProject = wxBitmap(os.path.join(self.AppDir, "icons", "book_green16.gif"), wxBITMAP_TYPE_GIF)
 		icnOpenProject = wxBitmap(os.path.join(self.AppDir, "icons", "open16.gif"), wxBITMAP_TYPE_GIF)
@@ -356,22 +356,9 @@ class MainFrame2(wxFrame):
 		PasteMenu.Append(ID_PASTE_CHILD, _("Paste As Child"))
 		#self.PasteMenu = PasteMenu
 		EditMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu)
+
 		#create the PopUp Menu used when a user right-clicks on an item
 		self.PopMenu = wxMenu()
-		#if wxPlatform != "__WXMAC__":
-		#	AddMenu = wxMenu()
-		#	for plugin in myplugins:
-		#		if plugin["Name"] == "eclass":
-		#			AddMenu.Append(ID_TREE_ADD_ECLASS, plugin["FullName"], _("Create a new ") + " " + plugin["FullName"])
-		#		else:
-		#			AddMenu.Append(wxNewId(), plugin["FullName"], _("Create a new ") + " " + plugin["FullName"])
-		self.PopMenu.Append(ID_ADD_MENU, _("Add New"))
-		#else:
-		#	for plugin in myplugins:
-		#		if plugin["Name"] == "eclass":
-		#			self.PopMenu.Append(ID_TREE_ADD_ECLASS ,_("New") + " " + plugin["FullName"], _("Create a new ") + " " + plugin["FullName"])
-		#		else:
-		#			self.PopMenu.Append(wxNewId(), _("New") + " " + plugin["FullName"], _("Create a new ") + " " +  plugin["FullName"])
 		PasteMenu2 = wxMenu()
 		PasteMenu2.Append(ID_PASTE_BELOW, _("Paste Below")+"\tCTRL+V")
 		PasteMenu2.Append(ID_PASTE_CHILD, _("Paste As Child"))
@@ -628,7 +615,7 @@ class MainFrame2(wxFrame):
 			if myitem.parent.children.count(myitem) > 0:
 				myitem.parent.children.remove(myitem)
 			else:
-				self.logfile.write("Item's parent doesn't have it as a child?!")
+				self.log.write("Item's parent doesn't have it as a child?!")
 
 			self.wxTree.Delete(self.CutNode)
 			self.dirtyNodes.append(myitem.back())
@@ -750,10 +737,6 @@ class MainFrame2(wxFrame):
 		#self.currentTheme = mythememodule
 		publisher = self.currentTheme.HTMLPublisher(self)
 		result = publisher.Publish()
-		
-	#def SplitterSize(self, event):
-	#	if self.GetAutoLayout():
-	#		self.Layout()
 
 	def LoadProps(self, event):
 		props = ProjectPropsDialog(self)
@@ -813,17 +796,6 @@ class MainFrame2(wxFrame):
 					self.CurrentDir = win32api.GetShortPathName(self.CurrentDir)
 				self.BindTowxTree(self.pub.nodes[0])	
 				self.CurrentTreeItem = self.wxTree.GetRootItem()
-				#hardcoded use of EClass! Can't be helped. =)
-				#dplugin = "eclass"
-				#if self.settings["DefaultPlugin"] != "":
-				#	for plugin in myplugins:
-				#		if plugin["FullName"] == self.settings["DefaultPlugin"]:
-				#			dplugin = plugin["Name"]
-
-				#theme = self.themes[0]
-				#for mytheme in self.themes:
-				#	if mytheme[0] == "Default (frames)":
-				#		theme = mytheme
 				
 				self.currentTheme = self.themes.FindTheme("Default (frames)")
 				self.AddNewEClassPage(None, self.pub.name, True)
@@ -851,11 +823,6 @@ class MainFrame2(wxFrame):
 				return
 		
 		self.settings.SaveAsXML(os.path.join(self.PrefDir,"settings.xml"))
-		#self.PasteMenu.Destroy()
-		#if wxPlatform == '__WXMSW__':
-			#self.outlog.close()
-			#sys.stdout = self.oldstdout
-			#sys.stderr = self.oldstderr
 		self.Destroy()	
 
 	def PublishToWeb(self, event):
@@ -954,7 +921,7 @@ class MainFrame2(wxFrame):
 						except:	
 							message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
 							import traceback
-							self.logfile.write(traceback.print_exc())
+							self.log.write(traceback.print_exc())
 							dialog = wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK)
 							dialog.ShowModal()
 							dialog.Destroy()
@@ -1027,7 +994,7 @@ class MainFrame2(wxFrame):
 		except:
 			message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
 			import traceback
-			self.logfile.write(traceback.print_exc())
+			self.log.write(traceback.print_exc())
 			wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK).ShowModal()
 			return False
 		del busy
@@ -1060,7 +1027,7 @@ class MainFrame2(wxFrame):
 		except:
 			self.SetStatusText(_("Unknown error uploading file(s)."))
 			import traceback
-			self.logfile.write(traceback.print_exc())
+			self.log.write(traceback.print_exc())
 		self.SetStatusText("")
 		del busy
 
@@ -1078,9 +1045,14 @@ class MainFrame2(wxFrame):
 				self.CurrentFilename = f.GetPath()
 				self.isDirty = False
 			f.Destroy()
-		file = open(os.path.join(self.CurrentDir, "ftppass.txt"), "w")
-		file.write(munge(self.ftppass, 'foobar'))
-		file.close()
+		ftppass_file = os.path.join(self.CurrentDir, "ftppass.txt")
+		try:
+			file = open(ftppass_file, "w")
+			file.write(munge(self.ftppass, 'foobar'))
+			file.close()
+		except:
+			message = utils.getStdErrorMessage("IOError", {"filename":ftppass_file, "type":"write"})
+			wxMessageDialog(self, message, _("Could Not Save File"), wxOK).ShowModal()
 		
 		self.CreateDocumancerBook()
 
@@ -1092,15 +1064,20 @@ class MainFrame2(wxFrame):
 
 	def CreateDocumancerBook(self):
 		#update the Documancer book file
+		filename = os.path.join(self.CurrentDir, "eclass.dmbk")
 		bookdata = open(os.path.join(self.AppDir,"bookfile.book.in")).read()
 		bookdata = string.replace(bookdata, "<!-- insert title here-->", self.pub.name)
 		if self.pub.settings["SearchEnabled"] == "1" and self.pub.settings["SearchProgram"] == "Lucene":
 			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "<attr name='indexed'>1</attr>\n    <attr name='cachedir'>.</attr>")
 		else: 
 			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "")
-		myfile = open(os.path.join(self.CurrentDir, "eclass.dmbk"), "w")
-		myfile.write(bookdata)
-		myfile.close()	
+		try:
+			myfile = open(filename, "w")
+			myfile.write(bookdata)
+			myfile.close()
+		except:
+			message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
+			wxMessageBox(message, _("Could Not Save File"), wxICON_ERROR)
 
 	def ReloadThemes(self):
 		self.themes = []
@@ -1149,7 +1126,7 @@ class MainFrame2(wxFrame):
 				dlg.Destroy()
 			except:
 				import traceback
-				self.logfile.write(traceback.print_exc())
+				self.log.write(traceback.print_exc())
 				wxMessageBox(_("There was an unknown error when creating the new page. The page was not created. Detailed error information is in the 'errlog.txt' file."))
 	
 	def AddNewEClassPage(self, event, name="", isroot=False):
@@ -1170,7 +1147,6 @@ class MainFrame2(wxFrame):
 						parent = self.CurrentTreeItem
 						newnode = self.pub.AddChild("", "")
 					else:
-						print "Is Root"
 						parent = None
 						newnode = self.CurrentItem
 					self.CurrentItem = newnode
@@ -1194,7 +1170,7 @@ class MainFrame2(wxFrame):
 							self.CurrentItem.parent.children.remove(self.CurrentItem)
 					except:
 						import traceback
-						self.logfile.write(traceback.print_exc())
+						self.log.write(traceback.print_exc())
 						wxMessageBox(_("There was an unknown error when creating the new page. The page was not created. Detailed error information is in the 'errlog.txt' file."))
 	
 				self.isNewCourse = False
@@ -1233,7 +1209,8 @@ class MainFrame2(wxFrame):
 					self.UploadPage()
 			except:
 				import traceback
-				self.logfile.write(traceback.print_exc())
+				if traceback.print_exc() != None:
+					self.log.write(traceback.print_exc())
 
 	def UploadPage(self, event = None):
 		ftpfiles = []
@@ -1267,21 +1244,17 @@ class MainFrame2(wxFrame):
 
 	def UpdateContents(self):
 		self.statusBar.SetStatusText(_("Updating table of contents..."))
-		#mythememodule = ""
-		#mytheme = self.currentTheme
-		#if not mytheme == "":
-		#	for theme in self.themes:
-		#		if mytheme[0] == theme[0]:
-		#			mythememodule = theme[1]
-		#			self.currentTheme = theme
-		#else:
-		#	mythememodule = self.themes[0][1]
-		#	self.currentTheme = self.themes[0]
-		#exec("mytheme = themes." + mythememodule)
 		if not self.currentTheme:
 			self.currentTheme = self.themes.FindTheme("Default (frames)")
-		publisher = self.currentTheme.HTMLPublisher(self)
-		result = publisher.CreateTOC()
+		try:
+			publisher = self.currentTheme.HTMLPublisher(self)
+			result = publisher.CreateTOC()
+		except IOError, e:
+			message = utils.getStdErrorMessage("IOError", {"filename": e.filename, "type":"write"})
+			wxMessageBox(message, _("Could Not Save File"), wxICON_ERROR)
+		except:
+			pass #we shouldn't do this, but there may be non-fatal errors we shouldn't
+				 #catch
 		self.statusBar.SetStatusText("")
 
 	def GetPublisher(self, filename):
@@ -1343,7 +1316,7 @@ class MainFrame2(wxFrame):
 					self.isDirty = True
 		except:
 			import traceback
-			self.logfile.write(traceback.print_exc())
+			self.log.write(traceback.print_exc())
 			wxMessageBox(_("There was an unknown error when attempting to start the page editor. Detailed error information is in the 'errlog.txt' file."))
 	
 	
@@ -1527,7 +1500,7 @@ class MainFrame2(wxFrame):
 				self.browser.LoadPage(filename) 
 		else:
 			#self.status.SetStatusText("Cannot find file: "+ filename)
-			self.logfile.write("Error previewing file: " + filename)
+			self.log.write("Error previewing file: " + filename)
 		
 
 	def BindTowxTree(self, root):
@@ -1716,10 +1689,6 @@ class ProjectPropsDialog(wxDialog):
 
 		self.pubSizer = wxBoxSizer(wxVERTICAL)
 		self.pubSizer.Add(self.chkFilename, 0, wxALL, 4)
-		#self.pubSizer.Add(self.lbltheme, 0, wxALL, 4)
-		#self.pubSizer.Add(self.cmbTheme, 0, wxEXPAND, 4)
-		#self.pubSizer.Add(self.btnUpdateTheme, 0, wxALL, 4)
-		#self.pubSizer.AddGrowableCol(1)
 
 		panel.SetAutoLayout(True)
 		panel.SetSizer(self.pubSizer)
@@ -3122,7 +3091,6 @@ class PageEditorDialog (wxDialog):
 			self.txtAuthor.SetValue(oldvalue)
 		else:
 			for person in self.content.metadata.lifecycle.contributors:
-				print "Person's role is: " + person.role
 				if person.role == "Author":
 					self.txtAuthor.SetValue(person.entity.fname.value)
 					if person.date != "":
@@ -3166,7 +3134,6 @@ class PageEditorDialog (wxDialog):
 			self.filename = f.GetFilename()
 			isEClassPluginPage = False
 			fileext = os.path.splitext(self.filename)[1][1:]
-			print fileext
 			page_plugin = None
 			for myplugin in myplugins:
 				if (fileext in myplugin["Extension"]):
