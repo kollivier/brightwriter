@@ -1,0 +1,8 @@
+*.jpg -k 'b'
+*.jpeg -k 'b'
+*.gif -k 'b'
+*.exe -k 'b'
+*.dll -k 'b'
+*.so -k 'b'
+*.dylib -k 'b'
+*.mo -k 'b'
