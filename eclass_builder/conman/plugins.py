@@ -108,7 +108,7 @@ class BaseHTMLPublisher:
 		self.parent = parent
 		self.node = node
 		self.dir = dir
-		self.data['name'] = TextToHTMLChar(node.content.name)
+		self.data['name'] = TextToHTMLChar(node.content.metadata.name)
 		self.data['description'] = TextToXMLAttr(node.content.description)
 		self.data['keywords'] = TextToXMLAttr(node.content.keywords)
 		self.data['URL'] = "pub/" + self.GetFilename(node.content.filename)
