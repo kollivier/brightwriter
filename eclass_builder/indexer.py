@@ -30,25 +30,25 @@ class SearchEngine:
 				self.publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
 		if self.parent.txtProgress:
 			self.parent.txtProgress.WriteText(statustext + "\n")
-		doc.add(PyLucene.Field("Title", node.content.metadata.name, True, True, True))
+		doc.add(PyLucene.Field("title", node.content.metadata.name, True, True, True))
 		filename = node.content.filename
 		if self.publisher:
 			filename = "pub/" + self.publisher.GetFilename(node.content.filename)
 		import urllib
 		filename = string.replace(filename, "\\", "/")
-		doc.add(PyLucene.Field("URL", filename, True, True, True))
-		doc.add(PyLucene.Field("Description", node.content.metadata.description, True, True, True))
-		doc.add(PyLucene.Field("Keywords", node.content.metadata.keywords, True, True, True))
+		doc.add(PyLucene.Field("url", filename, True, True, True))
+		doc.add(PyLucene.Field("description", node.content.metadata.description, True, True, True))
+		doc.add(PyLucene.Field("keywords", node.content.metadata.keywords, True, True, True))
 
 		#add the author to the index
 		author = node.content.metadata.lifecycle.getAuthor()
 		if author:
-			doc.add(PyLucene.Field("Author", author.entity.fname.value, True, True, True))
-			doc.add(PyLucene.Field("Date", author.date, True, True, True))
+			doc.add(PyLucene.Field("author", author.entity.fname.value, True, True, True))
+			doc.add(PyLucene.Field("date", author.date, True, True, True))
 
 		org = node.content.metadata.lifecycle.getOrganization()
 		if org:
-			doc.add(PyLucene.Field("Organization", author.entity.fname.value, True, True, True))
+			doc.add(PyLucene.Field("organization", author.entity.fname.value, True, True, True))
 
 		doc.add(PyLucene.Field("contents", self.GetTextToIndex(node), True, True, True))
 
