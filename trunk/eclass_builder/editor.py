@@ -15,7 +15,6 @@ from wxbrowser import *
 
 from conman.validate import *
 from wxPython.stc import * #this is for the HTML plugin
-from xml.dom.ext.reader.Sax import FromXmlFile
 import sys, urllib2, cPickle
 import string
 import time
