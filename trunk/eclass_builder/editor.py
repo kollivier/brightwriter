@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from wxPython.wx import *
+from wxPython.lib import newevent
 
 hasmozilla = True
 try:
@@ -144,7 +145,6 @@ class MainFrame2(wxFrame):
 		import sys
 		reload(sys)
 		sys.setdefaultencoding(self.encoding)
-
 		self.CurrentFilename = ""
 		self.isDirty = False
 		self.isNewCourse = False
@@ -345,7 +345,8 @@ class MainFrame2(wxFrame):
 		self.toolbar.AddSeparator()
 		self.toolbar.AddSimpleTool(ID_HELP, icnHelp, _("View Help"), _("View Help File"))
 		#self.toolbar.AddSimpleTool(ID_BUG, icnBug, _("Send Feedback"), _("Send Feedback"))
-		self.toolbar.SetToolBitmapSize(wxSize(16,16))
+		if wxPlatform != "__WXMAC__":
+			self.toolbar.SetToolBitmapSize(wxSize(16,16))
 		self.toolbar.Realize()
 
 		EditMenu = wxMenu()
@@ -540,6 +541,8 @@ class MainFrame2(wxFrame):
 		EVT_MENU(self, ID_IMPORT_FILE, self.AddNewItem)
 		EVT_MENU(self, ID_REFRESH_THEME, self.OnRefreshTheme)
 		EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
+		if wxPlatform == "__WXMAC__":
+			EVT_UPDATE_UI(self, self.GetId(), self.OnActivate)
 		EVT_MENU(self, ID_CONTACTS, self.OnContacts)
 
 		EVT_CLOSE(self, self.TimeToQuit)
@@ -560,8 +563,15 @@ class MainFrame2(wxFrame):
 
 		if not self.settings["ShowStartup"] == "False":
 			dlgStartup = StartupDialog(self)
-			dlgStartup.ShowModal()
+			result = dlgStartup.ShowModal()
 			dlgStartup.Destroy()
+			
+			if result == 0:
+				self.NewProject(None)
+			if result == 1:
+				self.OnOpen(None)
+			if result == 2:
+				self.OnHelp(None)
 
 	def SkipNotebookEvent(self, evt):
 		evt.Skip()
@@ -574,6 +584,9 @@ class MainFrame2(wxFrame):
 		elif self.settings["Language"] == "Francais":
 			lang_dict["fr"].install()
 
+	def OnActivate(self, evt):
+		self.menuBar.Refresh()
+	
 	def OnKeyPressed(self, evt):
 		self.IsCtrlDown = evt.ControlDown()
 		evt.Skip()		
@@ -602,7 +615,7 @@ class MainFrame2(wxFrame):
 			beforenode = self.wxTree.GetPyData(sel_item)
 			beforenode.parent.children.insert(beforenode.parent.children.index(beforenode) + 1, self.wxTree.GetPyData(pastenode))
 		elif event.GetId() == ID_PASTE_CHILD:
-			newitem = self.wxTree.InsertItem(sel_item, sel_item, self.wxTree.GetItemText(pastenode), -1, -1, wxTreeItemData(self.wxTree.GetPyData(pastenode)))
+			newitem = self.wxTree.AppendItem(sel_item, self.wxTree.GetItemText(pastenode), -1, -1, wxTreeItemData(self.wxTree.GetPyData(pastenode)))
 			parentnode = self.wxTree.GetPyData(sel_item)
 			parentnode.children.append(self.wxTree.GetPyData(pastenode))
 			
@@ -694,6 +707,9 @@ class MainFrame2(wxFrame):
 		self.menuBar.EnableTop(self.menuBar.FindMenu(_("Page")), value)
 		self.menuBar.EnableTop(self.menuBar.FindMenu(_("Edit")), value)
 		self.menuBar.EnableTop(self.menuBar.FindMenu(_("Tools")), value)
+		if wxPlatform == "__WXMAC__":
+			#still needed?
+			self.menuBar.Refresh()
 		#self.PopMenu.FindItemById(ID_ADD_MENU).Enable(value)
 		#self.PopMenu.FindItemById(ID_TREE_REMOVE).Enable(value)
 		#self.PopMenu.FindItemById(ID_CREATE_ECLS_LINK).Enable(value)
@@ -858,7 +874,7 @@ class MainFrame2(wxFrame):
 			if wxPlatform == "__WXMSW__":
 				win32api.ShellExecute(0, "open",myPublisher.pdffile, "", myPublisher.pdfdir, 1)
 			elif wxPlatform == "__WXMAC__":
-				result = os.popen("open " + string.replace(self.pdffile, " ", "\ "))
+				result = os.popen("open " + string.replace(myPublisher.pdffile, " ", "\ "))
 				result.close()
 
 	def PublishToIMS(self, event):
@@ -1341,7 +1357,7 @@ class MainFrame2(wxFrame):
 		"""
 		Handler for File-Open
 		"""
-
+		
 		if self.isDirty:
 			answer = self.CheckSave()
 			if answer == wxID_YES:
@@ -1355,9 +1371,8 @@ class MainFrame2(wxFrame):
 		if self.settings["CourseFolder"] != "" and os.path.exists(self.settings["CourseFolder"]):
 			defaultdir = self.settings["CourseFolder"]
 
-		#course = OpenPubDialog(self).ShowModal()
-		#f = wxFileDialog(self, _("Select a file"), defaultdir, "", "XML Files (*.xml)|*.xml", wxOPEN)
-		if OpenPubDialog(self).ShowModal() == wxID_OK:
+		dialog = OpenPubDialog(self)
+		if dialog.ShowModal() == wxID_OK:
 			self.wxTree.DeleteAllItems()
 			#self.CurrentDir = OpenPubDialog.GetDirectory()
 			busy = wxBusyCursor()
@@ -1390,17 +1405,21 @@ class MainFrame2(wxFrame):
 					self.ftppass = munge(file.read(), 'foobar')
 					file.close()	 
 				self.Preview()
-				self.SwitchMenus(True)
-				self.PopMenu.Enable(ID_TREE_REMOVE, False)
-				self.toolbar.EnableTool(ID_TREE_REMOVE, False)
 				self.wxTree.SelectItem(self.wxTree.GetRootItem())
 			del busy
+		
+		dialog.Destroy()
+			
+		self.SetFocus()
+		self.SwitchMenus(True)
+		self.PopMenu.Enable(ID_TREE_REMOVE, False)
+		self.toolbar.EnableTool(ID_TREE_REMOVE, False)
 		#f.Destroy()
 
 	def OnTreeRightClick(self, event):
 		pt = event.GetPosition()
 		item = self.wxTree.HitTest(pt)
-		if item[1] == wxTREE_HITTEST_ONITEMLABEL or (wxPlatform == "__WXMAC__" and item[1] == 4160):
+		if item[1] & wxTREE_HITTEST_ONITEMLABEL:
 			self.CurrentTreeItem = item[0]
 			self.CurrentItem = self.wxTree.GetPyData(item[0])
 			self.pub.CurrentNode = self.CurrentItem 
@@ -1433,7 +1452,7 @@ class MainFrame2(wxFrame):
 		pt = event.GetPosition()
 		item = self.wxTree.HitTest(pt)
 		#print self.wxTree.GetPyData(item)
-		if item[1] == wxTREE_HITTEST_ONITEMLABEL or (wxPlatform == "__WXMAC__" and item[1] == 4160):
+		if item[1] & wxTREE_HITTEST_ONITEMLABEL:
 			self.CurrentTreeItem = item[0]
 			self.CurrentItem = self.wxTree.GetPyData(item[0])
 			self.pub.CurrentNode = self.CurrentItem 
@@ -1449,9 +1468,8 @@ class MainFrame2(wxFrame):
 		pt = event.GetPosition()
 		item = self.wxTree.HitTest(pt)
 		#print self.wxTree.GetPyData(item)
-		#print "item[1] = ", item[1], " wxTREE constant = ", wxTREE_HITTEST_ONITEMLABEL, "."
 		
-		if item[1] == wxTREE_HITTEST_ONITEMLABEL or (wxPlatform == "__WXMAC__" and item[1] == 4160):
+		if item[1] & wxTREE_HITTEST_ONITEMLABEL:
 			self.CurrentTreeItem = item[0]
 			self.CurrentItem = self.wxTree.GetPyData(item[0])
 			self.pub.CurrentNode = self.CurrentItem			 
@@ -1503,7 +1521,7 @@ class MainFrame2(wxFrame):
 			#it should be in the File subdirectory
 			filename = self.CurrentItem.content.filename
 			filename = os.path.join(self.CurrentItem.dir, filename)
-		
+			
 		if os.path.exists(filename):
 			if wxPlatform == "__WXMSW__" or hasmozilla:
 				self.browser.Navigate(filename)
@@ -1867,6 +1885,10 @@ class ProjectPropsDialog(wxDialog):
 		self.EndModal(wxID_OK)
 
 
+(UpdateOutputEvent, EVT_OUTPUT_UPDATE) = newevent.NewEvent()
+(IndexingCanceledEvent, EVT_INDEXING_CANCELED) = newevent.NewEvent()
+(IndexingFinishedEvent, EVT_INDEXING_FINISHED) = newevent.NewEvent()
+
 #--------------------------- Export to CD Progress Dialog Class --------------------------------------
 class UpdateIndexDialog(wxDialog):
 	def __init__(self, parent, usegsdl=False):
@@ -1887,7 +1909,8 @@ class UpdateIndexDialog(wxDialog):
 		self.mythread = None
 		self.stopthread = False
 		self.exportfinished = False
-		
+		self.dialogtext = ""
+		self.olddir = ""
 		self.status = wxStaticText(self, -1, _("Updating full-text index..."), wxPoint(lblstart, 12))
 		self.txtProgress = wxTextCtrl(self, -1, "", wxPoint(lblstart, 40), wxSize(360, height*6), wxTE_MULTILINE|wxTE_READONLY)
 
@@ -1912,20 +1935,31 @@ class UpdateIndexDialog(wxDialog):
 		#EVT_BUTTON(self.btnTestCD, self.btnTestCD.GetId(), self.btnTestCDClicked)
 		#EVT_BUTTON(self.btnCloseWindow, self.btnCloseWindow.GetId(), self.OnClose)
 		EVT_CLOSE(self, self.OnClose)
+		EVT_OUTPUT_UPDATE(self, self.OnOutputUpdate)
+		EVT_INDEXING_FINISHED(self, self.OnIndexingFinished)
+		EVT_INDEXING_CANCELED(self, self.OnIndexingCanceled)
 		self.Show(True)
-		wxSleep(1)
+		#wxSleep(1)
 
+	def OnOutputUpdate(self, event):
+		self.txtProgress.WriteText("\n" + event.text)
+		
+	def OnIndexingCanceled(self, event):
+		self.EndModal(wxID_CANCEL)
+		
+	def OnIndexingFinished(self, event):
+		self.exportfinished = True
+		if wxPlatform != '__WXMSW__' and os.path.exists(self.olddir):
+			os.chdir(self.olddir)
+		self.EndModal(wxID_OK)
+		
 	def OnClose(self, event):
 		if not self.mythread == None:	
 			#return
 			self.stopthread = True
 			self.txtProgress.WriteText(_("Sending cancel command to process. Please wait...")+"\n")
-			#self.btnCloseWindow.Enable(False)
-			while self.mythread.isActive():
-				wxSleep(1)
-
-		self.EndModal(wxID_OK)		
-				#self.mythread.stop()
+		else:
+			self.EndModal(wxID_OK)	
 	
 	def UpdateIndex(self, gsdl, eclassdir):
 		import threading
@@ -1940,11 +1974,6 @@ class UpdateIndexDialog(wxDialog):
 				if captureoutput:
 					self.mythread = threading.Thread(None, self.cmdline)
 					self.mythread.start()
-					while self.mythread.isAlive():
-						wxSleep(1)
-					self.mythread = None
-					if self.stopthread == True:
-						self.EndModal(wxID_OK)
 	
 				else:
 					os.system(call)
@@ -1971,11 +2000,11 @@ class UpdateIndexDialog(wxDialog):
 				if captureoutput:	 
 					self.mythread = threading.Thread(None, self.cmdline)
 					self.mythread.start()
-					while self.mythread.isAlive():
-						wxSleep(1)
-					self.mythread = None
-					if self.stopthread == True:
-						self.EndModal(wxID_OK)
+					#while self.mythread.isAlive():
+					#	wxSleep(1)
+					#self.mythread = None
+					#if self.stopthread == True:
+					#	self.EndModal(wxID_OK)
 				else:
 					doscall = win32api.GetShortPathName(os.path.join(self.parent.AppDir, "greenstone", "buildcol.bat"))
 					os.spawnv(os.P_WAIT, doscall, [doscall, self.parent.pub.pubid, win32api.GetShortPathName(gsdl)])
@@ -2002,15 +2031,17 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 				self.call = win32api.GetShortPathName(os.path.join(swishedir, "swish.bat")) + " " + win32api.GetShortPathName(self.parent.pub.directory) + " " + win32api.GetShortPathName(os.path.join(swishedir, "swish-e.exe"))
 			else:
 				swishedir = os.path.join(swishedir, "bin")
-				olddir = os.getcwd()
+				self.olddir = os.getcwd()
 				os.chdir(self.parent.pub.directory)
-				self.call = os.path.join(swishedir, "swish-e") + "-c .\swishe.conf -f index.swish-e"				
+				self.call = os.path.join(swishedir, "swish-e") + " -c ./swishe.conf -f index.swish-e"				
 			#self.call = swishedir + " -c \"" + swisheconf + "\" -f \"" + swisheindex + "\"" # -i \"" + swisheinclude + "\""
 			#self.txtProgress.WriteText("Using swish-e!\n")
 			self.txtProgress.WriteText(self.call + "\n")
 			print self.call
+			self.dialogtext = ""
 			self.mythread = threading.Thread(None, self.cmdline)
 			self.mythread.start()
+
 			while self.mythread.isAlive():
 				wxSleep(1)
 			self.mythread = None
@@ -2030,18 +2061,30 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 		#self.EndModal(wxID_OK)
 
 	def cmdline(self):
-		myin, myout = win32pipe.popen4(self.call)
+		import time
+		if wxPlatform == "__WXMSW__":
+			myin, myout = win32pipe.popen4(self.call)
+		else:
+			myin, myout = os.popen4(self.call)
 		while 1:
 			line = myout.readline()
 			if not line:
 				break
 			elif self.stopthread == True:
-				self.txtProgress.WriteText(_("Cancelling process...")+"\n")
+				evt = IndexingCanceledEvent()
+				wxPostEvent(self, evt)
+				#self.txtProgress.WriteText(_("Cancelling process...")+"\n")
 				break
-			else: 
-				print line
-				self.txtProgress.WriteText(line)
+			else:
+				evt = UpdateOutputEvent(text = line)
+				wxPostEvent(self, evt)
+			time.sleep(0.01)
+				#self.dialogtext = self.dialogtext + "\n" + line 
+				#print line
+				#self.txtProgress.WriteText(line)
 			
+		evt = IndexingFinishedEvent()
+		wxPostEvent(self, evt)
 		myin.close()
 		myout.close()
 
@@ -2059,6 +2102,10 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 
 	def btnCloseWindowClicked(self, event):
 		self.Destroy()
+
+(UpdateFTPDialogEvent, EVT_UPDATE_FTPDIALOG) = newevent.NewEvent()
+(UploadFinishedEvent, EVT_UPLOAD_FINISHED) = newevent.NewEvent()
+(UploadCanceledEvent, EVT_UPLOAD_CANCELED) = newevent.NewEvent()
 
 #--------------------------- FTP Upload Dialog Class --------------------------------------
 class FTPUpload:
@@ -2140,6 +2187,7 @@ class FTPUpload:
 				self.GenerateFileList(myitem)
 
 	def UploadFiles(self):
+		import time
 		if self.stopupload:
 			self.host.close()
 			return
@@ -2149,13 +2197,16 @@ class FTPUpload:
 		if self.Directory == "" or not self.Directory[-1] == "/":
 			self.Directory = self.Directory + "/"
 		if self.isDialog:
-			self.projGauge.SetRange(len(self.filelist))
+			if wxPlatform != "__WXMAC__":
+				self.projGauge.SetRange(len(self.filelist))
 		myfile = None
 		for item in self.filelist[:]:
 			#self.cwd(self.txtDirectory.GetValue())
 			try:
 				if self.stopupload:
 					self.host.close()
+					evt = UploadCanceledEvent()
+					wxPostEvent(self, evt)
 					return
 				#wxSleep(1)
 				myitem = os.path.join(self.parent.CurrentDir, item)
@@ -2184,9 +2235,11 @@ class FTPUpload:
 				self.host.voidcmd('TYPE I')
 				#print "item = " + dir + myitem
 				self.mysocket = self.host.transfercmd('STOR ' + dir + myitem)
+				self.filepercent = 0
 				if self.isDialog:
-					self.fileGauge.SetRange(100)
-					self.fileGauge.SetValue(0)
+					#if wxPlatform != "__WXMAC__":
+					evt = UpdateFTPDialogEvent(projpercent = self.projpercent, filepercent = self.filepercent)
+					wxPostEvent(self, evt)
 				onepercent = bytes/100
 				if onepercent == 0:
 					print "bytes == " + `bytes`
@@ -2205,9 +2258,13 @@ class FTPUpload:
 							break
 
 						resp = self.mysocket.sendall(block)
+						time.sleep(1)
 						bytesuploaded = bytesuploaded + 4096
 						if self.isDialog:
-							self.fileGauge.SetValue((bytesuploaded/onepercent))
+							self.filepercent = bytesuploaded/onepercent
+							evt = UpdateFTPDialogEvent(projpercent = self.projpercent, filepercent = self.filepercent)
+							wxPostEvent(self, evt)
+							#self.fileGauge.SetValue(self.filepercent)
 						elif self.parent:
 							self.parent.SetStatusText(_("Uploaded %(current)d of %(total)d bytes for file %(filename)s." % {"current":bytesuploaded, "total":bytes, "filename":myitem})) 
 						wxYield()
@@ -2219,7 +2276,13 @@ class FTPUpload:
 					#self.lstFiles.Delete(myindex)
 				myfile.close()
 				if self.isDialog:
-					self.projGauge.SetValue(self.projGauge.GetValue() + 1)
+					self.projpercent = self.projpercent + 1
+					#if wxPlatform != "__WXMAC__":
+					#	self.projGauge.SetValue(self.projGauge.GetValue() + 1)
+					#else:
+					evt = UpdateFTPDialogEvent(projpercent = self.projpercent, filepercent = self.filepercent)
+					wxPostEvent(self, evt)
+						#time.sleep(1)
 			except ftplib.all_errors, e:
 				if myfile:
 					myfile.close()
@@ -2245,6 +2308,8 @@ class FTPUpload:
 		self.host.quit()
 		if self.parent:
 			self.parent.SetStatusText(_("Finished uploading."))
+		evt = UploadFinishedEvent()
+		wxPostEvent(self, evt)
 		#if len(self.filelist) > 0:
 			#try uploading the files that didn't make it
 			#self.UploadFiles()
@@ -2315,6 +2380,8 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		self.closewindow = False
 		self.filelist = []
 		self.folderlist = []
+		self.projpercent = 0
+		self.filepercent = 0
 		#lines up labels and textboxes
 		lblstart = 10
 		txtstart = 80
@@ -2329,8 +2396,10 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		self.txtDirectory = wxTextCtrl(self, -1, self.parent.pub.settings["FTPDirectory"])
 		self.txtProgress = wxStaticText(self, -1, "Current File:") #wxTextCtrl(self, -1, "", style=wxTE_MULTILINE|wxTE_READONLY)
 		self.fileGauge = wxGauge(self, -1, 1, style=wxGA_PROGRESSBAR)
+		self.fileGauge.SetRange(100)
 		self.txtTotalProg = wxStaticText(self, -1, "Total Progress:")
 		self.projGauge = wxGauge(self, -1, 1, style=wxGA_PROGRESSBAR)
+		self.projGauge.SetRange(100)
 		#self.lstFiles = wxListBox(self, -1, style=wxLB_SINGLE)
 		self.chkPassive = wxCheckBox(self, -1, _("Use Passive FTP"))
 		self.stopupload = False
@@ -2373,6 +2442,29 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 		EVT_BUTTON(self.btnCancel, self.btnCancel.GetId(), self.btnCancelClicked)
 		EVT_CLOSE(self, self.OnClose)
+		EVT_UPDATE_FTPDIALOG(self, self.OnUpdateDialog)
+		EVT_UPLOAD_FINISHED(self, self.OnUploadFinished)
+		EVT_UPLOAD_CANCELED(self, self.OnUploadCanceled)
+		
+	def OnUploadFinished(self, event):
+		self.txtProgress.SetLabel(_("Finished uploading.\n"))
+		self.fileGauge.SetValue(0)
+		self.projGauge.SetValue(0)
+		self.btnCancel.SetLabel(_("Close"))
+		self.btnOK.Enable(True)
+		
+	def OnUploadCanceled(self, event):
+		self.txtProgress.SetLabel(_("Disconnected. Upload cancelled by user.\n"))
+		self.btnCancel.SetLabel(_("Close"))
+		self.btnOK.Enable(True)
+		self.stopupload = False
+		if self.closewindow == True:
+			self.EndModal(wxID_OK)
+		
+	def OnUpdateDialog(self, event):
+		print "Called!"
+		self.projGauge.SetValue(event.projpercent)
+		self.fileGauge.SetValue(event.filepercent)
 
 	def OnClose(self, event):
 		if not self.mythread == None:
@@ -2423,8 +2515,12 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 			self.makefilelist = False
 		self.mythread = threading.Thread(None, self.UploadFiles)
 		self.mythread.start()
-		while self.mythread.isAlive():
-			wxSleep(1)
+		#while self.mythread.isAlive():
+			#wxSleep(1)
+		#	if wxPlatform == "__WXMAC__":
+		#		#need to update GUI in the main thread
+		#		self.fileGauge.SetValue(self.filepercent)	
+		#		self.projGauge.SetValue(self.projpercent)
 		#except:
 		#	message = "There was an unexpected error publishing your course. Details on the error message are located in the file: '" + os.path.join(self.AppDir, "errlog.txt") + "', or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app."
 		#	print message
@@ -2433,20 +2529,7 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		#	dialog.Destroy()
 		#	self.btnCancel.SetLabel("Close")
 		#	return False  
-	
-		if self.stopupload == True:
-			self.txtProgress.SetLabel(_("Disconnected. Upload cancelled by user.\n"))
-			self.btnCancel.SetLabel(_("Close"))
-			self.btnOK.Enable(True)
-			self.stopupload = False
-			if self.closewindow == True:
-				self.EndModal(wxID_OK)
-		else:
-			self.txtProgress.SetLabel(_("Finished uploading.\n"))
-			self.fileGauge.SetValue(0)
-			self.projGauge.SetValue(0)
-			self.btnCancel.SetLabel(_("Close"))
-			self.btnOK.Enable(True)
+
 		return
 
 #--------------------------- PreferencesEditor Class --------------------------------------
@@ -3527,16 +3610,16 @@ class StartupDialog(wxDialog):
 		#EVT_PAINT(self, self.OnPaint)
 
 	def OnNew(self, event):
-		self.EndModal(wxID_OK)
-		self.parent.NewProject(event)
+		self.EndModal(0)
+		#self.parent.NewProject(None)
 
 	def OnOpen(self, event):
-		self.EndModal(wxID_OK)
-		self.parent.OnOpen(event)
+		self.EndModal(1)
+		#self.parent.OnOpen(None)
 
 	def OnTutorial(self, event):
-		self.EndModal(wxID_OK)
-		self.parent.OnHelp(event)
+		self.EndModal(2)
+		#self.parent.OnHelp(None)
 
 	def OnCheck(self, event):
 		if event.Checked():
