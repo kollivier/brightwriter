@@ -10,6 +10,7 @@ if __name__ != "__main__":
 	from conman.HTMLFunctions import *
 	from conman.file_functions import *
 	from conman import plugins
+	from conman import HTMLTemplates
 	#from conman.colorbutton import *
 from StringIO import StringIO
 from threading import *
@@ -48,6 +49,7 @@ ID_INSERT_LINK = wxNewId()
 ID_INSERT_HR = wxNewId()
 ID_INSERT_TABLE = wxNewId()
 ID_INSERT_BOOKMARK = wxNewId()
+ID_INSERT_FLASH = wxNewId()
 
 ID_EDITIMAGE = wxNewId()
 ID_EDITLINK = wxNewId()
@@ -179,6 +181,7 @@ class EditorFrame (wxFrame):
 		self.insertmenu.Append(ID_INSERT_BOOKMARK, _("Bookmark"))
 		self.insertmenu.AppendSeparator()
 		self.insertmenu.Append(ID_INSERT_IMAGE, _("Image..."))
+		self.insertmenu.Append(ID_INSERT_FLASH, _("Flash Animation..."))
 
 		self.tablemenu = wxMenu()
 		self.tablemenu.Append(ID_INSERT_TABLE, _("Insert Table"))
@@ -353,6 +356,7 @@ class EditorFrame (wxFrame):
 		EVT_MENU(self, ID_INSERT_HR, self.OnHRButton)
 		EVT_MENU(self, ID_INSERT_TABLE, self.OnTableButton)
 		EVT_MENU(self, ID_INSERT_BOOKMARK, self.OnBookmarkButton)
+		EVT_MENU(self, ID_INSERT_FLASH, self.OnFlashButton)
 
 		EVT_MENU(self, ID_EDITIMAGE, self.OnImageProps)
 		EVT_MENU(self, ID_EDITLINK, self.OnLinkProps)
@@ -522,9 +526,9 @@ class EditorFrame (wxFrame):
 		linkProps = []
 		if self.mozilla.IsElementInSelection("a"):
 			if self.mozilla.GetElementAttribute("a", "href") != "":
-				mydialog = LinkPropsDialog(self, linkProps)
 				linkProps.append(self.mozilla.GetElementAttribute("a", "href"))
 				linkProps.append(self.mozilla.GetElementAttribute("a", "target"))
+				mydialog = LinkPropsDialog(self, linkProps)
 				if mydialog.ShowModal() == wxID_OK:
 					self.mozilla.SetElementAttribute("href", mydialog.linkProps[0])
 					self.mozilla.SetElementAttribute("target", mydialog.linkProps[1])
@@ -749,6 +753,17 @@ class EditorFrame (wxFrame):
 			#wxMessageBox(html)
 			self.mozilla.InsertHTML(html)
 			self.dirty = true
+		dialog.Destroy()
+
+	def OnFlashButton(self, evt):
+		dialog = wxFileDialog(self, _("Choose a file"), "", "", _("Macromedia Flash Files") + " (*.swf)|*.swf", wxOPEN)
+		if dialog.ShowModal() == wxID_OK:
+			if os.path.exists(dialog.GetPath()):
+				CopyFile(dialog.GetFilename(), dialog.GetDirectory(), os.path.join(self.parent.pub.directory, "Files"))
+			code = HTMLTemplates.flashTemp
+			code = string.replace(code, "_filename_", "../Files/" + dialog.GetFilename())
+			code = string.replace(code, "_autostart_", "True")
+			self.mozilla.InsertHTML(code)
 		dialog.Destroy()
 
 	def OnImageButton(self, evt):
