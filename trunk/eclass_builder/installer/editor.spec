@@ -1,5 +1,5 @@
 a = Analysis([os.path.join(HOMEPATH,'support\\_mountzlib.py'), os.path.join(HOMEPATH,'support\\useUnicode.py'), '..\\editor.py'],
-             pathex=['F:\\oss\\eclass\\eclass_builder\\installer'])
+             pathex=['F:\\oss\\eclass_builder\\installer'])
 pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
