@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Settings><Setting name="FTPUser" value="kevino"/>
+<Setting name="FTPHost" value="www.eclass.net"/>
+<Setting name="FTPPassive" value="Yes"/>
+<Setting name="Theme" value="Default (no frames)"/>
+<Setting name="UploadOnSave" value="No"/>
+<Setting name="SearchEnabled" value="0"/>
+<Setting name="FTPDirectory" value="/newlook/tutorial"/>
+<Setting name="ShortenFilenames" value="No"/>
+<Setting name="FTPUsername" value=""/>
+<Setting name="SearchProgram" value="Swish-e"/>
+</Settings>

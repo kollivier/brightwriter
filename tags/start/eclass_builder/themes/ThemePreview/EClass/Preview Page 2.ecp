@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="iso8859-1"?>
+<Page>
+	<Metadata>
+		<Name>Preview Page 2</Name>
+		<Codigo_pub></Codigo_pub>
+		<Fecha_pub></Fecha_pub>
+		<Author>Author Name Here</Author>
+		<Credit>Credit Goes Here</Credit>
+	</Metadata>
+	<Objectives>
+		
+	</Objectives>
+	<Media>
+		<Image>eclass-builder25xp.jpg</Image>
+		<Video></Video>
+		<VideoAutostart>0</VideoAutostart>
+		<Audio></Audio>
+		<AudioAutostart>0</AudioAutostart>
+		<Text>previewpage2.html</Text>
+		<PowerPoint></PowerPoint>
+	</Media>
+	<Terms>
+		
+	</Terms>
+</Page>
