@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 from wxPython.wx import *
-from wxPython.lib import fancytext
-from wxPython.lib.filebrowsebutton import FileBrowseButton
 
 hasmozilla = True
 try:
@@ -16,16 +14,13 @@ if wxPlatform != '__WXMSW__':
 from conman.validate import *
 from wxPython.stc import * #this is for the HTML plugin
 import sys, urllib2, cPickle
-import string
-import time
-import cStringIO
-import os
-import re
+import string, time, cStringIO, os, re, glob, csv
 import conman
 import version
-import glob
 
 import indexer
+
+import xml.dom.minidom
 
 #these 2 are needed for McMillan Installer to find these modules
 import conman.plugins
@@ -45,6 +40,8 @@ from convert.PDF import PDFPublisher
 import PyLucene
 
 rootdir = os.path.abspath(sys.path[0])
+if not os.path.isdir(rootdir):
+	rootdir = os.path.dirname(rootdir)
 localedir = os.path.join(rootdir, 'locale')
 import gettext
 gettext.install('eclass', localedir)
@@ -56,7 +53,7 @@ lang_dict = {
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
 myplugins = []
-for item in os.listdir(os.path.join(os.path.abspath(sys.path[0]), "plugins")):
+for item in os.listdir(os.path.join(rootdir, "plugins")):
 	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
 		if string.find(item, "html.py") == -1 or hasmozilla:
 			plugin = string.replace(item, ".py", "")
@@ -1009,26 +1006,22 @@ class MainFrame2(wxFrame):
 		busy = wxBusyCursor()
 		wxYield()
 		try:
+			self.CreateDocumancerBook()
+			#cleanup after old EClass versions
+			files.DeleteFiles(os.path.join(self.CurrentDir, "*.pyd"))
+			files.DeleteFiles(os.path.join(self.CurrentDir, "*.dll"))
+			files.DeleteFiles(os.path.join(self.CurrentDir, "*.exe"))
+
+			files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
+			files.CopyFile("loader.exe", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
+			installerdir = os.path.join(self.CurrentDir, "installers")
+			if not os.path.exists(installerdir):
+				os.mkdir(installerdir)
+			if sys.platform == "win32":
+				files.CopyFile("documancer-0.2.4-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(self.CurrentDir, "installers"))
 			useswishe = False
 			if self.pub.settings["SearchProgram"] == "Swish-e":
 				useswishe = True
-				if not os.path.exists(os.path.join(self.CurrentDir, "cgi-bin")):
-					os.mkdir(os.path.join(self.CurrentDir, "cgi-bin"))
-				#files.CopyFiles(os.path.join(self.AppDir, "cgi-bin"), os.path.join(self.CurrentDir, "cgi-bin"))
-				if wxPlatform == "__WXMSW__":
-					files.CopyFile("search.py",os.path.join(self.AppDir, "cgi-bin"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("swish-e.exe",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("xmlparse.dll",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("libxml2.dll",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("xmltok.dll",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("msvcr70.dll",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("w9xpopen.exe", self.ThirdPartyDir, self.CurrentDir)
-					files.CopyFile("pcre.dll",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("zlib.dll",os.path.join(self.ThirdPartyDir, "SWISH-E"), os.path.join(self.CurrentDir, "cgi-bin"))
-					files.CopyFile("default.tpl", os.path.join(self.AppDir, "themes", self.currentTheme.themename), os.path.join(self.CurrentDir, "cgi-bin"))
-			#mytheme = self.pub.settings["Theme"]
-				files.CopyFiles(os.path.join(self.ThirdPartyDir, "karrigell"), self.CurrentDir)
-				files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
 				if os.path.exists(os.path.join(self.CurrentDir, "Karrigell.ini")):
 					os.remove(os.path.join(self.CurrentDir, "Karrigell.ini"))
 			elif self.pub.settings["SearchProgram"] == "Greenstone":
@@ -1039,25 +1032,8 @@ class MainFrame2(wxFrame):
 				files.CopyFile("home.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
 				files.CopyFile("style.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
 			elif self.pub.settings["SearchProgram"] == "Lucene":
-				bookdata = open(os.path.join(self.AppDir,"bookfile.book.in")).read()
-				bookdata = string.replace(bookdata, "<!-- insert title here-->", self.pub.name)
+				pass
 
-				myfile = open(os.path.join(self.CurrentDir, MakeFileName2(self.pub.name) + ".dmbk"), "w")
-				myfile.write(bookdata)
-				myfile.close()
-
-				#files.CopyFiles(os.path.join(self.ThirdPartyDir, "karrigell"), self.CurrentDir)
-				#files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
-				#if os.path.exists(os.path.join(self.CurrentDir, "Karrigell.ini")):
-				#	os.remove(os.path.join(self.CurrentDir, "Karrigell.ini"))
-
-				#if not os.path.exists(os.path.join(self.CurrentDir, "cgi-bin")):
-				#	os.mkdir(os.path.join(self.CurrentDir, "cgi-bin"))
-				#searchfile = os.path.join(self.CurrentDir, "cgi-bin", "search.py")
-				#if os.path.exists(searchfile):
-				#	os.remove(searchfile)
-				#files.CopyFile("searchLucene.py",os.path.join(self.AppDir, "cgi-bin"), os.path.join(self.CurrentDir, "cgi-bin"))
-				#os.rename(os.path.join(self.CurrentDir, "cgi-bin", "searchLucene.py"), searchfile)
 		except:
 			message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
 			print message
@@ -1111,13 +1087,27 @@ class MainFrame2(wxFrame):
 			f.Destroy()
 		file = open(os.path.join(self.CurrentDir, "ftppass.txt"), "w")
 		file.write(munge(self.ftppass, 'foobar'))
-		file.close()	
+		file.close()
 		
+		self.CreateDocumancerBook()
+
 		try:
 			self.pub.SaveAsXML(self.CurrentFilename, self.encoding)
 			self.isDirty = False
 		except IOError, e:
 			wxMessageDialog(self, str(e), _("Could Not Save File"), wxOK).ShowModal() 
+
+	def CreateDocumancerBook(self):
+		#update the Documancer book file
+		bookdata = open(os.path.join(self.AppDir,"bookfile.book.in")).read()
+		bookdata = string.replace(bookdata, "<!-- insert title here-->", self.pub.name)
+		if self.pub.settings["SearchEnabled"] == "1" and self.pub.settings["SearchProgram"] == "Lucene":
+			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "<attr name='indexed'>1</attr>\n    <attr name='cachedir'>Index</attr>")
+		else: 
+			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "")
+		myfile = open(os.path.join(self.CurrentDir, "eclass.dmbk"), "w")
+		myfile.write(bookdata)
+		myfile.close()	
 
 	def ReloadThemes(self):
 		self.themes = []
@@ -1386,6 +1376,9 @@ class MainFrame2(wxFrame):
 				if not self.currentTheme:
 					self.currentTheme = self.themes.FindTheme("Default (frames)")
 
+				if self.pub.settings["SearchProgram"] == "Swish-e":
+					self.pub.settings["SearchProgram"] = "Lucene"
+					wxMessageBox(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
 				#self.currentTheme = self.themes[0]
 				#if mytheme != "":
 				#	for theme in self.themes:
@@ -1791,13 +1784,11 @@ class ProjectPropsDialog(wxDialog):
 				if searchtool == "": #since there wasn't an option selected, must be Greenstone
 					searchtool = "Greenstone"
 		
-		self.options = [_("Use SWISH-E for searching (Default)"), _("Use Greenstone for searching"), _("Use Lucene for searching")]
+		self.options = [_("Use Lucene for searching (Default)"), _("Use Greenstone for searching")]
 		self.whichSearch = wxRadioBox(panel, -1, _("Search Engine"), wxDefaultPosition, wxDefaultSize, self.options, 1)
 		if searchtool == "Greenstone":
 			self.whichSearch.SetStringSelection(self.options[1])
 		elif searchtool == "Lucene":
-			self.whichSearch.SetStringSelection(self.options[2])
-		else:
 			self.whichSearch.SetStringSelection(self.options[0])
 		
 		#self.useGSDL = wxRadioBox(panel, -1, )
@@ -1843,12 +1834,10 @@ class ProjectPropsDialog(wxDialog):
 		useswishe = False
 		updatetheme = False
 		if self.whichSearch.GetStringSelection() == self.options[0]:
-			self.parent.pub.settings["SearchProgram"] = "Swish-e"
+			self.parent.pub.settings["SearchProgram"] = "Lucene"
 			useswishe = True
 		elif self.whichSearch.GetStringSelection() == self.options[1]:
 			self.parent.pub.settings["SearchProgram"] = "Greenstone"
-		else:
-			self.parent.pub.settings["SearchProgram"] = "Lucene"
 
 		if self.searchchanged:
 			self.parent.Update()
@@ -3452,7 +3441,7 @@ class ContactEditor(wxDialog):
 		self.myvcard.title.value = self.txtTitle.GetValue()
 		self.myvcard.organization.name = self.txtOrganization.GetValue()
 		if len(self.myvcard.emails) == 0: 
-			self.myvcard.emails.append(vcard.EMail())
+			self.myvcard.emails.append(vcard.Email())
 		self.myvcard.emails[0].value = self.txtEmail.GetValue()
 		myfile = open(self.myvcard.filename, "wb")
 		myfile.write(self.myvcard.asString())
@@ -3775,6 +3764,7 @@ class ThemeManager(wxDialog):
 			self.parent.currentTheme = self.parent.themes.FindTheme("Default (frames)")
 			
 		#exec("mytheme = themes." + mythememodule)
+
 		publisher = self.parent.currentTheme.HTMLPublisher(self.parent)
 		result = publisher.Publish()
 		self.parent.Preview()
