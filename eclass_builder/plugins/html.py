@@ -293,7 +293,7 @@ class EditorFrame (wxFrame):
 		mozillapanel.SetAutoLayout(True)
 		mozillapanel.SetSizerAndFit(mozpanelsizer)
 
-		#self.mozilla.MakeEditable()
+		self.mozilla.MakeEditable()
 		sourcepanel = wxPanel(self.notebook, -1)
 		self.notebook.AddPage(sourcepanel, "HTML")
 
