@@ -1,17 +1,21 @@
 !define MUI_PRODUCT "EClass.Builder" ;Define your own software name here
-!define MUI_VERSION "2.5.4.19" ;Define your own software version here
-!include "${NSISDIR}\Contrib\Modern UI\System.nsh"
+!define MUI_VERSION "2.5.5.1" ;Define your own software version here
+Name "${MUI_PRODUCT} ${MUI_VERSION}"
+!include "MUI.nsh"
 !include "path_functions.nsi"
-!define MUI_ICON "${NSISDIR}\contrib\Icons\new_nsis_2.ico"
-!define MUI_UNICON "${NSISDIR}\contrib\Icons\new_nsis_2.ico"
+!define MUI_ICON "${NSISDIR}\contrib\Graphics\Icons\classic-install.ico"
+!define MUI_UNICON "${NSISDIR}\contrib\Graphics\Icons\classic-uninstall.ico"
 ;--------------------------------
 ;Configuration
-  !define MUI_LICENSEPAGE
-  ;!define MUI_COMPONENTSPAGE
-  !define MUI_DIRECTORYPAGE
+  !insertmacro MUI_PAGE_DIRECTORY
+  !insertmacro MUI_PAGE_INSTFILES
+  !insertmacro MUI_PAGE_FINISH
+
   !define MUI_ABORTWARNING
-  !define MUI_UNINSTALLER
-  !define MUI_UNCONFIRMPAGE
+  
+  ;!define MUI_UNINSTALLER
+  !insertmacro MUI_UNPAGE_CONFIRM
+  !insertmacro MUI_UNPAGE_INSTFILES
   ;Language
   !insertmacro MUI_LANGUAGE "English"
   
@@ -27,10 +31,7 @@
   ;Folder-selection page
   InstallDir "$PROGRAMFILES\${MUI_PRODUCT} ${MUI_VERSION}"
 
-;--------------------------------
-;Modern UI System
-
-!insertmacro MUI_SYSTEM
+  Var "hasDM"
 
 ;--------------------------------
 ;Installer Sections
@@ -43,16 +44,19 @@ Section "Program Files" SecCopyUI
   ;WriteRegStr HKLM SOFTWARE\mozilla.org\GRE\wxMozilla\1.3 "GreHome" "$PROGRAMFILES\Common Files\mozilla.org\GRE\wxMozilla\1.3"
   ;Push "$PROGRAMFILES\Common Files\mozilla.org\GRE\wxMozilla\1.3"
   ;Call AddToPath
-  File "disteditor\*.*"
+  File /r "minipython\*"
+  File "editor.exe"
   File "editor.exe.manifest"
-  File "..\converter.py"
-  File "..\swishe.conf"
+  File "..\*.py"
+  File "..\bookfile.book.in"
+  File /r "..\conman"
   File /r "..\convert"
   File /r "..\about"
   File /r "..\autorun"
   File /r "..\Greenstone"
   File /r "..\docs"
   File /r "..\icons"
+  File /r "..\installers"
   File /r "..\license"
   File /r "..\locale"
   File /r "..\cgi-bin"
@@ -62,22 +66,24 @@ Section "Program Files" SecCopyUI
   File "..\plugins\eclass.py"
   File "..\plugins\quiz.py"
   File "..\plugins\html.py"
-  File /r "..\plugins\Quiz"
 
   SetOutPath "$INSTDIR\themes"
   File "..\themes\__init__.py"
+  File "..\themes\themes.py"
   File "..\themes\BaseTheme.py"
   File "..\themes\Default_frames.py"
   File "..\themes\Default_no_frames.py"
+  File "..\themes\IMS_Package.py"
   File /r "..\themes\Default (Frames)"
   File /r "..\themes\Default (No Frames)"
   File /r "..\themes\ThemePreview"
+  File /r "..\themes\IMS Package"
 
   SetOutPath "$INSTDIR\3rdparty\win32"
   File "C:\Python23\w9xpopen.exe"
   File /r "..\3rdparty\win32\htmldoc"
-  File /r "..\3rdparty\win32\karrigell"
-  File /r "..\3rdparty\win32\SWISH-E"
+  ;File /r "..\3rdparty\win32\karrigell"
+  ;File /r "..\3rdparty\win32\SWISH-E"
   CreateDirectory "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}"
   SetOutPath $INSTDIR ; for working directory
   CreateShortCut "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}\Uninstall ${MUI_PRODUCT} ${MUI_VERSION}.lnk" "$INSTDIR\Uninstall.exe"
@@ -91,30 +97,25 @@ Section "Program Files" SecCopyUI
 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${MUI_PRODUCT} ${MUI_VERSION}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
 
+  EnumRegKey $hasDM HKLM "Software\Vaclav Slavik\Documancer" 0
+  StrCmp "$hasDM" "" CheckHKCU CheckForDM
+CheckHKCU:
+  EnumRegKey $hasDM HKCU "Software\Vaclav Slavik\Documancer" 0
+  StrCmp "$hasDM" "" InstallDM CheckForDM
+CheckForDM:
+  StrCmp "$hasDM" "0.2.4" Finished InstallDM  
+InstallDM:
+  Exec $INSTDIR\installers\documancer-0.2.4-setup.exe
+
+Finished:
 SectionEnd
-;Section "OpenOffice Support"
-;	IfFileExists $PROGRAMFILES\OpenOffice.org1.1Beta\program\*.* 0 NoOpenOffice
-;		SetOutPath $PROGRAMFILES\OpenOffice.org1.1Beta\program
-;		File /r "..\pyuno\*.*"
-;		ExecWait "$PROGRAMFILES\OpenOffice.org1.1Beta\program\pyuno_setup.bat"
-;		Push "$PROGRAMFILES\OpenOffice.org1.1Beta\program"
-; 		Call AddToPath
-;		Push "$PROGRAMFILES\OpenOffice.org1.1Beta\program"
-;		Call AddToPythonPath
-;		ExecWait '"$INSTDIR\editor.exe" --autostart-pyuno'
-;		Return
-;	NoOpenOffice:
-;		MessageBox MB_OK "Could not find an existing OpenOffice 1.1 beta installation. OpenOffice support will not be enabled."
-;SectionEnd
-;Display the Finish header
-;Insert this macro after the sections if you are not using a finish page
-!insertmacro MUI_SECTIONS_FINISHHEADER
+
 ;--------------------------------
 ;Descriptions
 
-!insertmacro MUI_FUNCTIONS_DESCRIPTION_BEGIN
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
 !insertmacro MUI_DESCRIPTION_TEXT ${SecCopyUI} $(DESC_SecCopyUI)
-!insertmacro MUI_FUNCTIONS_DESCRIPTION_END
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
  
 ;--------------------------------
 ;Uninstaller Section
@@ -135,7 +136,5 @@ Section "Uninstall"
 ;  Call un.RemoveFromPath
 ;  Push "$PROGRAMFILES\OpenOffice.org1.1Beta\program"
 ;  Call un.RemoveFromPythonPath
-  ;Display the Finish header
-  !insertmacro MUI_UNFINISHHEADER
 
 SectionEnd
