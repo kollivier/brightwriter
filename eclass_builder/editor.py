@@ -194,7 +194,16 @@ class MainFrame2(wxFrame):
 			key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
 		
 		if wxPlatform == '__WXMSW__':
-			prefdir = wreg.QueryValueEx(key,'Local AppData')[0]
+			prefdir = ""
+			#Win98 doesn't have a Local AppData folder
+			#TODO: replace all this code with wxStandardPaths!
+			try:
+				prefdir = wreg.QueryValueEx(key,'Local AppData')[0]
+			except:
+				try:
+					prefdir = wreg.QueryValueEx(key,'AppData')[0]
+				except:
+					pass
 			if not os.path.exists(prefdir):
 				prefdir = self.AppDir
 			else:
@@ -292,7 +301,8 @@ class MainFrame2(wxFrame):
 				self.vcardlist[myvcard.fname.value] = myvcard
 			except:
 				import traceback
-				self.log.write(traceback.print_exc())
+				if traceback.print_exc() != None:
+					self.log.write(traceback.print_exc())
 				errOccurred = True
 				errCards.append(card)
 
@@ -922,7 +932,8 @@ class MainFrame2(wxFrame):
 						except:	
 							message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
 							import traceback
-							self.log.write(traceback.print_exc())
+							if traceback.print_exc() != None:
+								self.log.write(traceback.print_exc())
 							dialog = wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK)
 							dialog.ShowModal()
 							dialog.Destroy()
@@ -995,7 +1006,8 @@ class MainFrame2(wxFrame):
 		except:
 			message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
 			import traceback
-			self.log.write(traceback.print_exc())
+			if traceback.print_exc() != None:
+				self.log.write(traceback.print_exc())
 			wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK).ShowModal()
 			return False
 		del busy
@@ -3054,6 +3066,7 @@ class PageEditorDialog (wxDialog):
 		EVT_BUTTON(self.btnAddCategory, self.btnAddCategory.GetId(), self.AddCategory)
 		EVT_BUTTON(self.btnEditCategory, self.btnEditCategory.GetId(), self.EditCategory)
 		EVT_BUTTON(self.btnRemoveCategory, self.btnRemoveCategory.GetId(), self.RemoveCategory)
+		EVT_ACTIVATE(self, self.UpdateAuthorList)
 
 		mypanel.SetSizer(mysizer)
 		mypanel.SetAutoLayout(True)
@@ -3085,7 +3098,7 @@ class PageEditorDialog (wxDialog):
 		ContactsDialog(self.parent).ShowModal()
 		self.UpdateAuthorList()
 
-	def UpdateAuthorList(self):
+	def UpdateAuthorList(self, event=None):
 		oldvalue = self.txtAuthor.GetValue()
 		self.txtAuthor.Clear()
 		for name in self.parent.vcardlist.keys():
