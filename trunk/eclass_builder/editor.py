@@ -3037,6 +3037,8 @@ class StartupDialog(wxDialog):
 	def OnCheck(self, event):
 		if event.Checked():
 			self.parent.settings["ShowStartup"] = "False"
+		else:
+			self.parent.settings["ShowStartup"] = "True"
 
 	#def OnPaint(self, event):
 	#	dc = wxPaintDC(self)
