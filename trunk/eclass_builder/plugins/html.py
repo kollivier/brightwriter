@@ -16,6 +16,7 @@ from StringIO import StringIO
 from threading import *
 import traceback
 import sys
+import utils
 
 ID_NEW = wxNewId()
 ID_OPEN = wxNewId()
@@ -73,6 +74,8 @@ ID_PASTE = wxNewId()
 ID_SPELLCHECK = wxNewId()
 ID_SELECTALL = wxNewId()
 ID_SELECTNONE = wxNewId()
+
+log = utils.LogFile("errlog.txt")
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into
@@ -139,8 +142,10 @@ if __name__ != "__main__":
 				myhtml2 = importer.ImportLinks(myhtml, os.path.join(self.dir, "Text"), self.dir)
 				myhtml = myhtml2
 			except:
+				global log
 				import traceback
-				print traceback.print_exc()
+				if traceback.print_exc() != None:
+					log.write(traceback.print_exc())
 
 			self.data['content'] = myhtml
 			#self.data['credit'] = ""
@@ -589,8 +594,12 @@ class EditorFrame (wxFrame):
 			self.parent.Update()
 			self.Destroy()
 		except Exception, ex:
+			global log
 			import traceback
-			wxMessageBox("Traceback is: " + `traceback.print_exc()`)
+			if traceback.print_exc() != None:
+				log.write(traceback.print_exc())
+				message = utils.getStdErrorMessage("UnknownError")
+				wxMessageBox(message, _("Unknown Error Occurred"), wxICON_ERROR)
 			
 	def OnRightClick(self, evt):
 		popupmenu = wxMenu()
@@ -898,13 +907,19 @@ class EditorFrame (wxFrame):
 		if self.notebook.GetSelection() == 1:
 			self.mozilla.SetPage(self.source.GetText())
 		filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
-		result = self.mozilla.SavePage(filename, False)
-		if result:
-			self.mozilla.UpdateBaseURI()
-			self.mozilla.Reload()
-			self.dirty = False
-		else:
-			wxMessageBox(_("Unable to save the file %(filename)s to disk. Please make sure you have sufficient disk space and access permissions to the location you are saving to.") % {"filename": filename}, _("Unable to Save File"), wxICON_ERROR)
+		try:
+			result = self.mozilla.SavePage(filename, False)
+			if result:
+				print "Hello!"
+				self.mozilla.UpdateBaseURI()
+				self.mozilla.Reload()
+				self.dirty = False
+			else:
+				message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
+				wxMessageBox(message, _("Unable to Save File"), wxICON_ERROR)
+		except IOError:
+			message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
+			wxMessageBox(message, _("Unable to Save File"), wxICON_ERROR)
 
 	def logEvt(self, name, event):
 		self.log.write('%s: %s\n' %

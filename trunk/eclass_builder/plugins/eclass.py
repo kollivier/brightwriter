@@ -10,6 +10,7 @@ from conman import plugins
 from conman.HTMLFunctions import *
 from conman.HTMLTemplates import *
 from StringIO import StringIO
+import utils
 
 USE_MINIDOM=0
 try:
@@ -23,6 +24,8 @@ if USE_MINIDOM:
 from threading import *
 import traceback
 import sys
+
+log = utils.LogFile("errlog.txt")
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into
@@ -119,7 +122,8 @@ class EClassPage:
 				doc = FromXmlFile(filename)
 			self.LoadDoc(doc)
 		except:
-			print traceback.print_exc()
+			global log
+			log.write(traceback.print_exc())
 			raise RuntimeError, `sys.exc_value.args`
 		return ""
 
@@ -305,16 +309,19 @@ class EClassPage:
 		try:
 			myxml = """<?xml version="1.0" encoding="%s"?>%s""" % (encoding, self.WriteDoc())
 		except:
-			message = "There was an error updating the file " + filename + ". Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again."
-			print message
+			message = _("There was an error updating the file " + filename + ". Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.")
+			global log
+			log.write(message)
 			raise IOError, message
 		try:
 			myfile = open(filename, "w")
 			myfile.write(myxml)
 			myfile.close()
 		except:
-			message = "There was an error writing the file " + filename + " to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file."
-			print `message`
+			message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
+			#message = _("There was an error writing the file " + filename + " to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file.")
+			global log
+			log.write(message)
 			raise IOError, message
 
 		return ""
@@ -425,7 +432,6 @@ class HotwordLoader(Thread):
 			if term.getElementsByTagName("URL"):
 				if term.getElementsByTagName("URL")[0].childNodes:
 					myterm.url = XMLCharToText(term.getElementsByTagName("URL")[0].childNodes[0].nodeValue)
-				#print "now value is: " + myterm.url
 				else:
 					myterm.url = ""
 			else:
@@ -634,7 +640,8 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 					myfile = open(thefilename, 'r')
 				else:
 					import traceback
-					print traceback.print_exc()
+					global log
+					log.write(traceback.print_exc())
 					myhtml = ""
 				
 			if myfile:
@@ -669,15 +676,15 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 		if not ishotword:
 			self.data['content'] = myhtml
-			creditstring = ""
-			if len(mypage.credit) > 0:
-				mypage.credit = string.replace(mypage.credit, "\r\n", "<br>")#mac
-				mypage.credit = string.replace(mypage.credit, "\n", "<br>")#win
-				mypage.credit = string.replace(mypage.credit, "\r", "<br>")#unix
-				mypage.credit = mypage.credit + "<h5 align=\'center\'>[ <a href=\'javascript:window.close()\'>" + _("Close") + "</a> ]</h5>"
-				mypage.credit = string.replace(mypage.credit, "'", "\\'")
-				creditstring = """[ <b><a href="javascript:openCredit('newWin','%(credit)s')">%(credittext)s</a></b> ]""" % {"credit":TextToHTMLChar(mypage.credit), "credittext":_("Credit")}	
-			self.data['credit'] = "<h5>" + mypage.author + " " + creditstring + "</h5>"
+			#creditstring = self.
+			#if len(mypage.credit) > 0:
+			#	mypage.credit = string.replace(mypage.credit, "\r\n", "<br>")#mac
+			#	mypage.credit = string.replace(mypage.credit, "\n", "<br>")#win
+			#	mypage.credit = string.replace(mypage.credit, "\r", "<br>")#unix
+			#	mypage.credit = mypage.credit + "<h5 align=\'center\'>[ <a href=\'javascript:window.close()\'>" + _("Close") + "</a> ]</h5>"
+			#	mypage.credit = string.replace(mypage.credit, "'", "\\'")
+			#	creditstring = """[ <b><a href="javascript:openCredit('newWin','%(credit)s')">%(credittext)s</a></b> ]""" % {"credit":TextToHTMLChar(mypage.credit), "credittext":_("Credit")}	
+			self.data['credit'] = self.GetCreditString() # "<h5>" + mypage.author + " " + creditstring + "</h5>"
 		else: #ugly hack for now...
 			if self.node.content.template == None or self.node.content.template == "None":
 				self.node.content.template = "Default"
@@ -691,9 +698,11 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				myfile = open(os.path.join(self.dir, "pub",filename), "w")
 				myfile.write(myhtml)
 				myfile.close()
-			except: 
-				message = _("There was an error writing the file '%(filename)s' to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file.") % {"filename":filename}
-				print `message`
+			except:
+				message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
+				#message = _("There was an error writing the file '%(filename)s' to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file.") % {"filename":filename}
+				global log
+				log.write(message)
 				raise IOError, message
 				return False	
 		return myhtml
@@ -914,8 +923,10 @@ class PDFPublisher:
 							wxMessageBox(_("Unable to convert file %(filename)s") % {"filename":mypage.media.text})
 						myfile = open(thefilename, 'r')
 				except:
+					global log
 					import traceback
-					print traceback.print_exc()
+					if traceback.print_exc() != None:
+						log.write(traceback.print_exc())
 					myhtml = ""
 				
 			if myfile:
@@ -1055,8 +1066,9 @@ class wxSelectBox:
 			file.close()
 		except IOError:
 			error = True
-			message =  _("Could not read file '%(filename)s from disk. Please check that the file exists in the location specified and that you have permission to open/view the file.") % {"filename":path} 
-			print message
+			global log
+			message = utils.getStdErrorMessage("IOError", {"type":"read", "filename":path})
+			log.write(message)
 			if showgui:
 				wxMessageDialog(self.parent, message, _("File Read Error"), wxOK).ShowModal()
 				
@@ -1241,6 +1253,7 @@ class EditorDialog (wxDialog):
 			self.mainform = parent.mainform
 		self.CurrentObj = None
 		loaded = True 
+		self.isHotword = False 
 
 		#check if ConNode or if EClassPage
 		if isinstance(item, conman.conman.ConNode):
@@ -1256,8 +1269,9 @@ class EditorDialog (wxDialog):
 					self.page.LoadPage(os.path.join(self.CurrentDir, "EClass", os.path.basename(self.filename)))
 					item.content.filename = self.filename
 				except RuntimeError, e:
+					global log
 					wxMessageDialog(parent, _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.CurrentDir, "EClass", self.filename), "error":str(e)}, _("Error loading page"), wxOK).ShowModal()
-					print e
+					log.write(repr(e))
 					del busy
 					return
 			else:
@@ -1272,6 +1286,7 @@ class EditorDialog (wxDialog):
 		else:
 			self.CurrentDir = self.parent.CurrentDir
 			self.page = item.page
+			self.isHotword = True
 		
 		wxDialog.__init__ (self, parent, -1, _("EClass Page Editor"),
 						 wxPoint(100, 100),
@@ -1285,20 +1300,30 @@ class EditorDialog (wxDialog):
 		self.lblCredit = wxStaticText(self, -1, _("Credit"), wxPoint(10, 5 + (height*2)))
 		
 		self.txtTitle = wxTextCtrl(self, -1, self.page.name, wxPoint(80, 5), wxSize(280, -1))
-		if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
-			self.item.content.metadta.lifecycle.addContributor(self.page.author, "Author")
 
 		authorname = ""
-		author = self.item.content.metadata.lifecycle.getAuthor()
-		if author:
-			authorname = author.entity.fname.value
+ 		if self.isHotword:
+			authorname = self.page.author
+		else:
+			if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
+				self.item.content.metadta.lifecycle.addContributor(self.page.author, "Author")
+
+			author = self.item.content.metadata.lifecycle.getAuthor()
+			if author:
+				authorname = author.entity.fname.value
  
 		self.txtAuthor = wxTextCtrl(self, -1, authorname, wxPoint(80, 25), wxSize(280, -1))
 		
-		if self.page.credit and self.item.content.metadata.rights.description == "":
-			self.item.content.metadata.rights.description = self.page.credit
+		credits = ""
+		if self.isHotword:
+			credits = self.page.credit
+		else:
+			if self.page.credit and self.item.content.metadata.rights.description == "":
+				self.item.content.metadata.rights.description = self.page.credit
 
-		self.txtCredit = wxTextCtrl(self, -1, self.item.content.metadata.rights.description, wxDefaultPosition, wxSize(280, height*3), wxTE_MULTILINE)
+			credits = self.item.content.metadata.rights.description
+
+		self.txtCredit = wxTextCtrl(self, -1, credits, wxDefaultPosition, wxSize(280, height*3), wxTE_MULTILINE)
 
 		#Left Input Labels
 		self.selectImage = wxSelectBox(self, _("Image:"), self.page.media.image, _("Graphics"), 10, 100, 160)
@@ -1626,19 +1651,25 @@ class EditorDialog (wxDialog):
 			self.item.name = self.page.name
 
 		#self.page.author = self.txtAuthor.GetValue()
-		author = self.item.content.metadata.lifecycle.getAuthor()
-		if not author:
-			self.item.content.metadata.lifecycle.addContributor(self.txtAuthor.GetValue(), "Author")
+		if self.isHotword:
+			self.page.author = self.txtAuthor.GetValue()
+		else:
 			author = self.item.content.metadata.lifecycle.getAuthor()
+			if not author:
+				self.item.content.metadata.lifecycle.addContributor(self.txtAuthor.GetValue(), "Author")
+				author = self.item.content.metadata.lifecycle.getAuthor()
 		
-		author.entity.fname.value = self.txtAuthor.GetValue()
-		if author.entity.filename == "":
-			afilename = os.path.join(self.parent.PrefDir, "Contacts", MakeFileName2(author.entity.fname.value) + ".vcf")
-			author.entity.filename = afilename
+			author.entity.fname.value = self.txtAuthor.GetValue()
+			if author.entity.filename == "":
+				afilename = os.path.join(self.parent.PrefDir, "Contacts", MakeFileName2(author.entity.fname.value) + ".vcf")
+				author.entity.filename = afilename
 			
-		author.entity.saveAsFile()
+			author.entity.saveAsFile()
 
-		self.item.content.metadata.rights.description = self.txtCredit.GetValue()
+		if self.isHotword:
+			self.page.credit = self.txtCredit.GetValue()
+		else:
+			self.item.content.metadata.rights.description = self.txtCredit.GetValue()
 		self.page.media.image = self.selectImage.filename
 		self.page.media.video = self.selectVideo.filename
 		if self.chkVideoAutostart.IsChecked():
