@@ -11,7 +11,7 @@ except:
 if wxPlatform != '__WXMSW__':
 	from wxPython.html import wxHtmlWindow
 
-from wxbrowser import *
+#from wxbrowser import *
 
 from conman.validate import *
 from wxPython.stc import * #this is for the HTML plugin
@@ -23,6 +23,7 @@ import os
 import re
 import conman
 import version
+import glob
 
 #these 2 are needed for McMillan Installer to find these modules
 import conman.plugins
@@ -33,6 +34,7 @@ import themes
 import conman.HTMLFunctions
 import conman.xml_settings as xml_settings
 import conman.file_functions as files
+import conman.vcard as vcard
 from conman.validate import *
 from convert.PDF import PDFPublisher
 
@@ -100,6 +102,7 @@ ID_THEME = wxNewId()
 ID_LINKCHECK = wxNewId()
 ID_REFRESH_THEME = wxNewId()
 ID_UPLOAD_PAGE = wxNewId()
+ID_CONTACTS = wxNewId()
 
 useie = True
 if wxPlatform == '__WXMSW__':
@@ -203,6 +206,10 @@ class MainFrame2(wxFrame):
 		if os.path.exists(os.path.join(self.PrefDir, "settings.xml")):
 			self.settings.LoadFromXML(os.path.join(self.PrefDir, "settings.xml"))
 		
+		contactsdir = os.path.join(self.PrefDir, "Contacts")
+		if not os.path.exists(contactsdir):
+			os.mkdir(contactsdir)
+
 		self.langdir = "en"
 		if self.settings["Language"] == "English":
 			self.langdir = "en"
@@ -257,6 +264,31 @@ class MainFrame2(wxFrame):
 			if os.path.exists(htmleditor):
 				self.settings["HTMLEditor"] = htmleditor
 		
+		#load the VCards
+		self.vcardlist = {}
+		vcards = glob.glob(os.path.join(self.PrefDir, "Contacts", "*.vcf"))
+		errOccurred = False
+		errCards = []
+		for card in vcards:
+			try:
+				myvcard = vcard.VCard()
+				myvcard.parseFile(os.path.join(self.PrefDir, "Contacts", card))
+				if myvcard.fname.value == "":
+					myvcard.fname.value = myvcard.name.givenName + " "
+					if myvcard.name.middleName != "":
+						myvcard.fname.value = myvcard.fname.value + myvcard.name.middleName + " "
+					myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
+				self.vcardlist[myvcard.fname.value] = myvcard
+			except:
+				import traceback
+				print traceback.print_exc()
+				errOccurred = True
+				errCards.append(card)
+
+		if errOccurred:
+			message = _("EClass could not load the following vCards from your Contacts folder: " + `errCards` + ". You may want to try deleting these cards and re-creating or re-importing them.")
+			wxMessageBox(message)
+
 		self.statusBar = self.CreateStatusBar()
 
 		if wxPlatform == '__WXMSW__':
@@ -387,6 +419,7 @@ class MainFrame2(wxFrame):
 		ToolsMenu = wxMenu()
 		ToolsMenu.Append(ID_THEME, _("Theme Manager"))
 		ToolsMenu.Append(ID_LINKCHECK, _("Link Checker"))
+		ToolsMenu.Append(ID_CONTACTS, _("Contact Manager"))
 
 		HelpMenu = wxMenu()
 		HelpMenu.Append(wxID_ABOUT, _("About Eclass"), _("About Eclass.Builder"))
@@ -500,6 +533,7 @@ class MainFrame2(wxFrame):
 		EVT_MENU(self, ID_IMPORT_FILE, self.AddNewItem)
 		EVT_MENU(self, ID_REFRESH_THEME, self.OnRefreshTheme)
 		EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
+		EVT_MENU(self, ID_CONTACTS, self.OnContacts)
 
 		EVT_CLOSE(self, self.TimeToQuit)
 
@@ -596,6 +630,9 @@ class MainFrame2(wxFrame):
 			pass #leave self.browser alone
 		self.Preview()
 		evt.Skip()
+
+	def OnContacts(self, event):
+		ContactsDialog(self).ShowModal()
 
 	def ManageThemes(self, event):
 		ThemeManager(self).ShowModal()
@@ -770,7 +807,7 @@ class MainFrame2(wxFrame):
 				publisher = mytheme.HTMLPublisher(self)
 				publisher.CopySupportFiles()
 				publisher.CreateTOC()
-				self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.name)
+				self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
 				self.Preview()
 				self.SwitchMenus(True)
 		#f.Destroy()
@@ -1038,7 +1075,7 @@ class MainFrame2(wxFrame):
 				self.pub.CurrentNode.children.append(newnode)
 				self.pub.content.append(newnode.content)
 				self.CurrentItem = newnode
-				newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.name, -1, -1, wxTreeItemData(self.CurrentItem))
+				newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.metadata.name, -1, -1, wxTreeItemData(self.CurrentItem))
 				if not self.wxTree.IsExpanded(self.CurrentTreeItem):
 					self.wxTree.Expand(self.CurrentTreeItem)
 				self.CurrentTreeItem = newitem
@@ -1070,13 +1107,12 @@ class MainFrame2(wxFrame):
 						parent = None
 						newnode = self.CurrentItem
 					self.CurrentItem = newnode
-					newnode.content.name = dialog.txtTitle.GetValue() #"New Page"
-					newnode.content.filename = dialog.txtFilename.GetValue()
-					myplugin = eval("plugins." + plugin["Name"])
-		
+					newnode.content.metadata.name = dialog.txtTitle.GetValue() #"New Page"
+					newnode.content.filename = os.path.join(plugin["Directory"], dialog.txtFilename.GetValue())
+					myplugin = eval("plugins." + plugin["Name"])		
 					if myplugin.EditorDialog(self,self.CurrentItem).ShowModal() == wxID_OK:
 						if not isroot:
-							newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.name, -1, -1, wxTreeItemData(self.CurrentItem))
+							newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.metadata.name, -1, -1, wxTreeItemData(self.CurrentItem))
 							if not self.wxTree.IsExpanded(self.CurrentTreeItem):
 								self.wxTree.Expand(self.CurrentTreeItem)
 							self.CurrentTreeItem = newitem
@@ -1094,7 +1130,7 @@ class MainFrame2(wxFrame):
 	def EditItem(self, event):
 		if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
 			result = PageEditorDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
-			self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.name)
+			self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
 			self.Update()
 			self.isDirty = True
 
@@ -1198,7 +1234,7 @@ class MainFrame2(wxFrame):
 				newpub.LoadFromXML(os.path.join(f.GetPath(), "imsmanifest.xml"))
 				newnode.pub = newpub
 				newnode.content.filename = os.path.join(f.GetPath(), "imsmanifest.xml")
-			#newitem = self.wxTree.AppendItem(self.CurrentTreeItem,newpub.nodes[0].content.name, -1, -1, wxTreeItemData(newnode))
+			#newitem = self.wxTree.AppendItem(self.CurrentTreeItem,newpub.nodes[0].content.metadata.name, -1, -1, wxTreeItemData(newnode))
 
 			#self.CurrentItem.children.append(newpub)
 				self.InsertwxTreeChildren(self.CurrentTreeItem, [newpub.nodes[0]]) 
@@ -1227,7 +1263,7 @@ class MainFrame2(wxFrame):
 	
 			if result == wxID_OK:
 				self.Update()
-				self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.name)
+				self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
 				self.isDirty = True
 	
 	def OnOpen(self,event):
@@ -1371,7 +1407,7 @@ class MainFrame2(wxFrame):
 	def Preview(self, myfilename=""):
 		filename = ""
 		if myfilename != "":
-			filename = os.path.join(self.CurrentItem.dir, "pub", myfilename)
+			filename = os.path.join(self.CurrentItem.dir, "pub", os.path.basename(myfilename))
 		if 0: #string.find(self.CurrentItem.content.filename, ".htm") != -1:
 			filename = self.CurrentItem.content.filename
 			filename = os.path.join(self.CurrentItem.dir, "Text", filename)
@@ -1382,13 +1418,13 @@ class MainFrame2(wxFrame):
 					publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
 					filename = publisher.GetFilename(self.CurrentItem.content.filename)
 					#publisher.Publish(self, self.CurrentItem, self.CurrentItem.dir)
-					filename = os.path.join(self.CurrentItem.dir, "pub", filename)
+					filename = os.path.join(self.CurrentItem.dir, "pub", os.path.basename(filename))
 					
 		if filename == "":
 			#no publisher could be found, just pass a link to the file
 			#it should be in the File subdirectory
 			filename = self.CurrentItem.content.filename
-			filename = os.path.join(self.CurrentItem.dir, "File", filename)
+			filename = os.path.join(self.CurrentItem.dir, filename)
 		
 		if os.path.exists(filename):
 			if wxPlatform == "__WXMSW__" or hasmozilla:
@@ -1410,9 +1446,9 @@ class MainFrame2(wxFrame):
 		#treeimages.Add(wxBitmap(os.path.join(imagepath, "page.gif"), wxBITMAP_TYPE_GIF))
 		#self.wxTree.AssignImageList(treeimages)
 		self.wxTree.DeleteAllItems()
-		#print root.content.name
+		#print root.content.metadata.name
 		wxTreeNode = self.wxTree.AddRoot(
-			root.content.name,
+			root.content.metadata.name,
 			-1,-1,
 			wxTreeItemData(root))
 		if len(root.children) > 0:
@@ -1428,7 +1464,7 @@ class MainFrame2(wxFrame):
 		for child in nodes:
 			if child.pub:
 				child = child.pub.nodes[0]
-			myname = child.content.name
+			myname = child.content.metadata.name
 			#print myname
 			NewwxNode = self.wxTree.AppendItem(wxTreeNode,
 					myname,
@@ -1455,7 +1491,7 @@ class MainFrame2(wxFrame):
 			nextsibling = self.wxTree.GetPrevSibling(self.CurrentTreeItem)
 			nextsibling = self.wxTree.GetPrevSibling(nextsibling)
 			self.wxTree.Delete(self.CurrentTreeItem)
-			self.CurrentTreeItem = self.wxTree.InsertItem(treeparent, nextsibling, self.CurrentItem.content.name,-1,-1,wxTreeItemData(item))
+			self.CurrentTreeItem = self.wxTree.InsertItem(treeparent, nextsibling, self.CurrentItem.content.metadata.name,-1,-1,wxTreeItemData(item))
 			if haschild:
 				self.InsertwxTreeChildren(self.CurrentTreeItem, self.CurrentItem.children)
 			self.wxTree.Refresh()
@@ -1480,7 +1516,7 @@ class MainFrame2(wxFrame):
 			haschild = self.wxTree.ItemHasChildren(self.CurrentTreeItem)
 		
 			self.wxTree.Delete(self.CurrentTreeItem)
-			self.CurrentTreeItem = self.wxTree.InsertItem(treeparent, nextsibling, self.CurrentItem.content.name,-1,-1,wxTreeItemData(item))
+			self.CurrentTreeItem = self.wxTree.InsertItem(treeparent, nextsibling, self.CurrentItem.content.metadata.name,-1,-1,wxTreeItemData(item))
 			if haschild:
 				self.InsertwxTreeChildren(self.CurrentTreeItem, self.CurrentItem.children)
 			self.wxTree.Refresh()
@@ -2782,9 +2818,6 @@ class PageEditorDialog (wxDialog):
 	"""
 	def __init__(self, parent, node, content, dir):
 		"""
-		Create a modal wxDialog control. AV parameter is a list consting
-		of attribute name and attribute value. The modified values for
-		this two variables can then be picked up from the list.
 		"""
 		wxDialog.__init__ (self, parent, -1, _("Page Properties"),
 						 wxPoint(100,100),
@@ -2800,66 +2833,21 @@ class PageEditorDialog (wxDialog):
 		self.dir = dir
 		self.filename = ""
 		self.updatetoc = False
-		icnFolder = wxBitmap(os.path.join(parent.AppDir, "icons", "Open.gif"), wxBITMAP_TYPE_GIF)
-		#TXT_LEFT = 60
-		
-		self.lblTitle = wxStaticText(self, -1, _("Name"), wxPoint(10, 12))
-		self.lblDescription = wxStaticText(self, -1, _("Description"),wxPoint(10,12 + height))
-		self.lblKeywords = wxStaticText(self, -1, _("Keywords"), wxPoint(10, 12 + (height*4)))
-		self.lblPublic = wxStaticText(self, -1, _("Public"), wxPoint(10, 12 + (height*5)))
-		#self.lblTemplate = wxStaticText(self, -1, _("Template"), wxPoint(10,12 + (height*6)))
-		self.lblContent = wxStaticText(self, -1, _("Page Content:"),wxPoint(10,12 + (height*8)))
 
-		self.txtTitle = wxTextCtrl(self, -1, self.content.name, wxPoint(80, 10), wxDefaultSize)
-		self.txtDescription = wxTextCtrl(self, -1, self.content.description, wxPoint(80, 10 + height), wxDefaultSize, wxTE_MULTILINE)
-		self.txtKeywords = wxTextCtrl(self, -1, self.content.keywords, wxPoint(80, 10 + (height*4)), wxSize(160, -1))
-		public_values = [_("true"), _("false")]
-		self.txtPublic = wxChoice(self, -1, wxPoint(80, 10 + (height*5)), wxSize(160,-1), public_values)
-		if self.content.public == "True":
-			self.txtPublic.SetSelection(0)
-		else:
-			self.txtPublic.SetSelection(1)
-		mytemplate = ""
-		#if self.content.template == "" or self.content.template == None or self.content.template == "None":
-		#	mytemplate = "Default"
-		#else:
-		#	mytemplate = self.content.template
-		#self.cmbTemplate = wxChoice(self, -1, wxPoint(80, 10 + (height*6)), wxDefaultSize, parent.templates.keys())		
-		#self.cmbTemplate.SetStringSelection(mytemplate)
+		self.notebook = wxNotebook(self, -1)
+		self.notebook.AddPage(self.GeneralPanel(), _("General"))
+		self.notebook.AddPage(self.CreditPanel(), _("Credits"))
+		self.notebook.AddPage(self.ClassificationPanel(), _("Categories"))
 
 		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(70, 20 + (height*10)),wxSize(76, 24))
 		self.btnOK.SetDefault()
-		self.txtTitle.SetFocus()
-		self.txtTitle.SetSelection(-1, -1)
 		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(160, 20 + (height*10)),wxSize(76,24))
 
-		self.btnSelectFile = wxBitmapButton(self, -1, icnFolder, wxPoint(180, 10 + (height*9)), wxSize(20, 18))
-		self.txtExistingFile = wxTextCtrl(self, -1, "", wxPoint(10, 10 + (height*9)), wxSize(160, -1))
-		#self.txtExistingFile.Enable(False)		
-
 		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.gridSizer = wxFlexGridSizer(0, 2, 4, 4)
-		self.gridSizer.Add(self.lblTitle, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-		self.gridSizer.Add(self.txtTitle, 1, wxEXPAND|wxALL, 4)
-		self.gridSizer.Add(self.lblDescription, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-		self.gridSizer.Add(self.txtDescription, 1, wxEXPAND|wxALL, 4)
-		self.gridSizer.Add(self.lblKeywords, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-		self.gridSizer.Add(self.txtKeywords, 1, wxEXPAND|wxALL, 4)
-		self.gridSizer.Add(self.lblPublic, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-		self.gridSizer.Add(self.txtPublic, 1, wxEXPAND|wxALL, 4)
-		#self.gridSizer.Add(self.lblTemplate, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-		#self.gridSizer.Add(self.cmbTemplate, 1, wxEXPAND|wxALL, 4)
-		self.gridSizer.Add(self.lblContent, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-
-		self.smallsizer = wxBoxSizer(wxHORIZONTAL)
-		self.smallsizer.Add(self.txtExistingFile, 1, wxEXPAND|wxALL, 4)
-		self.smallsizer.Add(self.btnSelectFile, 0, wxALIGN_CENTER|wxALL, 4)
-
-		self.gridSizer.Add(self.smallsizer, 1, wxEXPAND|wxALL, 4)
-		self.mysizer.Add(self.gridSizer, 1, wxEXPAND)
-
-		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.buttonsizer.Add((1, height), 1, wxEXPAND)
+		self.mysizer.Add(wxNotebookSizer(self.notebook), 1, wxEXPAND | wxALL, 4)
+		
+	 	self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
+	 	self.buttonsizer.Add((1, height), 1, wxEXPAND)
 		self.buttonsizer.Add(self.btnOK, 0, wxALL, 4)
 		self.buttonsizer.Add(self.btnCancel, 0, wxALL,4)
 		self.mysizer.Add(self.buttonsizer, 0, wxALL|wxALIGN_RIGHT, 4)
@@ -2872,13 +2860,219 @@ class PageEditorDialog (wxDialog):
 		if self.content.filename != "":
 			filename = self.content.filename
 			self.txtExistingFile.SetValue(filename)
-		#else:
-		#	answer = wxMessageDialog(self, _("WARNING: This page has no EClass page associated with it. Would you like to search for the page in your EClass folder?"), _("File not found"), wxYES_NO).ShowModal()
-		#	if answer == wxID_YES:
-		#		self.btnSelectFileClicked(None)
 
 		EVT_BUTTON(self.btnSelectFile, self.btnSelectFile.GetId(), self.btnSelectFileClicked)
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)	
+
+	def GeneralPanel(self):
+		icnFolder = wxBitmap(os.path.join(self.parent.AppDir, "icons", "Open.gif"), wxBITMAP_TYPE_GIF)
+	
+		mypanel = wxPanel(self.notebook, -1)
+		self.lblTitle = wxStaticText(mypanel, -1, _("Name"))
+		self.lblDescription = wxStaticText(mypanel, -1, _("Description"))
+		self.lblKeywords = wxStaticText(mypanel, -1, _("Keywords"))
+		self.lblPublic = wxStaticText(mypanel, -1, _("Public"))
+		self.lblContent = wxStaticText(mypanel, -1, _("Page Content:"))
+
+		self.txtTitle = wxTextCtrl(mypanel, -1, self.content.metadata.name)
+		self.txtDescription = wxTextCtrl(mypanel, -1, self.content.metadata.description, style=wxTE_MULTILINE)
+		self.txtKeywords = wxTextCtrl(mypanel, -1, self.content.metadata.keywords, size=wxSize(160, -1))
+		public_values = [_("true"), _("false")]
+		self.txtPublic = wxChoice(mypanel, -1, wxDefaultPosition, wxSize(160,-1), public_values)
+		if self.content.public == "True":
+			self.txtPublic.SetSelection(0)
+		else:
+			self.txtPublic.SetSelection(1)
+
+		self.txtTitle.SetFocus()
+		self.txtTitle.SetSelection(-1, -1)
+
+		self.btnSelectFile = wxBitmapButton(mypanel, -1, icnFolder, size=wxSize(20, 18))
+		self.txtExistingFile = wxTextCtrl(mypanel, -1, "", size=wxSize(160, -1))
+
+
+   		mysizer = wxBoxSizer(wxVERTICAL)
+   		self.gridSizer = wxFlexGridSizer(0, 2, 4, 4)
+   		self.gridSizer.Add(self.lblTitle, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
+   		self.gridSizer.Add(self.txtTitle, 1, wxEXPAND|wxALL, 4)
+   		self.gridSizer.Add(self.lblDescription, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
+   		self.gridSizer.Add(self.txtDescription, 1, wxEXPAND|wxALL, 4)
+   		self.gridSizer.Add(self.lblKeywords, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
+   		self.gridSizer.Add(self.txtKeywords, 1, wxEXPAND|wxALL, 4)
+   		self.gridSizer.Add(self.lblPublic, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
+   		self.gridSizer.Add(self.txtPublic, 1, wxEXPAND|wxALL, 4)
+   		#self.gridSizer.Add(self.lblTemplate, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
+   		#self.gridSizer.Add(self.cmbTemplate, 1, wxEXPAND|wxALL, 4)
+   		self.gridSizer.Add(self.lblContent, 0, wxALIGN_RIGHT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
+  
+   		self.smallsizer = wxBoxSizer(wxHORIZONTAL)
+   		self.smallsizer.Add(self.txtExistingFile, 1, wxEXPAND|wxALL, 4)
+   		self.smallsizer.Add(self.btnSelectFile, 0, wxALIGN_CENTER|wxALL, 4)
+  
+   		self.gridSizer.Add(self.smallsizer, 1, wxEXPAND|wxALL, 4)
+   		mysizer.Add(self.gridSizer, 1, wxEXPAND)
+		mypanel.SetSizer(mysizer)
+		mypanel.SetAutoLayout(True)
+
+		return mypanel
+
+	def CreditPanel(self):
+		mypanel = wxPanel(self.notebook, -1)
+		peopleIcon = wxBitmap(os.path.join(self.parent.AppDir, "icons", "users16.gif"), wxBITMAP_TYPE_GIF)
+		self.lblAuthor = wxStaticText(mypanel, -1, _("Author"))
+		self.txtAuthor = wxComboBox(mypanel, -1)
+		self.btnAuthor = wxBitmapButton(mypanel, -1, peopleIcon, size=wxSize(20, 18))
+		
+		self.lblDate = wxStaticText(mypanel, -1, _("Creation/Publication Date (Format: YYYY-MM-DD)"))
+		self.txtDate = wxTextCtrl(mypanel, -1)
+
+		self.lblOrganization = wxStaticText(mypanel, -1, _("Organization/Publisher"))
+		self.txtOrganization = wxComboBox(mypanel, -1)
+		self.btnOrganization = wxBitmapButton(mypanel, -1, peopleIcon, size=wxSize(20, 18))
+
+		self.lblContributors = wxStaticText(mypanel, -1, _("Contributors"))
+		self.lstContributors = wxListCtrl(mypanel, -1, style=wxLC_REPORT)
+		self.lstContributors.InsertColumn(0, _("Role"))
+		self.lstContributors.InsertColumn(1, _("Entity"))
+		self.lstContributors.InsertColumn(2, _("Date"))
+
+		self.btnAdd = wxButton(mypanel, -1, _("Add"))
+		self.btnEdit = wxButton(mypanel, -1, _("Edit"))
+		self.btnRemove = wxButton(mypanel, -1, _("Remove"))
+
+		self.lblCredit = wxStaticText(mypanel, -1, _("Credits"))
+		self.txtCredit = wxTextCtrl(mypanel, -1, self.content.metadata.rights.description, style=wxTE_MULTILINE)
+
+		mysizer = wxBoxSizer(wxVERTICAL)
+		mysizer.Add(self.lblAuthor, 0, wxALL, 4)
+		authorsizer = wxBoxSizer(wxHORIZONTAL)
+		authorsizer.Add(self.txtAuthor, 1, wxEXPAND | wxALL, 4)
+		authorsizer.Add(self.btnAuthor, 0, wxALL, 4)
+		mysizer.Add(authorsizer, 0, wxEXPAND)
+
+		mysizer.Add(self.lblDate, 0, wxALL, 4)
+		mysizer.Add(self.txtDate, 0, wxALL | wxEXPAND, 4)
+
+		mysizer.Add(self.lblOrganization, 0, wxALL, 4)
+		orgsizer = wxBoxSizer(wxHORIZONTAL)
+		orgsizer.Add(self.txtOrganization, 1, wxEXPAND | wxALL, 4)
+		orgsizer.Add(self.btnOrganization, 0, wxALL, 4)
+		mysizer.Add(orgsizer, 0, wxEXPAND)
+
+		mysizer.Add(self.lblContributors, 0, wxALL, 4)
+		mysizer.Add(self.lstContributors, 0, wxEXPAND | wxALL, 4)
+		buttonsizer = wxBoxSizer(wxHORIZONTAL)
+		buttonsizer.Add(self.btnAdd)
+		buttonsizer.Add(self.btnEdit)
+		buttonsizer.Add(self.btnRemove)
+		mysizer.Add(buttonsizer, 0, wxALIGN_CENTRE)
+		
+		mysizer.Add(self.lblCredit, 0, wxALL, 4)
+		mysizer.Add(self.txtCredit, 0, wxALL | wxEXPAND, 4)
+
+		self.UpdateAuthorList()
+
+		EVT_BUTTON(self.btnAuthor, self.btnAuthor.GetId(), self.OnLoadContacts)
+		EVT_BUTTON(self.btnOrganization, self.btnOrganization.GetId(), self.OnLoadContacts)
+		#EVT_TEXT(self.txtAuthor, self.txtAuthor.GetId(), self.CheckAuthor)
+		mypanel.SetSizer(mysizer)
+		mypanel.SetAutoLayout(True)
+
+		return mypanel
+
+	def ClassificationPanel(self):
+		mypanel = wxPanel(self.notebook, -1)
+		
+		self.lblCategories = wxStaticText(mypanel, -1, _("Categories"))
+		self.lstCategories = wxListBox(mypanel, -1)
+
+		self.btnAddCategory = wxButton(mypanel, -1, _("Add"))
+		self.btnEditCategory = wxButton(mypanel, -1, _("Edit"))
+		self.btnRemoveCategory = wxButton(mypanel, -1, _("Remove"))
+
+		mysizer = wxBoxSizer(wxVERTICAL)
+		mysizer.Add(self.lblCategories, 0, wxALL, 4)
+		mysizer.Add(self.lstCategories, 0, wxEXPAND | wxALL, 4)
+		buttonsizer = wxBoxSizer(wxHORIZONTAL)
+		buttonsizer.Add(self.btnAddCategory)
+		buttonsizer.Add(self.btnEditCategory)
+		buttonsizer.Add(self.btnRemoveCategory)
+		mysizer.Add(buttonsizer, 0, wxALIGN_CENTRE)
+
+		for item in self.content.metadata.classification.categories:
+			self.lstCategories.Append(item)
+		
+		EVT_BUTTON(self.btnAddCategory, self.btnAddCategory.GetId(), self.AddCategory)
+		EVT_BUTTON(self.btnEditCategory, self.btnEditCategory.GetId(), self.EditCategory)
+		EVT_BUTTON(self.btnRemoveCategory, self.btnRemoveCategory.GetId(), self.RemoveCategory)
+
+		mypanel.SetSizer(mysizer)
+		mypanel.SetAutoLayout(True)
+
+		return mypanel
+
+	def AddCategory(self, event):
+		dialog = wxTextEntryDialog(self, _("Please type the name of the new category here."), _("Add Category"))
+		if dialog.ShowModal() == wxID_OK:
+			value = dialog.GetValue()
+			if value != "":
+				self.lstCategories.Append(value)
+
+	def EditCategory(self, event):
+		selitem = self.lstCategories.GetSelection()
+		if selitem != wxNOT_FOUND:
+			dialog = wxTextEntryDialog(self, _("Type the new value for your category here."), _("Edit Category"), self.lstCategories.GetStringSelection())
+			if dialog.ShowModal() == wxID_OK:
+				value = dialog.GetValue()
+				if value != "":
+					self.lstCategories.SetString(selitem, value)
+
+	def RemoveCategory(self, event):
+		selitem = self.lstCategories.GetSelection()
+		if selitem != wxNOT_FOUND:
+			self.lstCategories.Delete(selitem)
+
+	def OnLoadContacts(self, event):
+		ContactsDialog(self.parent).ShowModal()
+		self.UpdateAuthorList()
+
+	def UpdateAuthorList(self):
+		oldvalue = self.txtAuthor.GetValue()
+		self.txtAuthor.Clear()
+		for name in self.parent.vcardlist.keys():
+			self.txtAuthor.Append(name, self.parent.vcardlist[name])
+
+		oldorg = self.txtOrganization.GetValue()
+		self.txtOrganization.Clear()
+		for name in self.parent.vcardlist.keys():
+			self.txtOrganization.Append(name, self.parent.vcardlist[name])
+
+		if oldvalue != "":
+			self.txtAuthor.SetValue(oldvalue)
+		else:
+			for person in self.content.metadata.lifecycle.contributors:
+				print "Person's role is: " + person.role
+				if person.role == "Author":
+					self.txtAuthor.SetValue(person.entity.fname.value)
+					if person.date != "":
+						self.txtDate.SetValue(person.date)
+				elif person.role == "Content Provider":
+					self.txtOrganization.SetValue(person.entity.fname.value)
+
+		if oldorg != "":
+			self.txtOrganization.SetValue(oldorg)
+		else:
+			for person in self.content.metadata.lifecycle.contributors:
+				if person.role == "Content Provider":
+					self.txtOrganization.SetValue(person.entity.fname.value)
+
+	def CheckAuthor(self, event):
+		text = self.txtAuthor.GetValue()
+		for name in self.parent.vcardlist.keys():
+			if string.find(name, text) == 0:
+				self.txtAuthor.SetValue(name)
+			self.txtAuthor.SetInsertionPoint(len(text))
+			self.txtAuthor.SetSelection(len(text), len(name))
 
 	def btnSelectFileClicked(self, event):
 		filtertext = "All Files (*.*)|*.*"
@@ -2961,11 +3155,212 @@ class PageEditorDialog (wxDialog):
 		if self.content.public != public:
 			self.content.public = public
 			self.parent.Update()
-		self.content.keywords = self.txtKeywords.GetValue()
-		self.content.description = self.txtDescription.GetValue()
-		self.content.name = self.txtTitle.GetValue()
+		self.content.metadata.keywords = self.txtKeywords.GetValue()
+		self.content.metadata.description = self.txtDescription.GetValue()
+		self.content.metadata.name = self.txtTitle.GetValue()
+		self.content.metadata.rights.description = self.txtCredit.GetValue()
+		if not self.txtAuthor.GetValue() == "":
+			self.UpdateContactInfo(self.txtAuthor.GetValue(), "Author")
+
+		if not self.txtOrganization.GetValue() == "":
+			self.UpdateContactInfo(self.txtOrganization.GetValue(), "Content Provider")
+
+		if not self.txtDate.GetValue() == "":
+			for person in self.content.metadata.lifecycle.contributors:
+				if person.role == "Author":
+					person.date = self.txtDate.GetValue()
+		
+		self.content.metadata.classification.categories = []
+		for num in range(0, self.lstCategories.GetCount()):
+			self.content.metadata.classification.categories.append(self.lstCategories.GetString(num))
+
 		self.content.filename = self.txtExistingFile.GetValue()
 		#self.content.template = self.cmbTemplate.GetStringSelection()
+		self.EndModal(wxID_OK)
+
+	def UpdateContactInfo(self, name, role):
+		"""
+		Updates the contact's information, or adds them to the contact database
+		if there's no info on the contact.
+		"""
+		if role == "":
+			role = "Author"
+		newcard = None
+		if not name in self.parent.vcardlist.keys():
+			newcard = vcard.VCard()
+			newcard.fname.value = name
+			newcard.filename = os.path.join(self.parent.PrefDir, "Contacts", MakeFileName2(name) + ".vcf")
+			myfile = open(newcard.filename, "wb")
+			myfile.write(newcard.asString())
+			myfile.close()
+			self.parent.vcardlist[newcard.fname.value] = newcard
+		else:
+			newcard = self.parent.vcardlist[name]
+
+		hasPerson = False
+		for person in self.content.metadata.lifecycle.contributors:
+			if person.role == role:
+				hasPerson = True
+				person.entity = newcard
+
+		if not hasPerson:
+			contrib = conman.conman.Contributor()
+			contrib.role = role
+			contrib.entity = newcard
+			self.content.metadata.lifecycle.contributors.append(contrib)
+
+class ContactsDialog(wxDialog):
+	def __init__(self, parent):
+		wxDialog.__init__ (self, parent, -1, _("Contact Manager"), wxPoint(100,100),wxSize(300,300), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		self.parent = parent
+		self.lstContacts = wxListBox(self, -1)
+
+		self.btnAdd = wxButton(self, -1, _("Add"))
+		self.btnEdit = wxButton(self, -1, _("Edit"))
+		self.btnRemove = wxButton(self, -1, _("Remove"))
+
+		self.btnImport = wxButton(self, -1, _("Import"))
+		self.btnClose = wxButton(self, wxID_CANCEL, _("Close"))
+
+		for name in parent.vcardlist.keys():
+			self.lstContacts.Append(name, parent.vcardlist[name])
+
+		EVT_BUTTON(self.btnImport, self.btnImport.GetId(), self.OnImport)
+		EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.OnEdit)
+
+		mysizer = wxBoxSizer(wxVERTICAL)
+		contactsizer = wxBoxSizer(wxHORIZONTAL)
+		contactsizer.Add(self.lstContacts, 1, wxEXPAND | wxALL, 4)
+
+		contactBtnSizer = wxBoxSizer(wxVERTICAL)
+		contactBtnSizer.Add(self.btnAdd)
+		contactBtnSizer.Add(self.btnEdit)
+		contactBtnSizer.Add(self.btnRemove)
+		contactsizer.Add(contactBtnSizer, 0, wxALL | wxALIGN_CENTRE, 4)
+
+		mysizer.Add(contactsizer, 1, wxEXPAND)
+
+		btnsizer = wxBoxSizer(wxHORIZONTAL)
+		btnsizer.Add(self.btnImport, 0, wxALL, 4)
+		btnsizer.Add((1,1), 1, wxEXPAND)
+		btnsizer.Add(self.btnClose, 0, wxALL, 4)
+		
+		mysizer.Add(btnsizer, 0, wxEXPAND)
+
+		self.SetSizer(mysizer)
+		self.SetAutoLayout(True)
+		self.Layout()
+
+	def OnImport(self, event):
+		dialog = wxFileDialog(self, _("Choose a vCard"), "", "", _("vCard Files") + " (*.vcf)|*.vcf", wxOPEN)
+		if dialog.ShowModal() == wxID_OK:
+			files.CopyFile(dialog.GetFilename(), dialog.GetDirectory(), os.path.join(self.parent.PrefDir, "Contacts"))
+			newvcard = vcard.VCard()
+			newvcard.parseFile(os.path.join(self.parent.PrefDir, "Contacts", dialog.GetFilename()))
+			if newvcard.fname.value == "":
+				myvcard.fname.value = myvcard.name.givenName + " "
+				if myvcard.name.middleName != "":
+					myvcard.fname.value = myvcard.fname.value + myvcard.name.middleName + " "
+				myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
+			self.parent.vcardlist[newvcard.fname.value] = newvcard
+			self.lstContacts.Append(name, newvcard)
+
+	def OnEdit(self, event):
+		thisvcard = self.lstContacts.GetClientData(self.lstContacts.GetSelection())
+		name = thisvcard.fname.value
+		print "Name = " + name
+		editor = ContactEditor(self, thisvcard)
+		if editor.ShowModal() == wxID_OK:
+			thisname = editor.vcard.fname.value
+			if name != thisname:
+				self.parent.vcardlist.pop(name)
+			self.parent.vcardlist[thisname] = editor.vcard
+			self.lstContacts.SetClientData(self.lstContacts.GetSelection(), editor.vcard)
+		editor.Destroy()
+
+class ContactEditor(wxDialog):
+	def __init__(self, parent, myvcard):
+		wxDialog.__init__ (self, parent, -1, _("Contact Editor"), wxPoint(100,100),wxSize(300,300), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		self.myvcard = myvcard
+		self.parent = parent
+		self.lblFullName = wxStaticText(self, -1, _("Full Name"))
+		self.txtFullName = wxTextCtrl(self, -1, myvcard.fname.value)
+		self.lblFirstName = wxStaticText(self, -1, _("First"))
+		self.txtFirstName = wxTextCtrl(self, -1, myvcard.name.givenName)
+		self.lblMiddleName = wxStaticText(self, -1, _("Middle"))
+		self.txtMiddleName = wxTextCtrl(self, -1, myvcard.name.middleName)
+		self.lblLastName = wxStaticText(self, -1, _("Last"))
+		self.txtLastName = wxTextCtrl(self, -1, myvcard.name.familyName)
+		self.lblPrefix = wxStaticText(self, -1, _("Prefix"))
+		self.txtPrefix = wxTextCtrl(self, -1, myvcard.name.prefix, size=wxSize(40, -1))
+		self.lblSuffix = wxStaticText(self, -1, _("Suffix"))
+		self.txtSuffix = wxTextCtrl(self, -1, myvcard.name.suffix, size=wxSize(40, -1))
+
+		self.lblTitle = wxStaticText(self, -1, _("Title"))
+		self.txtTitle = wxTextCtrl(self, -1, myvcard.title.value)
+
+		self.lblOrganization = wxStaticText(self, -1, _("Organization"))
+		self.txtOrganization = wxTextCtrl(self, -1, myvcard.organization.name)
+
+		self.lblEmail = wxStaticText(self, -1, _("Email"))
+		email = ""
+		if len(myvcard.emails) > 0:
+			email = myvcard.emails[0].value
+
+		self.txtEmail = wxTextCtrl(self, -1, email)
+
+		self.btnOK = wxButton(self, wxID_OK, _("OK"))
+		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
+
+		mysizer = wxBoxSizer(wxVERTICAL)
+		prefixsizer = wxBoxSizer(wxHORIZONTAL)
+		prefixsizer.AddMany([(self.lblFullName, 0, wxALL, 4), (self.txtFullName, 1, wxALL | wxEXPAND, 4)])
+		mysizer.Add(prefixsizer)
+		propsizer = wxFlexGridSizer(2, 6, 2, 2)
+		propsizer.AddMany([
+						(self.lblFirstName, 0, wxALL, 4), (self.txtFirstName, 0, wxALL | wxEXPAND, 4),
+						(self.lblMiddleName, 0, wxALL, 4), (self.txtMiddleName, 0, wxALL, 4),
+						(self.lblLastName, 0, wxALL, 4), (self.txtLastName, 0, wxALL | wxEXPAND, 4),
+						(self.lblPrefix, 0, wxALL, 4), (self.txtPrefix, 0, wxALL, 4), 
+						(self.lblSuffix, 0, wxALL, 4), (self.txtSuffix, 0, wxALL, 4),((1,1))])
+		mysizer.Add(propsizer, 0, wxEXPAND)
+		propsizer2 = wxFlexGridSizer(2, 4, 2, 2)
+		propsizer2.AddMany([(self.lblTitle, 0, wxALL, 4), (self.txtTitle, 1, wxALL | wxEXPAND, 4), 
+						(self.lblOrganization, 0, wxALL, 4), (self.txtOrganization, 1, wxALL | wxEXPAND, 4),
+						(self.lblEmail, 0, wxALL, 4), (self.txtEmail, 1, wxALL | wxEXPAND, 4)])
+		mysizer.Add(propsizer2, 0, wxEXPAND)
+		
+		btnsizer = wxBoxSizer(wxHORIZONTAL)
+		btnsizer.Add((1,1), 1, wxEXPAND)
+		if wxPlatform != "__WXMAC__":
+			btnsizer.Add(self.btnOK)
+			btnsizer.Add(self.btnCancel)
+		else:
+			btnsizer.Add(self.btnCancel)
+			btnsizer.Add(self.btnOK)
+		mysizer.Add(btnsizer, 0, wxEXPAND | wxALL, 4)
+
+		self.SetSizerAndFit(mysizer)
+		self.SetAutoLayout(True)
+		self.Layout()
+
+		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.OnOK)
+
+	def OnOK(self, event):
+		self.myvcard.fname.value = self.txtFullName.GetValue()
+		self.myvcard.name.prefix = self.txtPrefix.GetValue()
+		self.myvcard.name.suffix = self.txtSuffix.GetValue()
+		self.myvcard.name.familyName = self.txtLastName.GetValue()
+		self.myvcard.name.middleName = self.txtMiddleName.GetValue()
+		self.myvcard.name.givenName = self.txtFirstName.GetValue()
+		self.myvcard.title.value = self.txtTitle.GetValue()
+		self.myvcard.organization.name = self.txtOrganization.GetValue()
+		if len(self.myvcard.emails) == 0: 
+			self.myvcard.emails.append(vcard.EMail())
+		self.myvcard.emails[0].value = self.txtEmail.GetValue()
+		myfile = open(self.myvcard.filename, "wb")
+		myfile.write(self.myvcard.asString())
+		myfile.close()
 		self.EndModal(wxID_OK)
 
 class EClassAboutDialog(wxDialog):
@@ -2987,7 +3382,7 @@ class EClassAboutDialog(wxDialog):
 		self.btnOK.SetDefault()
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		self.mysizer.Add(self.browser, 1, wxEXPAND|wxALL, 4)
-		self.mysizer.Add(self.btnOK, 0, wxALIGN_CENTER|wxALL, 6)
+		self.mysizer.Add(self.btnOK, 0, wxALIGN_CENTER|wxALL, 6)			
 
 		self.SetAutoLayout(True)
 		self.SetSizer(self.mysizer)
@@ -3185,8 +3580,8 @@ class ThemeManager(wxDialog):
 		self.oldtheme = self.parent.pub.settings["Theme"]
 		
 		#self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
-
-		self.browser = wxBrowser(self, -1)
+		import wxbrowser
+		self.browser = wxbrowser.wxBrowser(self, -1)
 		#self.browser.LoadPage("http://www.apple.com")
 
 		icnNewTheme = wxBitmap(os.path.join(self.parent.AppDir, "icons", "plus16.gif"), wxBITMAP_TYPE_GIF)
@@ -3481,9 +3876,9 @@ class wxTreeDropTarget(wxPyDropTarget):
 				currentitem = cPickle.loads(self.data.GetData())
 				#currentitem = self.parent.CurrentItem
 				#if not self.parent.IsCtrlDown:
-				self.wxTree.InsertItem(self.wxTree.GetItemParent(item[0]), item[0], currentitem.content.name, -1, -1, wxTreeItemData(currentitem))
+				self.wxTree.InsertItem(self.wxTree.GetItemParent(item[0]), item[0], currentitem.content.metadata.name, -1, -1, wxTreeItemData(currentitem))
 				#else:
-				#	self.wxTree.InsertItem(item[0], -1, currentitem.content.name, -1, -1, wxTreeItemData(currentitem))
+				#	self.wxTree.InsertItem(item[0], -1, currentitem.content.metadata.name, -1, -1, wxTreeItemData(currentitem))
 				previtem = self.wxTree.GetPyData(item[0])
 				newitem = currentitem
 				newitem.parent = previtem.parent
