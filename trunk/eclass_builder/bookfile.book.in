@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<book xmlns='http://documancer.sourceforge.net/bookfile-0.2.4'>
+  <title><!-- insert title here--></title>
+  <provider>HTML</provider>
+  <attributes>
+    <attr name='rootfile'>index.htm</attr>
+    <attr name='basedir'>.</attr>
+    <attr name='dirty'>0</attr>
+    <!-- insert index info here -->
+  </attributes>
+</book>
