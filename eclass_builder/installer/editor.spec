@@ -9,6 +9,7 @@ exe = EXE(pyz,
           strip=0,
           upx=1,
           console=0 )
+
 coll = COLLECT( exe,
                a.binaries,
                strip=0,

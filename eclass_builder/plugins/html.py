@@ -18,7 +18,6 @@ import traceback
 import sys
 #from xml.dom.minidom import parse
 
-#if wxPlatform == '__WXMSW__':
 from wxPython.mozilla import *
 from wxPython.stc import *
 
@@ -295,7 +294,7 @@ class EditorFrame (wxFrame):
 		mozillapanel.SetAutoLayout(True)
 		mozillapanel.SetSizerAndFit(mozpanelsizer)
 
-		self.mozilla.MakeEditable()
+		#self.mozilla.MakeEditable()
 		sourcepanel = wxPanel(self.notebook, -1)
 		self.notebook.AddPage(sourcepanel, "HTML")
 
