@@ -27,6 +27,21 @@ class HTMLPublisher(BaseHTMLPublisher):
 		file.write(data)
 		file.close()
 
+	def _GetFilename(self, filename):
+		extension = string.split(filename, ".")[-1]
+		publisher = None
+		for plugin in myplugins:
+			if extension in plugin["Extension"]:
+				publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
+		if publisher: 
+			try:
+				filename = "pub/" + publisher.GetFilename(filename)
+			except: 
+				pass
+		else:
+			filename = string.replace(filename, "\\", "/")
+		return filename
+
 	def GetContentsPage(self):
 		if os.path.exists(os.path.join(self.themedir,"frame.tpl")):
 			return "index.htm"
