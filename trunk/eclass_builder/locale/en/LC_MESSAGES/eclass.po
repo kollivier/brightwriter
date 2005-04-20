@@ -586,7 +586,7 @@ msgid "Upload Files on Save"
 msgstr ""
 
 #: editor.py:1537
-msgid "Enable Search Function (Requires Greenstone)"
+msgid "Enable Search Function"
 msgstr ""
 
 #: editor.py:1547
