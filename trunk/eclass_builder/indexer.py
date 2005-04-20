@@ -9,7 +9,9 @@ from HTMLParser import HTMLParser, HTMLParseError
 from wxPython.wx import *
 import locale
 import settings
-import dialogs
+import utils
+
+indexLog = utils.LogFile("indexing_log.txt")
 
 class SearchEngine:
 	def __init__(self, parent, indexdir, folder=""):
@@ -79,6 +81,10 @@ class SearchEngine:
 		except:
 			pass
 
+		if mytext == "":
+			global indexLog
+			indexLog.write("No text indexed for file: " + filename)
+
 		doc.add(PyLucene.Field("contents", mytext, True, True, True))
 
 		if self.writer:
@@ -94,7 +100,7 @@ class SearchEngine:
 			fullname = os.path.join(dir, afile)
 			if os.path.isdir(fullname):
 				self.IndexFolder(fullname)
-			elif os.path.isfile(fullname) and os.path.splitext(fullname)[1][1:] != "xls":
+			elif os.path.isfile(fullname):
 				doc = PyLucene.Document()
 				filename = string.replace(fullname, self.folder, "File")
 				filename = string.replace(filename, "\\", "/")
@@ -119,7 +125,7 @@ class SearchEngine:
 				if self.writer:
 					self.writer.addDocument(doc)
 
-	def IndexFiles(self, rootnode, dialog=None):
+	def IndexFiles(self, rootnode, dialog=None):s
 		store = PyLucene.FSDirectory.getDirectory(self.indexdir, True)
 		self.writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), True)
 		self.dialog = dialog
@@ -154,18 +160,21 @@ class SearchEngine:
 		else:					
 			try:
 				myconverter = converter.DocConverter(self.parent)
-				thefilename, returnDataFormat = myconverter.ConvertFile(filename, "unicodeTxt")
+				thefilename, returnDataFormat = myconverter.ConvertFile(filename, "unicodeTxt", settings.options["PreferredConverter"])
 				if thefilename == "":
 					return ""
 				myfile = open(thefilename, "rb")
 				data = myfile.read()
 				myfile.close()
+
+				if os.path.exists(thefilename):
+					os.remove(thefilename)
 			except:
 				import traceback
 				print traceback.print_exc()
 				if os.path.exists(thefilename):
 					os.remove(thefilename)
-				return ""
+				return "", ""
 
 		if returnDataFormat == "html":
 			convert = TextConverter()
@@ -173,6 +182,7 @@ class SearchEngine:
 			convert.close()
 			encoding = "iso-8859-1"
 			if convert.encoding != "":
+				print "Encoding is: " + convert.encoding
 				encoding = convert.encoding
 			text = convert.text
 
@@ -181,7 +191,7 @@ class SearchEngine:
 			except:
 				text = convert.text.decode(locale.getdefaultlocale()[1])
 		elif returnDataFormat == "unicodeTxt":
-			text = unicode(data, "utf-8")
+			text = unicode(data)
 		else:
 			text = unicode(data)
 
@@ -230,10 +240,27 @@ class TextConverter(HTMLParser):
         if tagname in ["title", "h1", "h2", "h3", "h4"]:
             self.currentTag = tagname
 
+		#We can get encoding one of two ways, either from an encoding meta tag
+		#or from a Content-Type meta tag
+        isContentTypeTag = False
         if tagname == "meta":
             for attr in attrs:
+                if string.lower(attr[0]) == "http-equiv" and string.lower(attr[1]) == "content-type":
+                    isContentTypeTag = True
+
+                if isContentTypeTag == True and string.lower(attr[0]) == "content":
+                    values = string.split(attr[1], ";")
+                    for value in values:
+                        myvalue = string.lower(value)
+                        if myvalue.find("charset") != -1:
+                            self.encoding = string.split(myvalue, "=")[1]
+							
                 if string.lower(attr[0]) == "charset":
                     self.encoding = attr[1]
+			
+			#see encodings/aliases.py - all aliases use underscores where
+			#typically a dash is supposed to be.
+            self.encoding = string.replace(self.encoding, "-", "_")
 
     def handle_endtag(self, tag):
         tagname = string.lower(tag)
