@@ -1,3 +1,10 @@
+##########################################
+# utils.py
+# Common utilities used among EClass modules
+# Author: Kevin Ollivier
+##########################################
+
+import sys, os, string
 
 class LogFile:
 	def __init__(self, filename="log.txt"):
@@ -21,3 +28,9 @@ def getStdErrorMessage(type = "IOError", args={}):
 			return _("There was a problem reading or writing the file %(filename)s. Please check that the file exists and that you have correct permissions to the file.") % {"filename":args["filename"]} 
 	elif type == "UnknownError":
 		return _("An unknown error has occurred. A traceback has been written to the 'errlog.txt' file within your program directory.")
+
+def makeModuleName(text):
+	result = string.replace(text, "-", "_")
+	result = string.replace(result, "*", "")
+	result = string.replace(result, "/", "")
+	result = string.replace(result, "\\", "")
