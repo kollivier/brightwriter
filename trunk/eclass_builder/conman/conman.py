@@ -296,7 +296,7 @@ class ConMan:
 		keywords = ""
 		description = ""
 		template = ""
-		public = "false"
+		public = "true"
 		mycontent = None
 		if root.attributes:
 			for i in range(0, len(root.attributes)):
@@ -436,7 +436,7 @@ class ConMan:
 		return mymetadata
 
 	def _TOCAsXML(self, root):
-		mytoc = """\t\t<item identifier="%s" identifierref="%s" template="%s" public="%s">\n""" % (TextToXMLAttr(self.namespace + root.id), TextToXMLAttr(self.namespace + root.content.id), TextToXMLAttr(root.content.template), TextToXMLAttr(root.content.public))
+		mytoc = """\t\t<item identifier="%s" identifierref="%s">\n""" % (TextToXMLAttr(self.namespace + root.id), TextToXMLAttr(self.namespace + root.content.id))
 		mytoc = mytoc + "\t\t<Title>" + TextToXMLChar(root.content.metadata.name) + "</Title>\n"
 		if len(root.children) > 0:
 			for child in root.children:
@@ -580,7 +580,7 @@ class Content:
 	Methods:
 	NONE
 	"""
-	def __init__(self, id, lang):
+	def __init__(self, id, lang, type="webcontent"):
 		self.encoding = "ISO-8859-1"
 		self.id = id
 		self.name = ""
@@ -590,10 +590,9 @@ class Content:
 		self.description = ""
 		self.language = lang
 
-		self.permissions = ""
-		self.template = ""
 		self.public = "true"
 		self.filename = ""
+		self.type = type
 		self.metadata = Metadata()
 
 	def __setattr__(self, name, value):
@@ -601,7 +600,17 @@ class Content:
 			self.__dict__[name] = value.encode(self.encoding, 'replace')
 		else:
 			self.__dict__[name] = value
+
+	def asXMLString(self):
+		# TODO: IMPLEMENT THIS!! Remove hack from ConMan SaveAsXML.
+		pass
 		
+def CopyContent(oldcontent):
+	newcontent = Content(GetUUID(), "en")
+	import copy
+	newcontent.metadata = copy.copy(oldcontent.metadata)
+	return newcontent
+
 class Metadata:
 	""" 
 	Class: conman.Metadata
@@ -829,7 +838,7 @@ def GetUUID():
 	Description: Generates a UUID using platform specific tools (the built-in GUID generation tools on Windows, and the uuidgen command line utility on Linux/Mac OS X.
 	"""
 	id = ""
-	if sys.platform == "win32" or sys.platform == "nt":
+	if sys.platform == "win32":
 		id = pythoncom.CreateGuid()
 		id = str(id)
 		id = string.replace(id, "'", "")
