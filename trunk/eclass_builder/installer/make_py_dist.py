@@ -21,7 +21,31 @@
 #  This script creates the mini python distribution that is shipped
 #  with Documancer on Windows.
 
-import sys, os, string, shutil, glob, modulefinder
+import sys, os, string, shutil, glob, modulefinder, re
+#import wxversion
+flavor = "ansi"
+
+#if len(sys.argv) > 1:
+#    if sys.argv[1] == "--unicode":
+#        flavor = "unicode"
+
+#wxversion.select("2.5-" + flavor)
+
+#rename the installer appropriately.
+myfile = open("eclass-builder.nsi", "r")
+data = myfile.read()
+myfile.close()
+
+myterm = re.compile("(!define UNICODE_STRING \").*(\")",re.IGNORECASE|re.MULTILINE)
+unicodeText = ""
+if flavor == "unicode":
+    unicodeText = "-unicode"
+
+data = myterm.sub("\\1" + unicodeText + "\\2", data)
+
+myfile = myfile = open("eclass-builder.nsi", "w")
+myfile.write(data)
+myfile.close()
 
 def makedir(path):
     pathparts = string.split(path, os.sep)
@@ -35,7 +59,7 @@ if os.name == "nt":
     import win32com
     for p in win32com.__path__[1:]:
         modulefinder.AddPackagePath("win32com", p)
-    for extra in ["win32com.shell"]:
+    for extra in ["win32com.shell", "win32com.client"]:
         __import__(extra)
         m = sys.modules[extra]
         for p in m.__path__[1:]:
@@ -45,15 +69,17 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "..
 modfinder = modulefinder.ModuleFinder(excludes=["Tkinter"])
 #modulefinder.ReplacePackage("_xmlplus", "xml")
 modfinder.add_module("site")
-modfinder.run_script(os.path.join("..", "editor.py"))
 
+scripts = [os.path.join("..", "editor.py"), os.path.join("..", "converter.py")]
 deps = []
 
-for item in modfinder.modules.items():
-    filename = item[1].__file__
+for script in scripts:
+    modfinder.run_script(script)
+    for item in modfinder.modules.items():
+        filename = item[1].__file__
     #print filename
-    if filename and string.find(filename, sys.prefix) != -1:
-        deps.append(filename)
+        if filename and string.find(filename, sys.prefix) != -1:
+            deps.append(filename)
 
 mpdir = "minipython"
 
