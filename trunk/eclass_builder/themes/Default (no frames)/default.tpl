@@ -66,6 +66,7 @@ function openCredit(windowName, text)
 </style>
 </head>
 <body bgcolor="#FFFFF5">
+<basefont face="Times New Roman">
 <table id="exampletable" valign="top" width="100%">
   <tr valign="top">
 <td width="20%"><a style="font-size:7pt;text-decoration:none;color:silver" href="http://www.treemenu.net/" target=_blank>JavaScript Tree Menu</a><br>
