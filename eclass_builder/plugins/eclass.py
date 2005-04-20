@@ -616,8 +616,8 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		if len(mypage.media.text) > 0 and os.path.exists(os.path.join(self.dir, "Text", mypage.media.text)):
 			myfile = None
 			convert = False
-			if 1: #string.find(os.path.split(string.lower(mypage.media.text))[1], "htm") != -1:
-				myfile = open(os.path.join(self.dir, "Text", mypage.media.text), 'r')
+			if string.find(os.path.splitext(string.lower(mypage.media.text))[1], "htm") != -1:
+				myhtml = open(os.path.join(self.dir, "Text", mypage.media.text), 'rb').read()
 			else: 
 				#It might be a Word/RTF document, try to convert...
 				convert = True
@@ -625,31 +625,25 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				if wxPlatform == "__WXMSW__":
 					import win32api
 					myfilename = win32api.GetShortPathName(myfilename)
-				if 1:
-					#openofficedir = self.parent.settings["OpenOffice"]
-					#if openofficedir != "" and os.path.exists(os.path.join(openofficedir, "program", "uno.py")):
-						#programdir = os.path.join(openofficedir, "program")
-						#sys.path.append(programdir)
-						#os.environ['PATH'] = os.environ['PATH'] + ";" + programdir
+				try:
 					import converter
-						
+					wxBeginBusyCursor()
 					myconverter = converter.DocConverter(self.parent)
-					thefilename = myconverter.ConvertFile(myfilename, "html")
+					thefilename = myconverter.ConvertFile(myfilename, "html", "ms_office")[0]
+					wxEndBusyCursor()
 					if thefilename == "":
-						wxMessageBox("Unable to convert file " + mypage.media.text)
-					myfile = open(thefilename, 'r')
-				else:
+						wxMessageBox(_("Unable to convert file ") + mypage.media.text)
+						return ""
+					myhtml = open(thefilename, "rb").read()
+				except:
+					wxEndBusyCursor()
 					import traceback
 					global log
 					log.write(traceback.print_exc())
-					myhtml = ""
-				
-			if myfile:
-				myhtml = GetBody(myfile)
-				myfile.close()
+					return ""
 
-			if convert:
-				myhtml = ImportFiles().ImportLinks(myhtml, os.path.join(os.getcwd(), "temp"), self.dir)
+				myhtml = ImportFiles().ImportLinks(myhtml, os.path.join(os.path.dirname(thefilename)), self.dir)
+
 		else:
 			myhtml = ""
 		objtext = ""
@@ -668,7 +662,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			raise
 
 		try: 
-			importer = ImportFiles
+			importer = ImportFiles()
 			myhtml2 = importer.ImportLinks(myhtml, os.path.join(self.dir, "Text"), self.dir)
 			myhtml = myhtml2
 		except:
@@ -1002,7 +996,7 @@ class wxSelectBox:
 		elif self.type == "Audio":
 			filter = _("Audio Files") + "(*.wav,*.aif,*.mp3,*.asf,*.wma,*.rm,*.ram)|*.wav;*.aif;*.mp3;*.asf;*.wma;*.rm;*.ram"
 		elif self.type == "Text":
-			filter = _("Document Files") + "(*.htm,*.html)|*.htm;*.html"
+			filter = _("Document Files") + "(*.htm,*.html, *.doc, *.rtf)|*.htm;*.html;*.doc;*.rtf"
 		elif self.type == "Present":
 			filter = _("Presentation Files") + "(*.ppt,*.htm,*.html,*.swf)|*.ppt;*.htm;*.html;*.swf"
 		else:
@@ -1060,7 +1054,7 @@ class wxSelectBox:
 		try:
 			file = open(path, "rb")
 			data = file.read()
-			if not string.find(filename, ".htm") == -1:
+			if string.lower(os.path.splitext(filename)[1]) in [".html", ".htm"]:
 				importer = ImportFiles()
 				data = importer.ImportLinks(data, self.selecteddir, self.parent.mainform.CurrentDir)
 			file.close()
@@ -1254,6 +1248,7 @@ class EditorDialog (wxDialog):
 		self.CurrentObj = None
 		loaded = True 
 		self.isHotword = False 
+		import settings
 
 		#check if ConNode or if EClassPage
 		if isinstance(item, conman.conman.ConNode):
@@ -1306,7 +1301,7 @@ class EditorDialog (wxDialog):
 			authorname = self.page.author
 		else:
 			if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
-				self.item.content.metadta.lifecycle.addContributor(self.page.author, "Author")
+				self.item.content.metadata.lifecycle.addContributor(self.page.author, "Author")
 
 			author = self.item.content.metadata.lifecycle.getAuthor()
 			if author:
