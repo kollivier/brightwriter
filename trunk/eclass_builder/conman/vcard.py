@@ -23,7 +23,6 @@ class VCard:
 
 		counter = 0
 		filelength = len(lines)
-		print "filelength = " + `filelength`
 		while counter < filelength:
 			#if we're in the VCard, check for the END marker before parsing
 			line = lines[counter]
@@ -172,11 +171,16 @@ class Name(VCardProp):
 	def parseString(self, text):
 		text = self.parseProps(text)
 		fields = string.split(text, ";")
-		self.familyName = fields[0]
-		self.givenName = fields[1]
-		self.middleName = fields[2]
-		self.prefix = fields[3]
-		self.suffix = fields[4]
+		if len(fields) >= 1:
+			self.familyName = fields[0]
+		if len(fields) >= 2:
+			self.givenName = fields[1]
+		if len(fields) >= 3:
+			self.middleName = fields[2]
+		if len(fields) >= 4:
+			self.prefix = fields[3]
+		if len(fields) >= 5:
+			self.suffix = fields[4]
 
 	def asVCardString(self):
 		return self.propsAsString() + ":" + \
