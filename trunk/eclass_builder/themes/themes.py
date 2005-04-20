@@ -1,4 +1,7 @@
 import string, os
+import utils
+
+log = utils.LogFile("errlog.txt")
 
 class ThemeList:
 	def __init__(self, themedir):
@@ -11,9 +14,16 @@ class ThemeList:
 			if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and string.find(item, "themes.py") == -1 and not item[0] == ".":
 				theme = string.replace(item, ".py", "")
 				if theme != "BaseTheme":
-					exec("import " + theme)
-					exec("mytheme = " + theme)
-					self.themes[mytheme.themename] = mytheme 
+					try:
+						exec("import " + theme)
+						exec("mytheme = " + theme)
+						self.themes[mytheme.themename] = mytheme
+					except:
+						global log
+						log.write("Couldn't load theme: " + theme)
+						import traceback
+						if traceback.print_exc() != None:
+							log.write(traceback.print_exc())								
 
 	def GetPublicThemeNames(self):
 		result = []
