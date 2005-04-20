@@ -1,5 +1,6 @@
 !define MUI_PRODUCT "EClass.Builder" ;Define your own software name here
-!define MUI_VERSION "2.5.5.2" ;Define your own software version here
+!define MUI_VERSION "2.5.5.7" ;Define your own software version here
+!define UNICODE_STRING "" ; for unicode, add unicode the the installer name
 Name "${MUI_PRODUCT} ${MUI_VERSION}"
 !include "MUI.nsh"
 !include "path_functions.nsi"
@@ -20,7 +21,7 @@ Name "${MUI_PRODUCT} ${MUI_VERSION}"
   !insertmacro MUI_LANGUAGE "English"
   
   ;General
-  OutFile "eclass-builder-${MUI_VERSION}.exe"
+  OutFile "eclass-builder-${MUI_VERSION}${UNICODE_STRING}.exe"
 
   ;License page
   LicenseData "..\license\License.txt"
@@ -82,9 +83,11 @@ Section "Program Files" SecCopyUI
 
   SetOutPath "$INSTDIR\3rdparty\win32"
   File "C:\Python23\w9xpopen.exe"
+  File "..\3rdparty\win32\pdftohtml.exe"
+  File /r "..\3rdparty\win32\xlHtml"
+  File /r "..\3rdparty\win32\wv"
+  File /r "..\3rdparty\win32\unrtf"
   File /r "..\3rdparty\win32\htmldoc"
-  ;File /r "..\3rdparty\win32\karrigell"
-  ;File /r "..\3rdparty\win32\SWISH-E"
   CreateDirectory "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}"
   SetOutPath $INSTDIR ; for working directory
   CreateShortCut "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}\Uninstall ${MUI_PRODUCT} ${MUI_VERSION}.lnk" "$INSTDIR\Uninstall.exe"
