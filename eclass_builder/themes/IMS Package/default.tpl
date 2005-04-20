@@ -39,7 +39,7 @@ function openCredit(windowName, text)
 
 </script>
 </head>
-<body bgcolor="#FFFFF5" onload="loadPage()" onbeforeunload="doQuit('completed')">
+<body bgcolor="#FFFFF5" onload="loadPage()" onunload="doQuit('completed')">
 <table id="exampletable" valign="top" width="100%">
   <tr valign="top">
 <td width="0%">
