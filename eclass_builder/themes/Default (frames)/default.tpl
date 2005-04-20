@@ -39,6 +39,7 @@ function openCredit(windowName, text)
 </script>
 </head>
 <body>
+<basefont face="Times New Roman">
 <table border="0" cellpadding="2" width="100%" cellspacing="4">
 <tr>
     <td width="100%">
