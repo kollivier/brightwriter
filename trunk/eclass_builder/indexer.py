@@ -125,7 +125,7 @@ class SearchEngine:
 				if self.writer:
 					self.writer.addDocument(doc)
 
-	def IndexFiles(self, rootnode, dialog=None):s
+	def IndexFiles(self, rootnode, dialog=None):
 		store = PyLucene.FSDirectory.getDirectory(self.indexdir, True)
 		self.writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), True)
 		self.dialog = dialog
