@@ -1548,10 +1548,20 @@ if __name__ != "__main__":
 	
 			else:
 				self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
+
+			#until we get editing fixed...
+			if 0:
 				self.frame.mozilla.LoadURL(self.filename)
-	
-			self.frame.MakeModal(True)
-			self.frame.Show()
+				self.frame.MakeModal(True)
+				self.frame.Show()
+			else:
+				command = "open"
+				if self.parent.settings["HTMLEditor"] != "":
+					command = command + " -a " + string.replace(self.parent.settings["HTMLEditor"], " ", "\\ ")
+				filename = string.replace(self.filename, " ", "\\ ")
+				command = command + " " + filename
+				os.system(command)
+					
 			return wxID_OK
 
 class MyApp(wxApp):
