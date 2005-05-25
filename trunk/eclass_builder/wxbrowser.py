@@ -10,7 +10,7 @@ except:
 	pass 
 
 try: 
-	from wxPython.iewin import *
+	from wxPython.lib.iewin import *
 	browserlist.append("ie")
 except:
 	pass
@@ -107,12 +107,25 @@ class wxBrowser:
 
 	def LoadPage(self, url):
 		self.currenturl = url
-		if self.engine == "mozilla":
+		if self.engine == "mozilla" or self.engine == "webkit":
+			if self.engine == "webkit":
+				url = "file://" + url
+				url = string.replace(url, " ", "%20")
 			self.browser.LoadURL(url)
 		elif self.engine == "ie":
 			self.browser.Navigate(url)
 		else:
 			self.browser.LoadPage(url)
+			
+	def GetBrowserName(self):
+		if self.engine == "mozilla":
+			return "Mozilla/Netscape"
+		elif self.engine == "webkit":
+			return "Safari"
+		elif self.engine == "ie":
+			return "Internet Explorer"
+		else:
+			return "HTML Window"
 
 	def Refresh(self):
 		if self.engine == "mozilla":
@@ -169,7 +182,7 @@ class wxBrowser:
 			if not "ie" in browserlist:
 				return False
 
-			self.browser = wxIEHtmlWin(self.parent, self.id)
+			self.browser = IEHtmlWindow(self.parent, self.id)
 			self.engine = "ie"
 			return True
 		except:
