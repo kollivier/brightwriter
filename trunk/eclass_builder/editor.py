@@ -7,32 +7,15 @@ try:
 	from wxPython.mozilla import *
 except:
 	hasmozilla = False
-if wxPlatform != '__WXMSW__':
-	from wxPython.html import wxHtmlWindow
-
-#from wxbrowser import *
 
 from conman.validate import *
 from wxPython.stc import * #this is for the HTML plugin
 import sys, urllib2, cPickle
 import string, time, cStringIO, os, re, glob, csv
-import conman
-import version
-import utils
-import indexer
-try:
-	import win32process, win32con
-except:
-	pass
 
 import xml.dom.minidom
 
-#these 2 are needed for McMillan Installer to find these modules
-import conman.plugins
-import conman.HTMLTemplates
-
 import ftplib
-#import themes
 import themes.themes as themes
 import conman.HTMLFunctions
 import conman.xml_settings as xml_settings
@@ -40,7 +23,21 @@ import conman.file_functions as files
 import conman.vcard as vcard
 from conman.validate import *
 from convert.PDF import PDFPublisher
-import settings
+import settings, wxbrowser
+
+import indexer
+import conman
+import version
+import utils
+
+try:
+	import win32process, win32con
+except:
+	pass
+	
+#these 2 are needed for McMillan Installer to find these modules
+import conman.plugins
+import conman.HTMLTemplates
 
 #for indexing
 import PyLucene
@@ -410,7 +407,10 @@ class MainFrame2(wxFrame):
 		FileMenu.Append(ID_SAVE, "&" + _("Save"), _("Save the Current Project"))
 		FileMenu.Append(ID_CLOSE, "&" + _("Close"), _("Close the Current Project"))
 		FileMenu.AppendSeparator()
-		FileMenu.Append(ID_PREVIEW, _("Preview"), _("Preview EClass in web browser"))
+		PrevMenu = wxMenu()
+		PrevMenu.Append(ID_PREVIEW, _("Web Browser"),  _("Preview EClass in web browser"))
+		
+		FileMenu.AppendMenu(wxNewId(), _("Preview"), PrevMenu)
 		FileMenu.Append(ID_REFRESH_THEME, _("Refresh Theme"), "Reapply current theme to pages.")
 		FileMenu.AppendSeparator()
 		PubMenu = wxMenu()
@@ -486,34 +486,55 @@ class MainFrame2(wxFrame):
 
 		self.previewbook = wxNotebook(self.splitter1, -1, style=wxCLIP_CHILDREN)
 		self.booksizer = wxNotebookSizer(self.previewbook)
-		self.previewpanel = wxPanel(self.previewbook, -1)
-		panelsizer = wxBoxSizer(wxHORIZONTAL)
+		
 		self.splitter1.SplitVertically(self.wxTree, self.previewbook, 200)
 
-		if hasmozilla: 
-			if wxPlatform == '__WXMSW__':
-				self.ie = IEHtmlWindow(self.previewbook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
-				self.browser = self.ie #default, first to preview
-				self.previewbook.AddPage(self.ie, "Internet Explorer")
-			else:
-				self.browser = None
-			self.previewbook.AddPage(self.previewpanel, "Mozilla/Netscape")
-			self.mozilla = wxMozillaBrowser(self.previewpanel, -1, style = wxSIMPLE_BORDER | wxCLIP_CHILDREN) 
-			self.mozilla.Navigate = self.mozilla.LoadURL
-			if not self.browser: #if IE isn't loaded
-				self.browser = self.mozilla
-			panelsizer.Add(self.mozilla, 1, wxEXPAND)
+		# load all browsers that we can use for previewing
+		self.browsers = {}
+		browsers = wxbrowser.browserlist
+		if len(browsers) == 1 and browsers[0] == "htmlwindow":
+			self.browser = wxHtmlWindow(self.previewbook, -1, wxDefaultPosition, wxDefaultSize)
+			self.previewbook.AddPage(self.browser, _("HTML Preview"))
 		else:
-			if wxPlatform == '__WXMSW__':
-				self.ie = IEHtmlWindow(self.previewbook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
-				self.browser = self.ie #default, first to preview
-			else:
-				self.browser = wxHtmlWindow(self.previewbook, -1, wxDefaultPosition, wxDefaultSize)
-				self.previewbook.AddPage(self.browser, _("HTML Preview"))
+			browsers.remove("htmlwindow")
+			default = "mozilla"
+			if sys.platform == "win32" and "ie" in browsers:
+				default = "ie"
+			elif sys.platform == "darwin" and "webkit" in browsers:
+				default = "webkit"
+			
+			for browser in browsers:
+				panel = wxPanel(self.previewbook, -1)
+				self.browser = self.browsers[browser] = wxbrowser.wxBrowser(panel, -1, browser)
+				self.previewbook.AddPage(panel, self.browsers[browser].GetBrowserName())
+				
+				panelsizer = wxBoxSizer(wxHORIZONTAL)
+				panelsizer.Add(self.browser.browser, 1, wxEXPAND)
+				panel.SetAutoLayout(True)
+				panel.SetSizerAndFit(panelsizer)
+				
+
+		#if hasmozilla: 
+		#	if wxPlatform == '__WXMSW__':
+		#		self.ie = IEHtmlWindow(self.previewbook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
+		#		self.browser = self.ie #default, first to preview
+		#		self.previewbook.AddPage(self.ie, "Internet Explorer")
+		#	else:
+		#		self.browser = None
+		#	self.previewbook.AddPage(self.previewpanel, "Mozilla/Netscape")
+		#	self.mozilla = wxMozillaBrowser(self.previewpanel, -1, style = wxSIMPLE_BORDER | wxCLIP_CHILDREN) 
+		#	self.mozilla.Navigate = self.mozilla.LoadURL
+		#	if not self.browser: #if IE isn't loaded
+		#		self.browser = self.mozilla
+		#	panelsizer.Add(self.mozilla, 1, wxEXPAND)
+		#else:
+		#	if wxPlatform == '__WXMSW__':
+		#		self.ie = IEHtmlWindow(self.previewbook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
+		#		self.browser = self.ie #default, first to preview
+		#	else:
+		#		self.browser = wxHtmlWindow(self.previewbook, -1, wxDefaultPosition, wxDefaultSize)
+		#		self.previewbook.AddPage(self.browser, _("HTML Preview"))
 		
-		#splittersizer.Add(self.wxTree, 0, wxEXPAND)
-		self.previewpanel.SetAutoLayout(True)
-		self.previewpanel.SetSizerAndFit(panelsizer)
 		self.mysizer = wxBoxSizer(wxHORIZONTAL)
 		self.mysizer.Add(self.splitter1, 1, wxEXPAND)
 		self.SetSizer(self.mysizer)
@@ -575,7 +596,10 @@ class MainFrame2(wxFrame):
 		if wxPlatform == '__WXMSW__':
 			EVT_CHAR(self.previewbook, self.SkipNotebookEvent)
 
-		if not self.settings["ShowStartup"] == "False":
+		if self.settings["LastOpened"] != "" and os.path.exists(self.settings["LastOpened"]):
+			self.LoadEClass(self.settings["LastOpened"])
+			
+		elif not self.settings["ShowStartup"] == "False":
 			dlgStartup = StartupDialog(self)
 			result = dlgStartup.ShowModal()
 			dlgStartup.Destroy()
@@ -1410,57 +1434,63 @@ class MainFrame2(wxFrame):
 
 		dialog = OpenPubDialog(self)
 		if dialog.ShowModal() == wxID_OK:
-			self.wxTree.DeleteAllItems()
-			#self.CurrentDir = OpenPubDialog.GetDirectory()
-			busy = wxBusyCursor()
-			self.CurrentFilename = os.path.join(self.CurrentDir, "imsmanifest.xml")
-			self.pub = conman.ConMan()
-			result = self.pub.LoadFromXML(self.CurrentFilename)
-			if result != "":
-				wxMessageDialog(self, result, _("Error loading XML file."), wxOK).ShowModal()
-			else:
-				self.pub.directory = self.CurrentDir
-				global eclassdirs
-				for dir in eclassdirs:
-					subdir = os.path.join(self.pub.directory, dir)
-					if not os.path.exists(subdir):
-						os.mkdir(subdir)
-				pylucenedir = os.path.join(self.pub.directory, "index.pylucene")
-				if os.path.exists(pylucenedir):
-					os.rename(pylucenedir, os.path.join(self.pub.directory, "index.lucene"))
-
-				self.BindTowxTree(self.pub.nodes[0])
-				self.CurrentItem = self.pub.nodes[0]
-				self.CurrentTreeItem = self.wxTree.GetRootItem()
-				mytheme = self.pub.settings["Theme"]
-				self.currentTheme = self.themes.FindTheme(mytheme)
-				if not self.currentTheme:
-					self.currentTheme = self.themes.FindTheme("Default (frames)")
-
-				if self.pub.settings["SearchProgram"] == "Swish-e":
-					self.pub.settings["SearchProgram"] = "Lucene"
-					wxMessageBox(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
-				#self.currentTheme = self.themes[0]
-				#if mytheme != "":
-				#	for theme in self.themes:
-				#		if theme[0] == mytheme:
-				#			self.currentTheme = theme
-				self.isDirty = False
-				if os.path.exists(os.path.join(self.CurrentDir, "ftppass.txt")):
-					file = open(os.path.join(self.CurrentDir, "ftppass.txt"), "r")
-					self.ftppass = munge(file.read(), 'foobar')
-					file.close()	 
-				self.Preview()
-				self.wxTree.SelectItem(self.wxTree.GetRootItem())
-			del busy
+			self.LoadEClass(dialog.GetPath())
 		
 		dialog.Destroy()
+		
+	def LoadEClass(self, filename):
+		busy = wxBusyCursor()
+		if not os.path.exists(filename):
+			wxMessageDialog(self, result, _("Could not find EClass file:") + filename, wxOK).ShowModal()
+			return 
+		
+		settings.CurrentDir = self.CurrentDir = os.path.dirname(filename)
+		if sys.platform == "win32":
+			settings.CurrentDir = self.CurrentDir = win32api.GetShortPathName(settings.CurrentDir)
+		self.wxTree.DeleteAllItems()
+		self.CurrentFilename = filename
+		self.pub = conman.ConMan()
+		result = self.pub.LoadFromXML(self.CurrentFilename)
+		if result != "":
+			wxMessageDialog(self, result, _("Error loading XML file."), wxOK).ShowModal()
+		else:
+			self.pub.directory = self.CurrentDir
+			global eclassdirs
+			for dir in eclassdirs:
+				subdir = os.path.join(self.pub.directory, dir)
+				if not os.path.exists(subdir):
+					os.mkdir(subdir)
+			pylucenedir = os.path.join(self.pub.directory, "index.pylucene")
+			if os.path.exists(pylucenedir):
+				os.rename(pylucenedir, os.path.join(self.pub.directory, "index.lucene"))
+
+			self.BindTowxTree(self.pub.nodes[0])
+			self.CurrentItem = self.pub.nodes[0]
+			self.CurrentTreeItem = self.wxTree.GetRootItem()
+			mytheme = self.pub.settings["Theme"]
+			self.currentTheme = self.themes.FindTheme(mytheme)
+			if not self.currentTheme:
+				self.currentTheme = self.themes.FindTheme("Default (frames)")
+
+			if self.pub.settings["SearchProgram"] == "Swish-e":
+				self.pub.settings["SearchProgram"] = "Lucene"
+				wxMessageBox(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
+
+			self.isDirty = False
+			if os.path.exists(os.path.join(self.CurrentDir, "ftppass.txt")):
+				file = open(os.path.join(self.CurrentDir, "ftppass.txt"), "r")
+				self.ftppass = munge(file.read(), 'foobar')
+				file.close()	 
+			self.Preview()
+			self.wxTree.SelectItem(self.wxTree.GetRootItem())
 			
-		self.SetFocus()
-		self.SwitchMenus(True)
-		self.PopMenu.Enable(ID_TREE_REMOVE, False)
-		self.toolbar.EnableTool(ID_TREE_REMOVE, False)
-		#f.Destroy()
+			self.SetFocus()
+			self.SwitchMenus(True)
+			self.settings["LastOpened"] = filename
+			#self.PopMenu.Enable(ID_TREE_REMOVE, False)
+			#self.toolbar.EnableTool(ID_TREE_REMOVE, False)
+		del busy
+		
 
 	def OnTreeRightClick(self, event):
 		pt = event.GetPosition()
@@ -1570,6 +1600,8 @@ class MainFrame2(wxFrame):
 			if wxPlatform == "__WXMSW__" or hasmozilla:
 				self.browser.Navigate(filename)
 				#self.mozilla.Navigate(filename)
+			elif self.browser.engine == "webkit":
+				self.browser.LoadPage(filename)
 			else:
 				self.browser.LoadPage(filename) 
 		else:
@@ -2932,6 +2964,7 @@ class OpenPubDialog(wxDialog):
 		if wxPlatform == "__WXMAC__":
 			height = 25
 		self.parent = parent
+		self.path = ""
 		self.lblSelect = wxStaticText(self, -1, _("Select a publication:"))
 		self.cmbpubs = wxListBox(self, -1, wxDefaultPosition, wxSize(-1, height*5))
 		self.coursedir = parent.settings["CourseFolder"]
@@ -2975,27 +3008,23 @@ class OpenPubDialog(wxDialog):
 		dir = ""
 		f = wxDirDialog(self, _("Select the folder containing your EClass"))
 		if f.ShowModal() == wxID_OK:
-			dir = f.GetPath()
+			self.path = f.GetPath()
 			f.Destroy()
-			if not os.path.exists(os.path.join(dir, "imsmanifest.xml")):
+			if not os.path.exists(os.path.join(self.path, "imsmanifest.xml")):
 				message = _("This folder does not contain an EClass Project. Please try selecting another folder.")
 				dialog = wxMessageDialog(self, message, "No EClass Found", wxOK)
 				dialog.ShowModal()
 				dialog.Destroy()
 				return
 
-			self.parent.CurrentDir = dir
-			if wxPlatform == '__WXMSW__':
-				self.parent.CurrentDir = win32api.GetShortPathName(self.parent.CurrentDir)
-			settings.CurrentDir = self.parent.CurrentDir
 			self.EndModal(wxID_OK)
-
+			
+	def GetPath(self):
+		return os.path.join(self.path, "imsmanifest.xml")
+		
 	def btnOKClicked(self, event):
 		if self.cmbpubs.GetStringSelection() != "":
-			self.parent.CurrentDir = os.path.join(self.coursedir, self.cmbpubs.GetStringSelection())
-			if wxPlatform == '__WXMSW__':
-				self.parent.CurrentDir = win32api.GetShortPathName(self.parent.CurrentDir)
-			settings.CurrentDir = self.parent.CurrentDir
+			self.path = os.path.join(self.coursedir, self.cmbpubs.GetStringSelection())
 			self.EndModal(wxID_OK)
 
 #--------------------------- PageEditorDialog Class ---------------------------------------
@@ -3818,10 +3847,8 @@ class ThemeManager(wxDialog):
 		self.btnOK = wxButton(self, wxID_OK, _("OK"))
 		self.oldtheme = self.parent.pub.settings["Theme"]
 		
-		#self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
 		import wxbrowser
 		self.browser = wxbrowser.wxBrowser(self, -1)
-		#self.browser.LoadPage("http://www.apple.com")
 
 		icnNewTheme = wxBitmap(os.path.join(self.parent.AppDir, "icons", "plus16.gif"), wxBITMAP_TYPE_GIF)
 		icnCopyTheme = wxBitmap(os.path.join(self.parent.AppDir, "icons", "copy16.gif"), wxBITMAP_TYPE_GIF)
