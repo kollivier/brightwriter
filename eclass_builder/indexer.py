@@ -72,17 +72,18 @@ class SearchEngine:
 		org = node.content.metadata.lifecycle.getOrganization()
 		if org:
 			doc.add(PyLucene.Field("organization", author.entity.fname.value, True, True, True))
-
+		
+		global indexLog
 		mytext = ""
 		try: 
 			#unfortunately, sometimes conversion is hit or miss. Worst case, index the doc with
 			#no text.
 			mytext = self.GetTextToIndex(node)
 		except:
-			pass
+			import traceback
+			indexLog.write(`traceback.print_exc()`)#pass
 
 		if mytext == "":
-			global indexLog
 			indexLog.write("No text indexed for file: " + filename)
 
 		doc.add(PyLucene.Field("contents", mytext, True, True, True))
@@ -147,8 +148,9 @@ class SearchEngine:
 		Here we convert the contents to text for indexing by Lucene.
 		"""
 		data = ""
-
+		global indexLog
 		if filename == "":
+			indexLog.write('GetTextFromFile: No filename!')
 			return ""
 
 		ext = string.lower(os.path.splitext(filename)[1][1:])
@@ -176,8 +178,10 @@ class SearchEngine:
 					os.remove(thefilename)
 				return "", ""
 
+		print "returnDataFormat is: " + returnDataFormat
 		if returnDataFormat == "html":
 			convert = TextConverter()
+			print 'Data is: ' + data
 			convert.feed(data)
 			convert.close()
 			encoding = "iso-8859-1"
@@ -209,7 +213,10 @@ class SearchEngine:
 				self.publisher.Publish(self.parent, node, node.dir)
 				filename = node.content.filename
 				if self.publisher:
-					filename = self.publisher.GetFilename(node.content.filename)
+					name = self.publisher.GetFilename(node.content.filename)
+					filename = os.path.join(node.dir, name)
+					if not os.path.exists(filename):
+						filename = os.path.join(node.dir, "pub", name)
 			#except:
 			#	import traceback
 			#	print traceback.print_exc()
