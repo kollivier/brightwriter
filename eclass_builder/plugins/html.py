@@ -16,7 +16,7 @@ from StringIO import StringIO
 from threading import *
 import traceback
 import sys
-import utils
+import utils, guiutils, settings
 
 ID_NEW = wxNewId()
 ID_OPEN = wxNewId()
@@ -477,7 +477,7 @@ class EditorFrame (wxFrame):
 		if evt.GetOldSelection() == 1:
 			self.mozilla.SetPage(self.source.GetText())
 			self.mozilla.UpdateBaseURI()
-			#self.mozilla.Reload()
+			self.mozilla.Reload()
 		else:
 			pagetext = self.mozilla.GetPage()
 			self.source.SetText(pagetext)
@@ -826,16 +826,16 @@ class EditorFrame (wxFrame):
 		self.dirty = true
 
 	def OnLinkButton(self, evt):	
-		if 1:
-			linkProps = []
-			linkProps.append("")
-			linkProps.append("")
-			mydialog = LinkPropsDialog(self, linkProps)
-			if mydialog.ShowModal() == wxID_OK:
-				self.mozilla.EditCommand("cmd_insertLinkNoUI", mydialog.linkProps[0])
-				self.mozilla.SelectElement("a")
+		linkProps = []
+		linkProps.append("")
+		linkProps.append("")
+		mydialog = LinkPropsDialog(self, linkProps)
+		if mydialog.ShowModal() == wxID_OK:
+			self.mozilla.EditCommand("cmd_insertLinkNoUI", mydialog.linkProps[0])
+			if self.mozilla.IsElementInSelection("a"):
+				#self.mozilla.SelectElement("a")
 				self.mozilla.SetElementAttribute("target", mydialog.linkProps[1])
-			mydialog.Destroy()
+		mydialog.Destroy()
 
 	def OnBookmarkButton(self, evt):	
 		dialog = BookmarkPropsDialog(self, [""])
@@ -936,6 +936,7 @@ class EditorFrame (wxFrame):
 			self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, false)
 
 		fontsize = self.mozilla.GetStateAttribute("cmd_fontSize")
+		print "Fontsize is: " + fontsize
 		if fontsize == "":
 			self.fontsizelist.SetStringSelection("3")
 		else:
@@ -1550,18 +1551,20 @@ if __name__ != "__main__":
 				self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
 
 			#until we get editing fixed...
-			if 0:
+			use_builtin = False
+			if settings.options["HTMLEditor"] != "":
+				started_app = guiutils.sendCommandToApplication(self.filename, "edit", settings.options["HTMLEditor"])
+				if not started_app:
+					wxMessageBox(_("The HTML editing application could not be started. Please check to ensure the program exists and that you have permissions to run it. The built-in HTML editor will be used instead."))
+					use_builtin = True
+			else:
+				use_builtin = True
+
+			if use_builtin:
 				self.frame.mozilla.LoadURL(self.filename)
 				self.frame.MakeModal(True)
 				self.frame.Show()
-			else:
-				command = "open"
-				if self.parent.settings["HTMLEditor"] != "":
-					command = command + " -a " + string.replace(self.parent.settings["HTMLEditor"], " ", "\\ ")
-				filename = string.replace(self.filename, " ", "\\ ")
-				command = command + " " + filename
-				os.system(command)
-					
+
 			return wxID_OK
 
 class MyApp(wxApp):
