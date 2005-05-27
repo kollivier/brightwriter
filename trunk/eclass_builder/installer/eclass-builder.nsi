@@ -42,9 +42,6 @@ Section "Program Files" SecCopyUI
   WriteRegStr HKLM SOFTWARE\EClass\Builder\${MUI_VERSION} "Path" "$INSTDIR"
   SetOutPath "$INSTDIR"
   File /r "..\3rdparty\win32\gre\*"
-  ;WriteRegStr HKLM SOFTWARE\mozilla.org\GRE\wxMozilla\1.3 "GreHome" "$PROGRAMFILES\Common Files\mozilla.org\GRE\wxMozilla\1.3"
-  ;Push "$PROGRAMFILES\Common Files\mozilla.org\GRE\wxMozilla\1.3"
-  ;Call AddToPath
   File /r "minipython\*"
   File "editor.exe"
   File "editor.exe.manifest"
