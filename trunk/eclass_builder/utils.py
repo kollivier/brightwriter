@@ -5,6 +5,7 @@
 ##########################################
 
 import sys, os, string
+import settings
 
 class LogFile:
 	def __init__(self, filename="log.txt"):
@@ -34,3 +35,15 @@ def makeModuleName(text):
 	result = string.replace(result, "*", "")
 	result = string.replace(result, "/", "")
 	result = string.replace(result, "\\", "")
+
+def createHTMLPageWithBody(text):
+	retval = """
+<html>
+<head>
+</head>
+<body>
+%s
+</body>
+</html>""" % text
+
+	return retval
