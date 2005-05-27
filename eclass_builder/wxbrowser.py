@@ -9,9 +9,10 @@ try:
 except:
 	pass 
 
-try: 
-	from wxPython.lib.iewin import *
-	browserlist.append("ie")
+try:
+	if sys.platform == "win32": 
+		from wx.lib.iewin import *
+		browserlist.append("ie")
 except:
 	pass
 
@@ -21,9 +22,10 @@ try:
 except:
 	pass
 
-try: 
-	from wxPython.webkit import *
-	browserlist.append("webkit")
+try:
+	if sys.platform == "darwin": 
+		from wxPython.webkit import *
+		browserlist.append("webkit")
 except:
 	pass
 
@@ -117,6 +119,12 @@ class wxBrowser:
 		else:
 			self.browser.LoadPage(url)
 			
+	def SetPage(self, text):
+		if self.engine == "ie":
+			self.browser.LoadString(text)
+		else:
+			self.browser.SetPage(text)
+
 	def GetBrowserName(self):
 		if self.engine == "mozilla":
 			return "Mozilla/Netscape"
