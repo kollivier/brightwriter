@@ -11,7 +11,7 @@ except:
 from conman.validate import *
 from wxPython.stc import * #this is for the HTML plugin
 import sys, urllib2, cPickle
-import string, time, cStringIO, os, re, glob, csv
+import string, time, cStringIO, os, re, glob, csv, shutil
 
 import xml.dom.minidom
 
@@ -493,7 +493,7 @@ class MainFrame2(wxFrame):
 		self.browsers = {}
 		browsers = wxbrowser.browserlist
 		if len(browsers) == 1 and browsers[0] == "htmlwindow":
-			self.browser = wxHtmlWindow(self.previewbook, -1, wxDefaultPosition, wxDefaultSize)
+			self.browsers["htmlwin"] = self.browser = wxHtmlWindow(self.previewbook, -1, wxDefaultPosition, wxDefaultSize)
 			self.previewbook.AddPage(self.browser, _("HTML Preview"))
 		else:
 			browsers.remove("htmlwindow")
@@ -509,32 +509,10 @@ class MainFrame2(wxFrame):
 				self.previewbook.AddPage(panel, self.browsers[browser].GetBrowserName())
 				
 				panelsizer = wxBoxSizer(wxHORIZONTAL)
-				panelsizer.Add(self.browser.browser, 1, wxEXPAND)
+				panelsizer.Add(self.browsers[browser].browser, 1, wxEXPAND)
 				panel.SetAutoLayout(True)
 				panel.SetSizerAndFit(panelsizer)
 				
-
-		#if hasmozilla: 
-		#	if wxPlatform == '__WXMSW__':
-		#		self.ie = IEHtmlWindow(self.previewbook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
-		#		self.browser = self.ie #default, first to preview
-		#		self.previewbook.AddPage(self.ie, "Internet Explorer")
-		#	else:
-		#		self.browser = None
-		#	self.previewbook.AddPage(self.previewpanel, "Mozilla/Netscape")
-		#	self.mozilla = wxMozillaBrowser(self.previewpanel, -1, style = wxSIMPLE_BORDER | wxCLIP_CHILDREN) 
-		#	self.mozilla.Navigate = self.mozilla.LoadURL
-		#	if not self.browser: #if IE isn't loaded
-		#		self.browser = self.mozilla
-		#	panelsizer.Add(self.mozilla, 1, wxEXPAND)
-		#else:
-		#	if wxPlatform == '__WXMSW__':
-		#		self.ie = IEHtmlWindow(self.previewbook, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
-		#		self.browser = self.ie #default, first to preview
-		#	else:
-		#		self.browser = wxHtmlWindow(self.previewbook, -1, wxDefaultPosition, wxDefaultSize)
-		#		self.previewbook.AddPage(self.browser, _("HTML Preview"))
-		
 		self.mysizer = wxBoxSizer(wxHORIZONTAL)
 		self.mysizer.Add(self.splitter1, 1, wxEXPAND)
 		self.SetSizer(self.mysizer)
@@ -592,7 +570,7 @@ class MainFrame2(wxFrame):
 
 		#EVT_SIZE(self.splitter1, self.SplitterSize)
 		self.Show()
-		EVT_NOTEBOOK_PAGE_CHANGED(self.previewbook, self.previewbook.GetId(), self.OnPageChanged)
+		#EVT_NOTEBOOK_PAGE_CHANGED(self.previewbook, self.previewbook.GetId(), self.OnPageChanged)
 		if wxPlatform == '__WXMSW__':
 			EVT_CHAR(self.previewbook, self.SkipNotebookEvent)
 
@@ -1402,7 +1380,12 @@ class MainFrame2(wxFrame):
 						result = mydialog.ShowModal()
 	
 				if not isplugin:
-					result = PageEditorDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
+					result = 0
+					import guiutils
+					myFilename = os.path.join(settings.CurrentDir, self.CurrentItem.content.filename)
+					started_app = guiutils.sendCommandToApplication(myFilename, "open")
+					if not started_app:
+						result = PageEditorDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
 	
 				if result == wxID_OK:
 					self.Update()
@@ -1596,17 +1579,18 @@ class MainFrame2(wxFrame):
 			filename = self.CurrentItem.content.filename
 			filename = os.path.join(self.CurrentItem.dir, filename)
 			
-		if os.path.exists(filename):
-			if wxPlatform == "__WXMSW__" or hasmozilla:
-				self.browser.Navigate(filename)
-				#self.mozilla.Navigate(filename)
-			elif self.browser.engine == "webkit":
-				self.browser.LoadPage(filename)
-			else:
-				self.browser.LoadPage(filename) 
+		#we shouldn't preview files that EClass can't view
+		ok_fileTypes = ["htm", "html"]
+		if sys.platform == "win32":
+			ok_fileTypes.append("pdf")
+
+		if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
+			for browser in self.browsers:
+				self.browsers[browser].LoadPage(filename)
 		else:
 			#self.status.SetStatusText("Cannot find file: "+ filename)
-			self.log.write("Error previewing file: " + filename)
+			for browser in self.browsers:
+				self.browsers[browser].SetPage(utils.createHTMLPageWithBody("<p>The page " + os.path.basename(filename) + " cannot be previewed inside EClass. Double-click on the file to view or edit it.</p>"))
 		
 
 	def BindTowxTree(self, root):
@@ -3310,6 +3294,7 @@ class PageEditorDialog (wxDialog):
 		if f.ShowModal() == wxID_OK:
 			self.filedir = f.GetDirectory()
 			self.filename = f.GetFilename()
+			self.file = f.GetPath()
 			isEClassPluginPage = False
 			fileext = os.path.splitext(self.filename)[1][1:]
 			page_plugin = None
@@ -3338,7 +3323,7 @@ class PageEditorDialog (wxDialog):
 				self.node = conman.ConMan()
 				self.node.LoadFromXML(os.path.join(self.filedir, self.filename))
 			else:
-				files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.CurrentDir, "File"))
+				shutil.copy(self.file, os.path.join(self.parent.CurrentDir, "File"))
 				self.filename = os.path.join("File", self.filename)
 			
 			self.txtExistingFile.SetValue(self.filename)
