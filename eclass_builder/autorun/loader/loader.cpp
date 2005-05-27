@@ -1,7 +1,7 @@
 // loader.cpp : Defines the entry point for the application.
 //
 
-#include "stdafx.h"
+//#include "stdafx.h"
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,15 +25,18 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	}
 
 	if (hasDM){
-		ShellExecute(0, "open", "eclass.dmbk", "", "", SW_SHOWMAXIMIZED);
+		HINSTANCE result = ShellExecute(0, "open", "eclass.dmbk", "", "", SW_SHOWMAXIMIZED);
+		if ((long)result < 32)
+			hasDM = false;
 	}
-	else{
+	
+	if (!hasDM){
 		SHELLEXECUTEINFO si;
 		memset(&si, 0, sizeof(si));
 		si.cbSize = sizeof(si);
 		si.hwnd = NULL;
 		si.lpVerb = "open";
-		si.lpFile = "installers\\documancer-0.2.4-setup.exe";
+		si.lpFile = "installers\\documancer-0.2.6-setup.exe";
 		si.nShow = SW_NORMAL;
 		si.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
 		bool res = ShellExecuteEx(&si);
