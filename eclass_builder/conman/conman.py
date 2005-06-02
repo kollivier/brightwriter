@@ -84,6 +84,17 @@ class ConMan:
 		else:
 			self.__dict__[name] = value
 
+	def GetNodeCount(self):
+		return self._CountNodes(self.nodes)
+
+	def _CountNodes(self, nodes):
+		retval = 0
+		for node in nodes:
+			if len(node.children) > 0:
+				retval = retval + self._CountNodes(node.children)
+			retval = retval + 1
+		return retval
+
 	def AddChild(self, id, contentid):
 		#check to see if an item with this id exists, and if so, use it
 		mycontent = self.content.GetItem(contentid, self.language)
