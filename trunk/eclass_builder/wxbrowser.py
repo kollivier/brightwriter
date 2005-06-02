@@ -1,5 +1,5 @@
 from wxPython.wx import *
-import string
+import sys, string
 
 browserlist = []
 
