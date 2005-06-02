@@ -26,8 +26,7 @@ class SearchEngine:
 		self.keepgoing = True
 
 		#get a tally of all the files being indexed
-		for (dir, subdirs, files) in os.walk(os.path.join(settings.CurrentDir, "pub"), False):
-			self.numFiles = self.numFiles + len(files)
+		self.numFiles = self.numFiles + self.parent.pub.GetNodeCount()
 				
 		for (dir, subdirs, files) in os.walk(os.path.join(settings.CurrentDir, "File"),False):
 			self.numFiles = self.numFiles + len(files)
