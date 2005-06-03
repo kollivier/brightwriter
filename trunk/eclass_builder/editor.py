@@ -55,23 +55,10 @@ lang_dict = {
 			}
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
-myplugins = []
-for item in os.listdir(os.path.join(rootdir, "plugins")):
-	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
-		if string.find(item, "html.py") == -1 or hasmozilla:
-			plugin = string.replace(item, ".py", "")
-			exec("import plugins." + plugin)
-			exec("myplugins.append(plugins." + plugin + ".plugin_info)") 
+import plugins
+myplugins = plugins.PluginList(rootdir).LoadPlugins() 
 
 settings.plugins = myplugins
-
-#eventually we will load all publishers, like plugins, dynamically
-#mypublishers = []
-#for item in os.listdir(os.path.join(os.path.abspath(sys.path[0]), "convert")):
-#	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
-#		plugin = string.replace(item, ".py", "")
-#		exec("import convert." + plugin)
-#		exec("mypublishers.append(plugins." + plugin + ".plugin_info)") 
 
 ID_NEW = wxNewId()
 ID_OPEN = wxNewId()
@@ -144,7 +131,7 @@ class MsgPopup(wxDialog):
 		wxDialog.__init__ (self, parent, -1, _("Message"), wxPoint(200,200),wxSize(200,80), wxCAPTION|wxDEFAULT_DIALOG_STYLE|wxCLIP_CHILDREN)
 		label=wxStaticText(self, -1, message, wxPoint(35,10))
 		if accept == 1:
-			self.btnOK = wxButton(self,-1,_("OK"))#,wxPoint(62, 30),wxSize(76, 24))
+			self.btnOK = wxButton(self,-1,_("OK")))
 			EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.close)
 	def close(self,event):
 		self.Destroy()
