@@ -131,7 +131,7 @@ class MsgPopup(wxDialog):
 		wxDialog.__init__ (self, parent, -1, _("Message"), wxPoint(200,200),wxSize(200,80), wxCAPTION|wxDEFAULT_DIALOG_STYLE|wxCLIP_CHILDREN)
 		label=wxStaticText(self, -1, message, wxPoint(35,10))
 		if accept == 1:
-			self.btnOK = wxButton(self,-1,_("OK")))
+			self.btnOK = wxButton(self,-1,_("OK"))
 			EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.close)
 	def close(self,event):
 		self.Destroy()
@@ -244,10 +244,6 @@ class MainFrame2(wxFrame):
 		coursefolder = self.settings["CourseFolder"]
 		gsdlfolder = self.settings["GSDL"]
 		htmleditor = self.settings["HTMLEditor"]
-		
-		#tempfolder = os.path.join(os.getcwd(), "temp")
-		#if not os.path.exists(tempfolder):
-		#	os.mkdir(tempfolder)
 
 		if coursefolder == "":
 			if wxPlatform == '__WXMSW__':
@@ -411,10 +407,6 @@ class MainFrame2(wxFrame):
 		FileMenu.AppendSeparator()
 		FileMenu.Append(ID_EXIT, "&" + _("Exit"), _("Exit this Application"))
 		self.FileMenu = FileMenu		
-
-		#AuthorsMenu = wxMenu()
-		#AuthorsMenu.Append(ID_EDIT_AUTHORS, "&" + _("Edit Authors"), _("Edit authors database"))
-		#self.AuthorsMenu = AuthorsMenu
 		
 		ToolsMenu = wxMenu()
 		ToolsMenu.Append(ID_THEME, _("Theme Manager"))
@@ -446,14 +438,7 @@ class MainFrame2(wxFrame):
 		#self.sizer = wxBoxSizer(wxVERTICAL)
 		
 		#split the window into two - Treeview on one side, browser on the other
-		self.splitter1 = wxSplitterWindow (self, -1, style=wxSP_3D | wxNO_3D) #wxSize(760, 500))
-		
-		#lc = wxLayoutConstraints()
-		#lc.top.SameAs   (self.toolbar, wxBottom)
-		#lc.bottom.SameAs   (self, wxBottom)
-		#lc.right.SameAs (self, wxRight)
-		#lc.left.SameAs (self, wxLeft)
-		#self.splitter1.SetConstraints(lc)		
+		self.splitter1 = wxSplitterWindow (self, -1, style=wxSP_3D | wxNO_3D) #wxSize(760, 500))	
 
 		# Tree Control for the XML hierachy
 		self.wxTree = wxTreeCtrl (self.splitter1,
@@ -733,13 +718,6 @@ class MainFrame2(wxFrame):
 		if wxPlatform == "__WXMAC__":
 			#still needed?
 			self.menuBar.Refresh()
-		#self.PopMenu.FindItemById(ID_ADD_MENU).Enable(value)
-		#self.PopMenu.FindItemById(ID_TREE_REMOVE).Enable(value)
-		#self.PopMenu.FindItemById(ID_CREATE_ECLS_LINK).Enable(value)
-		#self.PopMenu.FindItemById(ID_EDIT_ITEM).Enable(value)	
-		#self.PopMenu.FindItemById(ID_TREE_MOVEUP).Enable(value)
-		#self.PopMenu.FindItemById(ID_TREE_MOVEDOWN).Enable(value)	
-		#self.PopMenu.FindItemById(ID_TREE_EDIT).Enable(value)
 
 	def OnClose(self, event):
 		if self.isDirty:
@@ -765,9 +743,6 @@ class MainFrame2(wxFrame):
 		self.SwitchMenus(False)
 
 	def OnRefreshTheme(self, event):
-		#mythememodule = self.currentTheme
-		#exec("mytheme = themes." + mythememodule[1])
-		#self.currentTheme = mythememodule
 		publisher = self.currentTheme.HTMLPublisher(self)
 		result = publisher.Publish()
 
@@ -833,17 +808,14 @@ class MainFrame2(wxFrame):
 				
 				self.currentTheme = self.themes.FindTheme("Default (frames)")
 				self.AddNewEClassPage(None, self.pub.name, True)
-				#exec("plugins." + dplugin + ".EditorDialog(self, self.CurrentItem).ShowModal()")
-				#self.Update()
+
 				self.SaveProject(event)  
-				#exec("mytheme = themes." + self.currentTheme[1])
 				publisher = self.currentTheme.HTMLPublisher(self)
 				publisher.CopySupportFiles()
 				publisher.CreateTOC()
 				self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
 				self.Preview()
 				self.SwitchMenus(True)
-		#f.Destroy()
 	
 	def TimeToQuit(self, event):
 		self.ShutDown(event)
@@ -946,17 +918,8 @@ class MainFrame2(wxFrame):
 				#	def run(self):
 				#		return PyLucene.attachCurrentThread(super(PyLuceneThread, self))
 
-				#self.mythread = PyLuceneThread(None, engine.IndexFiles, args=[self.pub.nodes[0]])
-				#self.mythread.start()
-				#wxMessageBox("Hello!")
-				#while self.mythread.isAlive():
-					#wxYield()
-				#	engine.keepgoing = dialog.Update(engine.filecount, engine.statustext)
-				#self.mythread = None
 				dialog.Destroy()
 				dialog = None
-				#cddialog = UpdateIndexDialog(self, False)
-				#cddialog.UpdateIndex("", "")
 
 			elif self.pub.settings["SearchProgram"] == "Greenstone":
 				if wxPlatform == "__WXMSW__":	
