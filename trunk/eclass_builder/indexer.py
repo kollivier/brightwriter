@@ -41,9 +41,9 @@ class SearchEngine:
 		self.publisher = None
 		ext = os.path.splitext(node.content.filename)[1][1:]
 		for plugin in settings.plugins:
-			if ext in plugin["Extension"]:
-				exec("import plugins." + plugin["Name"])
-				self.publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
+			if ext in plugin.plugin_info["Extension"]:
+				exec("import plugins." + plugin.plugin_info["Name"])
+				self.publisher = eval("plugins." + plugin.plugin_info["Name"] + ".HTMLPublisher()")
 		if self.dialog:
 			wxYield()
 			self.keepgoing = self.dialog.Update(self.filecount, self.statustext)
