@@ -3,47 +3,6 @@ import string, os, sys
 from validate import *
 from HTMLFunctions import *
 
-class PluginList:
-	def __init__(self):
-		self.plugins = []
-		self.filename = ""
-
-	def Load(self, filename=""):
-		"""Load plugin list from a CSV file."""
-		if not filename == "" and os.path.exists(filename):
-			self.filename = filename
-		if not self.filename == "":
-			try:
-				myfile = open(filename)
-				input = csv.reader(myfile)
-				for row in input:
-					reqlist = string.replace(row[4], "[", "")
-					reqlist = string.replace(reqlist, "]", "")
-					reqlist = string.split(reqlist, ",")
-					myplugin = Plugin(row[0], row[1], row[2], row[3], reqlist)
-					self.plugins.append(myplugin)
-				input = None
-				if myfile:
-					myfile.close()
-			except:
-				import traceback
-				traceback.print_exc()
-
-	def Save(self, filename=""):
-		if not filename == "":
-			self.filename = filename
-		if not self.filename == "":
-			try:
-				myfile = open(filename, "w")
-				output = csv.writer(myfile)
-				output.writerows(self.plugins)
-				output = None
-				if myfile:
-					myfile.close()
-			except:
-				import traceback
-				traceback.print_exc()  
-
 class Plugin:
 	def __init__(self, modname, fullname, ext, mimetype, requires):
 		self.modulename = modname
