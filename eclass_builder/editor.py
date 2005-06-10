@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+import sys, urllib2, cPickle
+import string, time, cStringIO, os, re, glob, csv, shutil
+
 from wxPython.wx import *
 from wxPython.lib import newevent
 
@@ -8,10 +12,15 @@ try:
 except:
 	hasmozilla = False
 
+import settings
+rootdir = os.path.abspath(sys.path[0])
+if not os.path.isdir(rootdir):
+	rootdir = os.path.dirname(rootdir)
+
+settings.AppDir = rootdir
+
 from conman.validate import *
 from wxPython.stc import * #this is for the HTML plugin
-import sys, urllib2, cPickle
-import string, time, cStringIO, os, re, glob, csv, shutil
 
 import xml.dom.minidom
 
@@ -23,7 +32,7 @@ import conman.file_functions as files
 import conman.vcard as vcard
 from conman.validate import *
 from convert.PDF import PDFPublisher
-import settings, wxbrowser
+import wxbrowser
 
 import indexer
 import conman
@@ -42,9 +51,6 @@ import conman.HTMLTemplates
 #for indexing
 import PyLucene
 
-rootdir = os.path.abspath(sys.path[0])
-if not os.path.isdir(rootdir):
-	rootdir = os.path.dirname(rootdir)
 localedir = os.path.join(rootdir, 'locale')
 import gettext
 gettext.install('eclass', localedir)
@@ -56,9 +62,9 @@ lang_dict = {
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
 import plugins
-myplugins = plugins.PluginList(rootdir).LoadPlugins() 
+plugins.LoadPlugins() 
 
-settings.plugins = myplugins
+settings.plugins = plugins.pluginList
 
 ID_NEW = wxNewId()
 ID_OPEN = wxNewId()
@@ -150,7 +156,6 @@ class MainFrame2(wxFrame):
 		self.CurrentItem = None #current node
 		self.CurrentDir = ""
 		self.CurrentTreeItem = None
-		self.myplugins = myplugins
 		self.pub = conman.ConMan()
 		#dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
 		self.dirtyNodes = []
@@ -526,8 +531,9 @@ class MainFrame2(wxFrame):
 		EVT_MENU(self, ID_IMPORT_FILE, self.AddNewItem)
 		EVT_MENU(self, ID_REFRESH_THEME, self.OnRefreshTheme)
 		EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
-		if wxPlatform == "__WXMAC__":
-			EVT_UPDATE_UI(self, self.GetId(), self.OnActivate)
+		#EVT_ACTIVATE(self, self.OnActivate)
+		#if wxPlatform == "__WXMAC__":
+		#	EVT_UPDATE_UI(self, self.GetId(), self.OnActivate)
 		EVT_MENU(self, ID_CONTACTS, self.OnContacts)
 
 		EVT_CLOSE(self, self.TimeToQuit)
@@ -573,7 +579,9 @@ class MainFrame2(wxFrame):
 			lang_dict["fr"].install()
 
 	def OnActivate(self, evt):
-		self.menuBar.Refresh()
+		pass #if self.CurrentItem:
+			#self.Preview()
+		#self.menuBar.Refresh()
 	
 	def OnKeyPressed(self, evt):
 		self.IsCtrlDown = evt.ControlDown()
@@ -1077,12 +1085,18 @@ class MainFrame2(wxFrame):
 			wxMessageDialog(self, message, _("Could Not Save File"), wxOK).ShowModal()
 		
 		self.CreateDocumancerBook()
+		self.CreateDevHelpBook()
 
 		try:
 			self.pub.SaveAsXML(self.CurrentFilename, self.encoding)
 			self.isDirty = False
 		except IOError, e:
 			wxMessageDialog(self, str(e), _("Could Not Save File"), wxOK).ShowModal() 
+
+	def CreateDevHelpBook(self):
+		import devhelp
+		converter = devhelp.DevHelpConverter(self.pub)
+		converter.ExportDevHelpFile(os.path.join(self.CurrentDir, "eclass.devhelp"))
 
 	def CreateDocumancerBook(self):
 		#update the Documancer book file
@@ -1160,7 +1174,7 @@ class MainFrame2(wxFrame):
 			if dialog.ShowModal() == wxID_OK:
 				plugintext = dialog.cmbType.GetStringSelection() #self.PopMenu.GetLabel(event.GetId())
 				plugin = None
-				for myplugin in myplugins:
+				for myplugin in plugins.pluginList:
 					if not string.find(plugintext, myplugin["FullName"]) == -1:
 						plugin = myplugin
 		
@@ -1282,9 +1296,9 @@ class MainFrame2(wxFrame):
 	def GetPublisher(self, filename):
 		extension = string.split(filename, ".")[-1]
 		publisher = None
-		for plugin in myplugins:
-			if extension in plugin["Extension"]:
-				publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
+		for plugin in plugins.pluginList:
+			if extension in plugin.plugin_info["Extension"]:
+				publisher = eval("plugins." + plugin.plugin_info["Name"] + ".HTMLPublisher()")
 		return publisher
 
 	def CreateCourseLink(self, event):
@@ -1321,12 +1335,12 @@ class MainFrame2(wxFrame):
 			if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
 				isplugin = False
 				result = wxID_CANCEL
-				for plugin in myplugins:
+				for plugin in plugins.pluginList:
 					extension = string.split(self.CurrentItem.content.filename, ".")
 					extension = extension[-1]
-					if extension in plugin["Extension"]:
+					if extension in plugin.plugin_info["Extension"]:
 						isplugin = True
-						exec("mydialog = plugins." + plugin["Name"] + ".EditorDialog(self, self.CurrentItem)")
+						exec("mydialog = plugins." + plugin.plugin_info["Name"] + ".EditorDialog(self, self.CurrentItem)")
 						result = mydialog.ShowModal()
 	
 				if not isplugin:
@@ -1515,12 +1529,14 @@ class MainFrame2(wxFrame):
 			filename = self.CurrentItem.content.filename
 			filename = os.path.join(self.CurrentItem.dir, "Text", filename)
 		else:
-			for plugin in myplugins:
+			for plugin in plugins.pluginList:
 				extension = string.split(self.CurrentItem.content.filename, ".")[-1]
-				if extension in plugin["Extension"]:
-					publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
+				if extension in plugin.plugin_info["Extension"]:
+					publisher = eval("plugins." + plugin.plugin_info["Name"] + ".HTMLPublisher()")
 					filename = publisher.GetFilename(self.CurrentItem.content.filename)
-					#publisher.Publish(self, self.CurrentItem, self.CurrentItem.dir)
+					#we need to do this again because we use external HTML editor
+					if extension in ["htm", "html"]:
+						publisher.Publish(self, self.CurrentItem, self.CurrentItem.dir)
 					filename = os.path.join(self.CurrentItem.dir, "pub", os.path.basename(filename))
 					
 		if filename == "":
@@ -2537,9 +2553,9 @@ class PreferencesEditor(wxDialog):
 			
 		self.lblDefaultPlugin = wxStaticText(self, -1, _("New Page Default"))
 		self.pluginnames = []
-		for plugin in myplugins:
-			if plugin["CanCreateNew"]:
-				self.pluginnames.append(plugin["FullName"])
+		for plugin in plugins.pluginList:
+			if plugin.plugin_info["CanCreateNew"]:
+				self.pluginnames.append(plugin.plugin_info["FullName"])
 		self.cmbDefaultPlugin = wxChoice(self, -1, wxDefaultPosition, wxDefaultSize, self.pluginnames)
 		if parent.settings["DefaultPlugin"] != "":
 			self.cmbDefaultPlugin.SetStringSelection(parent.settings["DefaultPlugin"])
@@ -2788,11 +2804,11 @@ class NewPageDialog(wxDialog):
 		self.filenameEdited = False
 		
 		extension = ".ecp"
-		for plugin in myplugins:
-			if plugin["CanCreateNew"]:
-				self.cmbType.Append(plugin["FullName"])
-			if self.parent.settings["DefaultPlugin"] != "" and plugin["FullName"] == self.parent.settings["DefaultPlugin"]:
-				extension = "." + plugin["Extension"][0]
+		for plugin in plugins.pluginList:
+			if plugin.plugin_info["CanCreateNew"]:
+				self.cmbType.Append(plugin.plugin_info["FullName"])
+			if self.parent.settings["DefaultPlugin"] != "" and plugin.plugin_info["FullName"] == self.parent.settings["DefaultPlugin"]:
+				extension = "." + plugin.plugin_info["Extension"][0]
 		
 		if self.parent.settings["DefaultPlugin"] != "":
 			self.cmbType.SetStringSelection(self.parent.settings["DefaultPlugin"])
@@ -2849,9 +2865,9 @@ class NewPageDialog(wxDialog):
 
 		pluginname = self.cmbType.GetStringSelection()
 		extension = ".ecp"
-		for plugin in myplugins:
-			if plugin["FullName"] == pluginname:
-				extension = "." + plugin["Extension"][0]
+		for plugin in plugins.pluginList:
+			if plugin.plugin_info["FullName"] == pluginname:
+				extension = "." + plugin.plugin_info["Extension"][0]
 				break
 
 		if not self.filenameEdited:
@@ -2880,11 +2896,11 @@ class NewPageDialog(wxDialog):
 
 	def btnOKClicked(self, event):
 		pluginname = self.cmbType.GetStringSelection()
-		for plugin in myplugins:
-			if plugin["FullName"] == pluginname:
+		for plugin in plugins.pluginList:
+			if plugin.plugin_info["FullName"] == pluginname:
 				break
 
-		if os.path.exists(os.path.join(self.parent.CurrentDir, plugin["Directory"], self.txtFilename.GetValue())):
+		if os.path.exists(os.path.join(self.parent.CurrentDir, plugin.plugin_info["Directory"], self.txtFilename.GetValue())):
 			wxMessageBox(_("Filename already exists. Please rename the file and try again."))
 		else:
 			self.EndModal(wxID_OK)
@@ -3227,18 +3243,18 @@ class PageEditorDialog (wxDialog):
 
 	def btnSelectFileClicked(self, event):
 		filtertext = "All Files (*.*)|*.*"
-		for plugin in myplugins:
+		for plugin in plugins.pluginList:
 			if filtertext != "":
 				filtertext = filtertext + "|"
 			textext = ""
 			filterext = ""
-			for count in range(0, len(plugin["Extension"])):
-				textext = textext + "*." + plugin["Extension"][count]
-				filterext = filterext + "*." + plugin["Extension"][count]
-				if not count == (len(plugin["Extension"]) - 1):
+			for count in range(0, len(plugin.plugin_info["Extension"])):
+				textext = textext + "*." + plugin.plugin_info["Extension"][count]
+				filterext = filterext + "*." + plugin.plugin_info["Extension"][count]
+				if not count == (len(plugin.plugin_info["Extension"]) - 1):
 					textext = textext + ", "
 					filterext = filterext + "; "
-			filtertext = filtertext + plugin["FullName"] + " Files (" + textext + ")|" + filterext
+			filtertext = filtertext + plugin.plugin_info["FullName"] + " Files (" + textext + ")|" + filterext
 			
 		f = wxFileDialog(self, _("Select a file"), os.path.join(self.parent.CurrentDir), "", filtertext, wxOPEN)
 		if f.ShowModal() == wxID_OK:
@@ -3248,17 +3264,17 @@ class PageEditorDialog (wxDialog):
 			isEClassPluginPage = False
 			fileext = os.path.splitext(self.filename)[1][1:]
 			page_plugin = None
-			for myplugin in myplugins:
-				if (fileext in myplugin["Extension"]):
+			for myplugin in plugins.pluginList:
+				if (fileext in myplugin.plugin_info["Extension"]):
 					isEClassPluginPage = True
-					page_plugin = myplugins[myplugins.index(myplugin)]
+					page_plugin = myplugin
 					break
 
 			if isEClassPluginPage and page_plugin:
 				overwrite = False 
-				if os.path.join(self.parent.CurrentDir, page_plugin["Directory"], self.filename) == os.path.join(self.filedir, self.filename):
+				if os.path.join(self.parent.CurrentDir, page_plugin.plugin_info["Directory"], self.filename) == os.path.join(self.filedir, self.filename):
 					pass
-				elif os.path.exists(os.path.join(self.parent.CurrentDir, page_plugin["Directory"], self.filename)):
+				elif os.path.exists(os.path.join(self.parent.CurrentDir, page_plugin.plugin_info["Directory"], self.filename)):
 					msg = wxMessageDialog(self, _("The file %(filename)s already exists. Do you want to overwrite this file?") % {"filename": self.content.filename}, _("Save Project?"), wxYES_NO)
 					answer = msg.ShowModal()
 					msg.Destroy()
@@ -3267,8 +3283,8 @@ class PageEditorDialog (wxDialog):
 				else:
 					overwrite = True
 				if overwrite:
-					files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.CurrentDir, page_plugin["Directory"]))
-				self.filename = os.path.join(page_plugin["Directory"], self.filename)
+					files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.CurrentDir, page_plugin.plugin_info["Directory"]))
+				self.filename = os.path.join(page_plugin.plugin_info["Directory"], self.filename)
 			elif self.filename == "imsmanifest.xml": #another publication
 				self.node = conman.ConMan()
 				self.node.LoadFromXML(os.path.join(self.filedir, self.filename))
