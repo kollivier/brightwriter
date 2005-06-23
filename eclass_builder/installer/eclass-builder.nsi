@@ -1,5 +1,5 @@
 !define MUI_PRODUCT "EClass.Builder" ;Define your own software name here
-!define MUI_VERSION "2.5.5.7" ;Define your own software version here
+!define MUI_VERSION "2.5.5.8" ;Define your own software version here
 !define UNICODE_STRING "" ; for unicode, add unicode the the installer name
 Name "${MUI_PRODUCT} ${MUI_VERSION}"
 !include "MUI.nsh"
@@ -50,7 +50,6 @@ Section "Program Files" SecCopyUI
   File /r "..\conman"
   File /r "..\convert"
   File /r "..\about"
-  File /r "..\autorun"
   File /r "..\Greenstone"
   File /r "..\docs"
   File /r "..\icons"
@@ -58,6 +57,10 @@ Section "Program Files" SecCopyUI
   File /r "..\license"
   File /r "..\locale"
   File /r "..\cgi-bin"
+
+  SetOutPath "$INSTDIR\autorun"
+  File "..\autorun\autorun.inf"
+  File "..\autorun\loader\Release\loader.exe"
 
   SetOutPath "$INSTDIR\plugins"
   File "..\plugins\__init__.py"
