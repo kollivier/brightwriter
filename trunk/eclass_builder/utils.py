@@ -6,6 +6,7 @@
 
 import sys, os, string
 import settings
+import plugins
 
 class LogFile:
 	def __init__(self, filename="log.txt"):
@@ -47,3 +48,67 @@ def createHTMLPageWithBody(text):
 </html>""" % text
 
 	return retval
+
+def isReadOnly(filename):
+    if sys.platform == 'win32':
+        import win32file
+        fileattr = win32file.GetFileAttributes(filename)
+        return (fileattr & win32file.FILE_ATTRIBUTE_READONLY)
+    else:
+        return not (os.stat(filename)[stat.ST_MODE] & stat.S_IWUSR)
+
+def CreateJoustJavascript(pub):
+	try:
+		filename = _GetFilename(pub.nodes[0].content.filename)
+		text = """
+function addJoustItems(theMenu){
+	var level1ID = -1;
+	var level2ID = -1;
+	var level3ID = -1;
+"""
+		text = text + """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(pub.nodes[0].content.metadata.name, "\"", "\\\""), filename, string.replace(pub.nodes[0].content.metadata.name, "\"", "\\\""))
+		text = text + AddJoustItems(pub.nodes[0], 1)
+		text = text + "return theMenu; \n}"
+
+		afile = open(os.path.join(settings.CurrentDir, "joustitems.js"), "w")
+		afile.write(text)
+		afile.close()
+	except:
+		import traceback
+		print `traceback.print_exc()`
+	
+
+def AddJoustItems(nodes, level):
+	text = ""
+	for root in nodes.children:
+		filename = ""
+		if string.find(root.content.filename, "imsmanifest.xml") != -1:
+				root = root.pub.nodes[0]
+
+		filename = _GetFilename(root.content.filename) 
+
+		if not root.content.public == "false":
+			if len(root.children) > 0:
+				nodeType = "Book"
+			else:
+				nodeType = "Document"
+			text = text + """level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, string.replace(root.content.metadata.name, "\"", "\\\""), filename, string.replace(root.content.metadata.name, "\"", "\\\""))
+
+			if len(root.children) > 0:
+				text = text + AddJoustItems(root, level + 1)
+		else:
+			print "Item " + root.content.metadata.name + " is marked private and was not published."
+	return text	
+
+def _GetFilename(filename):
+	extension = string.split(filename, ".")[-1]
+	publisher = plugins.GetPluginForExtension(extension).HTMLPublisher()
+	if publisher: 
+		try:
+			filename = "pub/" + publisher.GetFilename(filename)
+		except: 
+			import traceback
+			print `traceback.print_exc()`
+	else:
+		filename = string.replace(filename, "\\", "/")
+	return filename
