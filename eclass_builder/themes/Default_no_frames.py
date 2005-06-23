@@ -58,5 +58,5 @@ class HTMLPublisher(BaseHTMLPublisher):
 				else:
 					text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
 			else:
-				print "Item " + root.content.name + " is marked private and was not published."
+				print "Item " + root.content.metadata.name + " is marked private and was not published."
 		return text
