@@ -82,7 +82,7 @@ def MakeFileName(mydir, mytext):
 	myfilename = mytext + ".ecp"
 	counter = 2			
 	while os.path.exists(os.path.join(mydir, myfilename)):
-		#newnode.content.name = "New Page " + `counter`
+		#newnode.content.metadata.name = "New Page " + `counter`
 		myfilename = mytext + " " + `counter` + ".ecp"
 		counter = counter + 1
 	return myfilename
