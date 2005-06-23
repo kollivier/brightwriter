@@ -180,7 +180,6 @@ class SearchEngine:
 		print "returnDataFormat is: " + returnDataFormat
 		if returnDataFormat == "html":
 			convert = TextConverter()
-			print 'Data is: ' + data
 			convert.feed(data)
 			convert.close()
 			encoding = "iso-8859-1"
@@ -192,7 +191,11 @@ class SearchEngine:
 			try: 
 				text = convert.text.decode(encoding)
 			except:
-				text = convert.text.decode(locale.getdefaultlocale()[1])
+				try:
+					text = convert.text.decode(locale.getdefaultlocale()[1])
+				except: 
+					text = convert.text
+
 		elif returnDataFormat == "unicodeTxt":
 			text = unicode(data)
 		else:
