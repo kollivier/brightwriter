@@ -90,7 +90,7 @@ class conmanHTMLPublisher:
 	def CreateJoustTOC(self, gsdlcollection):
 		filename = self._GetFilename(self.pub.nodes[0].content.filename)
 
-		text = """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(self.pub.nodes[0].content.name, "\"", "\\\""), filename, string.replace(self.pub.nodes[0].content.name, "\"", "\\\""))
+		text = """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename, string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""))
 		text = text + self.AddJoustItems(self.pub.nodes[0], 1)
 		if self.useswishe:
 			searchscript = "../cgi-bin/search"
@@ -104,7 +104,7 @@ class conmanHTMLPublisher:
 		file.close()
 		file = open(os.path.join(self.dir, "index.htm"), "w")
 		data = string.replace(data, "<!-- INSERT INDEX PAGE HERE -->", filename)
-		data = string.replace(data, "<!-- INSERT CLASS TITLE HERE -->", self.pub.nodes[0].content.name)
+		data = string.replace(data, "<!-- INSERT CLASS TITLE HERE -->", self.pub.nodes[0].content.metadata.name)
 		data = string.replace(data, "<!-- INSERT MENU ITEMS HERE -->", text)
 		file.write(data)
 		file.close()
@@ -123,12 +123,12 @@ class conmanHTMLPublisher:
 					nodeType = "Book"
 				else:
 					nodeType = "Document"
-				text = text + """level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, string.replace(root.content.name, "\"", "\\\""), filename, string.replace(root.content.name, "\"", "\\\""))
+				text = text + """level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, string.replace(root.content.metadata.name, "\"", "\\\""), filename, string.replace(root.content.metadata.name, "\"", "\\\""))
 
 				if len(root.children) > 0:
 					text = text + self.AddJoustItems(root, level + 1)
 			else:
-				print "Item " + root.content.name + " is marked private and was not published."
+				print "Item " + root.content.metadata.name + " is marked private and was not published."
 		return text
 
 	def CreateTOCPage(self):
@@ -162,7 +162,7 @@ class conmanHTMLPublisher:
 			toc = toc + """<img src="../Graphics/menu/win/page.gif">"""
 		filename = self._GetFilename(root.content.filename)
 
-		toc = toc + """<FONT face="Arial" size="2"><A href="%s"> %s</A></FONT><BR>""" %(filename, root.content.name)
+		toc = toc + """<FONT face="Arial" size="2"><A href="%s"> %s</A></FONT><BR>""" %(filename, root.content.metadata.name)
 		if len(root.children) > 0:
 			for child in root.children:
 				toc = toc + self._TOCAsHTML(child, indent + 4)
@@ -172,7 +172,7 @@ class conmanHTMLPublisher:
 		page = ""
 		if self.cancelled:
 			return
-		keepgoing = self.progress.Update(self.counter, myDictionary["112"] + node.content.name)
+		keepgoing = self.progress.Update(self.counter, myDictionary["112"] + node.content.metadata.name)
 		if not keepgoing:
 			result = wxMessageDialog(self.parent, "Are you sure you want to cancel publishing this EClass?", "Cancel Publishing?", wxYES_NO).ShowModal()
 			if result == wxID_NO:
@@ -199,7 +199,7 @@ class conmanHTMLPublisher:
 			if node.content.template != "None":
 				try:
 					text = self._GetBody(StringIO(page))
-					page = self._CreateHTMLShell(node.content.name, node.content.description, node.content.keywords, node.content.filename, text, self.templates.get(node.content.template))
+					page = self._CreateHTMLShell(node.content.metadata.name, node.content.description, node.content.keywords, node.content.filename, text, self.templates.get(node.content.template))
 					file = open(os.path.join(self.dir, "pub", node.content.filename), "w")
 					file.write(page)
 					file.close()

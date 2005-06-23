@@ -117,7 +117,7 @@ class ConMan:
 	def NewPub(self, name, lang, directory=''):
 		self.directory = directory
 		mycontent = self.content.AddItem(GetUUID(), self.language)
-		mycontent.name = name
+		mycontent.metadata.name = name
 		mynode = ConNode(GetUUID(), mycontent, None)
 		mynode.dir = directory
 		self.CurrentNode = mynode
@@ -594,7 +594,7 @@ class Content:
 	def __init__(self, id, lang, type="webcontent"):
 		self.encoding = "ISO-8859-1"
 		self.id = id
-		self.name = ""
+		#self.name = ""
 
 		#These three below are for backwards compatibility with old EClasses.
 		self.keywords = ""
