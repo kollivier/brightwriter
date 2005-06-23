@@ -473,7 +473,8 @@ class MainFrame2(wxFrame):
 			self.browsers["htmlwin"] = self.browser = wxHtmlWindow(self.previewbook, -1, wxDefaultPosition, wxDefaultSize)
 			self.previewbook.AddPage(self.browser, _("HTML Preview"))
 		else:
-			browsers.remove("htmlwindow")
+			if "htmlwindow" in browsers:
+				browsers.remove("htmlwindow")
 			default = "mozilla"
 			if sys.platform == "win32" and "ie" in browsers:
 				default = "ie"
@@ -991,6 +992,8 @@ class MainFrame2(wxFrame):
 		wxYield()
 		try:
 			self.CreateDocumancerBook()
+			self.CreateDevHelpBook()
+			utils.CreateJoustJavascript(self.pub)
 			#cleanup after old EClass versions
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.pyd"))
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.dll"))
@@ -1002,7 +1005,7 @@ class MainFrame2(wxFrame):
 			if not os.path.exists(installerdir):
 				os.mkdir(installerdir)
 			if sys.platform == "win32":
-				files.CopyFile("documancer-0.2.4-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(self.CurrentDir, "installers"))
+				files.CopyFile("documancer-0.2.6-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(self.CurrentDir, "installers"))
 			useswishe = False
 			if self.pub.settings["SearchProgram"] == "Swish-e":
 				useswishe = True
@@ -1175,7 +1178,7 @@ class MainFrame2(wxFrame):
 				plugintext = dialog.cmbType.GetStringSelection() #self.PopMenu.GetLabel(event.GetId())
 				plugin = None
 				for myplugin in plugins.pluginList:
-					if not string.find(plugintext, myplugin["FullName"]) == -1:
+					if not string.find(plugintext, myplugin.plugin_info["FullName"]) == -1:
 						plugin = myplugin
 		
 				if plugin and self.CurrentItem and self.CurrentTreeItem:
@@ -1187,8 +1190,8 @@ class MainFrame2(wxFrame):
 						newnode = self.CurrentItem
 					self.CurrentItem = newnode
 					newnode.content.metadata.name = dialog.txtTitle.GetValue() #"New Page"
-					newnode.content.filename = os.path.join(plugin["Directory"], dialog.txtFilename.GetValue())
-					myplugin = eval("plugins." + plugin["Name"])
+					newnode.content.filename = os.path.join(plugin.plugin_info["Directory"], dialog.txtFilename.GetValue())
+					myplugin = eval("plugins." + plugin.plugin_info["Name"])
 					try: 		
 						if myplugin.EditorDialog(self,self.CurrentItem).ShowModal() == wxID_OK:
 							if not isroot:
@@ -1715,7 +1718,7 @@ class ProjectPropsDialog(wxDialog):
 		self.lblname = wxStaticText(panel, -1, _("Name"), wxPoint(self.labelx,10))
 		self.txtname = wxTextCtrl(panel, -1, self.parent.pub.name, wxPoint(self.textx, 10), wxDefaultSize) 
 		self.lbldescription = wxStaticText(panel, -1, _("Description"), wxPoint(self.labelx,self.height + 10))
-		self.txtdescription = wxTextCtrl(panel, -1, self.parent.pub.description, wxPoint(self.textx, self.height + 10), wxDefaultSize, wxTE_MULTILINE) 
+		self.txtdescription = wxTextCtrl(panel, -1, self.parent.pub.description, wxPoint(self.textx, self.height + 10), wxSize(-1, 160), wxTE_MULTILINE) 
 		self.lblkeywords = wxStaticText(panel, -1, _("Keywords"), wxPoint(self.labelx, (self.height*4) + 10))
 		self.txtkeywords = wxTextCtrl(panel, -1, self.parent.pub.keywords, wxPoint(self.textx, (self.height*4) + 10), wxDefaultSize) 
 		self.txtname.SetFocus()
