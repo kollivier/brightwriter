@@ -141,7 +141,7 @@ class BaseHTMLPublisher:
 				else:
 					text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
 			else:
-				print "Item " + root.content.name + " is marked private and was not published."
+				print "Item " + root.content.metadata.name + " is marked private and was not published."
         	return text					
 
 	def _GetFilename(self, filename):
@@ -169,7 +169,7 @@ class BaseHTMLPublisher:
 			return
 		keepgoing = True #assuming no dialog to cancel, this must always be the case
 		if self.progress:
-			keepgoing = self.progress.Update(self.counter, _("Updating page %(page)s") % {"page":node.content.name})
+			keepgoing = self.progress.Update(self.counter, _("Updating page %(page)s") % {"page":node.content.metadata.name})
 		if not keepgoing:
 			result = wxMessageDialog(self.parent, "Are you sure you want to cancel publishing this EClass?", "Cancel Publishing?", wxYES_NO).ShowModal()
 			if result == wxID_NO:
