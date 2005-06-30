@@ -32,9 +32,19 @@ class VCard:
 
 			#only parse if we're in the VCard
 			if inVCard: 
-				while counter < filelength and (lines[counter+1][0] in [" ", "\t"]): #it's a continuation of a previous line
-					line = line + "\r\n" + lines[counter+1]
+				while counter < filelength:
+					if len(lines[counter+1]) == 0:
+						counter = counter + 1
+						continue
+					if (lines[counter+1][0] in [" ", "\t"]): #it's a continuation of a previous line
+						line = line + "\r\n" + lines[counter+1]
+						counter = counter + 1
+					else:
+						break
+
+				if len(lines[counter+1]) == 0:
 					counter = counter + 1
+					continue
 
 	  			propname = string.split(string.split(line, ":")[0], ";")[0]
 	  			if string.find(propname, ".") != -1:
