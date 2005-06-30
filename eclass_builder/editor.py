@@ -3445,16 +3445,31 @@ class ContactsDialog(wxDialog):
 	def OnImport(self, event):
 		dialog = wxFileDialog(self, _("Choose a vCard"), "", "", _("vCard Files") + " (*.vcf)|*.vcf", wxOPEN)
 		if dialog.ShowModal() == wxID_OK:
-			files.CopyFile(dialog.GetFilename(), dialog.GetDirectory(), os.path.join(self.parent.PrefDir, "Contacts"))
-			newvcard = vcard.VCard()
-			newvcard.parseFile(os.path.join(self.parent.PrefDir, "Contacts", dialog.GetFilename()))
-			if newvcard.fname.value == "":
-				myvcard.fname.value = myvcard.name.givenName + " "
-				if myvcard.name.middleName != "":
-					myvcard.fname.value = myvcard.fname.value + myvcard.name.middleName + " "
-				myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
-			self.parent.vcardlist[newvcard.fname.value] = newvcard
-			self.lstContacts.Append(name, newvcard)
+			filename = ""
+			try:
+				contactsdir = os.path.join(self.parent.PrefDir, "Contacts")
+				shutil.copy(dialog.GetPath(), contactsdir)
+				newvcard = vcard.VCard()
+				filename = os.path.join(contactsdir, dialog.GetFilename())
+				if sys.platform == "win32":
+					filename = win32api.GetShortPathName(filename)
+				newvcard.parseFile(filename)
+				if newvcard.fname.value == "":
+					myvcard.fname.value = myvcard.name.givenName + " "
+					if myvcard.name.middleName != "":
+						myvcard.fname.value = myvcard.fname.value + myvcard.name.middleName + " "
+					myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
+				self.parent.vcardlist[newvcard.fname.value] = newvcard
+				self.lstContacts.Append(newvcard.fname.value, newvcard)
+			except:
+				import traceback
+				print `traceback.print_exc()`
+				if filename != "":
+					try:
+						os.remove(filename)
+					except:
+						pass
+				wxMessageBox(_("The VCard " + dialog.GetFilename() + " could not be imported."))
 
 	def OnEdit(self, event):
 		thisvcard = self.lstContacts.GetClientData(self.lstContacts.GetSelection())
