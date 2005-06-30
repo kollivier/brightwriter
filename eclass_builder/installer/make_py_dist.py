@@ -1,25 +1,5 @@
-#
-#  This file is part of Documancer (http://documancer.sf.net)
-#
 #  Copyright (C) 2004 Kevin Ollivier
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License version 2 as
-#  published by the Free Software Foundation.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-#
-#  $Id$
-#
-#  This script creates the mini python distribution that is shipped
-#  with Documancer on Windows.
+#  Licensing terms are in the license/license.txt file.
 
 import sys, os, string, shutil, glob, modulefinder, re
 #import wxversion
@@ -119,7 +99,10 @@ if os.name == "nt":
     if not os.path.exists(os.path.join(sys.prefix, "python23.dll")):
         syspython = os.path.join(sysdir, "python23.dll")
         if os.path.exists(syspython):
+            print mpdir
             shutil.copyfile(syspython, os.path.join(mpdir, "python23.dll"))
+    else: 
+        shutil.copyfile(os.path.join(sys.prefix, "python23.dll"), os.path.join(mpdir, "python23.dll"))
 
     pywindlls = ["PyWinTypes23.dll", "PythonCOM23.dll"]
     for dll in pywindlls:
