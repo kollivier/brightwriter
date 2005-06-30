@@ -840,10 +840,16 @@ class QuestionEditor(wxDialog):
 		#incorrectcondition.title = "Correct"
 		#incorrectcondition.itemid = self.question.presentation.lidid
 		correctAnswer = False
+		numAnswers = 0
 		for counter in range(1, 6):
 			exec("chkCorrect = self.chkCorrect" + `counter`)
+			exec("txtAnswer = self.txtAnswer" + `counter`)
+			
 			if chkCorrect.GetValue() == True:
 				correctAnswer = True
+
+			if not txtAnswer.GetValue() == "":
+				numAnswers = numAnswers + 1
 
 		if self.question.presentation.text == "":
 			wxMessageBox(_("Please enter a question."))
@@ -852,6 +858,10 @@ class QuestionEditor(wxDialog):
 		if not correctAnswer:
 			wxMessageBox(_("Please specify one or more correct answer(s)."))
 			return False 
+
+		if numAnswers <= 1:
+			wxMessageBox(_("Questions must have at least 2 answers."))
+			return False
 
 		for counter in range(1, 6):
 			exec("txtAnswer = self.txtAnswer" + `counter`)
