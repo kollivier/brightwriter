@@ -55,7 +55,7 @@ class PDFPublisher:
 		self.parent = parent
 		self.pub = parent.pub
 		self.dir = parent.CurrentDir
-		Title = self.pub.nodes[0].content.name
+		Title = self.pub.nodes[0].content.metadata.name
 		self.counter = 1
 		self.appdir = parent.AppDir
 		self.ThirdPartyDir = parent.ThirdPartyDir
@@ -140,7 +140,7 @@ class PDFPublisher:
 			return
 		keepgoing = True #assuming no dialog to cancel, this must always be the case
 		if self.progress:
-			keepgoing = self.progress.Update(self.counter, "Updating " + node.content.name)
+			keepgoing = self.progress.Update(self.counter, "Updating " + node.content.metadata.name)
 		if not keepgoing:
 			result = wxMessageDialog(self.parent, "Are you sure you want to cancel publishing this EClass?", "Cancel Publishing?", wxYES_NO).ShowModal()
 			if result == wxID_NO:
@@ -162,7 +162,7 @@ class PDFPublisher:
 			if publisher: 
 				try:
 					filename = publisher.GetFilename(node.content.filename)
-					publisher.data['name'] = TextToHTMLChar(node.content.name)
+					publisher.data['name'] = TextToHTMLChar(node.content.metadata.name)
 					publisher.GetData()
 					templatefile = os.path.join(self.parent.AppDir, "convert", "PDF.tpl")
 					myhtml = publisher.ApplyTemplate(templatefile, publisher.data)
