@@ -461,7 +461,7 @@ class ConMan:
 		myres = ""
 		publisher = plugins.BaseHTMLPublisher()
 		for item in self.content:
-			filename = item.filename
+			filename = os.path.basename(item.filename)
 			#HACK ALERT!!! This hardcodes current plugins...
 			fileext = os.path.splitext(filename)[1][1:]
 			if self.exporting and fileext in ["htm", "html", "ecp", "quiz"]:
