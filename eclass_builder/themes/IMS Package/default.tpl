@@ -39,7 +39,7 @@ function openCredit(windowName, text)
 
 </script>
 </head>
-<body bgcolor="#FFFFF5" onload="loadPage()" onunload="doQuit('completed')">
+<body onload="loadPage()" onunload="doQuit('completed')">
 <table id="exampletable" valign="top" width="100%">
   <tr valign="top">
 <td width="0%">
@@ -54,7 +54,6 @@ function openCredit(windowName, text)
 <h5 align="left"></h5>
 </td>
 <td align="center">
-<input type = "BUTTON" value = "  Next Page  " onClick = "doQuit('completed')" id=button2 name=button2>
 --[credit]--
 </td>
 <td width="5%" align="right">
