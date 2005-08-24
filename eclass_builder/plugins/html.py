@@ -160,8 +160,11 @@ if __name__ != "__main__":
 
 class EditorFrame (wxFrame):
 	def __init__(self, parent):
-		from wxPython.mozilla import *
-		from wxPython.stc import *
+		try:
+			from wxPython.mozilla import *
+			from wxPython.stc import *
+		except:
+			return
 		self.running = true
 		wxFrame.__init__(self,NULL, -1, "Document Editor")
 		self.current = "about:blank"
@@ -1528,9 +1531,7 @@ if __name__ != "__main__":
 			self.currentItem = currentItem
 	
 		def ShowModal(self):
-			self.frame = EditorFrame(self.parent)
-			#self.frame.mozilla.LoadURL("about:blank")
-			self.frame.currentItem = self.currentItem
+		
 			if not os.path.exists(os.path.join(self.parent.pub.directory, self.currentItem.content.filename)):
 				
 				self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
@@ -1561,6 +1562,9 @@ if __name__ != "__main__":
 				use_builtin = True
 
 			if use_builtin:
+				self.frame = EditorFrame(self.parent)
+				#self.frame.mozilla.LoadURL("about:blank")
+				self.frame.currentItem = self.currentItem
 				self.frame.mozilla.LoadURL(self.filename)
 				self.frame.MakeModal(True)
 				self.frame.Show()

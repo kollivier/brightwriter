@@ -25,7 +25,6 @@ class DevHelpFile:
 		
 	def SaveAsXML(self, filename):
 		doc = xml.dom.minidom.Document()
-		print "Title = " + self.title + ", Link = " + self.link
 		rootNode = newXMLNode(doc, "book", attrs={"title": self.title, "link":self.link})
 		chaptersNode = newXMLNode(doc, "chapters")
 		for page in self.pages:
@@ -33,8 +32,8 @@ class DevHelpFile:
 		rootNode.appendChild(chaptersNode)
 		doc.appendChild(rootNode)
 		data = doc.toprettyxml("\t")
-		myfile = open(filename, "w")
-		myfile.write(data)
+		myfile = open(filename, "wb")
+		myfile.write(data.encode("utf-8"))
 		myfile.close()
 
 class DevHelpConverter:

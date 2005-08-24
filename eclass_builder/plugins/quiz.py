@@ -46,7 +46,10 @@ EVT_RESULT_ID = wxNewId()
 def EVT_RESULT(win, func):
 	win.Connect(-1, -1, EVT_RESULT_ID, func)
 
-class QuizPage:
+# base type that makes sure all data is converted to Unicode
+
+
+class QuizPage(plugins.PluginData):
 	"""
 	Class: quiz.QuizPage()
 	Last Updated: 12/26/02
@@ -67,7 +70,7 @@ class QuizPage:
 	"""
 
 	def __init__(self, window=None):
-		self.encoding = "ISO-8859-1"
+		plugins.PluginData.__init__(self)
 		self.window = window
 		self.filename = ""
 		self.directory = ""
@@ -75,12 +78,6 @@ class QuizPage:
 		self.autograded = True
 		self.profemail = ""
 		self.items = []
-
-	def __setattr__(self, name, value):
-		if not name == "encoding" and isinstance(value, str) or isinstance(value, unicode):
-			self.__dict__[name] = value.encode(self.encoding, 'replace')
-		else:
-			self.__dict__[name] = value
 
 	def LoadPage(self, filename):
 		"""
@@ -264,12 +261,20 @@ class QuizPage:
 			self.filename = filename
 
 		try:
-			myxml = """<?xml version="1.0" encoding="%s"?>%s""" % (encoding, self.WriteDoc())
+			myxml = """<?xml version="1.0"?>%s""" % (self.WriteDoc())
 		except:
 			message = _("There was an error updating the file %(filename)s. Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.") % {"filename":filename}
 			print "Quiz Error: Unable to write XML data for " + filename + ". self.WriteDoc failed."
 			raise IOError, message
 		try:
+			import types
+			if type(myxml) != types.UnicodeType:
+				import locale
+				encoding = locale.getdefaultlocale()[1]
+				myxml = unicode(myxml, encoding)
+			
+			myxml = myxml.encode("utf-8")
+			
 			myfile = open(filename, "w")
 			myfile.write(myxml)
 			myfile.close()
@@ -388,7 +393,7 @@ class QuizPage:
 
 		return retval
 
-class QuizItem:
+class QuizItem (plugins.PluginData):
 	"""
 	Class: quiz.QuizItem()
 	Last Updated: 12/26/02
@@ -406,39 +411,37 @@ class QuizItem:
 	"""
 
 	def __init__(self):
-		self.encoding = "ISO-8859-1"
+		plugins.PluginData.__init__(self)
 		self.name = ""
 		self.id = ""
 		self.presentation = QuizItemPresentation()
 		self.conditions = []
 		self.feedback = []
 
-	def __setattr__(self, name, value):
-		if not name == "encoding" and isinstance(value, str) or isinstance(value, unicode):
-			self.__dict__[name] = value.encode(self.encoding, 'replace')
-		else:
-			self.__dict__[name] = value
-
-class QuizItemPresentation:
+class QuizItemPresentation (plugins.PluginData):
 	def __init__(self):
+		plugins.PluginData.__init__(self)
 		self.label = ""
 		self.text = ""
 		self.lidid = ""
 		self.choices = []
 
-class QuizItemChoice:
+class QuizItemChoice (plugins.PluginData):
 	def __init__(self):
+		plugins.PluginData.__init__(self)
 		self.id = ""
 		self.text = ""
 
-class QuizItemFeedback:
+class QuizItemFeedback(plugins.PluginData):
 	def __init__(self):
+		plugins.PluginData.__init__(self)
 		self.id = ""
 		self.view = ""
 		self.text = ""
 
-class QuizItemCondition:
+class QuizItemCondition(plugins.PluginData):
 	def __init__(self):
+		plugins.PluginData.__init__(self)
 		self.title = ""
 		self.variables = []
 		self.action = "set"
@@ -446,8 +449,9 @@ class QuizItemCondition:
 		self.feedbacktype = "Response"
 		self.feedbackid = ""
 
-class QuizItemVariable:
+class QuizItemVariable(plugins.PluginData):
 	def __init__(self):
+		plugins.PluginData.__init__(self)
 		self.condition = "equal"
 		self.itemid = ""
 		self.value = ""
@@ -673,10 +677,10 @@ class EditorDialog(wxDialog):
 		self.editsizer.Add(self.btnRemove, 1, wxALIGN_CENTER | wxALL, 4)
 		self.mysizer.Add(self.editsizer, 0, wxEXPAND | wxALIGN_CENTER | wxALL, 4)
 
-		self.btnsizer = wxBoxSizer(wxHORIZONTAL)
-		self.btnsizer.Add((100, 1), 1, wxEXPAND | wxALL, 4)
-		self.btnsizer.Add(self.btnOK, 0, wxALL, 4)
-		self.btnsizer.Add(self.btnCancel, 0, wxALL, 4)
+		self.btnsizer = wxStdDialogButtonSizer()
+		self.btnsizer.AddButton(self.btnOK)
+		self.btnsizer.AddButton(self.btnCancel)
+		self.btnsizer.Realize()
 		self.mysizer.Add(self.btnsizer, 0, wxEXPAND | wxALL, 4)
 		
 		self.SetAutoLayout(true)
@@ -793,8 +797,11 @@ class QuestionEditor(wxDialog):
 		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
 		self.buttonsizer.Add(self.btnFeedback, 0, wxALL, 4)
 		self.buttonsizer.Add((100, 1), 1, wxEXPAND | wxALL, 4)
-		self.buttonsizer.Add(self.btnOK, 0, wxALL, 4)
-		self.buttonsizer.Add(self.btnCancel, 0, wxALL, 4)
+		stdbuttonsizer = wxStdDialogButtonSizer()
+		stdbuttonsizer.AddButton(self.btnOK)
+		stdbuttonsizer.AddButton(self.btnCancel)
+		stdbuttonsizer.Realize()
+		self.buttonsizer.Add(stdbuttonsizer)
 		self.mysizer.Add(self.buttonsizer, 0, wxEXPAND, 4)
 
 		self.btnOK.SetDefault()
@@ -808,9 +815,9 @@ class QuestionEditor(wxDialog):
 			self.txtQuestion.SetValue(question.presentation.text)
 			counter = 0
 			for choice in question.presentation.choices:
-				eval("self.txtID" + `(counter + 1)` + ".SetValue(\"" + choice.id + "\")")
+				eval("self.txtID" + `(counter + 1)` + ".SetValue(u\"" + choice.id + "\")")
 				if counter < 6:
-					eval("self.txtAnswer" + `(counter + 1)` + ".SetValue(\"" + choice.text + "\")")
+					eval("self.txtAnswer" + `(counter + 1)` + ".SetValue(u\"" + choice.text + "\")")
 					for cond in question.conditions:
 						if cond.title == "Correct":
 							for var in cond.variables:
@@ -912,10 +919,10 @@ class QuestionFeedbackDialog(wxDialog):
 		self.mysizer.Add(self.lblIncorrect, 0, wxALL, 4)
 		self.mysizer.Add(self.txtIncorrect, 1, wxEXPAND | wxALL, 4)
 		
-		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.buttonsizer.Add((100, 1), 1, wxEXPAND | wxALL, 4)
-		self.buttonsizer.Add(self.btnOK, 0, wxALL, 4)
-		self.buttonsizer.Add(self.btnCancel, 0, wxALL, 4)
+		self.buttonsizer = wxStdDialogButtonSizer()
+		self.buttonsizer.AddButton(self.btnOK)
+		self.buttonsizer.AddButton(self.btnCancel)
+		self.buttonsizer.Realize()
 		self.mysizer.Add(self.buttonsizer, 0, wxEXPAND)
 
 		self.btnOK.SetDefault()

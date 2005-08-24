@@ -319,6 +319,15 @@ class ImportFiles:
 			else:
 				#link is relative to path
 				self.dependentFiles.append(link)
+				
+def GetEncoding(myhtml):
+	"""Checks for document HTML encoding and returns it if found."""
+	import re
+	match = re.search("""<meta\s+http-equiv="Content-Type"\s+content="text/html;\s*charset=([^\"]*)">""", myhtml, re.IGNORECASE)
+	if match:
+		return match.group(1).lower() #python encodings always in lowercase
+	else:
+		return None
 
 def GetBody(myhtml):
 	"""
@@ -338,8 +347,11 @@ def GetBody(myhtml):
 	bodyend = 0
 	text = ""
 	uppercase = 1
+	encoding = None
 	html = myhtml.readline()
 	while not html == "":
+		if not encoding and string.find(html.lower(), "<meta"):
+			encoding = GetEncoding(html)
 		#if we're inside a script, mark it so that we can test if body tag is inside the script
 		scriptstart = string.find(html, "<SCRIPT")
 		if scriptstart == -1:
@@ -390,6 +402,10 @@ def GetBody(myhtml):
 			elif inbody == 1:
 				text = text + html 
 		html = myhtml.readline()
+	
+	if encoding:
+		print "Encoding is: " + `encoding`
+		text = unicode(text, encoding) # all import data should be converted to unicode
 	return text
 
 #in case one day we can switch to this...

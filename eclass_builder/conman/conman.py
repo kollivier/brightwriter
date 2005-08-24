@@ -7,6 +7,8 @@ import xml_settings
 import vcard
 import plugins
 from validate import *
+import locale
+import utils
 
 USE_MINIDOM=0
 try:
@@ -55,7 +57,7 @@ class ConMan:
 	"""
 	def __init__(self):
 		#self.users = {} - for future use, multi-user system
-		self.encoding = "ISO-8859-1"
+		self.encoding = utils.getCurrentEncoding()
 		self.id = ""
 		self.pubid = ""
 		self.content = ContentList()
@@ -79,11 +81,12 @@ class ConMan:
 		return mytext
 
 	def __setattr__(self, name, value):
-		if not name == "encoding" and isinstance(value, str) or isinstance(value, unicode):
-			self.__dict__[name] = value.encode(self.encoding, 'replace')
+		# make sure internally we're always using Unicode
+		if not name == "encoding":
+			self.__dict__[name] = utils.makeUnicode(value, self.encoding)
 		else:
 			self.__dict__[name] = value
-
+		
 	def GetNodeCount(self):
 		return self._CountNodes(self.nodes)
 
@@ -188,6 +191,7 @@ class ConMan:
 			for i in range(0, len(toc.attributes)):
 				attr = toc.attributes.item(i)
 				if attr.name == "identifier" and string.find(attr.value, self.namespace) != -1:
+					print 'attr.value = ' + `attr.value`
 					self.orgid = string.replace(attr.value, self.namespace, "")
 					self.orgid = string.replace(self.orgid, "-", "")
 
@@ -402,7 +406,7 @@ class ConMan:
 			self.filename = filename
 			self.directory = os.path.split(filename)[0]
 		
-		myxml = """<?xml version="1.0" encoding="%s"?>
+		myxml = """<?xml version="1.0"?>
 <manifest identifier="%s" xmlns:imsmd="http://www.imsproject.org">
 	<metadata>%s</metadata>
 	<organizations default="%s">
@@ -414,7 +418,7 @@ class ConMan:
 	<resources>%s
 	</resources>
 </manifest>
-""" % (encoding, self.namespace + self.id, self._MetadataAsXML(), self.namespace + self.orgid, self.namespace + self.orgid, TextToXMLAttr(self.name), TextToXMLAttr(self.name), self._TOCAsXML(self.nodes[0]), self._ResourcesAsXML())		
+""" % (self.namespace + self.id, self._MetadataAsXML(), self.namespace + self.orgid, self.namespace + self.orgid, TextToXMLAttr(self.name), TextToXMLAttr(self.name), self._TOCAsXML(self.nodes[0]), self._ResourcesAsXML())		
 		try:	
 			self.settings.SaveAsXML(os.path.join(self.directory, "settings.xml"))
 		except:
@@ -424,6 +428,13 @@ class ConMan:
 			raise IOError, message
 
 		try:
+			import types
+			if type(myxml) != types.UnicodeType:
+				import locale
+				encoding = locale.getdefaultlocale()[1]
+				myxml = unicode(myxml, encoding)
+			
+			myxml = myxml.encode("utf-8")
 			myfile = open(filename, "wb")
 			myfile.write(myxml)
 			myfile.close()
@@ -592,23 +603,24 @@ class Content:
 	NONE
 	"""
 	def __init__(self, id, lang, type="webcontent"):
-		self.encoding = "ISO-8859-1"
+		self.encoding = utils.getCurrentEncoding()
 		self.id = id
 		#self.name = ""
 
 		#These three below are for backwards compatibility with old EClasses.
-		self.keywords = ""
-		self.description = ""
+		self.keywords = u""
+		self.description = u""
 		self.language = lang
 
-		self.public = "true"
-		self.filename = ""
+		self.public = u"true"
+		self.filename = u""
 		self.type = type
 		self.metadata = Metadata()
 
 	def __setattr__(self, name, value):
-		if not name == "encoding" and isinstance(value, str) or isinstance(value, unicode):
-			self.__dict__[name] = value.encode(self.encoding, 'replace')
+		# make sure internally we're always using Unicode
+		if not name == "encoding":
+			self.__dict__[name] = utils.makeUnicode(value, self.encoding)
 		else:
 			self.__dict__[name] = value
 
@@ -628,10 +640,10 @@ class Metadata:
 	Description: Stores metadata for Content items (Resources)
 	"""
 	def __init__(self):
-		self.name = ""
-		self.keywords = ""
-		self.description = ""
-		self.language = "en"
+		self.name = u""
+		self.keywords = u""
+		self.description = u""
+		self.language = u"en"
 		self.lifecycle = Lifecycle()
 		self.technical = Technical()
 		self.educational = Educational()

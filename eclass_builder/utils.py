@@ -11,13 +11,15 @@ import plugins
 class LogFile:
 	def __init__(self, filename="log.txt"):
 		self.filename = filename
+		
+	def read(self):
+		return unicode(open(self.filename, "rb").read(), "utf-8")
 
 	def write(self, message):
 		if message == None:
 			return
-		print message
-		myfile = open(self.filename, "a")
-		myfile.write(message + "\n")
+		myfile = open(self.filename, "ab")
+		myfile.write(message.encode("utf-8") + "\n")
 		myfile.close()
 
 def getStdErrorMessage(type = "IOError", args={}):
@@ -112,3 +114,17 @@ def _GetFilename(filename):
 	else:
 		filename = string.replace(filename, "\\", "/")
 	return filename
+
+def getCurrentEncoding():
+	import locale
+	encoding = locale.getdefaultlocale()[1]
+	if not encoding or encoding == 'ascii':
+		encoding = "iso-8859-1" 
+	
+	return encoding
+	
+def makeUnicode(text, encoding):
+	if isinstance(text, str):
+		return text.decode(encoding, 'replace')
+	else:
+		return text
