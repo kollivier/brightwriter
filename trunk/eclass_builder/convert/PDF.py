@@ -4,10 +4,14 @@ import re
 import StringIO
 #import pre as re
 import string
+import types
 from wxPython.wx import *
 import conman.file_functions as files
 from conman.HTMLFunctions import *
 from conman.validate import *
+import settings
+import tempfile
+import shutil
 
 myDictionary={}
 #import plugins.eclass as eclass
@@ -54,7 +58,9 @@ class PDFPublisher:
 	def __init__(self, parent=None):
 		self.parent = parent
 		self.pub = parent.pub
-		self.dir = parent.CurrentDir
+		self.dir = settings.CurrentDir
+		#if sys.platform != "win32":
+		#	self.dir = string.replace(self.dir, " ", "\\ ")
 		Title = self.pub.nodes[0].content.metadata.name
 		self.counter = 1
 		self.appdir = parent.AppDir
@@ -65,6 +71,7 @@ class PDFPublisher:
 		self.progress = None
 		self.pdffile = ""
 		self.pdfdir = ""
+		self.tempdir = tempfile.mkdtemp()
 		self.files = []
 
 	def Publish(self):
@@ -73,8 +80,8 @@ class PDFPublisher:
 			import win32api
 			self.pdfdir = win32api.GetShortPathName(self.pdfdir)
 		try:
-			if not os.path.exists(os.path.join(self.pdfdir, "temp")):
-				os.mkdir(os.path.join(self.pdfdir, "temp"))
+			#if not os.path.exists(os.path.join(self.pdfdir, "temp")):
+			#	os.mkdir(os.path.join(self.pdfdir, "temp"))
 			if isinstance(self.parent, wxFrame):
 				self.progress = wxProgressDialog("Publishing PDF", "Publishing PDF", self.parent.wxTree.GetCount() + 1, None, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT)
 			#self.CopySupportFiles()
@@ -89,18 +96,25 @@ class PDFPublisher:
 		#self.myfile.close()
 		self.pdffile = os.path.join(self.pdfdir, MakeFileName2(self.pub.nodes[0].content.metadata.name + ".pdf"))
 		bookfile = "#HTMLDOC\n"
-		bookfile = bookfile + "-f " + string.replace(self.pdffile, "\\", "/") + " -t pdf --no-toc --no-links --compression=9 --jpeg=90 --verbose\n" 
+		pdffile = self.pdffile
+		if sys.platform == "win32":
+			pdffile = string.replace(self.pdffile, "\\", "/")
+		bookfile = bookfile + "-f \"" + pdffile + "\" -t pdf --no-toc --no-links --compression=9 --jpeg=90 --verbose\n" 
 		for file in self.files:
 			if wxPlatform == "__WXMSW__":
 				import win32api
 				file = win32api.GetShortPathName(file)
 				file = string.replace(file, "\\", "/")
 			bookfile = bookfile + file + "\n"
-		bookpath = os.path.join(self.dir, "temp", "eclass.book")
+		bookpath = os.path.join(self.tempdir, "eclass.book")
 		book = open(bookpath, "w")
 		book.write(bookfile)
 		book.close()
-		htmldoc = os.path.join(self.ThirdPartyDir, "htmldoc", "htmldoc")
+		
+		if sys.platform == "win32":
+			htmldoc = os.path.join(self.ThirdPartyDir, "htmldoc", "htmldoc")
+		else:
+			htmldoc = os.path.join(self.ThirdPartyDir, "htmldoc", "bin", "htmldoc")
 
 		try:
 			os.system(htmldoc + " --batch " + bookpath)
@@ -110,6 +124,9 @@ class PDFPublisher:
 	
 		if self.progress:
 			self.progress.Destroy()
+		
+		#if os.path.exists(self.tempdir):
+		#	shutil.rmtree(self.tempdir)
 
 		return not self.cancelled
 
@@ -140,9 +157,9 @@ class PDFPublisher:
 			return
 		keepgoing = True #assuming no dialog to cancel, this must always be the case
 		if self.progress:
-			keepgoing = self.progress.Update(self.counter, "Updating " + node.content.metadata.name)
+			keepgoing = self.progress.Update(self.counter, _("Updating ") + node.content.metadata.name)
 		if not keepgoing:
-			result = wxMessageDialog(self.parent, "Are you sure you want to cancel publishing this EClass?", "Cancel Publishing?", wxYES_NO).ShowModal()
+			result = wxMessageDialog(self.parent, _("Are you sure you want to cancel publishing this EClass?"), _("Cancel Publishing?"), wxYES_NO).ShowModal()
 			if result == wxID_NO:
 				self.cancelled = false
 				self.progress.Resume()
@@ -165,17 +182,22 @@ class PDFPublisher:
 					publisher.data['name'] = TextToHTMLChar(node.content.metadata.name)
 					publisher.GetData()
 					templatefile = os.path.join(self.parent.AppDir, "convert", "PDF.tpl")
+					self.data['charset'] = self.GetConverterEncoding()
+			
 					myhtml = publisher.ApplyTemplate(templatefile, publisher.data)
+					
+					myhtml = publisher.EncodeHTMLToCharset(myhtml, self.data['charset'])
+					
 					#myhtml = publisher.Publish(self.parent, node, self.dir)
 					#myhtml = GetBody(StringIO(myhtml))
 					#print "in PDF plugin, myhtml = " + myhtml[:100]
 					if not myhtml == "":
-						myfile = open(os.path.join(self.pdfdir, "temp", filename), "w")
+						myfile = open(os.path.join(self.tempdir, filename), "w")
 						myfile.write(myhtml)
 						myfile.close()
-						self.files.append(os.path.join(self.pdfdir, "temp", filename))
+						self.files.append(os.path.join(self.tempdir, filename))
 				except:
-					print "Could not publish page " + os.path.join(self.dir, "pub", node.content.filename)
+					#print "Could not publish page " + os.path.join(self.dir, "pub", node.content.filename)
 					import traceback
 					print "Traceback is:\n" 
 					traceback.print_exc()

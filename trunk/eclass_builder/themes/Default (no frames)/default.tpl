@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html><head>
 <title>--[name]--</title>
+<meta http-equiv="Content-Type" content="text/html;charset=--[charset]--">
 <meta name="description" content="--[description]--">
 <meta name="keywords" content="--[keywords]--">
 <meta name="URL" content="--[URL]--">

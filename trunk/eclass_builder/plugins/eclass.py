@@ -54,7 +54,7 @@ def CreateNewFile(name, filename):
 	except:
 		return False
 		
-class EClassPage:
+class EClassPage(plugins.PluginData):
 	"""
 	Class: eclass.EClassPage()
 	Last Updated: 9/24/02
@@ -80,7 +80,7 @@ class EClassPage:
 	"""
 
 	def __init__(self, window=None):
-		self.encoding = "ISO-8859-1"
+		plugins.PluginData.__init__(self)
 		self.window = window
 		self.filename = ""
 		self.directory = ""
@@ -93,12 +93,6 @@ class EClassPage:
 		self.objectives = []
 		self.media = EClassMedia()
 		self.terms = []
-
-	def __setattr__(self, name, value):
-		if not name == "encoding" and isinstance(value, str) or isinstance(value, unicode):
-			self.__dict__[name] = value.encode(self.encoding, 'replace')
-		else:
-			self.__dict__[name] = value
 
 	def LoadPage(self, filename):
 		"""
@@ -268,16 +262,6 @@ class EClassPage:
 			else:
 				self.name = ""
 
-#			if root.getElementsByTagName("Codigo_pub"):
-#				self.codigo_pub = XMLCharToText(root.getElementsByTagName("Codigo_pub")[0].childNodes[0].nodeValue)
-#			else:
-#				self.codigo_pub = ""
-				
-#			if root.getElementsByTagName("Fecha_pub"):
-#				self.fecha_pub = XMLCharToText(root.getElementsByTagName("Fecha_pub")[0].childNodes[0].nodeValue)
-#			else:
-#				self.fecha_pub = ""
-
 			if root.getElementsByTagName("Author")[0].childNodes:
 				self.author = XMLCharToText(root.getElementsByTagName("Author")[0].childNodes[0].nodeValue)
 			else:
@@ -307,19 +291,28 @@ class EClassPage:
 			self.filename = filename
 
 		try:
-			myxml = """<?xml version="1.0" encoding="%s"?>%s""" % (encoding, self.WriteDoc())
+			myxml = """<?xml version="1.0"?>%s""" % (self.WriteDoc())
 		except:
 			message = _("There was an error updating the file " + filename + ". Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.")
 			global log
 			log.write(message)
 			raise IOError, message
 		try:
+			import types
+			if type(myxml) != types.UnicodeType:
+				#import locale
+				#encoding = locale.getdefaultlocale()[1]
+				myxml = unicode(myxml, encoding)
+			
+			myxml = myxml.encode("utf-8")
 			myfile = open(filename, "w")
 			myfile.write(myxml)
 			myfile.close()
 		except:
 			message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
 			#message = _("There was an error writing the file " + filename + " to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file.")
+			import traceback
+			print `traceback.print_exc()`
 			global log
 			log.write(message)
 			raise IOError, message
@@ -368,7 +361,7 @@ class EClassPage:
 	def _ObjectivesAsXML(self):
 		myobj = ""
 		for obj in self.objectives:
-			myobj = myobj + "<Objective>" + TextToXMLChar(obj).encode(self.encoding, 'replace') + "</Objective>"
+			myobj = myobj + "<Objective>" + TextToXMLChar(obj) + "</Objective>"
 		return myobj
 
 	def _MediaAsXML(self):
@@ -447,7 +440,6 @@ class HotwordLoader(Thread):
 			if self.cancelload:
 				return #exit immediately
 			if self.parent.window != None:
-				print "Loaded hotword " + myterm.name
 				wxPostEvent(self.parent.window,ResultEvent(myterm.name, self.parent.terms.index(myterm)))
 
 	def cancel(self):
@@ -460,7 +452,7 @@ class ResultEvent(wxPyEvent):
 		self.hwname = hwname
 		self.hwid = hwid
 	
-class EClassMedia:
+class EClassMedia (plugins.PluginData):
 	"""
 	Class: eclass.EClassMedia()
 	Last Updated: 9/24/02
@@ -478,7 +470,7 @@ class EClassMedia:
 	"""
 
 	def __init__(self):
-		self.encoding = "ISO-8859-1"
+		plugins.PluginData.__init__(self)
 		self.image = ""
 		self.audio = ""
 		self.audioautostart = False
@@ -488,14 +480,9 @@ class EClassMedia:
 		self.text = ""
 		self.powerpoint = ""
 		self.name = ""
+		
 
-	def __setattr__(self, name, value):
-		if not name == "encoding" and isinstance(value, str) or isinstance(value, unicode):
-			self.__dict__[name] = value.encode(self.encoding, 'replace')
-		else:
-			self.__dict__[name] = value
-
-class EClassTerm:
+class EClassTerm(plugins.PluginData):
 	"""
 	Class: eclass.EClassTerm()
 	Last Updated: 9/24/02
@@ -513,17 +500,11 @@ class EClassTerm:
 	- SavePage(): Converts the EClassPage hotword into XML
 	"""
 	def __init__(self):
-		self.encoding = "ISO-8859-1"
+		plugins.PluginData.__init__(self)
 		self.name = ""
 		self.type = ""
 		self.url = ""
 		self.page = None
-
-	def __setattr__(self, name, value):
-		if not name == "encoding" and isinstance(value, str) or isinstance(value, unicode):
-			self.__dict__[name] = value.encode(self.encoding, 'replace')
-		else:
-			self.__dict__[name] = value
 	
 	def NewPage(self):
 		self.page = EClassPage()
@@ -617,7 +598,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			myfile = None
 			convert = False
 			if string.find(os.path.splitext(string.lower(mypage.media.text))[1], "htm") != -1:
-				myhtml = open(os.path.join(self.dir, "Text", mypage.media.text), 'rb').read()
+				myhtml = GetBody(open(os.path.join(self.dir, "Text", mypage.media.text), 'rb'))
 			else: 
 				#It might be a Word/RTF document, try to convert...
 				convert = True
@@ -1116,10 +1097,10 @@ class EClassObjectiveEditorDialog(wxDialog):
 		self.mysizer = wxBoxSizer(wxVERTICAL)
 		self.mysizer.Add(self.txtObj, 1, wxEXPAND)
 
-		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.buttonsizer.Add((100, 25), 1, wxEXPAND)
-		self.buttonsizer.Add(self.btnOK, 0, wxALL, 4)
-		self.buttonsizer.Add(self.btnCancel, 0, wxALL, 4)
+		self.buttonsizer = wxStdDialogButtonSizer()
+		self.buttonsizer.AddButton(self.btnOK)
+		self.buttonsizer.AddButton(self.btnCancel)
+		self.buttonsizer.Realize()
 		self.mysizer.Add(self.buttonsizer, 0)
 
 		self.SetAutoLayout(True)
@@ -1132,7 +1113,7 @@ class EClassObjectiveEditorDialog(wxDialog):
 
 	def btnOKClicked(self, event):
 		if len(self.txtObj.GetValue()):	
-			self.parent.CurrentObj = self.txtObj.GetValue().encode(self.parent.mainform.encoding, 'replace')
+			self.parent.CurrentObj = self.txtObj.GetValue()
 			self.EndModal(wxID_OK)
 		else:
 			wxMessageDialog(self, _("Please enter some text for your objective, or click Cancel to quit."), _("Empty Objective"), wxICON_INFORMATION | wxOK).ShowModal() 
@@ -1186,10 +1167,10 @@ class EClassHyperlinkEditorDialog(wxDialog):
 		self.filesizer.Add(self.selectFile.selectbtn, 0, wxALIGN_CENTER|wxALL, 4)
 		self.mysizer.Add(self.filesizer)
 		
-		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.buttonsizer.Add((100, height), 1, wxEXPAND)
-		self.buttonsizer.Add(self.btnOK, 0, wxALL, 4)
-		self.buttonsizer.Add(self.btnCancel, 0, wxALL, 4)
+		self.buttonsizer = wxStdDialogButtonSizer()
+		self.buttonsizer.AddButton(self.btnOK)
+		self.buttonsizer.AddButton(self.btnCancel)
+		self.buttonsizer.Realize()
 		self.mysizer.Add(self.buttonsizer, 0, wxEXPAND)
 
 		self.SetAutoLayout(True)
@@ -1275,6 +1256,8 @@ class EditorDialog (wxDialog):
 				try:
 					self.page.SaveAsXML(os.path.join(self.parent.CurrentDir, "EClass", myfilename))
 				except IOError, e:
+					import traceback
+					print `traceback.print_exc()`
 					wxMessageDialog(self, _("There was an error saving the EClass page '%(page)s'. The error message returned by the system is: %(error)s") % {"page":os.path.join(self.parent.CurrentDir, "EClass", myfilename), "error":str(e)}, _("File Write Error"), wxOK)
 
 			self.page.name = item.content.metadata.name
@@ -1453,10 +1436,10 @@ class EditorDialog (wxDialog):
 		self.bottomsizer.AddGrowableRow(1)
 		self.mysizer.Add(self.bottomsizer, 0, wxEXPAND|wxALIGN_CENTER|wxLEFT|wxRIGHT, 10)
 
-		self.okcancelsizer = wxBoxSizer(wxHORIZONTAL)
-		self.okcancelsizer.Add((100, height), 1, wxEXPAND)
-		self.okcancelsizer.Add(self.btnOK, 0, wxALL, 4)
-		self.okcancelsizer.Add(self.btnCancel, 0, wxALL, 4)
+		self.okcancelsizer = wxStdDialogButtonSizer()
+		self.okcancelsizer.AddButton(self.btnOK)
+		self.okcancelsizer.AddButton(self.btnCancel)
+		self.okcancelsizer.Realize()
 		self.mysizer.Add(self.okcancelsizer, 0, wxEXPAND|wxRIGHT|wxLEFT, 10)
 
 		self.SetAutoLayout(True)
@@ -1713,6 +1696,8 @@ class EditorDialog (wxDialog):
 				try:
 					self.page.SaveAsXML(os.path.join(self.parent.CurrentDir, "EClass", os.path.basename(self.filename)),self.mainform.encoding)
 				except IOError, e:
+					import traceback
+					print `traceback.print_exc()`
 					wxMessageDialog(self, str(e), _("File Write Error"), wxOK).ShowModal()
 					return
 			else:
@@ -1721,6 +1706,8 @@ class EditorDialog (wxDialog):
 				try: 
 					self.page.SaveAsXML(os.path.join(self.parent.CurrentDir, "EClass", myfilename),self.mainform.encoding)
 				except IOError, e:
+					import traceback
+					print `traceback.print_exc()`
 					wxMessageDialog(self, str(e), _("File Write Error"), wxOK).ShowModal()
 					return
 
@@ -1777,10 +1764,10 @@ class NewTermDialog(wxDialog):
 		self.flexsizer.Add(self.cmbType, 0, wxALIGN_LEFT|wxALL, 4)
 		self.mysizer.Add(self.flexsizer, 0, wxLEFT|wxRIGHT, 10)
 		
-		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.buttonsizer.Add((10, 25), 1, wxEXPAND)
-		self.buttonsizer.Add(self.btnOK, 0, wxALIGN_LEFT|wxALL, 4)
-		self.buttonsizer.Add(self.btnCancel, 0, wxALIGN_LEFT|wxALL, 4)
+		self.buttonsizer = wxStdDialogButtonSizer()
+		self.buttonsizer.AddButton(self.btnOK)
+		self.buttonsizer.AddButton(self.btnCancel)
+		self.buttonsizer.Realize()
 		self.mysizer.Add(self.buttonsizer, 0, wxLEFT|wxRIGHT|wxEXPAND, 10)
 
 		self.SetAutoLayout(True)

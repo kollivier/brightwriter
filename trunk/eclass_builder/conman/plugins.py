@@ -2,6 +2,10 @@ import csv
 import string, os, sys
 from validate import *
 from HTMLFunctions import *
+import settings
+import types
+import locale
+import utils
 
 class Plugin:
 	def __init__(self, modname, fullname, ext, mimetype, requires):
@@ -11,6 +15,17 @@ class Plugin:
 		self.mimetype = mimetype
 		self.requires = requires
 
+class PluginData:
+	def __init__(self):
+		self.encoding = utils.getCurrentEncoding()
+		
+	def __setattr__(self, name, value):
+		# make sure internally we're always using Unicode
+		if not name == "encoding":
+			self.__dict__[name] = utils.makeUnicode(value, self.encoding)
+		else:
+			self.__dict__[name] = value	
+			
 #a base publisher to be overridden by plugins 
 class BaseHTMLPublisher:
 	"""
@@ -38,6 +53,17 @@ class BaseHTMLPublisher:
 		self.data = {} #data dictionary used to hold template variables
 		#self.language, self.encoding = locale.getdefaultlocale()			
 
+	def GetConverterEncoding(self):
+		convert_encoding = 'utf-8'
+	
+		if not settings.utf8_html:
+			if settings.encoding:
+				convert_encoding = settings.encoding
+			else:
+				convert_encoding = utils.getCurrentEncoding()
+			
+		return convert_encoding
+
 	def GetCreditString(self):
 		if self.node:
 			if self.node.content.metadata.rights.description == "" and len(self.node.content.metadata.lifecycle.contributors) == 0:
@@ -60,6 +86,15 @@ class BaseHTMLPublisher:
 	  		creditText = "<h5>" + thisauthor + " " + creditText + "</h5>"
 			return creditText
 			
+	def EncodeHTMLToCharset(self, myhtml, convert_encoding):
+		if type(myhtml) == types.UnicodeType:
+			try:
+				myhtml = myhtml.encode(convert_encoding)
+			except:
+				pass
+				
+		return myhtml
+			
 	def Publish(self, parent=None, node=None, dir=None):
 		"""
 		This function prepares the Page to be converted by putting variables into self.data
@@ -81,13 +116,20 @@ class BaseHTMLPublisher:
 		self.GetLinks()
 		self.GetData()
 		templatefile = os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme.themename, "default.tpl")
+		self.data['charset'] = self.GetConverterEncoding()
+
 		myhtml = self.ApplyTemplate(templatefile, self.data)
+		myhtml = self.EncodeHTMLToCharset(myhtml, self.data['charset']) 
+
+
 		try:		
-			myfile = open(os.path.join(self.dir, "pub", os.path.basename(filename)), "w")
+			myfile = open(os.path.join(self.dir, "pub", os.path.basename(filename)), "wb")
 			myfile.write(myhtml)
 			myfile.close()
 		except: 
 			message = "There was an error writing the file", filename + " to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file."
+			import traceback
+			print `traceback.print_exc()`
 			print `message`
 			raise IOError, message
 			return false

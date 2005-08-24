@@ -12,7 +12,9 @@ def sendCommandToApplication(filename, action="open", application=""):
 		return ranCommand
 	
 	aFileType = wxTheMimeTypesManager.GetFileTypeFromExtension(os.path.splitext(filename)[1])
-	filename = win32api.GetShortPathName(filename)
+	if sys.platform == "win32":
+		filename = win32api.GetShortPathName(filename)
+	
 	if aFileType and action == "open" and application == "":
 		command = aFileType.GetOpenCommand(filename)
 
@@ -20,8 +22,8 @@ def sendCommandToApplication(filename, action="open", application=""):
 		command = aFileType.GetPrintCommand(filename)
 
 	if command == "":
-		app = ""
-		thisFile = ""
+		app = u""
+		thisFile = u""
 		if os.path.exists(application):
 			if sys.platform == "win32":
 				app = win32api.GetShortPathName(application)
@@ -33,13 +35,14 @@ def sendCommandToApplication(filename, action="open", application=""):
 		if app != "":
 			command = app
 			if sys.platform == "darwin":
-				command = "open -a " + app
+				command = u"open -a " + app
 			
 			command = command + " " + thisFile
 		
 	if command != "":
+		#command = unicode(command, "utf-8")
 		ranCommand = True
-		print command
-		wxExecute(command)
+		print `command`
+		wxExecute(command.encode("utf-8"))
 	
 	return ranCommand
