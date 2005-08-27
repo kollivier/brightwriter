@@ -147,9 +147,6 @@ class MainFrame2(wxFrame):
 		busy = wxBusyCursor()
 		wxFrame.__init__(self, parent, ID, title, wxDefaultPosition, wxSize(780,580), style=wxDEFAULT_FRAME_STYLE|wxCLIP_CHILDREN|wxNO_FULL_REPAINT_ON_RESIZE)
 		self.encoding = "iso8859-1"
-		import sys
-		reload(sys)
-		sys.setdefaultencoding(self.encoding)
 		self.CurrentFilename = ""
 		self.isDirty = False
 		self.isNewCourse = False
