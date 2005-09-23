@@ -201,13 +201,20 @@ class BaseHTMLPublisher:
 		if template == "default.tpl":
 			#get the template file from the current theme
 			template = os.path.join(self.parent.AppDir,  "themes", self.parent.currentTheme.themename, template)
-		temp = open(template, "r")
+		temp = utils.openFile(template, "r")
 		html = temp.read()
 		temp.close()
+		charset = "utf-8"
+		if 'charset' in self.data.keys():
+			charset = self.data['charset']
 		ext = os.path.splitext(template)[1]
 		if ext == ".tpl":
 			for key in data.keys():
-				html = string.replace(html, "--[" + key + "]--", data[key])
+				value = data[key]
+				import types
+				if not type(value) == types.UnicodeType:
+					value = value.decode(charset, 'replace')
+				html = string.replace(html, "--[" + key + "]--", value)
 		elif ext == ".tal": #SimpleTAL support
 			pass #for now.... =)
 		return html
