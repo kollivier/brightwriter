@@ -12,6 +12,7 @@ from conman.validate import *
 import settings
 import tempfile
 import shutil
+import utils
 
 myDictionary={}
 #import plugins.eclass as eclass
@@ -76,9 +77,9 @@ class PDFPublisher:
 
 	def Publish(self):
 		self.pdfdir = self.dir
-		if wxPlatform == "__WXMSW__":
-			import win32api
-			self.pdfdir = win32api.GetShortPathName(self.pdfdir)
+		#if wxPlatform == "__WXMSW__":
+		#	import win32api
+		#	self.pdfdir = win32api.GetShortPathName(self.pdfdir.encode(utils.getCurrentEncoding(), "replace"))
 		try:
 			#if not os.path.exists(os.path.join(self.pdfdir, "temp")):
 			#	os.mkdir(os.path.join(self.pdfdir, "temp"))
@@ -100,14 +101,20 @@ class PDFPublisher:
 		if sys.platform == "win32":
 			pdffile = string.replace(self.pdffile, "\\", "/")
 		bookfile = bookfile + "-f \"" + pdffile + "\" -t pdf --no-toc --no-links --compression=9 --jpeg=90 --verbose\n" 
-		for file in self.files:
-			if wxPlatform == "__WXMSW__":
-				import win32api
-				file = win32api.GetShortPathName(file)
-				file = string.replace(file, "\\", "/")
-			bookfile = bookfile + file + "\n"
+		for afile in self.files:
+			#if wxPlatform == "__WXMSW__":
+				#import win32api
+			#	local_filename = file.encode(utils.getCurrentEncoding(), "replace")
+			#	if os.path.exists(local_filename):
+					#file = win32api.GetShortPathName(local_filename)
+			#		file = string.replace(file, "\\", "/")
+			#	else:
+			#		file = ""
+			if afile != "" and os.path.exists(afile):
+				bookfile = bookfile + afile + "\n"
+
 		bookpath = os.path.join(self.tempdir, "eclass.book")
-		book = open(bookpath, "w")
+		book = utils.openFile(bookpath, "w")
 		book.write(bookfile)
 		book.close()
 		
@@ -182,17 +189,17 @@ class PDFPublisher:
 					publisher.data['name'] = TextToHTMLChar(node.content.metadata.name)
 					publisher.GetData()
 					templatefile = os.path.join(self.parent.AppDir, "convert", "PDF.tpl")
-					self.data['charset'] = self.GetConverterEncoding()
+					publisher.data['charset'] = publisher.GetConverterEncoding()
 			
 					myhtml = publisher.ApplyTemplate(templatefile, publisher.data)
 					
-					myhtml = publisher.EncodeHTMLToCharset(myhtml, self.data['charset'])
+					myhtml = publisher.EncodeHTMLToCharset(myhtml, publisher.data['charset'])
 					
 					#myhtml = publisher.Publish(self.parent, node, self.dir)
 					#myhtml = GetBody(StringIO(myhtml))
 					#print "in PDF plugin, myhtml = " + myhtml[:100]
 					if not myhtml == "":
-						myfile = open(os.path.join(self.tempdir, filename), "w")
+						myfile = utils.openFile(os.path.join(self.tempdir, filename), "w")
 						myfile.write(myhtml)
 						myfile.close()
 						self.files.append(os.path.join(self.tempdir, filename))
