@@ -1,6 +1,6 @@
 !define MUI_PRODUCT "EClass.Builder" ;Define your own software name here
-!define MUI_VERSION "2.5.5.8" ;Define your own software version here
-!define UNICODE_STRING "" ; for unicode, add unicode the the installer name
+!define MUI_VERSION "2.5.5.9" ;Define your own software version here
+!define UNICODE_STRING "-unicode" ; for unicode, add unicode the the installer name
 Name "${MUI_PRODUCT} ${MUI_VERSION}"
 !include "MUI.nsh"
 !include "path_functions.nsi"
@@ -43,8 +43,8 @@ Section "Program Files" SecCopyUI
   SetOutPath "$INSTDIR"
   File /r "..\3rdparty\win32\gre\*"
   File /r "minipython\*"
-  File "editor.exe"
-  File "editor.exe.manifest"
+  File "eclass_builder.exe"
+  File "eclass_builder.exe.manifest"
   File "..\*.py"
   File "..\bookfile.book.in"
   File /r "..\conman"
@@ -92,7 +92,7 @@ Section "Program Files" SecCopyUI
   SetOutPath $INSTDIR ; for working directory
   CreateShortCut "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}\Uninstall ${MUI_PRODUCT} ${MUI_VERSION}.lnk" "$INSTDIR\Uninstall.exe"
 
-  CreateShortCut "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}\EClass.Builder.lnk" "$INSTDIR\editor.exe"
+  CreateShortCut "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}\EClass.Builder.lnk" "$INSTDIR\eclass_builder.exe"
 
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -107,9 +107,9 @@ CheckHKCU:
   EnumRegKey $hasDM HKCU "Software\Vaclav Slavik\Documancer" 0
   StrCmp "$hasDM" "" InstallDM CheckForDM
 CheckForDM:
-  StrCmp "$hasDM" "0.2.4" Finished InstallDM  
+  StrCmp "$hasDM" "0.2.6" Finished InstallDM  
 InstallDM:
-  Exec $INSTDIR\installers\documancer-0.2.4-setup.exe
+  Exec $INSTDIR\installers\documancer-0.2.6-setup.exe
 
 Finished:
 SectionEnd

@@ -59,7 +59,7 @@ modfinder = modulefinder.ModuleFinder(excludes=["Tkinter"])
 #modulefinder.ReplacePackage("_xmlplus", "xml")
 modfinder.add_module("site")
 
-scripts = [os.path.join("..", "editor.py"), os.path.join("..", "converter.py")]
+scripts = [os.path.join("..", "eclass_builder.py"), os.path.join("..", "editor.py"), os.path.join("..", "converter.py")]
 deps = []
 
 for script in scripts:
