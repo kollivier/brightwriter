@@ -47,10 +47,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			ShellExecute(0, "open", "eclass.dmbk", "", "", SW_SHOWMAXIMIZED);
 		}
 		else{
-			int answer;
-			answer = MessageBox(NULL, "This EClass requires Documancer but you do not have it installed on your system.\nWould you like to download and install the software now?\n\nClicking 'Yes' will take you to 'http://documancer.sf.net'.", "Download Documancer?", MB_YESNO); 
-			if (answer == IDYES)
-				ShellExecute(0, "open", "http://documancer.sf.net", "", "", SW_SHOWMAXIMIZED);
+			ShellExecute(0, "open", "index.html", "", "", SW_SHOWMAXIMIZED);
 		}
 	}
 
