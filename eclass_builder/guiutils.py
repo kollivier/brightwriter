@@ -5,6 +5,13 @@ try:
 except:
 	pass
 
+def getOpenCommandForFilename(filename):
+	aFileType = wxTheMimeTypesManager.GetFileTypeFromExtension(os.path.splitext(filename)[1])
+	if aFileType:
+		return aFileType.GetOpenCommand(filename)
+
+	return ""
+
 def sendCommandToApplication(filename, action="open", application=""):
 	command = ""
 	ranCommand = False
@@ -46,3 +53,12 @@ def sendCommandToApplication(filename, action="open", application=""):
 		wxExecute(command.encode("utf-8"))
 	
 	return ranCommand
+
+def getAppDataDir():
+	dir = ""
+	if wxGetApp():
+		dir = wxStandardPaths.Get().GetUserDataDir()
+		if not os.path.exists(dir):
+			os.mkdir(dir)
+	
+	return dir
