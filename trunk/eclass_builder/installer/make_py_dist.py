@@ -2,19 +2,23 @@
 #  Licensing terms are in the license/license.txt file.
 
 import sys, os, string, shutil, glob, modulefinder, re
-#import wxversion
+import wxversion
 flavor = "ansi"
+wx_version = "2.6"
+if len(sys.argv) > 1:
+    if sys.argv[1] == "--unicode":
+        flavor = "unicode"
 
-#if len(sys.argv) > 1:
-#    if sys.argv[1] == "--unicode":
-#        flavor = "unicode"
-
-#wxversion.select("2.5-" + flavor)
+wxversion.select(wx_version + "-" + flavor)
 
 #rename the installer appropriately.
 myfile = open("eclass-builder.nsi", "r")
 data = myfile.read()
 myfile.close()
+
+#create a python version string
+py_version = sys.version[0:3]
+py_version = string.replace(py_version, ".", "")
 
 myterm = re.compile("(!define UNICODE_STRING \").*(\")",re.IGNORECASE|re.MULTILINE)
 unicodeText = ""
@@ -35,6 +39,7 @@ def makedir(path):
         if not os.path.exists(fullpath):
             os.mkdir(fullpath)
 
+port = "msw"
 if os.name == "nt": 
     import win32com
     for p in win32com.__path__[1:]:
@@ -44,6 +49,10 @@ if os.name == "nt":
         m = sys.modules[extra]
         for p in m.__path__[1:]:
             modulefinder.AddPackagePath(extra, p)
+elif sys.platform == "darwin":
+    port = "mac"
+else:
+    port = "gtk"
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "..", "src"))
 modfinder = modulefinder.ModuleFinder(excludes=["Tkinter"])
@@ -85,9 +94,12 @@ deps.append(os.path.join(libdir, "formatter.py"))
 deps.append(os.path.join(libdir, "markupbase.py"))
 
 #if we're using wxPython 2.5.3 or above, we need to include wx.pth
-wxpth_file = os.path.join(sys.prefix, "lib", "site-packages", "wx.pth")
-if os.path.exists(wxpth_file):
-    deps.append(wxpth_file)
+#wxpth_file = os.path.join(sys.prefix, "lib", "site-packages", "wx.pth")
+#if os.path.exists(wxpth_file):
+#    deps.append(wxpth_file)
+myfile = open(os.path.join(mpdir, "lib", "site-packages", "wx.pth"), "w")
+myfile.write("wx-" + wx_version + "-" + port + "-" + flavor)
+myfile.close()
 
 if os.name == "nt":
     deps.append(os.path.join(sys.prefix, "python.exe"))
@@ -96,15 +108,16 @@ if os.name == "nt":
     sysdir = win32api.GetSystemDirectory()
     #if the below file exists, then the dependency checking will copy it over
     #if not, we need to check the Windows system dir for it
-    if not os.path.exists(os.path.join(sys.prefix, "python23.dll")):
-        syspython = os.path.join(sysdir, "python23.dll")
+    py_dll_name = "python%s.dll" % (py_version)
+    if not os.path.exists(os.path.join(sys.prefix, py_dll_name)):
+        syspython = os.path.join(sysdir, py_dll_name)
         if os.path.exists(syspython):
             print mpdir
-            shutil.copyfile(syspython, os.path.join(mpdir, "python23.dll"))
+            shutil.copyfile(syspython, os.path.join(mpdir, py_dll_name))
     else: 
-        shutil.copyfile(os.path.join(sys.prefix, "python23.dll"), os.path.join(mpdir, "python23.dll"))
+        shutil.copyfile(os.path.join(sys.prefix, py_dll_name), os.path.join(mpdir, py_dll_name))
 
-    pywindlls = ["PyWinTypes23.dll", "PythonCOM23.dll"]
+    pywindlls = ["PyWinTypes" + py_version + ".dll", "PythonCOM" + py_version + ".dll"]
     for dll in pywindlls:
         pywindll = os.path.join(sysdir, dll)
         if os.path.exists(pywindll):
@@ -118,6 +131,16 @@ if os.name == "nt":
     myfile = open(os.path.join(mpdir, "lib", "site-packages", "win32lib.pth"), "w")
     myfile.write("win32/lib")
     myfile.close()
+
+#let's test for dumpbin.exe first
+if sys.platform == "win32":
+    stream = os.popen("dumpbin.exe")
+    data = stream.read()
+    stream.close()
+    text = string.strip(data)
+    if text == "":
+        print "FATAL ERROR: Cannot generate dependency lists. Is dumpbin.exe on your path?"
+        sys.exit(1)
 
 for filename in deps:
     destfilename = string.replace(filename, sys.prefix, mpdir)
