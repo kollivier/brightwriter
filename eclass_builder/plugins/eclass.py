@@ -305,7 +305,7 @@ class EClassPage(plugins.PluginData):
 				myxml = unicode(myxml, encoding)
 			
 			myxml = myxml.encode("utf-8")
-			myfile = open(filename, "w")
+			myfile = utils.openFile(filename, "w")
 			myfile.write(myxml)
 			myfile.close()
 		except:
@@ -598,7 +598,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			myfile = None
 			convert = False
 			if string.find(os.path.splitext(string.lower(mypage.media.text))[1], "htm") != -1:
-				myhtml = GetBody(open(os.path.join(self.dir, "Text", mypage.media.text), 'rb'))
+				myhtml = GetBody(utils.openFile(os.path.join(self.dir, "Text", mypage.media.text), 'rb'))
 			else: 
 				#It might be a Word/RTF document, try to convert...
 				convert = True
@@ -615,7 +615,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 					if thefilename == "":
 						wxMessageBox(_("Unable to convert file ") + mypage.media.text)
 						return ""
-					myhtml = open(thefilename, "rb").read()
+					myhtml = utils.openFile(thefilename, "rb").read()
 				except:
 					wxEndBusyCursor()
 					import traceback
@@ -670,7 +670,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				raise
 
 			try:		
-				myfile = open(os.path.join(self.dir, "pub",filename), "w")
+				myfile = utils.openFile(os.path.join(self.dir, "pub",filename), "w")
 				myfile.write(myhtml)
 				myfile.close()
 			except:
@@ -807,7 +807,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 	def _CreateHTMLShell(self, mypage, node, content, ishotword=False):
 		template = "default.tpl"
-		temp = open(os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme.themename, template), "r")
+		temp = utils.openFile(os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme.themename, template), "r")
 
 		html = unicode(temp.read(), 'iso8859-1', 'replace')
 		temp.close()
@@ -877,7 +877,7 @@ class PDFPublisher:
 			myfile = None
 			convert = False
 			if string.find(os.path.split(mypage.media.text)[1], "htm") != -1:
-				myfile = open(os.path.join(self.dir, "Text", mypage.media.text), 'r')
+				myfile = utils.openFile(os.path.join(self.dir, "Text", mypage.media.text), 'r')
 			else: #try to convert...
 				convert = True
 				myfilename = os.path.join(self.dir, "Text", mypage.media.text)
@@ -896,7 +896,7 @@ class PDFPublisher:
 						thefilename = myconverter.ConvertFile(myfilename, "html")
 						if thefilename == "":
 							wxMessageBox(_("Unable to convert file %(filename)s") % {"filename":mypage.media.text})
-						myfile = open(thefilename, 'r')
+						myfile = utils.openFile(thefilename, 'r')
 				except:
 					global log
 					import traceback
@@ -1033,7 +1033,7 @@ class wxSelectBox:
 		self.parent.mainform.SetStatusText(_("Copying File %(filename)s...") % {"filename":filename})
 		error = False
 		try:
-			file = open(path, "rb")
+			file = utils.openFile(path, "rb")
 			data = file.read()
 			if string.lower(os.path.splitext(filename)[1]) in [".html", ".htm"]:
 				importer = ImportFiles()
@@ -1052,7 +1052,7 @@ class wxSelectBox:
 				os.mkdir(destdir)
 			try:
 				self.parent.mainform.SetStatusText(_("Pasting %(filename)s...") % {"filename":os.path.join(destdir, filename)})
-				out = open(os.path.join(destdir, filename), "wb")
+				out = utils.openFile(os.path.join(destdir, filename), "wb")
 				out.write(data)
 				out.close()
 			except IOError:
@@ -1525,7 +1525,7 @@ class EditorDialog (wxDialog):
 </BODY>
 </HTML>"""
 		try: 
-			file = open(filename, "w")
+			file = utils.openFile(filename, "w")
 			file.write(html)
 			file.close()
 		except IOError: 

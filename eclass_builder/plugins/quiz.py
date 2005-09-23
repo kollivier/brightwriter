@@ -95,7 +95,7 @@ class QuizPage(plugins.PluginData):
 		self.filename = filename
 		self.directory = os.path.split(filename)[0]
 		if USE_MINIDOM:
-			doc = minidom.parse(open(filename))	
+			doc = minidom.parse(utils.openFile(filename))	
 		else:
 			doc = FromXmlFile(filename)
 		self.LoadDoc(doc)
@@ -275,7 +275,7 @@ class QuizPage(plugins.PluginData):
 			
 			myxml = myxml.encode("utf-8")
 			
-			myfile = open(filename, "w")
+			myfile = utils.openFile(filename, "w")
 			myfile.write(myxml)
 			myfile.close()
 		except:

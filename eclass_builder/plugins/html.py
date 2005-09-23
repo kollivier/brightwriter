@@ -12,6 +12,15 @@ if __name__ != "__main__":
 	from conman import plugins
 	from conman import HTMLTemplates
 	#from conman.colorbutton import *
+
+mozilla_available = False
+try:
+	from wxPython.mozilla import *
+	from wxPython.stc import *
+	mozilla_available = True
+except:
+	pass
+
 from StringIO import StringIO
 from threading import *
 import traceback
@@ -133,7 +142,7 @@ if __name__ != "__main__":
 		def GetData(self):
 			if os.path.exists(os.path.join(self.dir, string.replace(self.node.content.filename, "/", os.sep))):
 				myfile = None
-				myfile = open(os.path.join(self.dir, self.node.content.filename), 'r')
+				myfile = utils.openFile(os.path.join(self.dir, self.node.content.filename), 'r')
 				
 				#if myfile:
 				myhtml = GetBody(myfile)
@@ -160,11 +169,6 @@ if __name__ != "__main__":
 
 class EditorFrame (wxFrame):
 	def __init__(self, parent):
-		try:
-			from wxPython.mozilla import *
-			from wxPython.stc import *
-		except:
-			return
 		self.running = true
 		wxFrame.__init__(self,NULL, -1, "Document Editor")
 		self.current = "about:blank"
@@ -1542,7 +1546,7 @@ if __name__ != "__main__":
 	<body></body>
 	</html>
 	"""
-					file = open(self.filename, "w")
+					file = utils.openFile(self.filename, "w")
 					file.write(html)
 					file.close()
 					#self.frame.mozilla.SavePage(self.filename, False)
@@ -1562,12 +1566,17 @@ if __name__ != "__main__":
 				use_builtin = True
 
 			if use_builtin:
-				self.frame = EditorFrame(self.parent)
-				#self.frame.mozilla.LoadURL("about:blank")
-				self.frame.currentItem = self.currentItem
-				self.frame.mozilla.LoadURL(self.filename)
-				self.frame.MakeModal(True)
-				self.frame.Show()
+				global mozilla_available
+				if mozilla_available:
+					self.frame = EditorFrame(self.parent)
+					#self.frame.mozilla.LoadURL("about:blank")
+					self.frame.currentItem = self.currentItem
+					self.frame.mozilla.LoadURL(self.filename)
+					self.frame.MakeModal(True)
+					self.frame.Show()
+				else:
+					message = _("This page cannot be opened for editing because no HTML editor is configured. Please specify one in Tools->Options.")
+					wxMessageBox(message)
 
 			return wxID_OK
 
