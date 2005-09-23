@@ -24,7 +24,19 @@ try:
 except:
 	pass
 
-class ConMan:
+
+class ConManData:
+	def __init__(self):
+		self.encoding = utils.getCurrentEncoding()
+		
+	def __setattr__(self, name, value):
+		# make sure internally we're always using Unicode
+		if not name == "encoding":
+			self.__dict__[name] = utils.makeUnicode(value, self.encoding)
+		else:
+			self.__dict__[name] = value	
+
+class ConMan (ConManData):
 	"""
 	Class: conman.ConMan()
 	Last updated: 9/24/02
@@ -57,7 +69,7 @@ class ConMan:
 	"""
 	def __init__(self):
 		#self.users = {} - for future use, multi-user system
-		self.encoding = utils.getCurrentEncoding()
+		ConManData.__init__(self)
 		self.id = ""
 		self.pubid = ""
 		self.content = ContentList()
@@ -79,13 +91,6 @@ class ConMan:
 		mytext = self.PrintNodes(self.nodes, 0)
 		#print mytext
 		return mytext
-
-	def __setattr__(self, name, value):
-		# make sure internally we're always using Unicode
-		if not name == "encoding":
-			self.__dict__[name] = utils.makeUnicode(value, self.encoding)
-		else:
-			self.__dict__[name] = value
 		
 	def GetNodeCount(self):
 		return self._CountNodes(self.nodes)
@@ -151,7 +156,7 @@ class ConMan:
 		self.nodes = []
 		try: 
 			if USE_MINIDOM:
-				doc = minidom.parse(open(filename))
+				doc = minidom.parse(utils.openFile(filename))
 			else:
 				doc = FromXmlFile(filename)
 		except:
@@ -435,7 +440,7 @@ class ConMan:
 				myxml = unicode(myxml, encoding)
 			
 			myxml = myxml.encode("utf-8")
-			myfile = open(filename, "wb")
+			myfile = utils.openFile(filename, "wb")
 			myfile.write(myxml)
 			myfile.close()
 		except:
@@ -581,7 +586,7 @@ class ConNode:
 		self.children.append(mynode)
 		return mynode
 
-class Content:
+class Content(ConManData):
 	"""
 	Class: conman.Content()
 	Last Updated: 9/24/02
@@ -603,7 +608,7 @@ class Content:
 	NONE
 	"""
 	def __init__(self, id, lang, type="webcontent"):
-		self.encoding = utils.getCurrentEncoding()
+		ConManData.__init__(self)
 		self.id = id
 		#self.name = ""
 
@@ -617,13 +622,6 @@ class Content:
 		self.type = type
 		self.metadata = Metadata()
 
-	def __setattr__(self, name, value):
-		# make sure internally we're always using Unicode
-		if not name == "encoding":
-			self.__dict__[name] = utils.makeUnicode(value, self.encoding)
-		else:
-			self.__dict__[name] = value
-
 	def asXMLString(self):
 		# TODO: IMPLEMENT THIS!! Remove hack from ConMan SaveAsXML.
 		pass
@@ -634,12 +632,13 @@ def CopyContent(oldcontent):
 	newcontent.metadata = copy.copy(oldcontent.metadata)
 	return newcontent
 
-class Metadata:
+class Metadata(ConManData):
 	""" 
 	Class: conman.Metadata
 	Description: Stores metadata for Content items (Resources)
 	"""
 	def __init__(self):
+		ConManData.__init__(self)
 		self.name = u""
 		self.keywords = u""
 		self.description = u""
@@ -672,8 +671,9 @@ class Metadata:
 		return result
 
 
-class Lifecycle:
+class Lifecycle(ConManData):
 	def __init__(self):
+		ConManData.__init__(self)
 		self.version = ""
 		self.status = ""
 		self.contributors = []
@@ -712,12 +712,13 @@ class Lifecycle:
 
 		return result
 
-class Contributor:
+class Contributor(ConManData):
 	""" 
 	Class: conman.Contributor
 	Description: Stores contributor information for Content items (Resources)
 	"""
 	def __init__(self):
+		ConManData.__init__(self)
 		self.role = ""
 		self.entity = vcard.VCard()
 		self.date = ""
@@ -736,44 +737,48 @@ class Contributor:
 		result = result + "</Contribute>"
 		return result
 
-class Technical:
+class Technical(ConManData):
 	""" 
 	Class: conman.Technical
 	Description: Stores technical requirement information for an EClass
 	"""
 	def __init__(self):
+		ConManData.__init__(self)
 		self.requirements = []
 		self.install_instructions = ""
 		self.other_requirements = []
 
-class TechRequirements:
+class TechRequirements(ConManData):
 	""" 
 	Class: conman.TechRequirements
 	Description: Stores technical requirement information for an EClass
 	"""
 	def __init__(self):
+		ConManData.__init__(self)
 		self.type = ""
 		self.name = ""
 		self.minversion = ""
 		self.maxversion = ""
 
-class Educational:
+class Educational(ConManData):
 	""" 
 	Class: conman.Educational
 	Description: Stores educational information for an EClass
 	"""
 	def __init__(self):
+		ConManData.__init__(self)
 		self.context = ""
 		self.ageGroup = ""
 		self.difficulty = ""
 
-class Rights:
+class Rights(ConManData):
 	"""
 	Class: conman.Rights
 	Description: Stores information about copyright restrictions
 	and any necessary credits for a particular resource
 	"""
 	def __init__(self):
+		ConManData.__init__(self)
 		self.description = ""
 
 	def asXMLString(self):
@@ -786,12 +791,13 @@ class Rights:
 		result = result + "</Rights>"
 		return result 
 
-class Classification:
+class Classification(ConManData):
 	""" 
 	Class: conman.Contributor
 	Description: Stores classification information for Content items (Resources)
 	"""
 	def __init__(self):
+		ConManData.__init__(self)
 		self.categories = []
 
 	def asXMLString(self):
@@ -804,7 +810,7 @@ class Classification:
 		result = result + "</Taxonpath>\n</Classification>"
 		return result
 		
-class ContentList:
+class ContentList(ConManData):
 	"""
 	Class: conman.ContentList()
 	Last Updated: 9/24/02
@@ -820,6 +826,7 @@ class ContentList:
 	"""
 
 	def __init__(self):
+		ConManData.__init__(self)
 		self.content = []
 
 	def __getitem__(self, key):
