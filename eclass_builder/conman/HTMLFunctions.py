@@ -405,7 +405,10 @@ def GetBody(myhtml):
 	
 	if encoding:
 		print "Encoding is: " + `encoding`
-		text = unicode(text, encoding) # all import data should be converted to unicode
+		try:
+			text = text.decode(encoding, "replace") # all import data should be converted to unicode
+		except:
+			pass # if it fails, just work with the byte string
 	return text
 
 #in case one day we can switch to this...
