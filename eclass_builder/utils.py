@@ -13,7 +13,10 @@ class LogFile:
 		self.filename = filename
 		
 	def read(self):
-		return unicode(open(self.filename, "rb").read(), "utf-8")
+		if os.path.exists(self.filename):
+			return unicode(open(self.filename, "rb").read(), "utf-8")
+		else:
+			return ""
 
 	def write(self, message):
 		if message == None:
@@ -21,6 +24,9 @@ class LogFile:
 		myfile = open(self.filename, "ab")
 		myfile.write(message.encode("utf-8") + "\n")
 		myfile.close()
+
+	def clear(self):
+		os.remove(self.filename)
 
 def getStdErrorMessage(type = "IOError", args={}):
 	if type == "IOError":
@@ -128,3 +134,25 @@ def makeUnicode(text, encoding):
 		return text.decode(encoding, 'replace')
 	else:
 		return text
+
+def openFile(filename, mode="r"):
+    """We need this special function because there are hardcoded restriction on the size of the pathname. 
+       We used to use GetShortPathName, but that  only works with ANSI mode, not with Unicode.
+       Tried ctypes, but that seems like too thin a wrapper for my comfort."""
+    myfilename = filename
+    olddir = os.getcwd()
+    if len(filename) > 240: #the exact number of chars varies by OS, but it's in the 240-250 char range on all the tested OSes.
+        mydir = os.path.dirname(filename)
+        myfilename = os.path.basename(filename)
+        if len(mydir) > 240:
+            # fun, now we have to break up the directory into a two parts that are both less than 240 chars
+            sepmarker = mydir.rfind(os.sep)
+            while (sepmarker > 0 and sepmarker > 240):
+                sepmarker = mydir.rfind(os.sep)
+            mydir = mydir[0:sepmarker-1]
+            myfilename = os.path.join(mydir[sepmarker+1:], myfilename)
+            os.chdir(mydir)
+    myfile = open(myfilename, mode)
+    os.chdir(olddir)
+    return myfile
+            
