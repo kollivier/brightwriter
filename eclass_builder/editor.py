@@ -38,6 +38,7 @@ import indexer
 import conman
 import version
 import utils
+import guiutils
 
 try:
 	import win32process, win32con
@@ -105,6 +106,7 @@ ID_LINKCHECK = wxNewId()
 ID_REFRESH_THEME = wxNewId()
 ID_UPLOAD_PAGE = wxNewId()
 ID_CONTACTS = wxNewId()
+ID_ERRORLOG = wxNewId()
 
 eclassdirs = ["EClass", "Audio", "Video", "Text", "pub", "Graphics", "includes", "File", "Present"]
 
@@ -158,8 +160,8 @@ class MainFrame2(wxFrame):
 		self.dirtyNodes = []
 		self.version = version.asString()
 		self.AppDir = os.path.abspath(sys.path[0])
-		if wxPlatform == '__WXMSW__':
-			self.AppDir = win32api.GetShortPathName(self.AppDir)
+		#if wxPlatform == '__WXMSW__':
+		#	self.AppDir = win32api.GetShortPathName(self.AppDir)
 		settings.AppDir = self.AppDir
 		self.Platform = "win32"
 		if wxPlatform == '__WXMSW__':
@@ -169,8 +171,8 @@ class MainFrame2(wxFrame):
 		else:
 			self.Platform = "linux"
 		self.ThirdPartyDir = os.path.join(self.AppDir, "3rdparty", self.Platform)
-		if wxPlatform == '__WXMSW__':
-			self.ThirdPartyDir = win32api.GetShortPathName(self.ThirdPartyDir)
+		#if wxPlatform == '__WXMSW__':
+		#	self.ThirdPartyDir = win32api.GetShortPathName(self.ThirdPartyDir)
 		settings.ThirdPartyDir = self.ThirdPartyDir
 
 		self.PrefDir = self.AppDir
@@ -184,8 +186,9 @@ class MainFrame2(wxFrame):
 		self.settings = xml_settings.XMLSettings()
 		wxInitAllImageHandlers()
 
-		self.log = utils.LogFile("errlog.txt")
-		self.log.write(time.strftime("%B %d, %Y %H:%M:%S - starting EClass.Builder...\n\n", time.localtime()))
+		import errors
+		self.log = errors.appErrorLog
+		self.log.write("Starting EClass.Builder...\n\n")
 
 		if wxPlatform == '__WXMSW__':
 			import _winreg as wreg
@@ -414,6 +417,7 @@ class MainFrame2(wxFrame):
 		ToolsMenu.Append(ID_THEME, _("Theme Manager"))
 		ToolsMenu.Append(ID_LINKCHECK, _("Link Checker"))
 		ToolsMenu.Append(ID_CONTACTS, _("Contact Manager"))
+		ToolsMenu.Append(ID_ERRORLOG, _("Error Viewer"))
 		ToolsMenu.AppendSeparator()
 		ToolsMenu.Append(ID_SETTINGS, _("Options"), _("Modify Program Options"))
 		if wxPlatform == "__WXMAC__":
@@ -529,6 +533,7 @@ class MainFrame2(wxFrame):
 		EVT_MENU(self, ID_IMPORT_FILE, self.AddNewItem)
 		EVT_MENU(self, ID_REFRESH_THEME, self.OnRefreshTheme)
 		EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
+		EVT_MENU(self, ID_ERRORLOG, self.OnErrorLog)
 		#EVT_ACTIVATE(self, self.OnActivate)
 		#if wxPlatform == "__WXMAC__":
 		#	EVT_UPDATE_UI(self, self.GetId(), self.OnActivate)
@@ -581,6 +586,10 @@ class MainFrame2(wxFrame):
 			#self.Preview()
 		#self.menuBar.Refresh()
 	
+	def OnErrorLog(self, evt):
+		import errors
+		errors.ErrorLogViewer(self).ShowModal() 		
+
 	def OnKeyPressed(self, evt):
 		self.IsCtrlDown = evt.ControlDown()
 		evt.Skip()		
@@ -806,9 +815,9 @@ class MainFrame2(wxFrame):
 				for dir in eclassdirs:
 					if not os.path.exists(os.path.join(self.CurrentDir, dir)):
 						os.mkdir(os.path.join(self.CurrentDir, dir))
-				if wxPlatform == '__WXMSW__':
-					self.CurrentDir = win32api.GetShortPathName(self.CurrentDir)
-					settings.CurrentDir = self.CurrentDir
+				#if wxPlatform == '__WXMSW__':
+					#self.CurrentDir = win32api.GetShortPathName(self.CurrentDir)
+					#settings.CurrentDir = self.CurrentDir
 				self.BindTowxTree(self.pub.nodes[0])	
 				self.CurrentTreeItem = self.wxTree.GetRootItem()
 				
@@ -851,13 +860,23 @@ class MainFrame2(wxFrame):
 	def PublishToPDF(self, event):
 		myPublisher = PDFPublisher(self)
 		myPublisher.Publish()
-		mydialog = wxMessageDialog(self, _("Publishing complete. A PDF version of your EClass can be found at %(pdffile)s. Would you like to preview it now?") % {"pdffile": myPublisher.pdffile}, _("Preview PDF?"), wxYES_NO)
-		if mydialog.ShowModal() == wxID_YES:
-			if wxPlatform == "__WXMSW__":
-				win32api.ShellExecute(0, "open",myPublisher.pdffile, "", myPublisher.pdfdir, 1)
-			elif wxPlatform == "__WXMAC__":
-				result = os.popen("open " + string.replace(myPublisher.pdffile, " ", "\ "))
-				result.close()
+		command = ""
+		if os.path.exists(myPublisher.pdffile):
+			command = guiutils.getOpenCommandForFilename(myPublisher.pdffile)
+		else:
+			wxMessageBox(_("There was an error publishing to PDF."))
+		
+		if command != "":
+			mydialog = wxMessageDialog(self, _("Publishing complete. A PDF version of your EClass can be found at %(pdffile)s. Would you like to preview it now?") % {"pdffile": myPublisher.pdffile}, _("Preview PDF?"), wxYES_NO)
+			if mydialog.ShowModal() == wxID_YES:
+				os.system(command)
+		else:
+			wxMessageBox(_("Publishing complete. A PDF version of your EClass can be found at %(pdffile)s.") % {"pdffile": myPublisher.pdffile}, _("Publishing Complete."))
+				#if wxPlatform == "__WXMSW__":
+				#	win32api.ShellExecute(0, "open",myPublisher.pdffile, "", myPublisher.pdfdir, 1)
+				#elif wxPlatform == "__WXMAC__":
+				#	result = os.popen("open " + string.replace(myPublisher.pdffile, " ", "\ "))
+				#	result.close()
 
 	def PublishToIMS(self, event):
 		import zipfile
@@ -1077,7 +1096,7 @@ class MainFrame2(wxFrame):
 			f.Destroy()
 		ftppass_file = os.path.join(self.CurrentDir, "ftppass.txt")
 		try:
-			file = open(ftppass_file, "w")
+			file = utils.openFile(ftppass_file, "w")
 			file.write(munge(self.ftppass, 'foobar'))
 			file.close()
 		except:
@@ -1101,14 +1120,14 @@ class MainFrame2(wxFrame):
 	def CreateDocumancerBook(self):
 		#update the Documancer book file
 		filename = os.path.join(self.CurrentDir, "eclass.dmbk")
-		bookdata = open(os.path.join(self.AppDir,"bookfile.book.in")).read()
+		bookdata = utils.openFile(os.path.join(self.AppDir,"bookfile.book.in")).read()
 		bookdata = string.replace(bookdata, "<!-- insert title here-->", self.pub.name)
 		if self.pub.settings["SearchEnabled"] == "1" and self.pub.settings["SearchProgram"] == "Lucene":
 			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "<attr name='indexed'>1</attr>\n    <attr name='cachedir'>.</attr>")
 		else: 
 			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "")
 		try:
-			myfile = open(filename, "w")
+			myfile = utils.openFile(filename, "w")
 			myfile.write(bookdata)
 			myfile.close()
 		except:
@@ -1392,8 +1411,8 @@ class MainFrame2(wxFrame):
 			return 
 		
 		settings.CurrentDir = self.CurrentDir = os.path.dirname(filename)
-		if sys.platform == "win32":
-			settings.CurrentDir = self.CurrentDir = win32api.GetShortPathName(settings.CurrentDir)
+		#if sys.platform == "win32":
+		#	settings.CurrentDir = self.CurrentDir = win32api.GetShortPathName(settings.CurrentDir)
 		self.wxTree.DeleteAllItems()
 		self.CurrentFilename = filename
 		self.pub = conman.ConMan()
@@ -1425,7 +1444,7 @@ class MainFrame2(wxFrame):
 
 			self.isDirty = False
 			if os.path.exists(os.path.join(self.CurrentDir, "ftppass.txt")):
-				file = open(os.path.join(self.CurrentDir, "ftppass.txt"), "r")
+				file = utils.openFile(os.path.join(self.CurrentDir, "ftppass.txt"), "r")
 				self.ftppass = munge(file.read(), 'foobar')
 				file.close()	 
 			self.Preview()
@@ -1989,14 +2008,14 @@ class UpdateIndexDialog(wxDialog):
 			if os.path.exists(eclassdir):
 				collecttext = ""
 				try:
-					collectcfg = open(os.path.join(self.parent.AppDir, "greenstone", "collect.cfg"), "r")
+					collectcfg = utils.openFile(os.path.join(self.parent.AppDir, "greenstone", "collect.cfg"), "r")
 					collecttext = collectcfg.read()
 					collectcfg.close()
 				except:
 					self.txtProgress.WriteText(_("There was an error reading the file ") + "'" + os.path.join(self.parent.AppDir, "greenstone", "collect.cfg") + "'" + _(". Please ensure that the file exists and that you have read permissions."))
 				try:
 					collecttext = string.replace(collecttext, "**[title]**", self.parent.pub.name)
-					collectout = open(os.path.join(eclassdir, "etc", "collect.cfg"), "w")
+					collectout = utils.openFile(os.path.join(eclassdir, "etc", "collect.cfg"), "w")
 					collectout.write(collecttext)
 					collectout.close()
 				except:
@@ -2236,7 +2255,7 @@ class FTPUpload:
 					return
 
 				myitem = settings.CurrentDir + "/" + item
-				myfile = open(myitem, "rb")
+				myfile = utils.openFile(myitem, "rb")
 				bytes = os.path.getsize(myitem)
 				dir = self.Directory
 				if not dir[-1] == "/":
@@ -2655,7 +2674,7 @@ class PreferencesEditor(wxDialog):
 			myfilename = os.path.join(self.parent.settings["OpenOffice"], "share", "registry", "data", "org", "openoffice", "Setup.xcu")
 		try:
 			print "Registering Pyuno... Location is: " + myfilename
-			file = open(myfilename, "r")
+			file = utils.openFile(myfilename, "r")
 			data = file.read()
 			file.close()
 			if string.find(data, "<prop oor:name=\"ooSetupConnectionURL\">") != -1:
@@ -2672,10 +2691,10 @@ class PreferencesEditor(wxDialog):
 			myfilename = os.path.join(self.parent.settings["OpenOffice"], "share", "registry", "data", "org", "openoffice", "Setup.xcu")
 		try:
 			print "Registering Pyuno... Location is: " + myfilename
-			file = open(myfilename, "r")
+			file = utils.openFile(myfilename, "r")
 			data = file.read()
 			file.close()
-			file = open(myfilename + ".bak", "w")
+			file = utils.openFile(myfilename + ".bak", "w")
 			file.write(data)
 			file.close()
 			if string.find(data, "<prop oor:name=\"ooSetupConnectionURL\">") == -1:
@@ -2688,7 +2707,7 @@ class PreferencesEditor(wxDialog):
 						<prop oor:name="ooSetupConnectionURL">socket,host=localhost,port=2002;urp;</prop>
 					</node>
 					"""
-				file = open(myfilename, "w")
+				file = utils.openFile(myfilename, "w")
 				file.write(data)
 				file.close()
 			return True
@@ -2939,7 +2958,7 @@ class OpenPubDialog(wxDialog):
 		self.mysizer.Add(self.lblSelect, 0, wxALL, 4)
 		self.mysizer.Add(self.cmbpubs, 1, wxEXPAND|wxALL, 4)
 		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.buttonsizer.Add(self.btnBrowse, 0, wxALIGN_LEFT|wxALL, 4)
+		self.buttonsizer.Add(self.btnBrowse, 0, wxALIGN_LEFT)
 		self.buttonsizer.Add((1,1),1, wxEXPAND | wxALL, 4)
 		stdbuttonsizer = wxStdDialogButtonSizer()
 		stdbuttonsizer.AddButton(self.btnOK)
@@ -3041,7 +3060,7 @@ class PageEditorDialog (wxDialog):
 		self.lblTitle = wxStaticText(mypanel, -1, _("Name"))
 		self.lblDescription = wxStaticText(mypanel, -1, _("Description"))
 		self.lblKeywords = wxStaticText(mypanel, -1, _("Keywords"))
-		self.lblPublic = wxStaticText(mypanel, -1, _("Public"))
+		#self.lblPublic = wxStaticText(mypanel, -1, _("Public"))
 		self.lblContent = wxStaticText(mypanel, -1, _("Page Content:"))
 
 		self.txtTitle = wxTextCtrl(mypanel, -1, self.content.metadata.name)
@@ -3366,7 +3385,7 @@ class PageEditorDialog (wxDialog):
 			newcard = vcard.VCard()
 			newcard.fname.value = name
 			newcard.filename = os.path.join(self.parent.PrefDir, "Contacts", MakeFileName2(name) + ".vcf")
-			myfile = open(newcard.filename, "wb")
+			myfile = utils.openFile(newcard.filename, "wb")
 			myfile.write(newcard.asString())
 			myfile.close()
 			self.parent.vcardlist[newcard.fname.value] = newcard
@@ -3451,8 +3470,8 @@ class ContactsDialog(wxDialog):
 				shutil.copy(dialog.GetPath(), contactsdir)
 				newvcard = vcard.VCard()
 				filename = os.path.join(contactsdir, dialog.GetFilename())
-				if sys.platform == "win32":
-					filename = win32api.GetShortPathName(filename)
+				#if sys.platform == "win32":
+				#	filename = win32api.GetShortPathName(filename)
 				newvcard.parseFile(filename)
 				if newvcard.fname.value == "":
 					myvcard.fname.value = myvcard.name.givenName + " "
@@ -3587,7 +3606,7 @@ class ContactEditor(wxDialog):
 			else:
 				self.myvcard.filename = thisfilename
 
-		myfile = open(self.myvcard.filename, "wb")
+		myfile = utils.openFile(self.myvcard.filename, "wb")
 		myfile.write(self.myvcard.asString())
 		myfile.close()
 
@@ -3757,7 +3776,7 @@ class LinkChecker(wxDialog):
 			filename = os.path.join(self.parent.CurrentDir, "pub", file)
 			if os.path.isfile(filename):
 				if string.find(os.path.splitext(file)[1], "htm") != -1: 
-					myhtml = open(filename, "r").read()
+					myhtml = utils.openFile(filename, "r").read()
 					imagelinks = re.compile("src\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
 					imagelinks.sub(self.CheckLink,myhtml)
 					weblinks = re.compile("href\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
@@ -3803,8 +3822,8 @@ class ThemeManager(wxDialog):
 		self.lstThemeList.SetSelection(0)
 		self.AppDir = parent.AppDir
 		self.CurrentDir = os.path.join(self.parent.AppDir, "themes", "ThemePreview")
-		if wxPlatform == "__WXMSW__":
-			self.CurrentDir = win32api.GetShortPathName(self.CurrentDir)
+		#if wxPlatform == "__WXMSW__":
+		#	self.CurrentDir = win32api.GetShortPathName(self.CurrentDir)
 		#self.templates = parent.templates
 		self.lblPreview = wxStaticText(self, -1, _("Theme Preview"))
 		self.pub = conman.ConMan()
@@ -3925,7 +3944,7 @@ class ThemeManager(wxDialog):
 			except:
 				wxMessageBox(_("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(self.parent.AppDir, "themes")})
 				return 
-			myfile = open(os.path.join(themedir, filename), "w")
+			myfile = utils.openFile(os.path.join(themedir, filename), "w")
 			data = """
 from BaseTheme import *
 themename = "%s"
@@ -3989,14 +4008,14 @@ class HTMLPublisher(BaseHTMLPublisher):
 				wxMessageBox(_("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(self.parent.AppDir, "themes")})
 				return 
 
-			copyfile = open(os.path.join(themedir, otherfilename), "r")
+			copyfile = utils.openFile(os.path.join(themedir, otherfilename), "r")
 			data = copyfile.read()
 			copyfile.close()
 
 			oldthemeline = 'themename = "%s"' % (string.replace(self.lstThemeList.GetStringSelection(), "\"", "\\\""))
 			newthemeline = 'themename = "%s"' % (string.replace(dialog.GetValue(), "\"", "\\\""))
 			data = string.replace(data, oldthemeline, newthemeline) 
-			myfile = open(os.path.join(themedir, filename), "w")
+			myfile = utils.openFile(os.path.join(themedir, filename), "w")
 			myfile.write(data)
 			myfile.close()
 
@@ -4044,7 +4063,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 				if not os.path.exists(os.path.join(self.AppDir, "themes", os.path.dirname(file.filename))):
 					os.mkdir(os.path.join(self.AppDir, "themes", os.path.dirname(file.filename)))
 
-				file = open(os.path.join(self.AppDir, "themes", file.filename), "wb")
+				file = utils.openFile(os.path.join(self.AppDir, "themes", file.filename), "wb")
 				file.write(data)
 				file.close()
 				self.ReloadThemes()
@@ -4176,10 +4195,10 @@ for arg in sys.argv:
 			myfilename = "C:\\Program Files\\OpenOffice.org1.1beta\\share\\registry\\data\\org\\openoffice\\Setup.xcu"
 		try:
 			print "Registering Pyuno... Location is: " + myfilename
-			file = open(myfilename, "r")
+			file = utils.openFile(myfilename, "r")
 			data = file.read()
 			file.close()
-			file = open(myfilename + ".bak", "w")
+			file = utils.openFile(myfilename + ".bak", "w")
 			file.write(data)
 			file.close()
 			if string.find(data, "<prop oor:name=\"ooSetupConnectionURL\">") == -1:
@@ -4192,7 +4211,7 @@ for arg in sys.argv:
 						<prop oor:name="ooSetupConnectionURL">socket,host=localhost,port=2002;urp;</prop>
 					</node>
 					"""
-				file = open(myfilename, "w")
+				file = utils.openFile(myfilename, "w")
 				file.write(data)
 				file.close()
 		except:
