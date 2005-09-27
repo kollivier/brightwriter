@@ -125,7 +125,10 @@ def getCurrentEncoding():
 	import locale
 	encoding = locale.getdefaultlocale()[1]
 	if not encoding or encoding == 'ascii':
-		encoding = "iso-8859-1" 
+		if sys.platform == "darwin":
+			encoding = "utf-8"
+		else:
+			encoding = "iso-8859-1" 
 	
 	return encoding
 	

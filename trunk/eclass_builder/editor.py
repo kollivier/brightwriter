@@ -157,6 +157,8 @@ class MainFrame2(wxFrame):
 		self.CurrentTreeItem = None
 		self.pub = conman.ConMan()
 		#dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
+		if wx.Platform == "__WXMAC__":
+			wx.SetDefaultPyEncoding("utf-8")
 		self.dirtyNodes = []
 		self.version = version.asString()
 		self.AppDir = os.path.abspath(sys.path[0])
@@ -1550,9 +1552,11 @@ class MainFrame2(wxFrame):
 		else:
 			for plugin in plugins.pluginList:
 				extension = string.split(self.CurrentItem.content.filename, ".")[-1]
+				print "extension = " + `extension`
 				if extension in plugin.plugin_info["Extension"]:
 					publisher = eval("plugins." + plugin.plugin_info["Name"] + ".HTMLPublisher()")
 					filename = publisher.GetFilename(self.CurrentItem.content.filename)
+					
 					#we need to do this again because we use external HTML editor
 					if extension in ["htm", "html"]:
 						publisher.Publish(self, self.CurrentItem, self.CurrentItem.dir)
@@ -1570,6 +1574,7 @@ class MainFrame2(wxFrame):
 			ok_fileTypes.append("pdf")
 
 		if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
+			print "Filename is: " + filename.encode(utils.getCurrentEncoding())
 			for browser in self.browsers:
 				self.browsers[browser].LoadPage(filename)
 		else:
