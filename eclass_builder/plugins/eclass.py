@@ -111,7 +111,7 @@ class EClassPage(plugins.PluginData):
 		self.directory = os.path.split(filename)[0]
 		try:
 			if USE_MINIDOM:
-				doc = minidom.parse(open(filename))
+				doc = minidom.parse(open(filename.encode(utils.getCurrentEncoding())))
 			else:	
 				doc = FromXmlFile(filename)
 			self.LoadDoc(doc)
