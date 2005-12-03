@@ -11,7 +11,9 @@ import locale
 import settings
 import utils
 
-indexLog = utils.LogFile("indexing_log.txt")
+import errors
+
+indexLog = errors.appErrorLog #utils.LogFile("indexing_log.txt")
 
 class SearchEngine:
 	def __init__(self, parent, indexdir, folder=""):
