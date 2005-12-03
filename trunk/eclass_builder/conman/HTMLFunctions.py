@@ -9,6 +9,7 @@ import re
 import file_functions as files
 import string, os, sys
 from HTMLParser import HTMLParser
+import utils
 
 # I'd LIKE to do things this way, but there's some problem that's causing 
 # files to have non-standard HTML in them that I can't seem to figure out.
@@ -403,6 +404,9 @@ def GetBody(myhtml):
 				text = text + html 
 		html = myhtml.readline()
 	
+	if not encoding:
+		encoding = utils.getCurrentEncoding()
+
 	if encoding:
 		print "Encoding is: " + `encoding`
 		try:
