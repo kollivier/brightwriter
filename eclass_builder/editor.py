@@ -3,6 +3,20 @@
 import sys, urllib2, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
 
+rootdir = os.path.abspath(sys.path[0])
+if not os.path.isdir(rootdir):
+	rootdir = os.path.dirname(rootdir)
+
+# do this first because other modules may rely on _()
+localedir = os.path.join(rootdir, 'locale')
+import gettext
+gettext.install('eclass', localedir)
+lang_dict = {
+			"en": gettext.translation('eclass', localedir, languages=['en']), 
+			"es": gettext.translation('eclass', localedir, languages=['es']),
+			"fr": gettext.translation('eclass', localedir, languages=['fr'])
+			}
+
 from wxPython.wx import *
 from wxPython.lib import newevent
 
@@ -13,10 +27,6 @@ except:
 	hasmozilla = False
 
 import settings
-rootdir = os.path.abspath(sys.path[0])
-if not os.path.isdir(rootdir):
-	rootdir = os.path.dirname(rootdir)
-
 settings.AppDir = rootdir
 
 from conman.validate import *
@@ -39,6 +49,7 @@ import conman
 import version
 import utils
 import guiutils
+import constants
 
 try:
 	import win32process, win32con
@@ -51,15 +62,6 @@ import conman.HTMLTemplates
 
 #for indexing
 import PyLucene
-
-localedir = os.path.join(rootdir, 'locale')
-import gettext
-gettext.install('eclass', localedir)
-lang_dict = {
-			"en": gettext.translation('eclass', localedir, languages=['en']), 
-			"es": gettext.translation('eclass', localedir, languages=['es']),
-			"fr": gettext.translation('eclass', localedir, languages=['fr'])
-			}
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
 import plugins
@@ -190,7 +192,6 @@ class MainFrame2(wxFrame):
 
 		import errors
 		self.log = errors.appErrorLog
-		self.log.write("Starting EClass.Builder...\n\n")
 
 		if wxPlatform == '__WXMSW__':
 			import _winreg as wreg
@@ -224,7 +225,14 @@ class MainFrame2(wxFrame):
 			if not os.path.exists(prefdir):
 				os.mkdir(prefdir)
 
-		self.PrefDir = prefdir
+		self.PrefDir = guiutils.getAppDataDir()
+		if os.path.exists(prefdir):
+			try:
+				files.CopyFiles(prefdir, self.PrefDir, 1)
+				shutil.rmtree(prefdir)
+			except:
+				self.PrefDir = prefdir
+				self.log.write(_("Error moving preferences."))
 
 		if os.path.exists(os.path.join(self.PrefDir, "settings.xml")):
 			self.settings.LoadFromXML(os.path.join(self.PrefDir, "settings.xml"))
@@ -301,9 +309,7 @@ class MainFrame2(wxFrame):
 					myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
 				self.vcardlist[myvcard.fname.value] = myvcard
 			except:
-				import traceback
-				if traceback.print_exc() != None:
-					self.log.write(traceback.print_exc())
+				self.log.write("Error loading vCard '%s'" % (card))
 				errOccurred = True
 				errCards.append(card)
 
@@ -867,11 +873,12 @@ class MainFrame2(wxFrame):
 			command = guiutils.getOpenCommandForFilename(myPublisher.pdffile)
 		else:
 			wxMessageBox(_("There was an error publishing to PDF."))
+			return
 		
-		if command != "":
+		if command and command != "":
 			mydialog = wxMessageDialog(self, _("Publishing complete. A PDF version of your EClass can be found at %(pdffile)s. Would you like to preview it now?") % {"pdffile": myPublisher.pdffile}, _("Preview PDF?"), wxYES_NO)
 			if mydialog.ShowModal() == wxID_YES:
-				os.system(command)
+				wxExecute(command)
 		else:
 			wxMessageBox(_("Publishing complete. A PDF version of your EClass can be found at %(pdffile)s.") % {"pdffile": myPublisher.pdffile}, _("Publishing Complete."))
 				#if wxPlatform == "__WXMSW__":
@@ -964,10 +971,8 @@ class MainFrame2(wxFrame):
 						try:
 							cddialog.UpdateIndex(gsdl, eclassdir)
 						except:	
-							message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
-							import traceback
-							if traceback.print_exc() != None:
-								self.log.write(traceback.print_exc())
+							message = _("There was an unexpected error publishing your course. For more details, check the Error Viewer from the 'Tools->Error Viewer' menu.")
+							self.log.write(message)
 							dialog = wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK)
 							dialog.ShowModal()
 							dialog.Destroy()
@@ -980,8 +985,8 @@ class MainFrame2(wxFrame):
 
 	def PublishToCD(self,event):
 		self.UpdateContents()
-		self.UpdateTextIndex()
 		self.PublishEClass(self.pub.pubid)
+		self.UpdateTextIndex()
 			#if result == True:
 		message = _("A window will now appear with all files that must be published to CD-ROM. Start your CD-Recording program and copy all files in this window to that program, and your CD will be ready for burning.")
 		dialog = wxMessageDialog(self, message, _("Export to CD Finished"), wxOK)
@@ -1017,13 +1022,19 @@ class MainFrame2(wxFrame):
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.dll"))
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.exe"))
 
-			files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
-			files.CopyFile("loader.exe", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
-			installerdir = os.path.join(self.CurrentDir, "installers")
-			if not os.path.exists(installerdir):
-				os.mkdir(installerdir)
-			if sys.platform == "win32":
+			# copy the server program
+			if sys.platform == "win32" and self.pub.settings["ServerProgram"] == "Documancer" and os.path.exists(os.path.join(self.CurrentDir, "installers")):
+				files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
+				files.CopyFile("loader.exe", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
+				installerdir = os.path.join(self.CurrentDir, "installers")
+				if not os.path.exists(installerdir):
+					os.mkdir(installerdir)
 				files.CopyFile("documancer-0.2.6-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(self.CurrentDir, "installers"))
+			elif sys.platform == "win32":
+				files.CopyFiles(os.path.join(self.AppDir, "cgi-bin"), os.path.join(self.CurrentDir, "cgi-bin"))
+				files.CopyFiles(os.path.join(self.ThirdPartyDir, "Karrigell"), self.CurrentDir)
+				files.CopyFiles(os.path.join(self.AppDir, "web"), self.CurrentDir, 1)
+
 			useswishe = False
 			if self.pub.settings["SearchProgram"] == "Swish-e":
 				useswishe = True
@@ -1040,10 +1051,8 @@ class MainFrame2(wxFrame):
 				pass
 
 		except:
-			message = _("There was an unexpected error publishing your course. Details on the error message are located in the file: ") + os.path.join(self.AppDir, "errlog.txt") + _(", or on Mac, the error message can be found by viewing /Applications/Utilities/Console.app.")
-			import traceback
-			if traceback.print_exc() != None:
-				self.log.write(traceback.print_exc())
+			message = _("There was an unexpected error publishing your course. For more details, check the Error Viewer from the 'Tools->Error Viewer' menu.")
+			self.log.write(message)
 			wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK).ShowModal()
 			return False
 		del busy
@@ -1073,12 +1082,13 @@ class MainFrame2(wxFrame):
 			ftp.GetUploadDirs(ftp.filelist)
 			ftp.UploadFiles()
 		except ftplib.all_errors, e:
-			wxMessageBox(ftp.getFtpErrorMessage(e))
+			message = ftp.getFtpErrorMessage(e)
+			self.log.write(message)
+			wxMessageBox(message)
 		except:
-			self.SetStatusText(_("Unknown error uploading file(s)."))
-			import traceback
-			if traceback.print_exc() != None:
-				self.log.write(traceback.print_exc())
+			message = _("Unknown error uploading file(s).")
+			self.SetStatusText(message)
+			self.log.write(message)
 		self.SetStatusText("")
 		del busy
 
@@ -1103,6 +1113,7 @@ class MainFrame2(wxFrame):
 			file.close()
 		except:
 			message = utils.getStdErrorMessage("IOError", {"filename":ftppass_file, "type":"write"})
+			self.log.write(message)
 			wxMessageDialog(self, message, _("Could Not Save File"), wxOK).ShowModal()
 		
 		self.CreateDocumancerBook()
@@ -1112,7 +1123,9 @@ class MainFrame2(wxFrame):
 			self.pub.SaveAsXML(self.CurrentFilename, self.encoding)
 			self.isDirty = False
 		except IOError, e:
-			wxMessageDialog(self, str(e), _("Could Not Save File"), wxOK).ShowModal() 
+			message = _("Could not save EClass project file. Error Message is:")
+			self.log.write(message)
+			wxMessageDialog(self, message + str(e), _("Could Not Save File"), wxOK).ShowModal() 
 
 	def CreateDevHelpBook(self):
 		import devhelp
@@ -1134,6 +1147,7 @@ class MainFrame2(wxFrame):
 			myfile.close()
 		except:
 			message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
+			self.log.write(message)
 			wxMessageBox(message, _("Could Not Save File"), wxICON_ERROR)
 
 	def ReloadThemes(self):
@@ -1156,7 +1170,7 @@ class MainFrame2(wxFrame):
 				self.CurrentTreeItem = self.wxTree.GetItemParent(itemtodelete)
 				self.wxTree.Delete(itemtodelete)
 				#self.CurrentItem = backitem
-				#self.CurrentTreeItem = self.wxTree.GetSelection()
+				self.CurrentTreeItem = self.wxTree.GetSelection()
 				self.CurrentItem = self.wxTree.GetPyData(self.CurrentTreeItem)
 				self.UpdateContents()
 				self.Update()
@@ -1182,9 +1196,9 @@ class MainFrame2(wxFrame):
 					self.isDirty = True				
 				dlg.Destroy()
 			except:
-				import traceback
-				self.log.write(traceback.print_exc())
-				wxMessageBox(_("There was an unknown error when creating the new page. The page was not created. Detailed error information is in the 'errlog.txt' file."))
+				message = constants.createPageErrorMsg
+				self.log.write(message)
+				wxMessageBox(message + constants.errorInfoMsg)
 	
 	def AddNewEClassPage(self, event, name="", isroot=False):
 		if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem) or self.isNewCourse:
@@ -1226,9 +1240,9 @@ class MainFrame2(wxFrame):
 						else:
 							self.CurrentItem.parent.children.remove(self.CurrentItem)
 					except:
-						import traceback
-						self.log.write(traceback.print_exc())
-						wxMessageBox(_("There was an unknown error when creating the new page. The page was not created. Detailed error information is in the 'errlog.txt' file."))
+						message = constants.createPageErrorMsg
+						self.log.write(message)
+						wxMessageBox(message + constants.errorInfoMsg)
 	
 				self.isNewCourse = False
 			dialog.Destroy()
@@ -1265,9 +1279,9 @@ class MainFrame2(wxFrame):
 				if string.lower(self.pub.settings["UploadOnSave"]) == "yes":
 					self.UploadPage()
 			except:
-				import traceback
-				if traceback.print_exc() != None:
-					self.log.write(traceback.print_exc())
+				message = _("Error updating page.") + constants.errorInfoMsg
+				self.log.write(message)
+				wxMessageBox(message)
 
 	def UploadPage(self, event = None):
 		ftpfiles = []
@@ -1308,6 +1322,7 @@ class MainFrame2(wxFrame):
 			result = publisher.CreateTOC()
 		except IOError, e:
 			message = utils.getStdErrorMessage("IOError", {"filename": e.filename, "type":"write"})
+			self.log.write(message)
 			wxMessageBox(message, _("Could Not Save File"), wxICON_ERROR)
 		except:
 			pass #we shouldn't do this, but there may be non-fatal errors we shouldn't
@@ -1377,9 +1392,9 @@ class MainFrame2(wxFrame):
 					self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
 					self.isDirty = True
 		except:
-			import traceback
-			self.log.write(traceback.print_exc())
-			wxMessageBox(_("There was an unknown error when attempting to start the page editor. Detailed error information is in the 'errlog.txt' file."))
+			message = _("There was an unknown error when attempting to start the page editor.")
+			self.log.write(message)
+			wxMessageBox(message + constants.errorInfoMsg)
 	
 	
 	def OnOpen(self,event):
@@ -1767,8 +1782,11 @@ class ProjectPropsDialog(wxDialog):
 		if self.parent.pub.settings["ShortenFilenames"] == "Yes":
 			self.chkFilename.SetValue(1)
 
+		self.serverOptions = [_("EClass Web Server (Karrigell)"), _("Documancer")]
+		#self.radboxServer = wxRadioBox(panel, -1, _("Specify EClass Viewer Software"), wxDefaultPosition, wxDefaultSize, self.serverOptions)
 		self.pubSizer = wxBoxSizer(wxVERTICAL)
 		self.pubSizer.Add(self.chkFilename, 0, wxALL, 4)
+		#self.pubSizer.Add(self.radboxServer, 0, wxALL, 4)
 
 		panel.SetAutoLayout(True)
 		panel.SetSizer(self.pubSizer)
@@ -1902,6 +1920,12 @@ class ProjectPropsDialog(wxDialog):
 		elif self.whichSearch.GetStringSelection() == self.options[1]:
 			self.parent.pub.settings["SearchProgram"] = "Greenstone"
 
+		#if self.radboxServer.GetStringSelection() == self.serverOptions[0]:
+		#	self.parent.pub.settings["ServerProgram"] = "Karrigell"
+		#	useswishe = True
+		#elif self.radboxServer.GetStringSelection() == self.options[1]:
+		#	self.parent.pub.settings["ServerProgram"] = "Documancer"
+
 		if self.searchchanged:
 			self.parent.Update()
 		if self.chkFilename.GetValue() == True:
@@ -2012,19 +2036,26 @@ class UpdateIndexDialog(wxDialog):
 	
 			if os.path.exists(eclassdir):
 				collecttext = ""
+				configfile = os.path.join(self.parent.AppDir, "greenstone", "collect.cfg")
 				try:
-					collectcfg = utils.openFile(os.path.join(self.parent.AppDir, "greenstone", "collect.cfg"), "r")
+					collectcfg = utils.openFile(configfile, "r")
 					collecttext = collectcfg.read()
 					collectcfg.close()
 				except:
-					self.txtProgress.WriteText(_("There was an error reading the file ") + "'" + os.path.join(self.parent.AppDir, "greenstone", "collect.cfg") + "'" + _(". Please ensure that the file exists and that you have read permissions."))
+					message = _("There was an error reading the file '%(filename)s'. Please ensure that the file exists and that you have read permissions.") % {"filename": configfile}
+					self.log.write(message)
+					self.txtProgress.WriteText(message)
+
+				outfile = os.path.join(eclassdir, "etc", "collect.cfg")
 				try:
 					collecttext = string.replace(collecttext, "**[title]**", self.parent.pub.name)
-					collectout = utils.openFile(os.path.join(eclassdir, "etc", "collect.cfg"), "w")
+					collectout = utils.openFile(outfile, "w")
 					collectout.write(collecttext)
 					collectout.close()
 				except:
-					self.txtProgress.WriteText(_("There was an error writing the file '%(collectfile)s'. Please ensure that the file exists and that you have write permissions.") % {"collectfile": os.path.join(self.parent.AppDir, "greenstone", "collect.cfg")})
+					message = _("There was an error writing the file '%(collectfile)s'. Please ensure that the file exists and that you have write permissions.") % {"collectfile": outfile}
+					self.log.write(message)
+					self.txtProgress.WriteText(message)
 	
 				files.CopyFiles(os.path.join(self.parent.CurrentDir, "pub"), os.path.join(eclassdir, "import"), 1)
 					#...and build the collection
@@ -2214,7 +2245,7 @@ class FTPUpload:
 				if wxPlatform == "__WXMSW__":
 					finalname = string.replace(finalname, "\\", "/")
 				#finalname = string.replace(finalname, os.pathsep, "/")
-				if string.find(myitem, "cgi-bin") == -1:
+				if not self.useSearch and string.find(myitem, "cgi-bin") == -1:
 					if string.find(item, ".dll") == -1 and string.find(item, ".pyd") == -1 and string.find(item, ".exe") == -1:
 						self.filelist.append(finalname)
 				else:
@@ -2541,9 +2572,9 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 			message	= self.getFtpErrorMessage(info[1])
 		else:
 			message = str(info[1])
-
+		
 		wxMessageBox(`message`)
-		self.parent.log.write(string.join(lines, ""))
+		self.parent.log.write(`message`)
 		self.host.close()
 		self.OnUploadCanceled(None)
 
@@ -3316,8 +3347,9 @@ class PageEditorDialog (wxDialog):
 				self.node = conman.ConMan()
 				self.node.LoadFromXML(os.path.join(self.filedir, self.filename))
 			else:
-				shutil.copy(self.file, os.path.join(self.parent.CurrentDir, "File"))
 				self.filename = os.path.join("File", self.filename)
+				if not os.path.exists(os.path.join(self.parent.CurrentDir, self.filename)):
+					shutil.copy(self.file, os.path.join(self.parent.CurrentDir, "File"))
 			
 			self.txtExistingFile.SetValue(self.filename)
 		f.Destroy()
@@ -3365,9 +3397,7 @@ class PageEditorDialog (wxDialog):
 					elif person.role == "Content Provider" and self.txtOrganization.GetValue() == "":
 						self.content.metadata.lifecycle.contributors.remove(person)
 				except:
-					import traceback
-					if traceback.print_exc() != None:
-						self.parent.log.write(traceback.print_exc())
+					self.parent.log.write(_("Error removing empty contact."))
 
 		
 		self.content.metadata.classification.categories = []
@@ -3486,14 +3516,14 @@ class ContactsDialog(wxDialog):
 				self.parent.vcardlist[newvcard.fname.value] = newvcard
 				self.lstContacts.Append(newvcard.fname.value, newvcard)
 			except:
-				import traceback
-				print `traceback.print_exc()`
+				message = _("The VCard %(filename)s could not be imported.") % {"filename": dialog.GetFilename()}
 				if filename != "":
 					try:
 						os.remove(filename)
 					except:
 						pass
-				wxMessageBox(_("The VCard " + dialog.GetFilename() + " could not be imported."))
+				self.parent.log.write(message)
+				wxMessageBox(message)
 
 	def OnEdit(self, event):
 		thisvcard = self.lstContacts.GetClientData(self.lstContacts.GetSelection())
@@ -3514,7 +3544,9 @@ class ContactsDialog(wxDialog):
 			try:
 				os.remove(thisvcard.filename)
 			except:
-				wxMessageBox(_("The contact could not be deleted. Please ensure you have the proper permissions to access the EClass.Builder data directory."))
+				message = _("The contact could not be deleted. Please ensure you have the proper permissions to access the EClass.Builder data directory.")
+				self.parent.log.write(message)
+				wxMessageBox(message)
 				return
 
 			del self.parent.vcardlist[thisvcard.fname.value]
@@ -3947,7 +3979,9 @@ class ThemeManager(wxDialog):
 			try:
 				os.mkdir(os.path.join(themedir, foldername))
 			except:
-				wxMessageBox(_("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(self.parent.AppDir, "themes")})
+				message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(self.parent.AppDir, "themes")}
+				self.parent.log.write(message)
+				wxMessageBox(message)
 				return 
 			myfile = utils.openFile(os.path.join(themedir, filename), "w")
 			data = """
@@ -4010,7 +4044,9 @@ class HTMLPublisher(BaseHTMLPublisher):
 			try:
 				os.mkdir(os.path.join(themedir, foldername))
 			except:
-				wxMessageBox(_("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(self.parent.AppDir, "themes")})
+				message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(self.parent.AppDir, "themes")}
+				self.parent.log.write(message)
+				wxMessageBox(message)
 				return 
 
 			copyfile = utils.openFile(os.path.join(themedir, otherfilename), "r")
@@ -4152,15 +4188,13 @@ class wxTreeDropTarget(wxPyDropTarget):
 		
 				self.parent.isDirty = True
 			except: 
-				import traceback
-				print traceback.print_exc()
 				#if not newtreeitem == None:
 				#	self.wxTree.Delete(newtreeitem)
 				#if not newitem == None and not previtem == None:
 				#	previtem.parent.children.remove(newitem)
 
 				message = "There was an error while moving the page. Please contact your systems administrator or send email to kevino@tulane.edu if this error continues to occur."
-				print message
+				self.parent.log.write(message)
 				dialog = wxMessageDialog(self.parent, message, "Error moving page", wxOK)
 				dialog.ShowModal()
 				dialog.Destroy()
