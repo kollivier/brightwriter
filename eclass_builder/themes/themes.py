@@ -1,7 +1,8 @@
 import string, os
 import utils
+import errors
 
-log = utils.LogFile("errlog.txt")
+log = errors.appErrorLog #utils.LogFile("errlog.txt")
 
 class ThemeList:
 	def __init__(self, themedir):
