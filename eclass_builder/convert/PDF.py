@@ -13,6 +13,7 @@ import settings
 import tempfile
 import shutil
 import utils
+import constants
 
 myDictionary={}
 #import plugins.eclass as eclass
@@ -31,6 +32,9 @@ from StringIO import StringIO
 themename = "PDF"
 Elements = []
 myDictionary = {}
+
+import errors
+log = errors.appErrorLog
 
 def initial(the_dictionary):
 	myDictionary=the_dictionary
@@ -72,23 +76,31 @@ class PDFPublisher:
 		self.progress = None
 		self.pdffile = ""
 		self.pdfdir = ""
-		self.tempdir = tempfile.mkdtemp()
+		self.tempdir = os.path.join(self.dir, "temp")#tempfile.mkdtemp()
 		self.files = []
 
 	def Publish(self):
+		global log
 		self.pdfdir = self.dir
+		if os.path.exists(self.tempdir):
+			try:
+				shutil.rmtree(self.tempdir)
+			except:
+				log.write(_("Could not remove directory '%(dir)s'.") % {"dir": self.tempdir})
+
 		#if wxPlatform == "__WXMSW__":
 		#	import win32api
 		#	self.pdfdir = win32api.GetShortPathName(self.pdfdir.encode(utils.getCurrentEncoding(), "replace"))
 		try:
-			#if not os.path.exists(os.path.join(self.pdfdir, "temp")):
-			#	os.mkdir(os.path.join(self.pdfdir, "temp"))
+			if not os.path.exists(self.tempdir):
+				os.mkdir(self.tempdir)
 			if isinstance(self.parent, wxFrame):
 				self.progress = wxProgressDialog("Publishing PDF", "Publishing PDF", self.parent.wxTree.GetCount() + 1, None, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT)
 			#self.CopySupportFiles()
 			#self.CreateTOC()
 			self.counter = 1
 			self.PublishPages(self.pub.nodes[0])
+			#shutil.copytree(os.path.join(self.CurrentDir, "Graphics"), os.path.join(self.tempdir, "Graphics"))
 		except:
 			if self.progress:
 				self.progress.Destroy()
@@ -102,38 +114,49 @@ class PDFPublisher:
 			pdffile = string.replace(self.pdffile, "\\", "/")
 		bookfile = bookfile + "-f \"" + pdffile + "\" -t pdf --no-toc --no-links --compression=9 --jpeg=90 --verbose\n" 
 		for afile in self.files:
-			#if wxPlatform == "__WXMSW__":
-				#import win32api
-			#	local_filename = file.encode(utils.getCurrentEncoding(), "replace")
-			#	if os.path.exists(local_filename):
-					#file = win32api.GetShortPathName(local_filename)
-			#		file = string.replace(file, "\\", "/")
-			#	else:
-			#		file = ""
 			if afile != "" and os.path.exists(afile):
+				if sys.platform == "win32":
+					afile = afile.replace("\\", "/")
 				bookfile = bookfile + afile + "\n"
 
 		bookpath = os.path.join(self.tempdir, "eclass.book")
-		book = utils.openFile(bookpath, "w")
-		book.write(bookfile)
-		book.close()
+		try:
+			book = utils.openFile(bookpath, "w")
+			book.write(bookfile)
+			book.close()
+		except:
+			message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":bookpath})
+			log.write(message)
+			return False
 		
 		if sys.platform == "win32":
-			htmldoc = os.path.join(self.ThirdPartyDir, "htmldoc", "htmldoc")
+			htmldoc = os.path.join(self.ThirdPartyDir, "htmldoc", "htmldoc.exe")
 		else:
 			htmldoc = os.path.join(self.ThirdPartyDir, "htmldoc", "bin", "htmldoc")
 
 		try:
-			os.system(htmldoc + " --batch " + bookpath)
+			datadir = os.path.dirname(htmldoc)
+			if sys.platform == "win32":
+				# use quotes to avoid issues with spaces in filenames
+				htmldoc = '"' + htmldoc + '"'
+				datadir = '"' + datadir + '"'
+				bookpath = '"' + bookpath + '"' 
+			#print 'Command is: ' + htmldoc + ' --datadir %s --batch %s' % (datadir, bookpath)
+			command = htmldoc + " --datadir %s --batch %s" % (datadir, bookpath)
+			result = wxExecute(command, wxEXEC_SYNC)
+			if result == -1:
+				message = _("Could not execute command '%(command)s'.") % {"command": command}
+				log.write(message)
+				wxMessageBox(message)
 		except:
+			message = _("Could not publish PDF File.")
+			log.write(message)
 			if isinstance(self.parent, wxFrame):
-				wxMessageBox(_("Could not publish PDF File."))
+				wxMessageBox(message  + constants.errorInfoMsg)
+			self.cancelled = True
 	
 		if self.progress:
 			self.progress.Destroy()
-		
-		#if os.path.exists(self.tempdir):
-		#	shutil.rmtree(self.tempdir)
 
 		return not self.cancelled
 
@@ -204,10 +227,9 @@ class PDFPublisher:
 						myfile.close()
 						self.files.append(os.path.join(self.tempdir, filename))
 				except:
-					#print "Could not publish page " + os.path.join(self.dir, "pub", node.content.filename)
-					import traceback
-					print "Traceback is:\n" 
-					traceback.print_exc()
+					message = _("Could not publish page '%(page)s'") % {"filename": os.path.join(self.tempdir, filename)}
+					global log
+					log.write(message)
         	
 		if len(node.children) > 0:
         		for child in node.children:
