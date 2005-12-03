@@ -1,6 +1,6 @@
 !define MUI_PRODUCT "EClass.Builder" ;Define your own software name here
-!define MUI_VERSION "2.5.5.9" ;Define your own software version here
-!define UNICODE_STRING "-unicode" ; for unicode, add unicode the the installer name
+!define MUI_VERSION "2.5.5.11" ;Define your own software version here
+!define UNICODE_STRING "" ; for unicode, add unicode the the installer name
 Name "${MUI_PRODUCT} ${MUI_VERSION}"
 !include "MUI.nsh"
 !include "path_functions.nsi"
@@ -41,7 +41,7 @@ Section "Program Files" SecCopyUI
   ;ADD YOUR OWN STUFF HERE!
   WriteRegStr HKLM SOFTWARE\EClass\Builder\${MUI_VERSION} "Path" "$INSTDIR"
   SetOutPath "$INSTDIR"
-  File /r "..\3rdparty\win32\gre\*"
+  ;File /r "..\3rdparty\win32\gre\*"
   File /r "minipython\*"
   File "eclass_builder.exe"
   File "eclass_builder.exe.manifest"
@@ -53,10 +53,11 @@ Section "Program Files" SecCopyUI
   File /r "..\Greenstone"
   File /r "..\docs"
   File /r "..\icons"
-  File /r "..\installers"
+  ;File /r "..\installers"
   File /r "..\license"
   File /r "..\locale"
   File /r "..\cgi-bin"
+  File /r "..\web"
 
   SetOutPath "$INSTDIR\autorun"
   File "..\autorun\autorun.inf"
@@ -84,6 +85,7 @@ Section "Program Files" SecCopyUI
   SetOutPath "$INSTDIR\3rdparty\win32"
   File "C:\Python23\w9xpopen.exe"
   File "..\3rdparty\win32\pdftohtml.exe"
+  File /r "..\3rdparty\win32\Karrigell"
   File /r "..\3rdparty\win32\xlHtml"
   File /r "..\3rdparty\win32\wv"
   File /r "..\3rdparty\win32\unrtf"
