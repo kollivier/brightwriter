@@ -109,10 +109,13 @@ if os.name == "nt":
     #if the below file exists, then the dependency checking will copy it over
     #if not, we need to check the Windows system dir for it
     py_dll_name = "python%s.dll" % (py_version)
+    msvc_dlls = glob.glob(os.path.join(sys.prefix, "msvc*"))
+    for dll in msvc_dlls:
+        shutil.copyfile(dll, os.path.join(mpdir, os.path.basename(dll)))
+
     if not os.path.exists(os.path.join(sys.prefix, py_dll_name)):
         syspython = os.path.join(sysdir, py_dll_name)
         if os.path.exists(syspython):
-            print mpdir
             shutil.copyfile(syspython, os.path.join(mpdir, py_dll_name))
     else: 
         shutil.copyfile(os.path.join(sys.prefix, py_dll_name), os.path.join(mpdir, py_dll_name))
