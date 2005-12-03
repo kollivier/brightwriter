@@ -7,6 +7,7 @@
 import sys, os, string
 import settings
 import plugins
+import constants
 
 class LogFile:
 	def __init__(self, filename="log.txt"):
@@ -37,7 +38,7 @@ def getStdErrorMessage(type = "IOError", args={}):
 		elif args.has_key("filename"):
 			return _("There was a problem reading or writing the file %(filename)s. Please check that the file exists and that you have correct permissions to the file.") % {"filename":args["filename"]} 
 	elif type == "UnknownError":
-		return _("An unknown error has occurred. A traceback has been written to the 'errlog.txt' file within your program directory.")
+		return _("An unknown error has occurred.") + constants.errorInfoMsg
 
 def makeModuleName(text):
 	result = string.replace(text, "-", "_")
@@ -110,8 +111,9 @@ def AddJoustItems(nodes, level):
 
 def _GetFilename(filename):
 	extension = string.split(filename, ".")[-1]
-	publisher = plugins.GetPluginForExtension(extension).HTMLPublisher()
-	if publisher: 
+	plugin = plugins.GetPluginForExtension(extension)
+	if plugin:
+		publisher = plugin.HTMLPublisher() 
 		try:
 			filename = "pub/" + publisher.GetFilename(filename)
 		except: 
@@ -132,7 +134,10 @@ def getCurrentEncoding():
 	
 	return encoding
 	
-def makeUnicode(text, encoding):
+def makeUnicode(text, encoding=""):
+	if encoding == "":
+		encoding = getCurrentEncoding()
+
 	if isinstance(text, str):
 		return text.decode(encoding, 'replace')
 	else:
