@@ -3,6 +3,7 @@ from wxPython.wx import *
 
 class MyApp(wxApp):
 	def OnInit(self):
+		self.SetAppName("EClass.Builder")
 		import editor
 		self.frame = editor.MainFrame2(None, -1, "EClass.Builder")
 		self.frame.Show(True)
