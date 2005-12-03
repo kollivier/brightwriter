@@ -10,20 +10,20 @@ build = version.build
 mydir = os.getcwd()
 os.chdir("..")
 #Write the new build to version.py
-myfile = open("version.py", "r")
-data = myfile.read()
-myfile.close()
+#myfile = open("version.py", "r")
+#data = myfile.read()
+#myfile.close()
 
-myterm = re.compile("(build = )([0-9]*)", re.IGNORECASE|re.DOTALL)
-mymatch = myterm.match(data)
+#myterm = re.compile("(build = )([0-9]*)", re.IGNORECASE|re.DOTALL)
+#mymatch = myterm.match(data)
 
-data = myterm.sub("\\1" + `build`, data)
+#data = mymatch.sub("\\1" + `build`, data)
 
-myfile = open("version.py", "w")
-myfile.write(data)
-myfile.close()
+#myfile = open("version.py", "w")
+#myfile.write(data)
+#myfile.close()
 
-reload(version)
+#reload(version)
 
 #update the installer version number
 myfile = open(os.path.join("installer", "eclass-builder.nsi"), "r")
