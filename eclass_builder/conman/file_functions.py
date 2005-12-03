@@ -7,6 +7,8 @@ import sys
 import os	
 
 def CopyFiles(indir, outdir, recurse=0):
+	if not os.path.exists(outdir):
+		os.makedirs(outdir)
 	for item in os.listdir(indir):
 		if os.path.isfile(os.path.join(indir, item)):
 			CopyFile(item, indir, outdir)
