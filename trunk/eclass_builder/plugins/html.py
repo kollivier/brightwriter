@@ -89,8 +89,8 @@ ID_TEXT_SUB = wxNewId()
 ID_TEXT_CODE = wxNewId()
 ID_TEXT_CITATION = wxNewId()
 ID_TEXT_REMOVE_STYLES = wxNewId()
-
-log = utils.LogFile("errlog.txt")
+import errors
+log = errors.appErrorLog
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into
@@ -140,9 +140,10 @@ if __name__ != "__main__":
 			return filename
 
 		def GetData(self):
-			if os.path.exists(os.path.join(self.dir, string.replace(self.node.content.filename, "/", os.sep))):
+			filename = os.path.join(self.dir, string.replace(self.node.content.filename, "/", os.sep))
+			if os.path.exists(filename):
 				myfile = None
-				myfile = utils.openFile(os.path.join(self.dir, self.node.content.filename), 'r')
+				myfile = utils.openFile(filename, 'r')
 				
 				#if myfile:
 				myhtml = GetBody(myfile)
@@ -151,16 +152,14 @@ if __name__ != "__main__":
 				#	myhtml = ""
 			else:
 				myhtml = ""
-		
+
 			try: 
 				importer = HTMLImporter("", os.path.join(self.dir, "Text"), self.dir, myhtml)
 				myhtml2 = importer.CopyAndReplaceLinks()
 				myhtml = myhtml2
 			except:
 				global log
-				import traceback
-				if traceback.print_exc() != None:
-					log.write(traceback.print_exc())
+				log.write(_("Could not import linked files for '%(filename)s.") % {"filename": filename})
 
 			self.data['content'] = myhtml
 			#self.data['credit'] = ""
@@ -639,11 +638,9 @@ class EditorFrame (wxFrame):
 			self.Destroy()
 		except Exception, ex:
 			global log
-			import traceback
-			if traceback.print_exc() != None:
-				log.write(traceback.print_exc())
-				message = utils.getStdErrorMessage("UnknownError")
-				wxMessageBox(message, _("Unknown Error Occurred"), wxICON_ERROR)
+			message = utils.getStdErrorMessage("UnknownError")
+			log.write(message)
+			wxMessageBox(message, _("Unknown Error Occurred"), wxICON_ERROR)
 			
 	def OnRightClick(self, evt):
 		popupmenu = wxMenu()
@@ -989,6 +986,8 @@ class EditorFrame (wxFrame):
 				wxMessageBox(message, _("Unable to Save File"), wxICON_ERROR)
 		except IOError:
 			message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
+			global log
+			log.write(message)
 			wxMessageBox(message, _("Unable to Save File"), wxICON_ERROR)
 
 	def logEvt(self, name, event):
@@ -1535,25 +1534,17 @@ if __name__ != "__main__":
 			self.currentItem = currentItem
 	
 		def ShowModal(self):
-		
-			if not os.path.exists(os.path.join(self.parent.pub.directory, self.currentItem.content.filename)):
-				
-				self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
-				if 1: #self.currentItem.content.filename != "":
-					html = """
+			self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
+			if not os.path.exists(self.filename):
+				html = """
 	<html>
 	<head></head>
 	<body></body>
 	</html>
 	"""
-					file = utils.openFile(self.filename, "w")
-					file.write(html)
-					file.close()
-					#self.frame.mozilla.SavePage(self.filename, False)
-					self.frame.mozilla.LoadURL(self.filename)
-	
-			else:
-				self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
+				file = utils.openFile(self.filename, "w")
+				file.write(html)
+				file.close()
 
 			#until we get editing fixed...
 			use_builtin = False
