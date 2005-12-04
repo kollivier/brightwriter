@@ -25,7 +25,8 @@ from threading import *
 import traceback
 import sys
 
-log = utils.LogFile("errlog.txt")
+import errors
+log = errors.appErrorLog
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into
@@ -52,6 +53,8 @@ def CreateNewFile(name, filename):
 		file.SaveAsXML(filename)
 		return True
 	except:
+		global log
+		log.write(_("Could not create new file."))
 		return False
 		
 class EClassPage(plugins.PluginData):
@@ -117,7 +120,7 @@ class EClassPage(plugins.PluginData):
 			self.LoadDoc(doc)
 		except:
 			global log
-			log.write(traceback.print_exc())
+			log.write(_("Could not load EClass Page %(filename)s.") % {"filename":filename})
 			raise RuntimeError, `sys.exc_value.args`
 		return ""
 
@@ -175,7 +178,8 @@ class EClassPage(plugins.PluginData):
 					try:
 						myterm.LoadPage(term.getElementsByTagName("Page")[0])
 					except:
-						print "Could not load hotword page for", myterm.name
+						global log
+						log.write(_("Could not load hotword page for '%(name)s'.") % {"name":myterm.name})
 				else:
 					myterm.page = None
 	
@@ -199,7 +203,9 @@ class EClassPage(plugins.PluginData):
 		try:	
 			doc = FromXmlFile(self.filename)
 		except:
-			return "The EClass page file cannot be loaded from disk. The error message is: " + `sys.exc_value.args`
+			message = _("The EClass page file cannot be loaded from disk.")
+			global log
+			log.write(message)
 
 		if len(doc.getElementsByTagName("Terms")) > 0:
 			terms = []
@@ -293,7 +299,7 @@ class EClassPage(plugins.PluginData):
 		try:
 			myxml = """<?xml version="1.0"?>%s""" % (self.WriteDoc())
 		except:
-			message = _("There was an error updating the file " + filename + ". Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.")
+			message = _("There was an error updating the file '%(filename)s'. Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.") % {"filename": filename}
 			global log
 			log.write(message)
 			raise IOError, message
@@ -310,9 +316,6 @@ class EClassPage(plugins.PluginData):
 			myfile.close()
 		except:
 			message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
-			#message = _("There was an error writing the file " + filename + " to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file.")
-			import traceback
-			print `traceback.print_exc()`
 			global log
 			log.write(message)
 			raise IOError, message
@@ -606,6 +609,8 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				if wxPlatform == "__WXMSW__":
 					import win32api
 					myfilename = win32api.GetShortPathName(myfilename)
+
+				message = _("Unable to convert file %(filename)s") % {"filename": mypage.media.text}
 				try:
 					import converter
 					wxBeginBusyCursor()
@@ -613,14 +618,13 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 					thefilename = myconverter.ConvertFile(myfilename, "html", "ms_office")[0]
 					wxEndBusyCursor()
 					if thefilename == "":
-						wxMessageBox(_("Unable to convert file ") + mypage.media.text)
+						wxMessageBox(message)
 						return ""
-					myhtml = utils.openFile(thefilename, "rb").read()
+					myhtml = GetBody(utils.openFile(thefilename, "rb"))
 				except:
 					wxEndBusyCursor()
-					import traceback
 					global log
-					log.write(traceback.print_exc())
+					log.write(message)
 					return ""
 
 				myhtml = ImportFiles().ImportLinks(myhtml, os.path.join(os.path.dirname(thefilename)), self.dir)
@@ -637,6 +641,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			objtext = objtext + "</ul><hr>"
 
 		try:
+			objtext = utils.makeUnicode(objtext)
 			myhtml = self._AddMedia(mypage) + objtext + myhtml
 			
 		except UnicodeError:
@@ -675,7 +680,6 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				myfile.close()
 			except:
 				message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
-				#message = _("There was an error writing the file '%(filename)s' to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file.") % {"filename":filename}
 				global log
 				log.write(message)
 				raise IOError, message
@@ -803,7 +807,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		if len(mypage.media.powerpoint) > 0:
 			HTML = HTML + "<br><h3 align=\"center\">%s</h3>" % (presentHTML)
 		
-		return HTML
+		return utils.makeUnicode(HTML)
 
 	def _CreateHTMLShell(self, mypage, node, content, ishotword=False):
 		template = "default.tpl"
@@ -884,6 +888,8 @@ class PDFPublisher:
 				if wxPlatform == "__WXMSW__":
 					import win32api
 					myfilename = win32api.GetShortPathName(myfilename)
+
+				message = _("Unable to convert file %(filename)s") % {"filename":mypage.media.text}
 				try:
 					openofficedir = self.parent.settings["OpenOffice"]
 					if openofficedir != "" and os.path.exists(os.path.join(openofficedir, "program", "uno.py")):
@@ -895,13 +901,11 @@ class PDFPublisher:
 						myconverter = converter.DocConverter(self.parent)
 						thefilename = myconverter.ConvertFile(myfilename, "html")
 						if thefilename == "":
-							wxMessageBox(_("Unable to convert file %(filename)s") % {"filename":mypage.media.text})
+							wxMessageBox(message)
 						myfile = utils.openFile(thefilename, 'r')
 				except:
 					global log
-					import traceback
-					if traceback.print_exc() != None:
-						log.write(traceback.print_exc())
+					log.write(message)
 					myhtml = ""
 				
 			if myfile:
@@ -1057,7 +1061,8 @@ class wxSelectBox:
 				out.close()
 			except IOError:
 				message = _("EClass.Builder could not write the file '%(filename)s' to disk. Please check that '%(directory)s' exists and you have permissions to write to this folder, and that a read-only version of the file does not exist in this folder.") % {"filename":os.path.join(destdir, filename),"directory":destdir}
-				print message
+				global log
+				log.write(message)
 				if showgui:
 					wxMessageDialog(self, message, _("File Write Error."), wxOK).ShowModal()
 		self.parent.mainform.SetStatusText("")
@@ -1246,8 +1251,9 @@ class EditorDialog (wxDialog):
 					item.content.filename = self.filename
 				except RuntimeError, e:
 					global log
-					wxMessageDialog(parent, _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.CurrentDir, "EClass", self.filename), "error":str(e)}, _("Error loading page"), wxOK).ShowModal()
-					log.write(repr(e))
+					message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.CurrentDir, "EClass", self.filename), "error":str(e)}
+					wxMessageDialog(parent, message, _("Error loading page"), wxOK).ShowModal()
+					log.write(message)
 					del busy
 					return
 			else:
@@ -1256,9 +1262,10 @@ class EditorDialog (wxDialog):
 				try:
 					self.page.SaveAsXML(os.path.join(self.parent.CurrentDir, "EClass", myfilename))
 				except IOError, e:
-					import traceback
-					print `traceback.print_exc()`
-					wxMessageDialog(self, _("There was an error saving the EClass page '%(page)s'. The error message returned by the system is: %(error)s") % {"page":os.path.join(self.parent.CurrentDir, "EClass", myfilename), "error":str(e)}, _("File Write Error"), wxOK)
+					global log
+					message = _("There was an error saving the EClass page '%(page)s'. The error message returned by the system is: %(error)s") % {"page":os.path.join(self.parent.CurrentDir, "EClass", myfilename), "error":str(e)}
+					log.write(message)
+					wxMessageDialog(self, message, _("File Write Error"), wxOK)
 
 			self.page.name = item.content.metadata.name
 		else:
@@ -1529,7 +1536,10 @@ class EditorDialog (wxDialog):
 			file.write(html)
 			file.close()
 		except IOError: 
-			wxMessageDialog(self, _("Unable to create the file '%(filename)s'. Please make sure that this is a valid filename and try again.") % {"filename":filename}, _("File write error"), wxOK)
+			global log
+			message = _("Unable to create the file '%(filename)s'. Please make sure that this is a valid filename and try again.") % {"filename":filename}
+			log.write(message)
+			wxMessageDialog(self, message, _("File write error"), wxOK)
 
 	def btnNewFileClicked(self, event):
 		savefile = False
@@ -1693,12 +1703,14 @@ class EditorDialog (wxDialog):
 
 		if isinstance(self.item, conman.conman.ConNode):
 			if len(self.filename) > 0:
+				filename = os.path.join(self.parent.CurrentDir, "EClass", os.path.basename(self.filename))
 				try:
-					self.page.SaveAsXML(os.path.join(self.parent.CurrentDir, "EClass", os.path.basename(self.filename)),self.mainform.encoding)
+					self.page.SaveAsXML(filename,self.mainform.encoding)
 				except IOError, e:
-					import traceback
-					print `traceback.print_exc()`
-					wxMessageDialog(self, str(e), _("File Write Error"), wxOK).ShowModal()
+					global log
+					message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
+					log.write(message)
+					wxMessageDialog(self, message, _("File Write Error"), wxOK).ShowModal()
 					return
 			else:
 				myfilename = MakeFileName(os.path.join(self.parent.CurrentDir, "EClass"), self.page.name)
@@ -1718,8 +1730,10 @@ class EditorDialog (wxDialog):
 				del busy
 			except Exception, ex:
 				del busy
-				print "Error publishing page. Error message is: \n%s" % (traceback.print_exc())
-				wxMessageDialog(self, _("There was an error publishing the EClass Page to HTML. Please check to make sure you have sufficient disk space, have write permission to the 'pub' directory, and that the page does not contain any foreign characters."), _("Publishing Error")).ShowModal()
+				message = _("There was an error publishing the EClass Page to HTML. Please check to make sure you have sufficient disk space, have write permission to the 'pub' directory, and that the page does not contain any foreign characters.")
+				global log
+				log.write(message)
+				wxMessageDialog(self, message, _("Publishing Error")).ShowModal()
 			
 		self.EndModal(wxID_OK)
 

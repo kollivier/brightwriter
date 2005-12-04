@@ -25,7 +25,8 @@ from threading import *
 import traceback
 #from xml.dom.minidom import parse
 
-log = utils.LogFile("errlog.txt")
+import errors
+log = errors.appErrorLog
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into
@@ -264,7 +265,8 @@ class QuizPage(plugins.PluginData):
 			myxml = """<?xml version="1.0"?>%s""" % (self.WriteDoc())
 		except:
 			message = _("There was an error updating the file %(filename)s. Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.") % {"filename":filename}
-			print "Quiz Error: Unable to write XML data for " + filename + ". self.WriteDoc failed."
+			global log
+			log.write(message)
 			raise IOError, message
 		try:
 			import types
@@ -648,13 +650,17 @@ class EditorDialog(wxDialog):
 		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
 
 		if len(self.item.content.filename) > 0:	
+			filename = os.path.join(self.parent.CurrentDir, self.item.content.filename)
 			try:
-				if not os.path.exists(os.path.join(self.parent.CurrentDir, self.item.content.filename)):
-					self.quiz.SaveAsXML(os.path.join(self.parent.CurrentDir, self.item.content.filename))
+				if not os.path.exists(filename):
+					self.quiz.SaveAsXML(filename)
 	
-				self.quiz.LoadPage(os.path.join(self.parent.CurrentDir, self.item.content.filename))
-			except IOError, message:
-				wxMessageBox(message.args[0], _("Unable to create file."), wxICON_ERROR)
+				self.quiz.LoadPage(filename)
+			except IOError, msg:
+				message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": filename})
+				global log
+				log.write(message)
+				wxMessageBox(message, _("Unable to create file."), wxICON_ERROR)
 				return
 
 			for item in self.quiz.items:
@@ -702,6 +708,8 @@ class EditorDialog(wxDialog):
 			self.EndModal(wxID_OK)
 		except IOError:
 			message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
+			global log
+			log.write(message)
 			wxMessageBox(message, _("Cannot Save File"), wxICON_ERROR)
 
 	def btnAddClicked(self,event):
