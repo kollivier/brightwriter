@@ -154,15 +154,6 @@ def munge(string, pad):
 	return s
 
 #----------------------------- MainFrame Class ----------------------------------------------
-class MsgPopup(wxDialog):
-	def __init__(self, parent,message,accept):
-		wxDialog.__init__ (self, parent, -1, _("Message"), wxPoint(200,200),wxSize(200,80), wxCAPTION|wxDEFAULT_DIALOG_STYLE|wxCLIP_CHILDREN)
-		label=wxStaticText(self, -1, message, wxPoint(35,10))
-		if accept == 1:
-			self.btnOK = wxButton(self,-1,_("OK"))
-			EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.close)
-	def close(self,event):
-		self.Destroy()
 
 class MainFrame2(wxFrame): 
 	def __init__(self, parent, ID, title):
