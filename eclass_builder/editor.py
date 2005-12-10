@@ -202,45 +202,14 @@ class MainFrame2(wxFrame):
 		import errors
 		self.log = errors.appErrorLog
 
-		if wxPlatform == '__WXMSW__':
-			import _winreg as wreg
-			key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
-		
-		if wxPlatform == '__WXMSW__':
-			prefdir = ""
-			#Win98 doesn't have a Local AppData folder
-			#TODO: replace all this code with wxStandardPaths!
-			try:
-				prefdir = wreg.QueryValueEx(key,'Local AppData')[0]
-			except:
-				try:
-					prefdir = wreg.QueryValueEx(key,'AppData')[0]
-				except:
-					pass
-			if not os.path.exists(prefdir):
-				prefdir = self.AppDir
-			else:
-				if not os.path.exists(os.path.join(prefdir, "EClass")):
-					os.mkdir(os.path.join(prefdir, "EClass"))
-				prefdir = os.path.join(prefdir, "EClass")
-
-		elif wxPlatform == '__WXMAC__':
-			prefdir = os.path.join(os.path.expanduser("~"), "Library", "Preferences", "EClass")
-			if not os.path.exists(prefdir):
-				os.mkdir(prefdir)
-
-		else: #Assume we're UNIX-based
-			prefdir = os.path.join(os.path.expanduser("~"), ".eclass")
-			if not os.path.exists(prefdir):
-				os.mkdir(prefdir)
-
 		self.PrefDir = guiutils.getAppDataDir()
-		if os.path.exists(prefdir):
+		oldprefdir = guiutils.getOldAppDataDir()
+		if os.path.exists(oldprefdir) and not oldprefdir == self.PrefDir:
 			try:
-				files.CopyFiles(prefdir, self.PrefDir, 1)
-				shutil.rmtree(prefdir)
+				files.CopyFiles(oldprefdir, self.PrefDir, 1)
+				shutil.rmtree(oldprefdir)
 			except:
-				self.PrefDir = prefdir
+				#self.PrefDir = oldprefdir
 				self.log.write(_("Error moving preferences."))
 
 		if os.path.exists(os.path.join(self.PrefDir, "settings.xml")):
@@ -251,17 +220,9 @@ class MainFrame2(wxFrame):
 		contactsdir = os.path.join(self.PrefDir, "Contacts")
 		if not os.path.exists(contactsdir):
 			os.mkdir(contactsdir)
-
-		self.langdir = "en"
-		if self.settings["Language"] == "English":
-			self.langdir = "en"
-		elif self.settings["Language"] == "Espanol":
-			self.langdir = "es"
-		elif self.settings["Language"] == "Francais":
-			self.langdir = "fr"
 		
-		if self.settings["Language"] != "":
-			self.LoadLanguage()
+		self.LoadLanguage()
+
 		#self.templates = {_("Default"): "default.tpl"}
 
 		#check settings and if blank, apply defaults
@@ -270,23 +231,7 @@ class MainFrame2(wxFrame):
 		htmleditor = self.settings["HTMLEditor"]
 
 		if coursefolder == "":
-			if wxPlatform == '__WXMSW__':
-				try:
-					my_documents_dir = wreg.QueryValueEx(key,'Personal')[0] 
-					key.Close() 
-					coursefolder = os.path.join(my_documents_dir, "EClass Projects")
-				except:
-					key.Close()
-				
-			elif wxPlatform == '__WXMAC__':
-				coursefolder = os.path.join(os.path.expanduser("~"),"Documents","EClass Projects")
-			else:
-				coursefolder = os.path.join(os.path.expanduser("~"), "eclass_projects")
-
-			if not os.path.exists(coursefolder):
-				os.mkdir(coursefolder)
-		
-			self.settings["CourseFolder"] = coursefolder
+			self.settings["CourseFolder"] = guiutils.getEClassProjectsDir()
 
 		if gsdlfolder == "":
 			if wxPlatform == '__WXMSW__':
@@ -591,12 +536,14 @@ class MainFrame2(wxFrame):
 		evt.Skip()
 
 	def LoadLanguage(self):
+		self.langdir = "en"
 		if self.settings["Language"] == "English":
-			lang_dict["en"].install()
+			self.langdir = "en"
 		elif self.settings["Language"] == "Espanol":
-			lang_dict["es"].install()
+			self.langdir = "es"
 		elif self.settings["Language"] == "Francais":
-			lang_dict["fr"].install()
+			self.langdir = "fr"
+		lang_dict[self.langdir].install()
 
 	def OnActivate(self, evt):
 		pass #if self.CurrentItem:

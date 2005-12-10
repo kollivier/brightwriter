@@ -62,3 +62,66 @@ def getAppDataDir():
 			os.mkdir(dir)
 	
 	return dir
+
+def getOldAppDataDir():
+	"""
+	This function contains the old logic for finding the preferences directory. It is still 
+	in place so that any old preferences can be moved to the data dir returned by StandardPaths.
+	"""
+	if wxPlatform == '__WXMSW__':
+		import _winreg as wreg
+		key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
+		prefdir = ""
+		#Win98 doesn't have a Local AppData folder
+		#TODO: replace all this code with wxStandardPaths!
+		try:
+			prefdir = wreg.QueryValueEx(key,'Local AppData')[0]
+		except:
+			try:
+				prefdir = wreg.QueryValueEx(key,'AppData')[0]
+			except:
+				pass
+		if not os.path.exists(prefdir):
+			prefdir = self.AppDir
+		else:
+			if not os.path.exists(os.path.join(prefdir, "EClass")):
+				os.mkdir(os.path.join(prefdir, "EClass"))
+			prefdir = os.path.join(prefdir, "EClass")
+
+	elif wxPlatform == '__WXMAC__':
+		prefdir = os.path.join(os.path.expanduser("~"), "Library", "Preferences", "EClass")
+		if not os.path.exists(prefdir):
+			os.mkdir(prefdir)
+
+	else: #Assume we're UNIX-based
+		prefdir = os.path.join(os.path.expanduser("~"), ".eclass")
+		if not os.path.exists(prefdir):
+			os.mkdir(prefdir)
+
+def getDocumentsDir():
+	docsfolder = ""
+	if wxPlatform == '__WXMSW__':
+    	try:
+    		import _winreg as wreg
+    		key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
+    		my_documents_dir = wreg.QueryValueEx(key,'Personal')[0] 
+    		key.Close() 
+    		docsfolder = os.path.join(my_documents_dir)
+    	except:
+    		key.Close()
+				
+	elif wxPlatform == '__WXMAC__':
+		docsfolder = os.path.join(os.path.expanduser("~"),"Documents")
+	else:
+		docsfolder = os.path.expanduser("~")
+
+	if not os.path.exists(docsfolder):
+		os.mkdir(docsfolder)
+
+	return docsfolder
+
+def getEClassProjectsDir():
+	if wxPlatform in ['__WXMAC__', '__WXMSW__']:
+		return os.path.join(getDocumentsDir(), "EClass Projects")
+	else:
+		return os.path.join(getDocumentsDir(), "eclass_projects")
