@@ -10,12 +10,21 @@ def LoadPlugins():
 			exec("import plugins." + plugin)
 			exec("pluginList.append(plugins." + plugin + ")") 
 
+def GetPluginForFilename(filename):
+	fileext = os.path.splitext(filename)[1][1:]
+	return GetPluginForExtension(fileext)
+
 def GetPluginForExtension(fileext):
 	global pluginList
 	for plugin in pluginList:
 		if fileext in plugin.plugin_info["Extension"]:
 			return plugin
-		
+
+	# As a default, return the file plugin	
+	for plugin in pluginList:
+		if plugin.plugin_info["Name"] == "file":
+			return plugin
+
 	return None
 
 def GetPlugin(name):
