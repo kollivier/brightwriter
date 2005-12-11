@@ -190,7 +190,6 @@ class MainFrame2(wxFrame):
 
 		self.PrefDir = self.AppDir
 		self.DragItem = None
-		self.IsCtrlDown = False
 		self.CutNode = None
 		self.CopyNode = None
 		self.ftppass = ""
@@ -204,6 +203,8 @@ class MainFrame2(wxFrame):
 
 		self.PrefDir = guiutils.getAppDataDir()
 		oldprefdir = guiutils.getOldAppDataDir()
+
+		# Move old AppDataDir if it exists.
 		if os.path.exists(oldprefdir) and not oldprefdir == self.PrefDir:
 			try:
 				files.CopyFiles(oldprefdir, self.PrefDir, 1)
@@ -222,8 +223,6 @@ class MainFrame2(wxFrame):
 			os.mkdir(contactsdir)
 		
 		self.LoadLanguage()
-
-		#self.templates = {_("Default"): "default.tpl"}
 
 		#check settings and if blank, apply defaults
 		coursefolder = self.settings["CourseFolder"]
@@ -272,6 +271,7 @@ class MainFrame2(wxFrame):
 			wxMessageBox(message)
 
 		self.statusBar = self.CreateStatusBar()
+
 		if self.Platform == "win32":
 			self.SetIcon(wxIcon(os.path.join(self.AppDir, "icons", "eclass_builder.ico"), wxBITMAP_TYPE_ICO))
 		#load icons
@@ -314,7 +314,7 @@ class MainFrame2(wxFrame):
 		self.toolbar.AddSimpleTool(ID_PUBLISH_PDF, icnPublishPDF, _("Publish to PDF"), _("Publish to PDF"))
 		self.toolbar.AddSeparator()
 		self.toolbar.AddSimpleTool(ID_HELP, icnHelp, _("View Help"), _("View Help File"))
-		#self.toolbar.AddSimpleTool(ID_BUG, icnBug, _("Send Feedback"), _("Send Feedback"))
+
 		if wxPlatform != "__WXMAC__":
 			self.toolbar.SetToolBitmapSize(wxSize(16,16))
 		self.toolbar.Realize()
@@ -496,9 +496,6 @@ class MainFrame2(wxFrame):
 		EVT_MENU(self, ID_REFRESH_THEME, self.OnRefreshTheme)
 		EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
 		EVT_MENU(self, ID_ERRORLOG, self.OnErrorLog)
-		#EVT_ACTIVATE(self, self.OnActivate)
-		#if wxPlatform == "__WXMAC__":
-		#	EVT_UPDATE_UI(self, self.GetId(), self.OnActivate)
 		EVT_MENU(self, ID_CONTACTS, self.OnContacts)
 
 		EVT_CLOSE(self, self.TimeToQuit)
@@ -520,7 +517,7 @@ class MainFrame2(wxFrame):
 		if self.settings["LastOpened"] != "" and os.path.exists(self.settings["LastOpened"]):
 			self.LoadEClass(self.settings["LastOpened"])
 			
-		elif not self.settings["ShowStartup"] == "False":
+		if not self.settings["ShowStartup"] == "False":
 			dlgStartup = StartupDialog(self)
 			result = dlgStartup.ShowModal()
 			dlgStartup.Destroy()
@@ -544,19 +541,10 @@ class MainFrame2(wxFrame):
 		elif self.settings["Language"] == "Francais":
 			self.langdir = "fr"
 		lang_dict[self.langdir].install()
-
-	def OnActivate(self, evt):
-		pass #if self.CurrentItem:
-			#self.Preview()
-		#self.menuBar.Refresh()
 	
 	def OnErrorLog(self, evt):
 		import errors
 		errors.ErrorLogViewer(self).ShowModal() 		
-
-	def OnKeyPressed(self, evt):
-		self.IsCtrlDown = evt.ControlDown()
-		evt.Skip()		
 
 	def OnCut(self, event):
 		sel_item = self.wxTree.GetSelection()
@@ -570,7 +558,7 @@ class MainFrame2(wxFrame):
 		self.CopyNode = sel_item
 		if self.CutNode:
 			self.wxTree.SetItemTextColour(self.CutNode, wxBLACK)
-			self.CutNode = None #copy automatically cancels a paste operation
+			self.CutNode = None #copy automatically cancels a cut operation
 
 	def OnPaste(self, event):
 		dirtyNodes = []
@@ -766,6 +754,7 @@ class MainFrame2(wxFrame):
 			msg = wxMessageDialog(self, _("You need to specify a folder to store your course packages. To do so, select Options->Preferences from the main menu."),_("Course Folder not specified"), wxOK)
 			msg.ShowModal()
 			msg.Destroy()
+			return
 		else:
 			self.pub = conman.ConMan()
 			result = NewPubDialog(self).ShowModal()
@@ -811,6 +800,7 @@ class MainFrame2(wxFrame):
 		self.Destroy()	
 
 	def PublishToWeb(self, event):
+		# Turn off search features before uploading.
 		value = self.pub.settings["SearchEnabled"]
 		self.pub.settings["SearchEnabled"] = ""
 		self.UpdateTextIndex()
@@ -837,11 +827,6 @@ class MainFrame2(wxFrame):
 				wxExecute(command)
 		else:
 			wxMessageBox(_("Publishing complete. A PDF version of your EClass can be found at %(pdffile)s.") % {"pdffile": myPublisher.pdffile}, _("Publishing Complete."))
-				#if wxPlatform == "__WXMSW__":
-				#	win32api.ShellExecute(0, "open",myPublisher.pdffile, "", myPublisher.pdfdir, 1)
-				#elif wxPlatform == "__WXMAC__":
-				#	result = os.popen("open " + string.replace(myPublisher.pdffile, " ", "\ "))
-				#	result.close()
 
 	def PublishToIMS(self, event):
 		import zipfile
@@ -893,8 +878,6 @@ class MainFrame2(wxFrame):
 		if not self.pub.settings["SearchEnabled"] == "":
 			searchEnabled = self.pub.settings["SearchEnabled"]
 		if int(searchEnabled) == 1:
-			gsdl = self.settings["GSDL"]
-			collect = os.path.join(gsdl, "collect")
 			if self.pub.settings["SearchProgram"] == "Lucene":
 				engine = indexer.SearchEngine(self, os.path.join(settings.CurrentDir, "index.lucene"), os.path.join(settings.CurrentDir, "File"))
 				maxfiles = engine.numFiles
@@ -902,16 +885,12 @@ class MainFrame2(wxFrame):
 				dialog = wxProgressDialog(_("Updating Index"), _("Preparing to update Index...") + "                             ", maxfiles, style=wxPD_CAN_ABORT | wxPD_APP_MODAL) 
 				engine.IndexFiles(self.pub.nodes[0], dialog)
 
-				#Threading doesn't work here for some reason. The dialog sometimes does not update itself
-				#until it is activated, like by having a wxMessageBox call before it.
-				#class PyLuceneThread(threading.Thread):
-				#	def run(self):
-				#		return PyLucene.attachCurrentThread(super(PyLuceneThread, self))
-
 				dialog.Destroy()
 				dialog = None
 
 			elif self.pub.settings["SearchProgram"] == "Greenstone":
+				gsdl = self.settings["GSDL"]
+				collect = os.path.join(gsdl, "collect")
 				if wxPlatform == "__WXMSW__":	
 					wxYield()
 					if True:
@@ -920,20 +899,16 @@ class MainFrame2(wxFrame):
 							eclassdir = os.path.join(collect, self.pub.pubid)
 						else:
 							message = _("You must enter a publication ID to enable the search function. You can specify a publication ID by selecting 'File->Project Settings' from the menu.")
-							dialog = wxMessageDialog(self, message, _("Publication ID Not Set"), wxOK)
-							dialog.ShowModal()
-							dialog.Destroy()
+							dialog = wxMessageDialog(self, message, _("Publication ID Not Set"), wxOK).ShowModal()
 							return
 						try:
 							cddialog.UpdateIndex(gsdl, eclassdir)
 						except:	
 							message = _("There was an unexpected error publishing your course. For more details, check the Error Viewer from the 'Tools->Error Viewer' menu.")
 							self.log.write(message)
-							dialog = wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK)
-							dialog.ShowModal()
-							dialog.Destroy()
+							dialog = wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK).ShowModal()
 							cddialog.Destroy()
-						result = self.PublishEClass(self.pub.pubid)
+						result = self.UpdateEClassDataFiles(self.pub.pubid)
 				else:
 					dialog = wxMessageDialog(self, _("Sorry, building a Greenstone CD from EClass is not yet supported on this platform."), _("Cannot build Greenstone collection."), wxOK)
 					dialog.ShowModal()
@@ -941,38 +916,24 @@ class MainFrame2(wxFrame):
 
 	def PublishToCD(self,event):
 		self.UpdateContents()
-		self.PublishEClass(self.pub.pubid)
+		self.UpdateEClassDataFiles(self.pub.pubid)
 		self.UpdateTextIndex()
-			#if result == True:
+		self.CopyCDFiles()
 		message = _("A window will now appear with all files that must be published to CD-ROM. Start your CD-Recording program and copy all files in this window to that program, and your CD will be ready for burning.")
 		dialog = wxMessageDialog(self, message, _("Export to CD Finished"), wxOK)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-				#Open the explorer/finder window	
+		#Open the explorer/finder window
+		folder = self.CurrentDir
 		if wxPlatform == "__WXMSW__":
 			if self.pub.settings["SearchProgram"] == "Greenstone" and self.pub.pubid != "":
-				cddir = os.path.join(self.settings["GSDL"], "tmp", "exported_collections")
-				win32api.ShellExecute(0, "open", cddir, "", cddir, 1)
-			else:
-				win32api.ShellExecute(0, "open",self.CurrentDir, "", self.CurrentDir, 1)
-		elif wxPlatform == "__WXMAC__":
-			result = os.popen("open " + string.replace(self.CurrentDir, " ", "\ "))
-			result.close()
-										
-	def PublishIt(self, event):
-		self.PublishEClass()
-		import webbrowser
-		webbrowser.open_new("file://" + os.path.join(self.CurrentDir, "index.htm"))	
+				folder = os.path.join(self.settings["GSDL"], "tmp", "exported_collections")
 		
-	def PublishEClass(self, pubid=""):
-		result = False
-		busy = wxBusyCursor()
-		wxYield()
+		guiutils.openFolderInGUI(folder)
+
+	def CopyCDFiles():
 		try:
-			self.CreateDocumancerBook()
-			self.CreateDevHelpBook()
-			utils.CreateJoustJavascript(self.pub)
 			#cleanup after old EClass versions
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.pyd"))
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.dll"))
@@ -1005,6 +966,25 @@ class MainFrame2(wxFrame):
 				files.CopyFile("style.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
 			elif self.pub.settings["SearchProgram"] == "Lucene":
 				pass
+		except:
+			message = _("Unable to copy CD support files to your publication directory. For more details, check the Error Viewer from the 'Tools->Error Viewer' menu.")
+			self.log.write(message)
+			wxMessageDialog(self, message, _("Could Not Copy CD Files"), wxOK).ShowModal()
+			return False
+										
+	def PublishIt(self, event):
+		self.UpdateEClassDataFiles()
+		import webbrowser
+		webbrowser.open_new("file://" + os.path.join(self.CurrentDir, "index.htm"))	
+		
+	def UpdateEClassDataFiles(self, pubid=""):
+		result = False
+		busy = wxBusyCursor()
+		wxYield()
+		try:
+			self.CreateDocumancerBook()
+			self.CreateDevHelpBook()
+			utils.CreateJoustJavascript(self.pub)
 
 		except:
 			message = _("There was an unexpected error publishing your course. For more details, check the Error Viewer from the 'Tools->Error Viewer' menu.")
@@ -1210,34 +1190,31 @@ class MainFrame2(wxFrame):
 			self.Update()
 			self.isDirty = True
 
+	def PublishPage(self, page):
+		if page != None:
+			publisher = self.GetPublisher(page.content.filename)
+			if publisher:
+				publisher.Publish(self, page, self.CurrentDir)
+
 	def Update(self, myitem = None):
 		if myitem == None:
 			myitem = self.CurrentItem
 		self.UpdateContents()
-		publisher = self.GetPublisher(myitem.content.filename)
-		if publisher: 
-			try:
-				publisher.Publish(self, myitem, self.CurrentDir)
-				backnode = myitem.back()
-				if backnode != None:
-					publisher = self.GetPublisher(backnode.content.filename)
-					if publisher:
-						publisher.Publish(self, backnode, self.CurrentDir)
-				nextnode = myitem.next()
-				if nextnode != None:
-					publisher = self.GetPublisher(nextnode.content.filename)
-					if publisher:
-						publisher.Publish(self, nextnode, self.CurrentDir)
-				self.Preview()
-				self.dirtyNodes.append(myitem)
-				self.dirtyNodes.append(backnode)
-				self.dirtyNodes.append(nextnode)
-				if string.lower(self.pub.settings["UploadOnSave"]) == "yes":
-					self.UploadPage()
-			except:
-				message = _("Error updating page.") + constants.errorInfoMsg
-				self.log.write(message)
-				wxMessageBox(message)
+		try:
+			self.PublishPage(myitem)
+			self.PublishPage(myitem.back())
+			self.PublishPage(myitem.next())
+
+			self.Preview()
+			self.dirtyNodes.append(myitem)
+			self.dirtyNodes.append(backnode)
+			self.dirtyNodes.append(nextnode)
+			if string.lower(self.pub.settings["UploadOnSave"]) == "yes":
+				self.UploadPage()
+		except:
+			message = _("Error updating page.") + constants.errorInfoMsg
+			self.log.write(message)
+			wxMessageBox(message)
 
 	def UploadPage(self, event = None):
 		ftpfiles = []
@@ -1286,11 +1263,9 @@ class MainFrame2(wxFrame):
 		self.statusBar.SetStatusText("")
 
 	def GetPublisher(self, filename):
-		extension = string.split(filename, ".")[-1]
 		publisher = None
-		for plugin in plugins.pluginList:
-			if extension in plugin.plugin_info["Extension"]:
-				publisher = eval("plugins." + plugin.plugin_info["Name"] + ".HTMLPublisher()")
+		plugin = plugins.GetPluginForFilename(filename)
+		publisher = plugin.HTMLPublisher()
 		return publisher
 
 	def CreateCourseLink(self, event):
@@ -1320,28 +1295,23 @@ class MainFrame2(wxFrame):
 		f.Destroy()
 	
 	def EditFile(self, event):
-		#if not os.path.exists(os.path.join(self.pub.directory, "EClass", self.CurrentItem.content.filename)) and not os.path.exists(os.path.join(self.pub.directory, "Text", self.CurrentItem.content.filename)):
-		#	wxMessageDialog(self,_("The file cannot be found. Please ensure that the file exists and is located in the EClass subdirectory of your project."), _("File Not Found"), wxOK).ShowModal()
-		#	return
 		try:
 			if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
 				isplugin = False
 				result = wxID_CANCEL
-				for plugin in plugins.pluginList:
-					extension = string.split(self.CurrentItem.content.filename, ".")
-					extension = extension[-1]
-					if extension in plugin.plugin_info["Extension"]:
-						isplugin = True
-						exec("mydialog = plugins." + plugin.plugin_info["Name"] + ".EditorDialog(self, self.CurrentItem)")
-						result = mydialog.ShowModal()
+				plugin = plugins.GetPluginForFilename(self.CurrentItem.content.filename)
+				if plugin:
+					mydialog = plugin.EditorDialog(self, self.CurrentItem)
+					result = mydialog.ShowModal()
 	
-				if not isplugin:
-					result = 0
-					import guiutils
-					myFilename = os.path.join(settings.CurrentDir, self.CurrentItem.content.filename)
-					started_app = guiutils.sendCommandToApplication(myFilename, "open")
-					if not started_app:
-						result = PagePropertiesDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
+				# This should never happen, but leave it in as a fallback
+				#if not plugin:
+				#	result = 0
+				#	import guiutils
+				#	myFilename = os.path.join(settings.CurrentDir, self.CurrentItem.content.filename)
+				#	started_app = guiutils.sendCommandToApplication(myFilename, "open")
+				#	if not started_app:
+				#		result = PagePropertiesDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
 	
 				if result == wxID_OK:
 					self.Update()
@@ -1513,46 +1483,29 @@ class MainFrame2(wxFrame):
 			self.menuBar.EnableTop(pageMenu, False)
 		event.Skip()
 
-	def Preview(self, myfilename=""):
-		filename = ""
-		if myfilename != "":
-			filename = os.path.join(self.CurrentItem.dir, "pub", os.path.basename(myfilename))
-		if 0: #string.find(self.CurrentItem.content.filename, ".htm") != -1:
-			filename = self.CurrentItem.content.filename
-			filename = os.path.join(self.CurrentItem.dir, "Text", filename)
-		else:
-			for plugin in plugins.pluginList:
-				extension = string.split(self.CurrentItem.content.filename, ".")[-1]
-				print "extension = " + `extension`
-				if extension in plugin.plugin_info["Extension"]:
-					publisher = eval("plugins." + plugin.plugin_info["Name"] + ".HTMLPublisher()")
-					filename = publisher.GetFilename(self.CurrentItem.content.filename)
+	def Preview(self):
+		filename = self.CurrentItem.content.filename
+		plugin = plugins.GetPluginForFilename(filename)
+		publisher = plugin.HTMLPublisher()
+		filename = publisher.GetFilename(filename)
 					
-					#we need to do this again because we use external HTML editor
-					if extension in ["htm", "html"]:
-						publisher.Publish(self, self.CurrentItem, self.CurrentItem.dir)
-					filename = os.path.join(self.CurrentItem.dir, "pub", os.path.basename(filename))
-					
-		if filename == "":
-			#no publisher could be found, just pass a link to the file
-			#it should be in the File subdirectory
-			filename = self.CurrentItem.content.filename
-			filename = os.path.join(self.CurrentItem.dir, filename)
+		# Still needed? we need to do this again because we use external HTML editor
+		#if extension in ["htm", "html"]:
+		#	publisher.Publish(self, self.CurrentItem, self.CurrentItem.dir)
+		#filename = os.path.join(self.CurrentItem.dir, "pub", os.path.basename(filename))
 			
 		#we shouldn't preview files that EClass can't view
-		ok_fileTypes = ["htm", "html"]
+		ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
 		if sys.platform == "win32":
 			ok_fileTypes.append("pdf")
 
 		if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
-			print "Filename is: " + filename.encode(utils.getCurrentEncoding())
 			for browser in self.browsers:
 				self.browsers[browser].LoadPage(filename)
 		else:
 			#self.status.SetStatusText("Cannot find file: "+ filename)
 			for browser in self.browsers:
-				self.browsers[browser].SetPage(utils.createHTMLPageWithBody("<p>The page " + os.path.basename(filename) + " cannot be previewed inside EClass. Double-click on the file to view or edit it.</p>"))
-		
+				self.browsers[browser].SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the file to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
 
 	def BindTowxTree(self, root):
 		wxBeginBusyCursor()
