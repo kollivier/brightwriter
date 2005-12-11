@@ -125,3 +125,10 @@ def getEClassProjectsDir():
 		return os.path.join(getDocumentsDir(), "EClass Projects")
 	else:
 		return os.path.join(getDocumentsDir(), "eclass_projects")
+
+def openFolderInGUI(folder):
+	if wxPlatform == "__WXMSW__":
+		win32api.ShellExecute(0, "open", folder, "", folder, 1)
+	elif wxPlatform == "__WXMAC__":
+		result = os.popen("open " + string.replace(folder, " ", "\ "))
+		result.close()
