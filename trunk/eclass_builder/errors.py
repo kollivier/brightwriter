@@ -83,7 +83,7 @@ class ErrorLogViewer(wxDialog):
 		global appErrorLog
 		appErrorLog.clear()
 		self.LoadErrorLog()
-
+		self.details.SetValue("")
 
 	def LoadErrorLog(self):
 		global appErrorLog
@@ -96,7 +96,8 @@ class ErrorLogViewer(wxDialog):
 				self.errList.append(errArray)
 				index = self.errList.index(errArray)
 				self.listCtrl.InsertStringItem(self.itemCount, errArray[0])
-				self.listCtrl.SetStringItem(self.itemCount, 1, errArray[1])
+				if len(errArray) > 1:
+					self.listCtrl.SetStringItem(self.itemCount, 1, errArray[1])
 				self.listCtrl.SetItemData(self.itemCount, index)
 				self.itemCount += 1
 
