@@ -24,7 +24,7 @@ class ProjectPropsDialog(wxDialog):
 		panel = self.PublishPanel()
 		self.notebook.AddPage(panel, _("Publish"))
 		panel = self.FTPPanel()
-		self.notebook.AddPage(panel, "FTP")
+		self.notebook.AddPage(panel, _("FTP"))
 		if wxPlatform == '__WXMAC__':
 			self.notebook.SetSelection(0)
 
