@@ -6,10 +6,10 @@ def TextToXMLChar(mytext):
 	Last Updated: 9/24/02
 	Description: Validates text and converts special characters to their XML character equivalents.
 	"""
-	mytext = string.replace(mytext, "&", "&amp;")
-	#mytext = string.replace(mytext, "\"", "&quot;")
-	mytext = string.replace(mytext, "<", "&lt;")
-	mytext = string.replace(mytext, ">", "&gt;")
+	mytext = string.replace(mytext, u"&", "&amp;")
+	#mytext = string.replace(mytext, u"\"", "&quot;")
+	mytext = string.replace(mytext, u"<", "&lt;")
+	mytext = string.replace(mytext, u">", "&gt;")
 	return mytext
 
 def XMLCharToText(mytext):
@@ -18,10 +18,10 @@ def XMLCharToText(mytext):
 	Last Updated: 9/24/02
 	Description: Validates XML character text and converts XML special characters to their text equivalent.
 	"""
-	mytext = string.replace(mytext, "&amp;", "&")
-	mytext = string.replace(mytext, "&quot;", "\"")
-	mytext = string.replace(mytext, "&lt;", "<")
-	mytext = string.replace(mytext, "&gt;", ">")
+	mytext = string.replace(mytext, "&amp;", u"&")
+	mytext = string.replace(mytext, "&quot;", u"\"")
+	mytext = string.replace(mytext, "&lt;", u"<")
+	mytext = string.replace(mytext, "&gt;", u">")
 	return mytext
 
 def XMLAttrToText(mytext):
@@ -30,10 +30,10 @@ def XMLAttrToText(mytext):
 	Last Updated: 9/24/02
 	Description: Validates XML attribute text and converts special characters to their text equivalents
 	"""
-	mytext = string.replace(mytext, "&amp;", "&")
-	mytext = string.replace(mytext, "&quot;", '"')
-	mytext = string.replace(mytext, "&lt;", "<")
-	mytext = string.replace(mytext, "&gt;", ">")
+	mytext = string.replace(mytext, "&amp;", u"&")
+	mytext = string.replace(mytext, "&quot;", u'"')
+	mytext = string.replace(mytext, "&lt;", u"<")
+	mytext = string.replace(mytext, "&gt;", u">")
 	return mytext
 
 def TextToXMLAttr(mytext):
@@ -42,25 +42,25 @@ def TextToXMLAttr(mytext):
 	Last Updated: 9/24/02
 	Description: Validates text and converts special characters to their XML attribute equivalents
 	"""
-	mytext = string.replace(mytext, "&", "&amp;")
-	mytext = string.replace(mytext, '"', "&quot;")
-	mytext = string.replace(mytext, "<", "&lt;")
-	mytext = string.replace(mytext, ">", "&gt;")
+	mytext = string.replace(mytext, u"&", "&amp;")
+	mytext = string.replace(mytext, u'"', "&quot;")
+	mytext = string.replace(mytext, u"<", "&lt;")
+	mytext = string.replace(mytext, u">", "&gt;")
 	return mytext
 
 def TextToHTMLChar(mytext):
 	mytext = TextToXMLChar(mytext)
-	mytext = string.replace(mytext, "©", "&copy;")
-	#mytext = string.replace(mytext, "¨", "&reg;")
-	#mytext = string.replace(mytext, "ª", "&8482;")
-	mytext = string.replace(mytext, "£", "&pound;")
-	#mytext = string.replace(mytext, "´", "&yen;")
-	#mytext = string.replace(mytext, "Û", "&8364;")
-	#mytext = string.replace(mytext, "Ñ", "&8212;")
-	mytext = string.replace(mytext, "Ò", "&8220;")
-	mytext = string.replace(mytext, "Ó", "&8221;")
-	mytext = string.replace(mytext, "\"", "&quot;")
-	#mytext = string.replace(mytext, "\'", "\\'")
+	mytext = string.replace(mytext, u"©", "&copy;")
+	#mytext = string.replace(mytext, u"¨", "&reg;")
+	#mytext = string.replace(mytext, u"ª", "&8482;")
+	mytext = string.replace(mytext, u"£", "&pound;")
+	#mytext = string.replace(mytext, u"´", "&yen;")
+	#mytext = string.replace(mytext, u"Û", "&8364;")
+	#mytext = string.replace(mytext, u"Ñ", "&8212;")
+	mytext = string.replace(mytext, u"Ò", "&8220;")
+	mytext = string.replace(mytext, u"Ó", "&8221;")
+	mytext = string.replace(mytext, u"\"", "&quot;")
+	#mytext = string.replace(mytext, u"\'", "\\'")
 	return mytext
 
 def MakeFileName(mydir, mytext):

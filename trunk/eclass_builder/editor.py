@@ -205,7 +205,7 @@ class MainFrame2(wxFrame):
 		oldprefdir = guiutils.getOldAppDataDir()
 
 		# Move old AppDataDir if it exists.
-		if os.path.exists(oldprefdir) and not oldprefdir == self.PrefDir:
+		if oldprefdir and os.path.exists(oldprefdir) and not oldprefdir == self.PrefDir:
 			try:
 				files.CopyFiles(oldprefdir, self.PrefDir, 1)
 				shutil.rmtree(oldprefdir)
@@ -506,7 +506,6 @@ class MainFrame2(wxFrame):
 		EVT_LEFT_DOWN(self.wxTree, self.OnTreeLeftClick)
 		EVT_LEFT_DCLICK(self.wxTree, self.OnTreeDoubleClick)
 		#EVT_LIST_DELETE_ITEM(self, self.List.GetId(), self.OnDeleteItem)
-		EVT_KEY_DOWN(self.wxTree, self.OnKeyPressed)
 
 		#EVT_SIZE(self.splitter1, self.SplitterSize)
 		self.Show()
@@ -761,7 +760,7 @@ class MainFrame2(wxFrame):
 			if result == wxID_OK:
 				self.isNewCourse = True
 				self.wxTree.DeleteAllItems()
-				self.CurrentFilename = os.path.join(self.CurrentDir, "imsmanifest.xml")
+				self.CurrentFilename = os.path.join(settings.CurrentDir, "imsmanifest.xml")
 				self.CurrentItem = self.pub.NewPub(self.pub.name, "English", self.CurrentDir)
 				self.isDirty = True
 				global eclassdirs
@@ -915,6 +914,18 @@ class MainFrame2(wxFrame):
 					dialog.Destroy()
 
 	def PublishToCD(self,event):
+		folder = self.CurrentDir
+		if self.pub.settings["CDSaveDir"] == "":
+			result = wxMessageDialog(self, _("You need to specify a directory in which to store the CD files for burning.\nWould you like to do so now?"), _("Specify CD Save Directory?"), wxYES_NO).ShowModal()
+			if result == wxID_YES:
+				dialog = wxDirDialog(self, _("Choose a folder to store CD files."), style=wxDD_NEW_DIR_BUTTON)
+				if dialog.ShowModal() == wxID_OK:
+					folder = self.pub.settings["CDSaveDir"] = dialog.GetPath()
+			else:
+				return
+		else:
+			folder = self.pub.settings["CDSaveDir"]
+
 		self.UpdateContents()
 		self.UpdateEClassDataFiles(self.pub.pubid)
 		self.UpdateTextIndex()
@@ -925,39 +936,40 @@ class MainFrame2(wxFrame):
 		dialog.Destroy()
 
 		#Open the explorer/finder window
-		folder = self.CurrentDir
 		if wxPlatform == "__WXMSW__":
 			if self.pub.settings["SearchProgram"] == "Greenstone" and self.pub.pubid != "":
 				folder = os.path.join(self.settings["GSDL"], "tmp", "exported_collections")
 		
 		guiutils.openFolderInGUI(folder)
 
-	def CopyCDFiles():
+	def CopyCDFiles(self):
 		try:
 			#cleanup after old EClass versions
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.pyd"))
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.dll"))
 			files.DeleteFiles(os.path.join(self.CurrentDir, "*.exe"))
 
+			pubdir = self.CurrentDir
+			if self.pub.settings["CDSaveDir"] != "":
+				pubdir = self.pub.settings["CDSaveDir"]
+
+			if pubdir != self.CurrentDir:
+				files.CopyFiles(self.CurrentDir, pubdir, 1)
+
 			# copy the server program
-			if sys.platform == "win32" and self.pub.settings["ServerProgram"] == "Documancer" and os.path.exists(os.path.join(self.CurrentDir, "installers")):
-				files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
-				files.CopyFile("loader.exe", os.path.join(self.AppDir, "autorun"),self.CurrentDir)
-				installerdir = os.path.join(self.CurrentDir, "installers")
+			if sys.platform == "win32" and self.pub.settings["ServerProgram"] == "Documancer":
+				files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),pubdir)
+				files.CopyFile("loader.exe", os.path.join(self.AppDir, "autorun"),pubdir)
+				installerdir = os.path.join(pubdir, "installers")
 				if not os.path.exists(installerdir):
 					os.mkdir(installerdir)
-				files.CopyFile("documancer-0.2.6-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(self.CurrentDir, "installers"))
+				files.CopyFile("documancer-0.2.6-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(pubdir, "installers"))
 			elif sys.platform == "win32":
-				files.CopyFiles(os.path.join(self.AppDir, "cgi-bin"), os.path.join(self.CurrentDir, "cgi-bin"))
-				files.CopyFiles(os.path.join(self.ThirdPartyDir, "Karrigell"), self.CurrentDir)
-				files.CopyFiles(os.path.join(self.AppDir, "web"), self.CurrentDir, 1)
+				files.CopyFiles(os.path.join(self.AppDir, "cgi-bin"), os.path.join(pubdir, "cgi-bin"))
+				files.CopyFiles(os.path.join(self.ThirdPartyDir, "Karrigell"), pubdir)
+				#files.CopyFiles(os.path.join(self.AppDir, "web"), pubdir, 1)
 
-			useswishe = False
-			if self.pub.settings["SearchProgram"] == "Swish-e":
-				useswishe = True
-				if os.path.exists(os.path.join(self.CurrentDir, "Karrigell.ini")):
-					os.remove(os.path.join(self.CurrentDir, "Karrigell.ini"))
-			elif self.pub.settings["SearchProgram"] == "Greenstone":
+			if self.pub.settings["SearchProgram"] == "Greenstone":
 				cddir = os.path.join(self.settings["GSDL"], "tmp", "exported_collections")
 				if not os.path.exists(os.path.join(cddir, "gsdl", "eclass")):
 					os.mkdir(os.path.join(cddir, "gsdl", "eclass"))
@@ -1207,8 +1219,8 @@ class MainFrame2(wxFrame):
 
 			self.Preview()
 			self.dirtyNodes.append(myitem)
-			self.dirtyNodes.append(backnode)
-			self.dirtyNodes.append(nextnode)
+			self.dirtyNodes.append(myitem.back())
+			self.dirtyNodes.append(myitem.next())
 			if string.lower(self.pub.settings["UploadOnSave"]) == "yes":
 				self.UploadPage()
 		except:
@@ -1321,8 +1333,7 @@ class MainFrame2(wxFrame):
 			message = _("There was an unknown error when attempting to start the page editor.")
 			self.log.write(message)
 			wxMessageBox(message + constants.errorInfoMsg)
-	
-	
+		
 	def OnOpen(self,event):
 		"""
 		Handler for File-Open
@@ -1354,6 +1365,7 @@ class MainFrame2(wxFrame):
 			return 
 		
 		settings.CurrentDir = self.CurrentDir = os.path.dirname(filename)
+		print "Current Dir is " + settings.CurrentDir
 		#if sys.platform == "win32":
 		#	settings.CurrentDir = self.CurrentDir = win32api.GetShortPathName(settings.CurrentDir)
 		self.wxTree.DeleteAllItems()
@@ -1363,7 +1375,7 @@ class MainFrame2(wxFrame):
 		if result != "":
 			wxMessageDialog(self, result, _("Error loading XML file."), wxOK).ShowModal()
 		else:
-			self.pub.directory = self.CurrentDir
+			self.pub.directory = settings.CurrentDir
 			global eclassdirs
 			for dir in eclassdirs:
 				subdir = os.path.join(self.pub.directory, dir)
@@ -1386,8 +1398,8 @@ class MainFrame2(wxFrame):
 				wxMessageBox(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
 
 			self.isDirty = False
-			if os.path.exists(os.path.join(self.CurrentDir, "ftppass.txt")):
-				file = utils.openFile(os.path.join(self.CurrentDir, "ftppass.txt"), "r")
+			if os.path.exists(os.path.join(settings.CurrentDir, "ftppass.txt")):
+				file = utils.openFile(os.path.join(settings.CurrentDir, "ftppass.txt"), "r")
 				self.ftppass = munge(file.read(), 'foobar')
 				file.close()	 
 			self.Preview()
@@ -1492,7 +1504,7 @@ class MainFrame2(wxFrame):
 		# Still needed? we need to do this again because we use external HTML editor
 		#if extension in ["htm", "html"]:
 		#	publisher.Publish(self, self.CurrentItem, self.CurrentItem.dir)
-		#filename = os.path.join(self.CurrentItem.dir, "pub", os.path.basename(filename))
+		filename = os.path.join(settings.CurrentDir, "pub", os.path.basename(filename))
 			
 		#we shouldn't preview files that EClass can't view
 		ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
@@ -1692,17 +1704,3 @@ class wxTreeDropTarget(wxPyDropTarget):
 				#olditem
 		#print text
 		return wxDragCopy
-
-
-def MakeFolder(mytext):
-	mytext = string.replace(mytext, "\\", "")
-	mytext = string.replace(mytext, "/", "")
-	mytext = string.replace(mytext, ":", "")
-	mytext = string.replace(mytext, "*", "")
-	mytext = string.replace(mytext, "?", "")
-	mytext = string.replace(mytext, "\"", "")
-	mytext = string.replace(mytext, "<", "")
-	mytext = string.replace(mytext, ">", "")
-	mytext = string.replace(mytext, "|", "")
-	mytext = mytext 
-	return mytext

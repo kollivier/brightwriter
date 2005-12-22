@@ -1,6 +1,7 @@
 import string, sys, os
 from wxPython.wx import *
 import utils
+import plugins
 
 class PagePropertiesDialog (wxDialog):
 	"""
@@ -49,7 +50,6 @@ class PagePropertiesDialog (wxDialog):
 			filename = self.content.filename
 			self.txtExistingFile.SetValue(filename)
 
-		EVT_BUTTON(self.btnSelectFile, self.btnSelectFile.GetId(), self.btnSelectFileClicked)
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)	
 
 	def GeneralPanel(self):
@@ -101,6 +101,8 @@ class PagePropertiesDialog (wxDialog):
    		mysizer.Add(self.gridSizer, 1, wxEXPAND)
 		mypanel.SetSizer(mysizer)
 		mypanel.SetAutoLayout(True)
+
+		EVT_BUTTON(self.btnSelectFile, self.btnSelectFile.GetId(), self.btnSelectFileClicked)
 
 		return mypanel
 

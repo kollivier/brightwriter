@@ -68,6 +68,7 @@ def getOldAppDataDir():
 	This function contains the old logic for finding the preferences directory. It is still 
 	in place so that any old preferences can be moved to the data dir returned by StandardPaths.
 	"""
+	prefdir = ""
 	if wxPlatform == '__WXMSW__':
 		import _winreg as wreg
 		key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
@@ -90,25 +91,23 @@ def getOldAppDataDir():
 
 	elif wxPlatform == '__WXMAC__':
 		prefdir = os.path.join(os.path.expanduser("~"), "Library", "Preferences", "EClass")
-		if not os.path.exists(prefdir):
-			os.mkdir(prefdir)
 
 	else: #Assume we're UNIX-based
 		prefdir = os.path.join(os.path.expanduser("~"), ".eclass")
-		if not os.path.exists(prefdir):
-			os.mkdir(prefdir)
+
+	return prefdir
 
 def getDocumentsDir():
 	docsfolder = ""
 	if wxPlatform == '__WXMSW__':
-    	try:
-    		import _winreg as wreg
-    		key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
-    		my_documents_dir = wreg.QueryValueEx(key,'Personal')[0] 
-    		key.Close() 
-    		docsfolder = os.path.join(my_documents_dir)
-    	except:
-    		key.Close()
+		try:
+			import _winreg as wreg
+			key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
+			my_documents_dir = wreg.QueryValueEx(key,'Personal')[0] 
+			key.Close() 
+			docsfolder = os.path.join(my_documents_dir)
+		except:
+			key.Close()
 				
 	elif wxPlatform == '__WXMAC__':
 		docsfolder = os.path.join(os.path.expanduser("~"),"Documents")

@@ -89,19 +89,35 @@ class ProjectPropsDialog(wxDialog):
 		if self.parent.pub.settings["ShortenFilenames"] == "Yes":
 			self.chkFilename.SetValue(1)
 
-		self.serverOptions = [_("EClass Web Server (Karrigell)"), _("Documancer")]
+		icnFolder = wxBitmap(os.path.join(self.parent.AppDir, "icons", "Open.gif"), wxBITMAP_TYPE_GIF)
+
+		self.lblCDDir = wxStaticText(panel, -1, _("Directory to save CD files."))
+		self.btnSelectFile = wxBitmapButton(panel, -1, icnFolder, size=wxSize(20, 18))
+		self.txtCDDir = wxTextCtrl(panel, -1, "", size=wxSize(160, -1))		
+
+		#self.serverOptions = [_("EClass Web Server (Karrigell)"), _("Documancer")]
 		#self.radboxServer = wxRadioBox(panel, -1, _("Specify EClass Viewer Software"), wxDefaultPosition, wxDefaultSize, self.serverOptions)
+		
 		self.pubSizer = wxBoxSizer(wxVERTICAL)
 		self.pubSizer.Add(self.chkFilename, 0, wxALL, 4)
 		#self.pubSizer.Add(self.radboxServer, 0, wxALL, 4)
+		self.pubSizer.Add(self.lblCDDir, 0, wxALL, 4)
+
+   		self.smallsizer = wxBoxSizer(wxHORIZONTAL)
+   		self.smallsizer.Add(self.txtCDDir, 1, wxEXPAND|wxALL, 4)
+   		self.smallsizer.Add(self.btnSelectFile, 0, wxALIGN_CENTER|wxALL, 4)
+
+		self.pubSizer.Add(self.smallsizer, 0, wxEXPAND|wxALL, 4)
+
+		if self.parent.pub.settings["CDSaveDir"] != "":
+			self.txtCDDir.SetValue(self.parent.pub.settings["CDSaveDir"])
 
 		panel.SetAutoLayout(True)
 		panel.SetSizer(self.pubSizer)
 		self.pubSizer.Fit(panel)
 		panel.Layout()
 
-		#EVT_CHOICE(self, self.cmbTheme.GetId(), self.OnThemeChanged)
-		#EVT_BUTTON(self, self.btnUpdateTheme.GetId(), self.btnUpdateThemeClicked)
+		EVT_BUTTON(self.btnSelectFile, self.btnSelectFile.GetId(), self.btnSelectFileClicked)
 
 		return panel
 
@@ -212,6 +228,12 @@ class ProjectPropsDialog(wxDialog):
 		self.txtpubid.Enable(value)
 		self.lblpubidhelp.Enable(value)
 		self.searchchanged = True
+
+	def btnSelectFileClicked(self, event):
+		dialog = wxDirDialog(self, _("Choose a folder to store CD files."), style=wxDD_NEW_DIR_BUTTON)
+		if dialog.ShowModal() == wxID_OK:
+			self.txtCDDir.SetValue(dialog.GetPath())
+		dialog.Destroy()
 		
 	def btnOKClicked(self, event):
 		self.parent.pub.name = self.txtname.GetValue()
@@ -255,6 +277,8 @@ class ProjectPropsDialog(wxDialog):
 			self.parent.pub.settings["UploadOnSave"] = "Yes"
 		else:
 			self.parent.pub.settings["UploadOnSave"] = "No"
+
+		self.parent.pub.settings["CDSaveDir"] = self.txtCDDir.GetValue()
 
 		self.parent.pub.pubid = self.txtpubid.GetValue()
 		self.parent.isDirty = True

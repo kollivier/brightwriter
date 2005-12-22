@@ -11,6 +11,7 @@ class ThemeList:
 		self.LoadThemes()
 
 	def LoadThemes(self):
+		self.themes = {}
 		for item in os.listdir(self.themedir):
 			if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and string.find(item, "themes.py") == -1 and not item[0] == ".":
 				theme = string.replace(item, ".py", "")

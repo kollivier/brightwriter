@@ -5,7 +5,6 @@
 <TITLE><!-- INSERT CLASS TITLE HERE --></TITLE>
 
 
-
 <!--
 
 Joust Outliner Version 2.5.4
@@ -17,7 +16,6 @@ This code may be freely copied and distributed provided that it is accompanied b
 header.  For full details of the Joust license, as well as documentation and help, go 
 
 to http://www.ivanpeters.com/.
-
 
 
 Do not modify anything between here and the "End of Joust" marker unless you know what you
@@ -1043,7 +1041,6 @@ function MenuItemClicked(entryNo, fromToggle) {
 	var b = theBrowser;
 
 
-
 	this.selectEntry(entryNo);
 
 	if (this.wizardInstalled) {w.menuItemClicked(entryNo);}
@@ -1703,13 +1700,11 @@ function defaultResizeHandler() {
 var theBrowser = new browserInfo;
 
 
-
 var jsErrorMsg = 'A JavaScript error has occurred on this page!  Please note down the ';
 
 jsErrorMsg += 'following information and pass it on to the Webmaster.';
 
 if (theBrowser.canOnError) {self.onerror = defOnError;}
-
 
 
 var theMenu = new Menu;
@@ -1741,7 +1736,6 @@ smSecurityMsg += 'change modes while a page from another server is being display
 smSecurityMsg += 'The default home page for this site will be displayed instead.';
 
 
-
 var floatingMode = (getMode() == 'Floating');
 
 var myOpener = null;
@@ -1769,9 +1763,7 @@ if (floatingMode == true) {
 }
 
 
-
 //	############################   End of Joust   ############################
-
 
 
 function initOutlineIcons(imgStore) {
@@ -1809,13 +1801,11 @@ function initOutlineIcons(imgStore) {
 	imgStore.add('iconJoinBottom', ip + 'joinbottom.gif', 18, 16);
 
 
-
 	//Add folder and document images to the imgStore.
 
 	imgStore.add('Folder', ip + 'folderclosed.gif', 18, 16);
 
 	imgStore.add('Book', ip + 'bookclosed.gif', 17,16);
-
 
 
 	var di = 'Graphics/menu/';
@@ -1837,7 +1827,6 @@ function initOutlineIcons(imgStore) {
 	}
 
 }
-
 
 
 function initialise() {
@@ -1905,15 +1894,12 @@ function initialise() {
 }
 
 
-
 self.defaultStatus = "";	
-
 
 
 //-->
 
 </script>
-
 
 
 </HEAD>
@@ -1945,7 +1931,6 @@ if (self.name == 'menu') {
 			thePage = pageFromSearch(value, theMenu, true);
 	}
 
-
 	
 
 	if (floatingMode) {
@@ -1961,25 +1946,17 @@ if (self.name == 'menu') {
 	} else {
 
 		self.document.writeln('<frameset cols="100%" rows="*" onResize="defaultResizeHandler();">');
-
-		//self.document.writeln('<frame name="title" src="title.htm" scrolling="no" noresize marginwidth="0" marginheight="0" APPLICATION="yes">');
-
 		self.document.writeln('<frameset cols="230,*" rows="100%">');
-
 		self.document.writeln('<frameset cols="100%" rows="*,48">');
-
 		self.document.writeln('<frame name="menu" src="menu.htm" scrolling="auto" marginwidth="1" marginheight="1" APPLICATION="yes">');
-
 		self.document.writeln('<frame name="menuCntrl" src="menucntrl.htm" scrolling="no" marginwidth="0" marginheight="0" APPLICATION="yes">');
-
 		self.document.writeln('</frameset>');
-
+		self.document.writeln('<frameset cols="100%" rows="*, 48">');
 		self.document.writeln('<frame name="text" src="' + thePage +'" scrolling="auto" APPLICATION="yes">');
-
+		self.document.writeln('<frame name="navigation" src="navbuttons.htm" scrolling="auto" APPLICATION="yes">');
 		self.document.writeln('</frameset>');
-
 		self.document.writeln('</frameset>');
-
+		self.document.writeln('</frameset>');
 	}
 
 }
@@ -2007,11 +1984,9 @@ Explorer version 3.0</A> or <A HREF="http://www.netscape.com/comprod/mirror/">Ne
 version 2.0</A>, you'll have a much more pleasant experience navigating around this site.</P>
 
 
-
 <P><I><B>Opera Users:</B> Although Opera 3.0 supports JavaScript, there is a bug in their implementation 
 
 which prevents the menu system on this site from working.  Opera 3.2 fixes the problem.</I></P>
-
 
 
 <P><I><B>Note:</B> There is a know bug in Netscape Navigator version 4.0.x which will cause you to see this message
@@ -2019,13 +1994,10 @@ which prevents the menu system on this site from working.  Opera 3.2 fixes the p
 if you have the local cache turned off.</I></P>
 
 
-
 <P>If you have any problems with this site, please contact the Webmaster.</P>
 
 
-
 <P>Click <a HREF="default.htm">here</a> to see the non-JavaScript version of this site.</P>
-
 
 
 <A HREF="robots.htm"> </A>
@@ -2033,7 +2005,6 @@ if you have the local cache turned off.</I></P>
 </BODY>
 
 </NOSCRIPT>
-
 
 
 </HTML>

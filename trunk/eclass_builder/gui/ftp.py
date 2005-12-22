@@ -3,10 +3,15 @@ from wxPython.wx import *
 from wxPython.lib import newevent
 import ftplib
 import traceback
+import settings
+import utils
 
-(UpdateFTPDialogEvent, EVT_UPDATE_FTPDIALOG) = newevent.NewEvent()
+(UploadFileProgressEvent, EVT_UPLOAD_FILE_PROGRESS) = newevent.NewEvent()
+(UploadFileFinishedEvent, EVT_UPLOAD_FILE_FINISHED) = newevent.NewEvent()
+(UploadFileStartedEvent, EVT_UPLOAD_FILE_STARTED) = newevent.NewEvent()
 (UploadFinishedEvent, EVT_UPLOAD_FINISHED) = newevent.NewEvent()
 (UploadCanceledEvent, EVT_UPLOAD_CANCELED) = newevent.NewEvent()
+(UploadDirCreatedEvent, EVT_UPLOAD_DIR_CREATED) = newevent.NewEvent()
 
 #--------------------------- FTP Upload Dialog Class --------------------------------------
 class FTPUpload:
@@ -46,14 +51,14 @@ class FTPUpload:
 		self.host = ftplib.FTP(self.FTPSite, self.Username, self.Password)
 		self.host.set_pasv(self.usePasv)
 		self.host.sock.setblocking(1)
-		self.host.set_debuglevel(2)
+		#self.host.set_debuglevel(2)
 		self.host.sock.settimeout(30)
 		return True
 
 	def GetUploadDirName(self, indir):
 		#first, strip out any hardcoded path reference
 		parentdir = settings.CurrentDir
-		print "Parentdir: " + parentdir
+		#print "Parentdir: " + parentdir
 
 		mydir = string.replace(indir, parentdir, "")
 		if wxPlatform == "__WXMSW__":
@@ -64,7 +69,7 @@ class FTPUpload:
 		fulldir = self.Directory + mydir
 		if not fulldir[0] == "/":
 			fulldir = "/" + fulldir
-		print "Fulldir: " + fulldir
+		#print "Fulldir: " + fulldir
 		return fulldir
 
 	def GetUploadDirs(self, filelist):
@@ -110,8 +115,30 @@ class FTPUpload:
 		if not ftpdir == "" and not ftpdir[-1] == "/":
 			ftpdir = ftpdir + "/"
 		self.cwd(ftpdir)
+		print "len(dirlist) = " + `len(self.dirlist)`
 		for item in self.dirlist:
 			self.cwd(item) #create the folders if they don't already exist
+
+	def ValidateUploadDir(self, dir):
+		if not dir[-1] == "/":
+			dir = dir + "/"
+		if not dir[0] == "/":
+			dir = "/" + dir
+
+		return dir
+
+	def CreateDestFilename(self, sourcefile):
+		destdir = self.ValidateUploadDir(self.Directory)
+		inputfile = sourcefile.replace(settings.CurrentDir, "")
+
+		adir, aname = os.path.split(inputfile)
+		if adir != "":					
+			destdir = destdir + string.replace(adir, "\\", "/")
+			if not destdir[-1] == "/":
+				destdir = destdir + "/"
+		
+		outputfile = destdir + aname
+		return outputfile
 
 	def UploadFiles(self):
 		import time
@@ -120,14 +147,13 @@ class FTPUpload:
 			return
 		if not self.StartFTP():
 			return
+		#self.dirlist = []
 		self.CreateDirectories()
 
 		#lastdir = self.Directory #this should have gotten created already
 		if self.Directory == "" or not self.Directory[-1] == "/":
 			self.Directory = self.Directory + "/"
-		if self.isDialog:
-			if wxPlatform != "__WXMAC__":
-				self.projGauge.SetRange(len(self.filelist))
+
 		myfile = None
 		for item in self.filelist[:]:
 			try:
@@ -138,69 +164,17 @@ class FTPUpload:
 						wxPostEvent(self, evt)
 					return
 
-				myitem = settings.CurrentDir + "/" + item
-				myfile = utils.openFile(myitem, "rb")
-				bytes = os.path.getsize(myitem)
-				dir = self.Directory
-				if not dir[-1] == "/":
-					dir = dir + "/"
-				if not dir[0] == "/":
-					dir = "/" + dir
-				if string.find(item, "/") != -1:
-					mydir, myitem = os.path.split(item)					
-					dir = dir + string.replace(mydir, "\\", "/")
-					if not dir[-1] == "/":
-						dir = dir + "/"
-				else:
-					myitem = item
-		
-				self.host.voidcmd('TYPE I')
-				self.mysocket = self.host.transfercmd('STOR ' + dir + myitem)
-				self.filepercent = 0
+				sourcename = settings.CurrentDir + os.sep + item
+				destname = self.CreateDestFilename(item)	
+				success = self.UploadFile(sourcename, destname)
 
-				evt = UpdateFTPDialogEvent(filename = myitem, projpercent = self.projpercent, filepercent = self.filepercent)
-				if self.isDialog:
-					wxPostEvent(self, evt)
-
-				onepercent = bytes/100
-				if onepercent == 0:
-					onepercent = 1
-				if self.mysocket:
-					self.mysocket.setblocking(1)
-					self.mysocket.settimeout(30)
-					if self.isDialog:
-						self.txtProgress.SetLabel(_("Current File: ") + myitem)
-					elif self.parent:
-						self.parent.SetStatusText(_("Uploading file %(file)s...") % {"file": myitem})
-					bytesuploaded = 0
-					while 1:
-						block = myfile.read(4096)
-						if not block or self.stopupload:
-							break
-
-						resp = self.mysocket.sendall(block)
-						#time.sleep(0.001)
-						bytesuploaded = bytesuploaded + 4096
-						if self.isDialog:
-							self.filepercent = bytesuploaded/onepercent
-							evt = UpdateFTPDialogEvent(filename = myitem, projpercent = self.projpercent, filepercent = self.filepercent)
-							if self.isDialog:
-								wxPostEvent(self, evt)
-						elif self.parent:
-							self.parent.SetStatusText(_("Uploaded %(current)d of %(total)d bytes for file %(filename)s." % {"current":bytesuploaded, "total":bytes, "filename":myitem})) 
-						wxYield()
-					self.mysocket.close()
-					self.mysocket = None
-					self.host.voidresp()
+				if success:
 					myindex = self.filelist.index(item)
 					self.filelist.remove(item)
 
-				myfile.close()
-
-				self.projpercent = self.projpercent + 1
-				evt = UpdateFTPDialogEvent(filename = myitem, projpercent = self.projpercent, filepercent = self.filepercent)
-				if self.isDialog:
-					wxPostEvent(self, evt)
+				#evt = UploadFileProgressEvent(filename = destname, filepercent = self.filepercent)
+				#if self.isDialog:
+				#	wxPostEvent(self, evt)
 
 			except ftplib.all_errors, e:
 				if myfile:
@@ -211,6 +185,66 @@ class FTPUpload:
 		evt = UploadFinishedEvent()
 		if self.isDialog:
 			wxPostEvent(self, evt)
+
+	def UploadFile(self, sourcename, destname):
+		success = False
+		myfile = utils.openFile(sourcename, "rb")
+		bytes = os.path.getsize(sourcename)
+
+		self.host.voidcmd('TYPE I')
+		self.mysocket = self.host.transfercmd('STOR ' + destname)
+		self.filepercent = 0
+
+		evt = UploadFileStartedEvent(filename = destname)
+		if self.isDialog:
+			wxPostEvent(self, evt)
+
+		evt = UploadFileProgressEvent(filename = destname, filepercent = self.filepercent)
+		if self.isDialog:
+			wxPostEvent(self, evt)
+
+		onepercent = bytes/100
+		if onepercent == 0:
+			onepercent = 1
+		if self.mysocket:
+			self.mysocket.setblocking(1)
+			self.mysocket.settimeout(30)
+
+			bytesuploaded = 0
+			while 1:
+				block = myfile.read(4096)
+				if not block:
+					break
+
+				if self.stopupload:
+					success = False
+					break
+
+				resp = self.mysocket.sendall(block)
+				#time.sleep(0.001)
+				bytesuploaded = bytesuploaded + len(block)
+				if self.isDialog:
+					self.filepercent = int((float(bytesuploaded)/float(bytes))*100.0)
+					evt = UploadFileProgressEvent(filename = destname, filepercent = self.filepercent)
+					if self.isDialog:
+						wxPostEvent(self, evt)
+				elif self.parent:
+					self.parent.SetStatusText(_("Uploaded %(current)d of %(total)d bytes for file %(filename)s." % {"current":bytesuploaded, "total":bytes, "filename":destname})) 
+				wxYield()
+
+			self.mysocket.close()
+			self.mysocket = None
+
+		if bytesuploaded >= bytes:
+			success = True
+			evt = UploadFileFinishedEvent(filename = destname)
+			if self.isDialog:
+				wxPostEvent(self, evt)
+
+		myfile.close()
+		self.host.voidresp()
+		
+		return success
 
 	def getFtpErrorMessage(self, e):
 		""" Given an ftplib error object, generate some common error messages. """
@@ -237,12 +271,16 @@ class FTPUpload:
 	def cwd(self, item):
 		myitem = item
 		try:
-			if not string.rfind(myitem, "/") == 0:
+			if myitem[-1] == "/":
 				myitem = myitem + "/"
+			print "directory is: " + myitem
 			self.host.cwd(myitem)
 		except:
 			try:
 				self.host.mkd(myitem)
+				evt = UploadDirCreatedEvent(dirname = myitem)
+				if self.isDialog:
+					wxPostEvent(self, evt)
 				self.host.cwd(myitem)
 			except ftplib.all_errors, e:
 				raise
@@ -251,7 +289,7 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 	def __init__(self, parent):
 		FTPUpload.__init__(self, parent)
 		self.isDialog = True
-		wxDialog.__init__ (self, parent, -1, _("Publish to web site"), wxPoint(100,100),wxSize(250,260), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		wxDialog.__init__ (self, parent, -1, _("Publish to web site"), wxPoint(100,100),wxSize(600,260), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
 		height = 20
 		if wxPlatform == "__WXMAC__":
 			height = 25
@@ -261,6 +299,9 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		self.closewindow = False
 		self.filelist = []
 		self.folderlist = []
+		self.currentFileNo = 0
+		self.filesUploaded = 0
+		self.itemCount = 0
 		self.projpercent = 0
 		self.filepercent = 0
 		#lines up labels and textboxes
@@ -275,9 +316,13 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		self.txtPassword = wxTextCtrl(self, -1, self.parent.ftppass, style=wxTE_PASSWORD)
 		self.lblDirectory = wxStaticText(self, -1, _("Directory"))
 		self.txtDirectory = wxTextCtrl(self, -1, self.parent.pub.settings["FTPDirectory"])
-		self.txtProgress = wxStaticText(self, -1, "Current File:") #wxTextCtrl(self, -1, "", style=wxTE_MULTILINE|wxTE_READONLY)
-		self.fileGauge = wxGauge(self, -1, 1, style=wxGA_PROGRESSBAR)
-		self.fileGauge.SetRange(100)
+		#self.txtProgress = wxStaticText(self, -1, "Current File:") #wxTextCtrl(self, -1, "", style=wxTE_MULTILINE|wxTE_READONLY)
+		#self.fileGauge = wxGauge(self, -1, 1, style=wxGA_PROGRESSBAR)
+		#self.fileGauge.SetRange(100)
+		self.fileList = wxListCtrl(self, -1, size=(320,120), style=wxLC_REPORT)
+		self.fileList.InsertColumn(0, _("File"), width=200)
+		self.fileList.InsertColumn(1, _("Status"), width=200)
+
 		self.txtTotalProg = wxStaticText(self, -1, "Total Progress:")
 		self.projGauge = wxGauge(self, -1, 1, style=wxGA_PROGRESSBAR)
 		self.projGauge.SetRange(100)
@@ -304,11 +349,11 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		self.gridsizer.Add((1, 1), 0, wxALL, 4)
 		self.gridsizer.Add(self.chkPassive, 0, wxALIGN_RIGHT|wxALL, 4)
 		self.mysizer.Add(self.gridsizer, 3, wxEXPAND|wxALL)
-		self.mysizer.Add(self.txtProgress, 0, wxEXPAND|wxALL, 4)
-		self.mysizer.Add(self.fileGauge, 0, wxEXPAND|wxALL, 4)
+		#self.mysizer.Add(self.txtProgress, 0, wxEXPAND|wxALL, 4)
+		#self.mysizer.Add(self.fileGauge, 0, wxEXPAND|wxALL, 4)
 		self.mysizer.Add(self.txtTotalProg, 0, wxEXPAND|wxALL, 4)
 		self.mysizer.Add(self.projGauge, 0, wxEXPAND|wxALL, 4)
-		#self.mysizer.Add(self.lstFiles, 2, wxEXPAND|wxALL, 4)
+		self.mysizer.Add(self.fileList, 0, wxEXPAND|wxALL, 4)
 		
 		self.buttonSizer = wxBoxSizer(wxHORIZONTAL)
 		self.buttonSizer.Add((100, height), 1, wxEXPAND)
@@ -318,67 +363,82 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 
 		self.SetAutoLayout(True)
 		self.SetSizerAndFit(self.mysizer)
-		self.mytimer = wxTimer(self)
+		#self.mytimer = wxTimer(self)
 		self.Layout()
 
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
-		EVT_BUTTON(self.btnCancel, self.btnCancel.GetId(), self.btnCancelClicked)
+		EVT_BUTTON(self.btnCancel, self.btnCancel.GetId(), self.OnClose)
 		#EVT_TIMER(self, self.mytimer.GetId(), self.OnHang)
 		EVT_CLOSE(self, self.OnClose)
-		EVT_UPDATE_FTPDIALOG(self, self.OnUpdateDialog)
+		EVT_UPLOAD_FILE_STARTED(self, self.OnNewFile)
+		EVT_UPLOAD_FILE_PROGRESS(self, self.OnFileProgress)
+		EVT_UPLOAD_FILE_FINISHED(self, self.OnFileUploaded)
 		EVT_UPLOAD_FINISHED(self, self.OnUploadFinished)
 		EVT_UPLOAD_CANCELED(self, self.OnUploadCanceled)
+		EVT_UPLOAD_DIR_CREATED(self, self.OnDirCreated)
 		
+	def OnDirCreated(self, event):
+		self.txtTotalProg.SetLabel(_("Created Directory: ") + event.dirname)
+
 	def OnUploadFinished(self, event):
-		self.mytimer.Stop()
-		self.txtProgress.SetLabel(_("Finished uploading.\n"))
 		self.parent.SetStatusText(_("Finished uploading."))
-		self.fileGauge.SetValue(0)
 		self.projGauge.SetValue(0)
-		self.btnCancel.SetLabel(_("Close"))
-		self.btnOK.Enable(True)
+		self.btnOK.SetLabel(_("Upload"))
+
+	def OnFileUploaded(self, event):
+		self.fileList.DeleteItem(0)
+		self.filesUploaded += 1
+		filePercentUploaded = int((float(self.filesUploaded)/float(self.itemCount))* 100.0)
+		print "FilesUploaded: %s, TotalFiles: %s" % (self.filesUploaded, self.itemCount)
+		print "FilePercentUploaded is: " + `filePercentUploaded`
+		self.projGauge.SetValue(filePercentUploaded)
+
+	def OnNewFile(self, event):
+		self.fileList.SetStringItem(0, 1, _("Uploading..."))
 		
 	def OnUploadCanceled(self, event):
-		self.mytimer.Stop()
-		self.txtProgress.SetLabel(_("Disconnected. Upload cancelled by user.\n"))
-		self.btnCancel.SetLabel(_("Close"))
-		self.btnOK.Enable(True)
+		self.btnOK.SetLabel(_("Upload"))
+		self.filesUploaded = 0
 		self.stopupload = False
 		if self.closewindow == True:
 			self.EndModal(wxID_OK)
 		
-	def OnUpdateDialog(self, event):
-		self.mytimer.Stop()
-		self.mytimer.Start(60000)
-		self.txtProgress.SetLabel("Current File: " + event.filename)
-		self.projGauge.SetValue(event.projpercent)
-		self.fileGauge.SetValue(event.filepercent)
+	def OnFileProgress(self, event):
+		self.fileList.SetStringItem(0, 1, _("%(percent)s%% uploaded...") % {"percent":event.filepercent})
 
 	def OnClose(self, event):
-		if not self.mythread == None:
+		if not self.mythread == None and self.mythread.isAlive():
 			self.stopupload = True
 			self.closewindow = True
-		else:
-			self.EndModal(wxID_OK)
-
-	def btnCancelClicked(self, event):
-		if self.btnCancel.GetLabel() == _("Cancel"):
-			self.stopupload = True
-
-		else:				
+			self.txtTotalProgress.SetValue(_("Shutting down FTP connection, please wait."))
+			while self.mythread.isAlive():
+				pass
+				
 			self.parent.pub.settings["FTPHost"] = self.txtFTPSite.GetValue()
 			self.parent.pub.settings["FTPUser"] = self.txtUsername.GetValue()
 			self.parent.pub.settings["FTPDirectory"] = self.txtDirectory.GetValue()
-			#self.parent.pub.settings["FTPPassword"] = `munge(self.txtPassword.GetValue(), "foobar")`
-			self.stopupload = True
-			#self.parent.pub.settings["FTPPassive"] = int(self.chkPassive.GetValue())
-			self.EndModal(wxID_CANCEL)
+			self.parent.pub.settings["FTPPassive"] = int(self.chkPassive.GetValue())
+			#self.parent.pub.settings.SaveAsXML()
+		self.EndModal(wxID_OK)
 
 	def OnHang(self, event):
 		wxMessageBox(_("The FTP server has failed to respond for over 1 minute, and so the connection is being disconnected. Please click Upload to try again."))
 		self.btnCancelClicked(event)
 
+	def LoadFileList(self):
+		self.itemCount = 0
+		for item in self.filelist:
+			self.fileList.InsertStringItem(self.itemCount, item)
+			self.fileList.SetStringItem(self.itemCount, 1, _("Queued"))
+			self.itemCount += 1
+
 	def btnOKClicked(self, event):
+		if self.btnOK.GetLabel() == _("Stop"):
+			self.stopupload = True
+			self.closewindow = False
+			return
+
+		self.btnOK.SetLabel(_("Stop"))
 		import threading
 		self.FTPSite = self.txtFTPSite.GetValue()
 		self.Username = self.txtUsername.GetValue()
@@ -394,14 +454,16 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		except:
 			self.handleError()
 
-		self.btnOK.Enable(False)
-		self.btnCancel.SetLabel(_("Cancel"))
+		#self.btnOK.Enable(False)
+		#self.btnCancel.SetLabel(_("Cancel"))
 		if self.makefilelist:
 			self.GenerateFileList(self.parent.CurrentDir)
 			self.makefilelist = False
+		self.LoadFileList()
+		self.txtTotalProg.SetLabel(_("Total Progress: "))
 		self.mythread = threading.Thread(None, self.UploadFiles)
 		try:
-			self.mytimer.Start(60000)
+			#self.mytimer.Start(60000)
 			self.mythread.run()
 		except:
 			self.handleError()
@@ -418,6 +480,12 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 			message = utils.getStdErrorMessage(name, {"filename":info[1].filename})
 		elif name.find("ftplib") != -1:
 			message	= self.getFtpErrorMessage(info[1])
+		elif name.find("socket") != -1:
+			errortext = str(info[1])
+			print "Type is: " + `type(info[1])`
+			if len(info[1]) == 2:
+				errortext = info[1][1]
+			message = _("Socket Error: ") + errortext 
 		else:
 			message = str(info[1])
 		

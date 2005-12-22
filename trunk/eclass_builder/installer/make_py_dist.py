@@ -56,7 +56,7 @@ else:
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "..", "src"))
 modfinder = modulefinder.ModuleFinder(excludes=["Tkinter"])
-#modulefinder.ReplacePackage("_xmlplus", "xml")
+modulefinder.ReplacePackage("xml", "_xmlplus")
 modfinder.add_module("site")
 
 scripts = [os.path.join("..", "eclass_builder.py"), os.path.join("..", "editor.py"), os.path.join("..", "converter.py")]
@@ -80,8 +80,8 @@ os.mkdir(os.path.join(mpdir, "lib"))
 os.mkdir(os.path.join(mpdir, "lib", "site-packages"))
 os.mkdir(os.path.join(mpdir, "lib", "encodings"))
 
-encodingsdir = os.path.join(sys.prefix, "lib", "encodings", "*")
-deps = deps + glob.glob(encodingsdir)
+encodingsdir = os.path.join(sys.prefix, "lib", "encodings")
+deps = deps + glob.glob(os.path.join(encodingsdir, "*.*"))
 deps = deps + glob.glob(os.path.join(sys.prefix, "*.txt"))
 libdir = os.path.join(sys.prefix, "lib")
 deps.append(os.path.join(libdir, "site.py"))
