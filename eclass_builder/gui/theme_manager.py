@@ -1,6 +1,9 @@
 from wxPython.wx import *
 import string, sys, os
 import conman
+from conman.validate import MakeFileName2
+import conman.file_functions as files
+import utils
 
 class ThemeManager(wxDialog):
 	def __init__(self, parent):
@@ -118,7 +121,7 @@ class ThemeManager(wxDialog):
 		if dialog.ShowModal() == wxID_OK:
 			themedir = os.path.join(self.parent.AppDir, "themes")
 			filename = string.replace(MakeFileName2(dialog.GetValue()) + ".py", "-", "_")
-			foldername = MakeFolder(dialog.GetValue())
+			foldername = utils.MakeFolder(dialog.GetValue())
 			try:
 				os.mkdir(os.path.join(themedir, foldername))
 			except:
@@ -187,7 +190,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			otherfilename = string.replace(MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
 			otherfilename = string.replace(otherfilename, "(", "")
 			otherfilename = string.replace(otherfilename, ")", "")
-			foldername = MakeFolder(dialog.GetValue())
+			foldername = utils.MakeFolder(dialog.GetValue())
 			try:
 				os.mkdir(os.path.join(themedir, foldername))
 			except:
@@ -226,7 +229,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			themezip = zipfile.ZipFile(filename, "w")
 			themepyfile = string.replace(themename + ".py", " ", "_")
 			themezip.write(os.path.join(self.parent.AppDir, "themes", themepyfile), themepyfile)
-			themefolder = MakeFolder(self.lstThemeList.GetStringSelection())
+			themefolder = utils.MakeFolder(self.lstThemeList.GetStringSelection())
 			self.AddDirToZip(themefolder, themezip)
 			themezip.close()
 			wxMessageBox(_("Theme successfully exported."))

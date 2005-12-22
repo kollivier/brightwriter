@@ -164,3 +164,15 @@ def openFile(filename, mode="r"):
     os.chdir(olddir)
     return myfile
             
+def MakeFolder(mytext):
+	mytext = string.replace(mytext, "\\", "")
+	mytext = string.replace(mytext, "/", "")
+	mytext = string.replace(mytext, ":", "")
+	mytext = string.replace(mytext, "*", "")
+	mytext = string.replace(mytext, "?", "")
+	mytext = string.replace(mytext, "\"", "")
+	mytext = string.replace(mytext, "<", "")
+	mytext = string.replace(mytext, ">", "")
+	mytext = string.replace(mytext, "|", "")
+	mytext = mytext 
+	return mytext

@@ -2,6 +2,8 @@ import string, sys, os
 from wxPython.wx import *
 import plugins
 from conman.validate import MakeFileName2
+import utils
+import settings
 
 class NewPubDialog(wxDialog):
 	def __init__(self, parent):
@@ -47,7 +49,7 @@ class NewPubDialog(wxDialog):
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 	
 	def btnOKClicked(self, event):
-		self.parent.CurrentDir = self.parent.pub.directory = os.path.join(self.parent.settings["CourseFolder"], MakeFolder(self.txtTitle.GetValue()))
+		settings.CurrentDir = self.parent.CurrentDir = self.parent.pub.directory = os.path.join(self.parent.settings["CourseFolder"], utils.MakeFolder(self.txtTitle.GetValue()))
 		#print self.parent.CurrentDir
 
 		if not os.path.exists(self.parent.CurrentDir):

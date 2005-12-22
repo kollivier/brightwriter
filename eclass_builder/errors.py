@@ -16,7 +16,7 @@ class AppErrorLog(utils.LogFile):
 		try:
 			import traceback
 			type, value, trace = sys.exc_info()
-			list = traceback.format_tb(trace) + ["\n"] + traceback.format_exception_only(type, value)
+			list = traceback.format_exception_only(type, value) + ["\n"] + traceback.format_tb(trace)
 			tb = string.join(list, "")
 		except:
 			pass
