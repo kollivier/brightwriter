@@ -44,7 +44,14 @@ from conman.validate import *
 from convert.PDF import PDFPublisher
 import wxbrowser
 
-import indexer
+hasLucene = False
+try:
+	import PyLucene
+	import indexer
+	hasLucene = True
+except:
+	pass
+	
 import conman
 import version
 import utils
@@ -77,9 +84,6 @@ except:
 #these 2 are needed for McMillan Installer to find these modules
 import conman.plugins
 import conman.HTMLTemplates
-
-#for indexing
-import PyLucene
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
 import plugins
@@ -877,7 +881,7 @@ class MainFrame2(wxFrame):
 		if not self.pub.settings["SearchEnabled"] == "":
 			searchEnabled = self.pub.settings["SearchEnabled"]
 		if int(searchEnabled) == 1:
-			if self.pub.settings["SearchProgram"] == "Lucene":
+			if self.pub.settings["SearchProgram"] == "Lucene" and hasLucene:
 				engine = indexer.SearchEngine(self, os.path.join(settings.CurrentDir, "index.lucene"), os.path.join(settings.CurrentDir, "File"))
 				maxfiles = engine.numFiles
 				#import threading
