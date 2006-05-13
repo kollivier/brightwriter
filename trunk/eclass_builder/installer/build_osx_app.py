@@ -15,7 +15,7 @@ py2app_options = dict(
 )
 
 setup(
-    app=['../editor.py'],
+    app=['../eclass_builder.py'],
     data_files=[('', 	glob.glob('../3rdparty') + 
     						glob.glob('../about') +
     						glob.glob('../autorun') +
