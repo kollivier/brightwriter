@@ -9,15 +9,15 @@ PYTHONDIR=C:\Python$(PYTHONVERSION)
 
 CFLAGS=/nologo /O2 /I$(PYTHONDIR)\include /MD
 LDFLAGS=$(PYTHONDIR)\libs\python$(PYTHONVERSION).lib 
-all: eclass.res editor.exe
+all: eclass.res eclass_builder.exe
 
 eclass.res: eclass.rc
 	rc /fo"eclass.res" /r /d WIN32 /i ..\icons $**
 
-editor.exe: win32scriptwrapper.c eclass.res
+eclass_builder.exe: win32scriptwrapper.c eclass.res
 	cl $(CFLAGS) $(LDFLAGS) /Fe$@ win32scriptwrapper.c /link /SUBSYSTEM:WINDOWS eclass.res kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /machine:I386
 
 clean:
 	-erase *.obj
-	-erase editor.exe
+	-erase eclass_builder.exe
 	-erase *.res
