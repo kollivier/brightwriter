@@ -1,0 +1,44 @@
+<HTML>
+<HEAD>
+<TITLE>The Joust Outliner</TITLE>
+
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+function goNext(){
+	if (parent.theMenu.selectedEntry == -1){
+		parent.theMenu.selectEntry(parent.theMenu.firstEntry);
+	}
+	nextitem = parent.theMenu.selectedEntry+1;
+	if (nextitem > -1){
+		next = parent.theMenu.entry[nextitem];
+		if (next){
+			parent.theMenu.selectEntry(nextitem, false);
+			parent.text.location.href = next.url; 
+		}
+	}
+}
+
+function goBack(){
+	if (parent.theMenu.selectedEntry == -1){
+		parent.theMenu.selectEntry(parent.theMenu.firstEntry);
+	}
+	previtem = parent.theMenu.selectedEntry-1;
+	if (previtem >= -1){
+		prev = parent.theMenu.entry[previtem];
+		if (prev){
+			parent.theMenu.selectEntry(previtem, false);
+			parent.text.location.href = prev.url; 
+		}
+	}
+}
+//-->
+</SCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR=#000000>
+<p align="right">
+<a href="javascript:goBack()"><font color="#FFFFFF"><b>Back</b></FONT></a>
+<a href="javascript:goNext()"><font color="#FFFFFF"><b>Next</b></FONT></a>
+</BODY>
+</HTML>

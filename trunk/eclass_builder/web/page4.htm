@@ -1,0 +1,37 @@
+<HTML>
+<HEAD>
+<TITLE>The Joust Outliner</TITLE>
+
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+if ((self != top) && (parent.theMenu)) {
+	var eID = parent.theMenu.findEntry(location.pathname, "url", "right", 0);
+	if (eID >= 0) {
+		parent.theMenu.selectEntry(eID);
+		if (parent.theMenu.setEntry(eID, true)) {
+			parent.theMenu.refresh();
+		}
+	}
+} else {
+	var navPrinting = false;
+	if ((navigator.appName + navigator.appVersion.substring(0, 1)) == "Netscape4") {
+		navPrinting = (self.innerHeight == 0) && (self.innerWidth == 0);}
+	if ((self.name != 'text') && (self.location.protocol != "file:") && (document.cookie.indexOf('mode=NoFrames') < 0) && !navPrinting) {
+		var newLoc = "index.htm?page=" + escape(self.location.pathname);
+		if (parseInt(navigator.appVersion) >= 3) {self.location.replace(newLoc);} else {self.location.href = newLoc;}
+	}
+}
+//-->
+</SCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR=#FFFFCC>
+
+<H1>Page 4<HR></H1>
+
+
+<P>This is a dummy page used for the sample menu.</P>
+
+</BODY>
+</HTML>
