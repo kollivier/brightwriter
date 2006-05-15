@@ -9,7 +9,7 @@ myplist = dict(
     CFBundleVersion=version.asString()
     )
  
-rootdir = "./"
+rootdir = "../"
 
 py2app_options = dict(
 	iconfile=rootdir + "icons/eclass_builder.icns", 
