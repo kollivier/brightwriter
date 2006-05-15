@@ -6,7 +6,7 @@ nmake -f makefile.vc
 cd ..\autorun\loader
 nmake -f loader.mak
 cd ..\..\3rdparty\win32
-unzip win32extras.zip
+unzip -o win32extras.zip
 cd ..\..\installer
 C:\Progra~1\nsis\makensis eclass-builder.nsi
 REM C:\Python24\python make_py_dist.py --unicode
