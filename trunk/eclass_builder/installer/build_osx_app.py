@@ -30,7 +30,8 @@ setup(
     						glob.glob(rootdir + 'locale') +
     						glob.glob(rootdir + 'license') +
     						glob.glob(rootdir + 'plugins') +
-    						glob.glob(rootdir + 'themes')
+    						glob.glob(rootdir + 'themes') +
+    						[rootdir + "bookfile.book.in"]
     						)
     			],
     options=dict(py2app=py2app_options),
