@@ -547,7 +547,7 @@ class MainFrame2(wxFrame):
 	
 	def OnErrorLog(self, evt):
 		import errors
-		errors.ErrorLogViewer(self).ShowModal() 		
+		errors.ErrorLogViewer(self).Show() 		
 
 	def OnCut(self, event):
 		sel_item = self.wxTree.GetSelection()
