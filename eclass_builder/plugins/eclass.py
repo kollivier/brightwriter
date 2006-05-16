@@ -640,12 +640,12 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				objtext = objtext + "<li>" + TextToXMLChar(obj) + "</li>"
 			objtext = objtext + "</ul><hr>"
 
-		try:
-			objtext = utils.makeUnicode(objtext)
-			myhtml = self._AddMedia(mypage) + objtext + myhtml
+		#try:
+		bjtext = utils.makeUnicode(objtext)
+		myhtml = self._AddMedia(mypage) + objtext + utils.makeUnicode(myhtml)
 			
-		except UnicodeError:
-			raise
+		#except UnicodeError:
+		#	raise
 
 		try: 
 			importer = ImportFiles()
