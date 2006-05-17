@@ -1,11 +1,15 @@
 #updateVersion.py
 #this should be run whenever the software is rebuilt
 
+import sys
 import re
 import os
 import glob
 import version
 build = version.build
+
+if len(sys.argv) == 2:
+    build = sys.argv[1]
 
 mydir = os.getcwd()
 os.chdir("..")
