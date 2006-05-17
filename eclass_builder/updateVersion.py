@@ -7,9 +7,10 @@ import os
 import glob
 import version
 build = version.build
+version_str = version.asString()
 
 if len(sys.argv) == 2:
-    build = sys.argv[1]
+    version_str = sys.argv[1]
 
 mydir = os.getcwd()
 os.chdir("..")
@@ -35,7 +36,7 @@ data = myfile.read()
 myfile.close()
 
 myterm = re.compile("(!define MUI_VERSION \").*(\")",re.IGNORECASE|re.MULTILINE)
-data = myterm.sub("\\1" + version.asString() + "\\2", data)
+data = myterm.sub("\\1" + version_str + "\\2", data)
 
 myfile = myfile = open(os.path.join("installer", "eclass-builder.nsi"), "w")
 myfile.write(data)
@@ -49,7 +50,7 @@ for file in aboutfiles:
     myfile.close()
 
     myterm = re.compile("(<strong>EClass.Builder )(.*)(<br>)",re.IGNORECASE|re.MULTILINE)
-    data = myterm.sub("\\1" + version.asString() + "\\3", data)
+    data = myterm.sub("\\1" + version_str + "\\3", data)
 
     myfile = myfile = open(file, "w")
     myfile.write(data)
