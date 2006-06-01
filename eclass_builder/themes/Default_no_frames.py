@@ -30,7 +30,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 		file.close()
 		file = open(os.path.join(self.dir, "index.htm"),"w")
 		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", "pub/" + os.path.basename(self._GetFilename(self.pub.nodes[0].content.filename)))
-		file.write(data)
+		file.write(data.encode("utf-8"))
 		file.close()
 
 	def AddTOCItems(self, nodes, level):
