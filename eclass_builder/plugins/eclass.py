@@ -11,6 +11,7 @@ from conman.HTMLFunctions import *
 from conman.HTMLTemplates import *
 from StringIO import StringIO
 import utils
+import mmedia
 
 USE_MINIDOM=0
 try:
@@ -726,27 +727,9 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		
 		if len(mypage.media.video) > 0 and os.path.exists(os.path.join(self.dir, "Video", mypage.media.video)):
 			template = ""
-			if string.find(string.lower(mypage.media.video), ".mpg") != -1 or string.find(string.lower(mypage.media.video), ".mpeg") != -1:
-				template = wmTemp
-				mimetype = "video/x-ms-asf-plugin" 
-			if string.find(string.lower(mypage.media.video), ".wmv") != -1:
-				template = wmTemp
-				mimetype = "video/x-ms-asf" 
-			elif string.find(string.lower(mypage.media.video), ".avi") != -1:
-				template = wmTemp
-				mimetype = "application/x-mplayer2"
-			elif string.find(string.lower(mypage.media.video), ".asf") != -1:
-				template = wmTemp
-				mimetype = "video/x-ms-asf"
-			elif string.find(string.lower(mypage.media.video), ".rm") != -1 or string.find(string.lower(mypage.media.video), ".ram") != -1:
-				template = rmVideoTemp
-				mimetype = "application/vnd.rn-realmedia"
-			elif string.find(string.lower(mypage.media.video), ".mov") != -1:
-				template = qtTemp
-				mimetype = "video/quicktime"
-			elif string.find(string.lower(mypage.media.video), ".swf") != -1:
-				template = flashTemp
-				mimetype = "application/x-shockwave-flash"
+			
+			mimetype = mmedia.getMediaMimeType(mypage.media.video, isVideo=True)
+			template = mmedia.getHTMLTemplate(mypage.media.video, isVideo=True)
 
 			videoHTML = string.replace(template, "_filename_", "../Video/" + mypage.media.video)
 			autostart = "False"
@@ -757,24 +740,10 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 		if len(mypage.media.audio) > 0 and os.path.exists(os.path.join(self.dir, "Audio", mypage.media.audio)):
 			template = ""
-			if string.find(string.lower(mypage.media.audio), ".wma") != -1:
-				template = wmTemp
-				mimetype = "audio/x-ms-asf" 
-			elif string.find(string.lower(mypage.media.audio), ".wav") != -1:
-				template = wmTemp
-				mimetype = "audio/wav"
-			elif string.find(string.lower(mypage.media.audio), ".mp3") != -1:
-				template = wmTemp
-				mimetype = "audio/mp3"
-			elif string.find(string.lower(mypage.media.audio), ".asf") != -1:
-				template = wmTemp
-				mimetype = "audio/x-ms-asf"
-			elif string.find(string.lower(mypage.media.audio), ".rm") != -1 or string.find(string.lower(mypage.media.audio), ".ram") != -1:
-				template = rmAudioTemp
-				mimetype = "application/vnd.rn-realmedia"
-			elif string.find(string.lower(mypage.media.audio), ".mov") != -1:
-				template = qtTemp
-				mimetype = "video/quicktime"
+
+			mimetype = mmedia.getMediaMimeType(mypage.media.audio, isVideo=False)
+			template = mmedia.getHTMLTemplate(mypage.media.audio, isVideo=False)
+
 
 			audioHTML = string.replace(template, "_filename_", "../Audio/" + mypage.media.audio)
 			autostart = "False"
@@ -1238,16 +1207,15 @@ class EditorDialog (wxDialog):
 
 		#check if ConNode or if EClassPage
 		if isinstance(item, conman.conman.ConNode):
-			self.CurrentDir = item.dir 
 			self.filename = item.content.filename
 			self.page = EClassPage(self)
 			if len(self.filename) > 0:
 				
-				if not os.path.exists(os.path.join(self.CurrentDir, "EClass", os.path.basename(self.filename))):
-					self.page.SaveAsXML(os.path.join(self.CurrentDir, "EClass", os.path.basename(self.filename)))
+				if not os.path.exists(os.path.join(settings.CurrentDir, "EClass", os.path.basename(self.filename))):
+					self.page.SaveAsXML(os.path.join(settings.CurrentDir, "EClass", os.path.basename(self.filename)))
 
 				try:
-					self.page.LoadPage(os.path.join(self.CurrentDir, "EClass", os.path.basename(self.filename)))
+					self.page.LoadPage(os.path.join(settings.CurrentDir, "EClass", os.path.basename(self.filename)))
 					item.content.filename = self.filename
 				except RuntimeError, e:
 					global log
@@ -1257,10 +1225,10 @@ class EditorDialog (wxDialog):
 					del busy
 					return
 			else:
-				myfilename = MakeFileName(os.path.join(self.parent.CurrentDir, "EClass"), self.page.name)
+				myfilename = os.path.join(settings.CurrentDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
 				self.filename = item.content.filename = myfilename
 				try:
-					self.page.SaveAsXML(os.path.join(self.parent.CurrentDir, "EClass", myfilename))
+					self.page.SaveAsXML(os.path.join(settings.CurrentDir, "EClass", myfilename))
 				except IOError, e:
 					global log
 					message = _("There was an error saving the EClass page '%(page)s'. The error message returned by the system is: %(error)s") % {"page":os.path.join(self.parent.CurrentDir, "EClass", myfilename), "error":str(e)}
@@ -1453,6 +1421,7 @@ class EditorDialog (wxDialog):
 		self.SetSizer(self.mysizer)
 		self.mysizer.Fit(self)
 		self.Layout()
+			
 
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 		EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
@@ -1713,7 +1682,7 @@ class EditorDialog (wxDialog):
 					wxMessageDialog(self, message, _("File Write Error"), wxOK).ShowModal()
 					return
 			else:
-				myfilename = MakeFileName(os.path.join(self.parent.CurrentDir, "EClass"), self.page.name)
+				myfilename = os.path.join(self.parent.CurrentDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
 				self.item.content.filename = myfilename
 				try: 
 					self.page.SaveAsXML(os.path.join(self.parent.CurrentDir, "EClass", myfilename),self.mainform.encoding)
