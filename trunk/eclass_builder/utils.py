@@ -9,6 +9,8 @@ import settings
 import plugins
 import constants
 
+filenameRestrictedChars = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
+
 class LogFile:
 	def __init__(self, filename="log.txt"):
 		self.filename = filename
@@ -69,7 +71,7 @@ def isReadOnly(filename):
 def CreateJoustJavascript(pub):
 	try:
 		filename = _GetFilename(pub.nodes[0].content.filename)
-		text = """
+		text = u"""
 function addJoustItems(theMenu){
 	var level1ID = -1;
 	var level2ID = -1;
@@ -80,7 +82,7 @@ function addJoustItems(theMenu){
 		text = text + "return theMenu; \n}"
 
 		afile = open(os.path.join(settings.CurrentDir, "joustitems.js"), "w")
-		afile.write(text)
+		afile.write(text.encode("utf-8"))
 		afile.close()
 	except:
 		import traceback
@@ -88,7 +90,7 @@ function addJoustItems(theMenu){
 	
 
 def AddJoustItems(nodes, level):
-	text = ""
+	text = u""
 	for root in nodes.children:
 		filename = ""
 		if string.find(root.content.filename, "imsmanifest.xml") != -1:
@@ -101,7 +103,7 @@ def AddJoustItems(nodes, level):
 				nodeType = "Book"
 			else:
 				nodeType = "Document"
-			text = text + """level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, string.replace(root.content.metadata.name, "\"", "\\\""), filename, string.replace(root.content.metadata.name, "\"", "\\\""))
+			text = text + u"""level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, string.replace(root.content.metadata.name, '"', '\\"'), filename, string.replace(root.content.metadata.name, '"', '\\"'))
 
 			if len(root.children) > 0:
 				text = text + AddJoustItems(root, level + 1)
@@ -163,16 +165,38 @@ def openFile(filename, mode="r"):
     myfile = open(myfilename, mode)
     os.chdir(olddir)
     return myfile
-            
-def MakeFolder(mytext):
-	mytext = string.replace(mytext, "\\", "")
-	mytext = string.replace(mytext, "/", "")
-	mytext = string.replace(mytext, ":", "")
-	mytext = string.replace(mytext, "*", "")
-	mytext = string.replace(mytext, "?", "")
-	mytext = string.replace(mytext, "\"", "")
-	mytext = string.replace(mytext, "<", "")
-	mytext = string.replace(mytext, ">", "")
-	mytext = string.replace(mytext, "|", "")
-	mytext = mytext 
-	return mytext
+ 
+def createSafeFilename(filename):
+    finalname = filename
+    global filenameRestrictedChars
+    for char in filenameRestrictedChars:
+        finalname = finalname.replace(char, "")
+
+	return finalname
+	
+def createWebFriendlyFilename(filename):
+    finalname = createSafeFilename(filename)
+    finalname = finalname.replace(" ", "_")
+    return finalname
+	
+def checkNameExists(filename):
+    # due to file conversion, we have to check for files with other extensions
+    # that have the same name.
+    basename = os.path.splitext(os.path.basename(filename))[0]
+    for dir in ["EClass", "Text", "pub"]:
+        for ext in [".htm", ".html", ".quiz", ".ecp"]:
+            if os.path.exists(os.path.join(settings.CurrentDir, dir, basename + ext)):
+                return True
+                
+    return False
+
+def suggestFilename(filename):
+    counter = 2
+    finalname = filename
+    
+    # check for any files that would end up being named pub/whatever.html
+    while checkNameExists(finalname):
+        basename, ext = os.path.splitext(os.path.basename(finalname))
+        finalname = basename + `counter` + ext
+        counter = counter + 1
+	return finalname

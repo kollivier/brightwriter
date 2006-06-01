@@ -1,4 +1,5 @@
 import string, os
+import utils
 
 def TextToXMLChar(mytext):
 	"""
@@ -63,30 +64,6 @@ def TextToHTMLChar(mytext):
 	#mytext = string.replace(mytext, u"\'", "\\'")
 	return mytext
 
-def MakeFileName(mydir, mytext):
-	"""
-	Function: validate.MakeFileName(mydir, mytext)
-	Last Updated: 9/24/02
-	Description: Returns a filename valid on supported operating systems. Also checks for existing files and renames if necessary.
-	"""
-
-	mytext = string.replace(mytext, "\\", "")
-	mytext = string.replace(mytext, "/", "")
-	mytext = string.replace(mytext, ":", "")
-	mytext = string.replace(mytext, "*", "")
-	mytext = string.replace(mytext, "?", "")
-	mytext = string.replace(mytext, "\"", "")
-	mytext = string.replace(mytext, "<", "")
-	mytext = string.replace(mytext, ">", "")
-	mytext = string.replace(mytext, "|", "")
-	myfilename = mytext + ".ecp"
-	counter = 2			
-	while os.path.exists(os.path.join(mydir, myfilename)):
-		#newnode.content.metadata.name = "New Page " + `counter`
-		myfilename = mytext + " " + `counter` + ".ecp"
-		counter = counter + 1
-	return myfilename
-
 def MakeFileName2(mytext):
 	"""
 	Function: validate.MakeFileName2(mydir, mytext)
@@ -95,14 +72,6 @@ def MakeFileName2(mytext):
     Replacement for MakeFileName which oddly is designed only for .ecp files...
 	"""
 
-	mytext = string.replace(mytext, "\\", "")
-	mytext = string.replace(mytext, "/", "")
-	mytext = string.replace(mytext, ":", "")
-	mytext = string.replace(mytext, "*", "")
-	mytext = string.replace(mytext, "?", "")
-	mytext = string.replace(mytext, "\"", "")
-	mytext = string.replace(mytext, "<", "")
-	mytext = string.replace(mytext, ">", "")
-	mytext = string.replace(mytext, "|", "")
+	mytext = utils.createSafeFilename(mytext)
 	mytext = string.replace(mytext, " ", "_")
 	return mytext
