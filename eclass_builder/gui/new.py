@@ -49,7 +49,7 @@ class NewPubDialog(wxDialog):
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 	
 	def btnOKClicked(self, event):
-		settings.CurrentDir = self.parent.CurrentDir = self.parent.pub.directory = os.path.join(self.parent.settings["CourseFolder"], utils.MakeFolder(self.txtTitle.GetValue()))
+		settings.CurrentDir = self.parent.CurrentDir = self.parent.pub.directory = os.path.join(self.parent.settings["CourseFolder"], utils.createSafeFilename(self.txtTitle.GetValue()))
 		#print self.parent.CurrentDir
 
 		if not os.path.exists(self.parent.CurrentDir):
