@@ -1,4 +1,4 @@
-Copyright (c) 2002, The Payson Center for International Development and Technology Transfer
+Copyright (c) 2002-2006, The Payson Center for International Development and Technology Transfer
 
 All rights reserved.
 
