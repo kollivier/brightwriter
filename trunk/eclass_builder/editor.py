@@ -520,7 +520,7 @@ class MainFrame2(wxFrame):
 		if self.settings["LastOpened"] != "" and os.path.exists(self.settings["LastOpened"]):
 			self.LoadEClass(self.settings["LastOpened"])
 			
-		if not self.settings["ShowStartup"] == "False":
+		else:
 			dlgStartup = StartupDialog(self)
 			result = dlgStartup.ShowModal()
 			dlgStartup.Destroy()
@@ -531,6 +531,7 @@ class MainFrame2(wxFrame):
 				self.OnOpen(None)
 			if result == 2:
 				self.OnHelp(None)
+				
 
 	def SkipNotebookEvent(self, evt):
 		evt.Skip()
