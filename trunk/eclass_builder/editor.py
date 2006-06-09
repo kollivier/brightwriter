@@ -75,6 +75,8 @@ from gui.options import *
 from gui.ftp import *
 from gui.indexing import *
 from gui.project_props import *
+from gui.activity_monitor import *
+import gui.error_viewer
 
 try:
 	import win32process, win32con
@@ -83,7 +85,6 @@ except:
 	
 #these 2 are needed for McMillan Installer to find these modules
 import conman.plugins
-import conman.HTMLTemplates
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
 import plugins
@@ -131,8 +132,9 @@ ID_REFRESH_THEME = wxNewId()
 ID_UPLOAD_PAGE = wxNewId()
 ID_CONTACTS = wxNewId()
 ID_ERRORLOG = wxNewId()
+ID_ACTIVITY = wxNewId()
 
-eclassdirs = ["EClass", "Audio", "Video", "Text", "pub", "Graphics", "includes", "File", "Present"]
+eclassdirs = ["EClass", "Text", "pub", "Graphics", "File", "Present"]
 
 useie = True
 try:
@@ -200,6 +202,7 @@ class MainFrame2(wxFrame):
 		self.themes = themes.ThemeList(os.path.join(self.AppDir, "themes"))
 		self.currentTheme = self.themes.FindTheme("Default (no frames)")
 		self.settings = xml_settings.XMLSettings()
+		
 		wxInitAllImageHandlers()
 
 		import errors
@@ -220,6 +223,7 @@ class MainFrame2(wxFrame):
 		if os.path.exists(os.path.join(self.PrefDir, "settings.xml")):
 			self.settings.LoadFromXML(os.path.join(self.PrefDir, "settings.xml"))
 		
+		settings.PrefDir = self.PrefDir
 		settings.options = self.settings
 
 		contactsdir = os.path.join(self.PrefDir, "Contacts")
@@ -383,11 +387,14 @@ class MainFrame2(wxFrame):
 		ToolsMenu.Append(ID_THEME, _("Theme Manager"))
 		ToolsMenu.Append(ID_LINKCHECK, _("Link Checker"))
 		ToolsMenu.Append(ID_CONTACTS, _("Contact Manager"))
+		
 		ToolsMenu.Append(ID_ERRORLOG, _("Error Viewer"))
 		ToolsMenu.AppendSeparator()
 		ToolsMenu.Append(ID_SETTINGS, _("Options"), _("Modify Program Options"))
 		if wxPlatform == "__WXMAC__":
 			wxApp_SetMacPreferencesMenuItemId(ID_SETTINGS)
+		ToolsMenu.Append(ID_ACTIVITY, _("Activity Monitor"), _("View status of background activties."))
+
 
 		HelpMenu = wxMenu()
 		HelpMenu.Append(wxID_ABOUT, _("About Eclass"), _("About Eclass.Builder"))
@@ -403,6 +410,8 @@ class MainFrame2(wxFrame):
 		#menuBar.Append(OptionsMenu, "&" + _("Options"))
 		menuBar.Append(ToolsMenu, "&" + _("Tools"))
 		menuBar.Append(HelpMenu, "&" + _("Help"))
+		
+		
 		self.menuBar = menuBar
 		self.SetMenuBar(menuBar)
 		self.SwitchMenus(False)
@@ -501,6 +510,7 @@ class MainFrame2(wxFrame):
 		EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
 		EVT_MENU(self, ID_ERRORLOG, self.OnErrorLog)
 		EVT_MENU(self, ID_CONTACTS, self.OnContacts)
+		EVT_MENU(self, ID_ACTIVITY, self.OnActivityMonitor)
 
 		EVT_CLOSE(self, self.TimeToQuit)
 
@@ -513,6 +523,13 @@ class MainFrame2(wxFrame):
 
 		#EVT_SIZE(self.splitter1, self.SplitterSize)
 		self.Show()
+		
+		self.activityMonitor = ActivityMonitor(self, -1, _("Activity Monitor"))
+		self.activityMonitor.LoadState("ActivityMonitor")
+		
+		self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
+		self.errorViewer.LoadState("ErrorLogViewer")
+		
 		#EVT_NOTEBOOK_PAGE_CHANGED(self.previewbook, self.previewbook.GetId(), self.OnPageChanged)
 		if wxPlatform == '__WXMSW__':
 			EVT_CHAR(self.previewbook, self.SkipNotebookEvent)
@@ -532,6 +549,13 @@ class MainFrame2(wxFrame):
 			if result == 2:
 				self.OnHelp(None)
 				
+				
+	def OnActivityMonitor(self, evt):
+		if self.activityMonitor:
+			self.activityMonitor.Show()
+		else:
+			self.activityMonitor = ActivityMonitor(self, -1, _("Activity Monitor"))
+			self.activityMonitor.Show()
 
 	def SkipNotebookEvent(self, evt):
 		evt.Skip()
@@ -547,8 +571,11 @@ class MainFrame2(wxFrame):
 		lang_dict[self.langdir].install()
 	
 	def OnErrorLog(self, evt):
-		import errors
-		errors.ErrorLogViewer(self).Show() 		
+		if not self.errorViewer:	
+			self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
+			self.errorViewer.Show() 		
+		else:
+			self.errorViewer.Show()
 
 	def OnCut(self, event):
 		sel_item = self.wxTree.GetSelection()
@@ -801,6 +828,12 @@ class MainFrame2(wxFrame):
 				return
 		
 		self.settings.SaveAsXML(os.path.join(self.PrefDir,"settings.xml"))
+		if self.activityMonitor:
+			self.activityMonitor.SaveState("ActivityMonitor")
+			self.activityMonitor.Destroy()
+		if self.errorViewer:
+			self.errorViewer.SaveState("ErrorLogViewer")
+			self.errorViewer.Destroy()
 		self.Destroy()	
 
 	def PublishToWeb(self, event):
@@ -1211,7 +1244,12 @@ class MainFrame2(wxFrame):
 		if page != None:
 			publisher = self.GetPublisher(page.content.filename)
 			if publisher:
-				publisher.Publish(self, page, self.CurrentDir)
+				publisher.Publish(self, page, settings.CurrentDir)
+				
+	def PublishPageAndChildren(self, page):
+		self.PublishPage(page)
+		for child in page.children:
+			self.PublishPageAndChildren(child)
 
 	def Update(self, myitem = None):
 		if myitem == None:
@@ -1219,13 +1257,9 @@ class MainFrame2(wxFrame):
 		self.UpdateContents()
 		try:
 			self.PublishPage(myitem)
-			self.PublishPage(myitem.back())
-			self.PublishPage(myitem.next())
 
 			self.Preview()
 			self.dirtyNodes.append(myitem)
-			self.dirtyNodes.append(myitem.back())
-			self.dirtyNodes.append(myitem.next())
 			if string.lower(self.pub.settings["UploadOnSave"]) == "yes":
 				self.UploadPage()
 		except:
@@ -1370,7 +1404,6 @@ class MainFrame2(wxFrame):
 			return 
 		
 		settings.CurrentDir = self.CurrentDir = os.path.dirname(filename)
-		print "Current Dir is " + settings.CurrentDir
 		#if sys.platform == "win32":
 		#	settings.CurrentDir = self.CurrentDir = win32api.GetShortPathName(settings.CurrentDir)
 		self.wxTree.DeleteAllItems()
@@ -1413,6 +1446,17 @@ class MainFrame2(wxFrame):
 			self.SetFocus()
 			self.SwitchMenus(True)
 			self.settings["LastOpened"] = filename
+			viddir = os.path.join(settings.CurrentDir, "Video")
+			auddir = os.path.join(settings.CurrentDir, "Audio")
+			
+			if os.path.exists(viddir) or os.path.exists(auddir):
+				wxMessageBox(_("Due to new security restrictions in some media players, video and audio files need to be moved underneath of the 'pub' directory. EClass will now do this automatically and update your pages. Sorry for any inconvenience!"), _("Moving media files"))
+				os.rename(viddir, os.path.join(settings.CurrentDir, "pub", "Video"))
+				os.rename(auddir, os.path.join(settings.CurrentDir, "pub", "Audio"))
+				#busy2 = wxBusyCursor()
+				self.PublishPageAndChildren(self.pub.nodes[0])
+				#del busy2
+				
 			#self.PopMenu.Enable(ID_TREE_REMOVE, False)
 			#self.toolbar.EnableTool(ID_TREE_REMOVE, False)
 		del busy
