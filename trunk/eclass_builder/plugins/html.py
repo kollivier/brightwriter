@@ -10,7 +10,7 @@ if __name__ != "__main__":
 	from conman.HTMLFunctions import *
 	from conman.file_functions import *
 	from conman import plugins
-	from conman import HTMLTemplates
+	from mmedia import HTMLTemplates
 	#from conman.colorbutton import *
 
 mozilla_available = False
