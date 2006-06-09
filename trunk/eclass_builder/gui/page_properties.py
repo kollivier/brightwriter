@@ -279,7 +279,7 @@ class PagePropertiesDialog (wxDialog):
 					filterext = filterext + "; "
 			filtertext = filtertext + plugin.plugin_info["FullName"] + " Files (" + textext + ")|" + filterext
 			
-		f = wxFileDialog(self, _("Select a file"), os.path.join(self.parent.CurrentDir), "", filtertext, wxOPEN)
+		f = wxFileDialog(self, _("Select a file"), os.path.join(settings.CurrentDir), "", filtertext, wxOPEN)
 		if f.ShowModal() == wxID_OK:
 			self.filedir = f.GetDirectory()
 			self.filename = f.GetFilename()
