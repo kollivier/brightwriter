@@ -81,8 +81,7 @@ flashTemp = """
 			<embed src="_filename_" quality="autolow" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" scale="exactfit"> 
 		</object> 
 		"""
-		
-mp3Temp = """
+flvTemp = """
 		<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0">
 			<param name="FlashVars" value="0">
 			<param name="Movie" value="mp3player.swf?file=__filename__">
@@ -103,4 +102,30 @@ mp3Temp = """
 			<param name="SWRemote" value>
 			<embed src="mp3player.swf" flashvars="&file=__filename__" menu="false" quality="autolow" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" scale="exactfit"> 
 		</object> 
+		"""
+
+mp4Temp = """
+        <applet name="mediaframe" code="mediaframe.mpeg4.MPEG4.class" archive="mediaframe-mpeg4.jar,mediaframe-aac.jar" width="384" height="224" mayscript="true">
+			<param name="id"				value="ID: __filename__">
+			<param name="default_media"		value="__filename__">
+			<param name="pre_buffer"  		value="28%%">
+			<param name="playback"			value="autostart">
+			<param name="loop"				value="false">
+			<param name="control_location"	value="control_set">
+			<param name="smooth_video"		value="true">
+			<param name="video_license"		value="false">
+			<!-- <param name="save_script"		value="save_scripts/movie_save.php"> -->
+			<param name="allow_save"		value="false">
+		</applet>
+"""
+
+mp3Temp = """
+<center>
+<object width="320" height="32">
+	<param name="SRC" value="_filename_">
+	<param name="AUTOPLAY" value="_autostart_">
+	<param src="_filename_" autoplay="_autostart_" width="320" height="32">
+	</embed>
+</object>
+</center>
 		"""
