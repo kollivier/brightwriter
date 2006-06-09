@@ -51,7 +51,9 @@ class BaseHTMLPublisher:
 		#isPublic determines if this theme is selectable from EClass.Builder
 		self.rename = None #should we rename long files if found?
 		self.data = {} #data dictionary used to hold template variables
-		#self.language, self.encoding = locale.getdefaultlocale()			
+		#self.language, self.encoding = locale.getdefaultlocale()	
+		self.data['backlink'] = ""
+		self.data['nextlink'] = ""
 
 	def GetConverterEncoding(self):
 		convert_encoding = 'utf-8'
@@ -140,39 +142,11 @@ class BaseHTMLPublisher:
 		Retrieve the back and next links for the page.
 		"""
 		self.data['SCORMAction'] = ""
-		self.data['backlink'] = ""
-		self.data['nextlink'] = ""
-		backnode = self.node.back()
-		#since we're publishing, we only want public nodes
-		#while backnode != None and backnode.content.public != "true":
-		#	print "We're in here! Node: " + backnode.content.metadata.name
-		#	backnode = backnode.back()
-		backlink = ""
-		if backnode == None:
+		# Do this only for the first page in the module
+		if not self.node.parent:
 			self.data['SCORMAction'] = "onload=\"initAPI(window)\""
 
 		return 
-
-		#if backnode != None:
-		#	backfileext = string.lower(os.path.splitext(backnode.content.filename)[1])
-		#	if backfileext in [".htm", ".html", ".ecp", ".quiz"]:
-		#		backlink = self.GetFilename(backnode.content.filename)
-		#	else:
-		#		backlink = "../" + backnode.content.filename
-		#	self.data['backlink'] = "<a href=\"" + backlink + "\">Back </a>"
-		#else:
-		#	self.data['backlink'] = ""
-		#	self.data['SCORMAction'] = "onload=\"initAPI(window)\""
-		#nextnode = self.node.next()
-		#if nextnode != None:
-		#	nextfileext = string.lower(os.path.splitext(nextnode.content.filename)[1])
-		#	if nextfileext in [".htm", ".html", ".ecp", ".quiz"]:
-		#		nextlink = self.GetFilename(nextnode.content.filename)
-		#	else:
-		#		nextlink = "../" + nextnode.content.filename
-		#	self.data['nextlink'] = "<a href=\"" + nextlink + "\">Next </a>"
-		#else:
-		#	self.data['nextlink'] = ""
 			
 
 	def GetFilename(self, filename):

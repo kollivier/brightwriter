@@ -485,10 +485,6 @@ class ConMan (ConManData):
 			myres = myres + """<resource identifier="%s" href="%s">\n%s\n</resource>\n""" % (self.namespace + item.id, TextToXMLAttr(string.replace(filename, os.sep, "/")), item.metadata.asXMLString())
 		return myres
 
-	def PublishAsHTML(self, parent, joustdir, gsdlcollection='', useswishe=0):
-		htmlpub	= HTMLPublish.conmanHTMLPublisher()
-		return htmlpub.Publish(parent, joustdir, gsdlcollection, useswishe)
-
 class ConNode:
 	"""
 	Class: conman.ConNode()
@@ -526,53 +522,6 @@ class ConNode:
 			self.dir = self.parent.dir
 		else:
 			self.dir = ""
-
-	def back(self):
-		back = None
-		if self.parent and self in self.parent.children:
-			myindex = self.parent.children.index(self)
-			if myindex != 0:
-				children = self.parent.children
-				if len(children[myindex-1].children) == 0:
-					back = self.parent.children[myindex - 1]
-				else:
-					child = children[myindex-1]
-					while not len(child.children) == 0: 
-						#if there are child trees, you want the very last child node
-						child = child.children[len(child.children)-1]
-					back = child
-			else:
-				back = self.parent
-
-		return back
-		
-	def next(self):		
-		next = None
-		if self.children:
-			next = self.children[0]				
-		elif self.parent and self in self.parent.children:
-			myindex = self.parent.children.index(self)
-			if not (myindex + 1) >= len(self.parent.children): #get next child
-				next = self.parent.children[myindex + 1]
-			elif self.parent.parent:
-				parent = self.parent.parent
-				child = self.parent
-				#look for the first parent who has children after this node's parents, if any
-				while (len(parent.children) - 1) <= parent.children.index(child):
-					#no nodes after the parent, move up another level
-					if parent.parent:
-						child = parent
-						parent = parent.parent
-					else:
-						return None #this is very last child
-
-				#finally found a parent with children after the parent node
-				myindex = parent.children.index(child)
-				#print "myindex = ", myindex
-				next = parent.children[myindex + 1]
-				#return self.parent.next()		
-	
-		return next
 	
 	def AddSibling(self, id, contentid, dir):
 		if self.parent:
