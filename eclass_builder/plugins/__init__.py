@@ -38,6 +38,6 @@ def GetPlugin(name):
 def GetExtensionsForPlugin(name):
 	plugin = self.GetPlugin(name)
 	if plugin:
-		return plugin.plugin_info["Extensions"]
+		return plugin.plugin_info["Extension"]
 
 	return []
