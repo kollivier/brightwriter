@@ -8,10 +8,11 @@ import re
 from conman.validate import *
 from conman import plugins
 from conman.HTMLFunctions import *
-from conman.HTMLTemplates import *
 from StringIO import StringIO
 import utils
 import mmedia
+import gui.media_convert
+import settings
 
 USE_MINIDOM=0
 try:
@@ -722,37 +723,32 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		audioHTML = ""
 		presentHTML = ""
  
-		if len(mypage.media.image) > 0 and os.path.exists(os.path.join(self.dir, "Graphics", mypage.media.image)):
+		if len(mypage.media.image) > 0 and os.path.exists(os.path.join(settings.CurrentDir, "Graphics", mypage.media.image)):
 			imageHTML = "<IMG src='../Graphics/%s'>" % (mypage.media.image)
 		
-		if len(mypage.media.video) > 0 and os.path.exists(os.path.join(self.dir, "Video", mypage.media.video)):
+		if len(mypage.media.video) > 0 and os.path.exists(os.path.join(settings.CurrentDir, "pub", "Video", mypage.media.video)):
 			template = ""
-			
-			mimetype = mmedia.getMediaMimeType(mypage.media.video, isVideo=True)
-			template = mmedia.getHTMLTemplate(mypage.media.video, isVideo=True)
+			url = "Video/" + mypage.media.video
+			template = mmedia.getHTMLTemplate(os.path.join(settings.CurrentDir, "pub", url), isVideo=True)
 
-			videoHTML = string.replace(template, "_filename_", "../Video/" + mypage.media.video)
+			videoHTML = string.replace(template, "_filename_", url)
 			autostart = "False"
 			if mypage.media.videoautostart == True:
 				autostart = "True"
 			videoHTML = string.replace(videoHTML, "_autostart_", autostart)
-			videoHTML = string.replace(videoHTML, "_mimetype_", mimetype)
 
-		if len(mypage.media.audio) > 0 and os.path.exists(os.path.join(self.dir, "Audio", mypage.media.audio)):
+		if len(mypage.media.audio) > 0 and os.path.exists(os.path.join(settings.CurrentDir, "pub", "Audio", mypage.media.audio)):
 			template = ""
+			url = "Audio/" + mypage.media.audio
+			template = mmedia.getHTMLTemplate(os.path.join(settings.CurrentDir, "pub", url), isVideo=False)
 
-			mimetype = mmedia.getMediaMimeType(mypage.media.audio, isVideo=False)
-			template = mmedia.getHTMLTemplate(mypage.media.audio, isVideo=False)
-
-
-			audioHTML = string.replace(template, "_filename_", "../Audio/" + mypage.media.audio)
+			audioHTML = string.replace(template, "_filename_", url)
 			autostart = "False"
 			if mypage.media.audioautostart == True:
 				autostart = "True"
 			audioHTML = string.replace(audioHTML, "_autostart_", autostart)
-			audioHTML = string.replace(audioHTML, "_mimetype_", mimetype)
 
-		if len(mypage.media.powerpoint) > 0 and os.path.exists(os.path.join(self.dir, "Present", mypage.media.powerpoint)):
+		if len(mypage.media.powerpoint) > 0 and os.path.exists(os.path.join(settings.CurrentDir, "Present", mypage.media.powerpoint)):
 			presentHTML = """<a href="../Present/%(pres)s" target="_blank">%(viewpres)s</a>""" % {"pres":mypage.media.powerpoint, "viewpres":_("View Presentation")}
 	
 		if len(imageHTML) > 0 and len(videoHTML) > 0:
@@ -782,7 +778,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		template = "default.tpl"
 		temp = utils.openFile(os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme.themename, template), "r")
 
-		html = unicode(temp.read(), 'iso8859-1', 'replace')
+		html = utils.makeUnicode(temp.read())
 		temp.close()
 		#print "in create html shell, my name = " + mypage.name
 		html = string.replace(html, "--[name]--", TextToHTMLChar(mypage.name))
@@ -790,32 +786,14 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		html = string.replace(html, "--[keywords]--", TextToXMLAttr(node.content.keywords))
 		html = string.replace(html, "--[URL]--", "pub/" + self.GetFilename(node.content.filename))
 		html = string.replace(html, "--[content]--", content)
-
-		if not ishotword:
-			backnode = node.back()
-			#since we're publishing, we only want public nodes
-			while backnode != None and backnode.content.public != "True":
-				backnode = backnode.back()
-			backlink = ""
-			if backnode != None:
-				backlink = self.GetFilename(backnode.content.filename)
-				
-				html = string.replace(str(html), "--[backlink]--", "<a href=\"" + backlink + "\">" + _("Back") + " </a>")
-			else:
-				html = string.replace(str(html), "--[backlink]--", "")
-
-			nextnode = node.next()
-			while nextnode != None and nextnode.content.public != "True":
-				nextnode = nextnode.next()
-
-			if nextnode != None:
-				nextlink = self.GetFilename(nextnode.content.filename)
-				html = string.replace(str(html), "--[nextlink]--", "<a href=\"" + nextlink + "\">" + _("Next") + " </a>")
-			else:
-				html = string.replace(str(html), "--[nextlink]--", "")
+		
+		# These are from old versions of EClass.
+		html = string.replace(html, "--[nextlink]--", "")
+		if ishotword:
+			html = string.replace(html, "--[backlink]--", "<a href=\"javascript:window.close()\">" + _("Close") + "</a>")
 		else:
-			html = string.replace(str(html), "--[backlink]--", "<a href=\"javascript:window.close()\">" + _("Close") + "</a>")
-			html = string.replace(str(html), "--[nextlink]--", "")
+			html = string.replace(html, "--[backlink]--", "")
+
 		
 		creditstring = ""
 		if len(mypage.credit) > 0:
@@ -825,7 +803,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			mypage.credit = mypage.credit + "<h5 align=\'center\'>[ <a href=\'javascript:window.close()\'>" + _("Close") + "</a> ]</h5>"
 			mypage.credit = string.replace(mypage.credit, "'", "\\'")
 			creditstring = """[ <b><a href="javascript:openCredit('newWin','%s')">%s</a></b> ]""" % (TextToHTMLChar(mypage.credit), _("Credit"))	
-		html = string.replace(str(html), "--[credit]--", "<h5>" + mypage.author + " " + creditstring + "</h5>")
+		html = string.replace(html, "--[credit]--", "<h5>" + mypage.author + " " + creditstring + "</h5>")
 		return html
 
 class PDFPublisher:
@@ -928,9 +906,8 @@ class wxSelectBox:
 		self.filename = filename
 		self.type = type
 		self.title = title
-		self.dir = self.parent.mainform.CurrentDir
 		self.selecteddir = ""
-		icnFolder = wxBitmap(os.path.join(self.parent.mainform.AppDir, "icons", "Open.gif"), wxBITMAP_TYPE_GIF)
+		icnFolder = wxBitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wxBITMAP_TYPE_GIF)
 		self.label = wxStaticText(parent, -1, title, wxPoint(x, y+4))
 		height = 20
 		if wxPlatform == "__WXMAC__":
@@ -958,13 +935,15 @@ class wxSelectBox:
 			self.type = "File"
 			filter = _("All Files") + "(*.*)|*.*"
 
-		f = wxFileDialog(self.parent, _("Select a file"), os.path.join(self.parent.CurrentDir, self.type), "", filter, wxOPEN)
+		f = wxFileDialog(self.parent, _("Select a file"), os.path.join(settings.CurrentDir, self.type), "", filter, wxOPEN)
 		if f.ShowModal() == wxID_OK:
 			self.selecteddir = f.GetDirectory()
-
-			if string.find(f.GetPath(), os.path.join(self.parent.mainform.CurrentDir, self.type)) == -1:
-				destdir = os.path.join(self.parent.mainform.CurrentDir,self.type)
-				self.CopyFile(f.GetPath(), f.GetFilename(), destdir)
+			dir = os.path.join(settings.CurrentDir, self.type)
+			if self.type in ["Video", "Audio"]:
+				dir = os.path.join(settings.CurrentDir, "pub", self.type)
+			
+			if string.find(f.GetPath(), dir) == -1:
+				self.CopyFile(f.GetPath(), f.GetFilename(), dir)
 									
 			if hyperlink:
 				result = False
@@ -993,7 +972,7 @@ class wxSelectBox:
 							myfilename = myname[:-1] + `counter` + myext
 						counter = counter + 1
 						#print "new filename is: " + myfilename + "\n"
-					os.rename(os.path.join(self.dir, "File", oldfilename), os.path.join(self.dir, "File", myfilename))
+					os.rename(os.path.join(settings.CurrentDir, "File", oldfilename), os.path.join(settings.CurrentDir, "File", myfilename))
 					self.filename = "../File/" + myfilename
 			else:
 				self.filename = f.GetFilename()
@@ -1010,7 +989,7 @@ class wxSelectBox:
 			data = file.read()
 			if string.lower(os.path.splitext(filename)[1]) in [".html", ".htm"]:
 				importer = ImportFiles()
-				data = importer.ImportLinks(data, self.selecteddir, self.parent.mainform.CurrentDir)
+				data = importer.ImportLinks(data, self.selecteddir, settings.CurrentDir)
 			file.close()
 		except IOError:
 			error = True
@@ -1120,7 +1099,7 @@ class EClassHyperlinkEditorDialog(wxDialog):
 
 		self.parent = parent
 		self.mainform = parent.mainform
-		self.CurrentDir = parent.CurrentDir
+		settings.CurrentDir = parent.CurrentDir
 		self.term = term
 		self.lblName = wxStaticText(self, -1, _("Name"), wxPoint(10, 5))
 		self.txtName = wxTextCtrl(self, -1, term.name, wxPoint(80, 5), wxSize(180, -1))
@@ -1203,7 +1182,6 @@ class EditorDialog (wxDialog):
 		self.CurrentObj = None
 		loaded = True 
 		self.isHotword = False 
-		import settings
 
 		#check if ConNode or if EClassPage
 		if isinstance(item, conman.conman.ConNode):
@@ -1237,7 +1215,7 @@ class EditorDialog (wxDialog):
 
 			self.page.name = item.content.metadata.name
 		else:
-			self.CurrentDir = self.parent.CurrentDir
+			settings.CurrentDir = self.parent.CurrentDir
 			self.page = item.page
 			self.isHotword = True
 		
@@ -1422,6 +1400,25 @@ class EditorDialog (wxDialog):
 		self.mysizer.Fit(self)
 		self.Layout()
 			
+		convertFiles = []
+		audioFile = os.path.join(settings.CurrentDir, "pub", "Audio", self.page.media.audio)
+		if mmedia.canConvertFile(self.page.media.audio) and not mmedia.wasConverted(audioFile):
+			convertFiles.append(self.page.media.audio)
+		
+		videoFile = os.path.join(settings.CurrentDir, "pub", "Video", self.page.media.video)
+		if mmedia.canConvertFile(self.page.media.video) and not mmedia.wasConverted(videoFile):
+			convertFiles.append(self.page.media.video)
+			
+		if mmedia.findFFMpeg() != "" and convertFiles != []:
+			dlg = gui.media_convert.ConvertMediaDialog(self, convertFiles)
+			if dlg.ShowModal() == wxID_OK:
+				files = dlg.GetSelectedFiles()
+				for afile in files:
+					filepath = os.path.join(settings.CurrentDir, "pub", "Video", afile)
+					if not os.path.exists(filepath):
+						filepath = os.path.join(settings.CurrentDir, "pub", "Audio", afile)
+					if os.path.exists(filepath):
+						mmedia.convertFile(filepath)
 
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 		EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
@@ -1456,7 +1453,7 @@ class EditorDialog (wxDialog):
 			try:
 				from OSATools import AppModels
 				dreamweaver = AppModels.AppleScriptApp("Dreamweaver MX")
-				opencommand = 'set myPath to POSIX file "' + os.path.join(self.CurrentDir, "Text", self.selectText.filename) + '"'
+				opencommand = 'set myPath to POSIX file "' + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + '"'
 				result = dreamweaver.tellBlock(['activate',opencommand, 'open file myPath'])
 			except:
 				pass
@@ -1465,10 +1462,10 @@ class EditorDialog (wxDialog):
 		if self.mainform.settings["HTMLEditor"] == "":
 			wxMessageDialog(self, _("To edit the page, E-Class needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wxOK).ShowModal()
 		else:
-			if not os.path.exists(os.path.join(self.CurrentDir, "Text", self.selectText.filename)):
+			if not os.path.exists(os.path.join(settings.CurrentDir, "Text", self.selectText.filename)):
 				dialog = wxMessageDialog(self, _("The text file '%(filename)s' does not exist. Would you like EClass to create it for you?") % {"filename":self.selectText.filename}, _("File not found"), wxYES_NO)
 				if dialog.ShowModal() == wxID_YES:
-					self.CreateHTMLFile(os.path.join(self.CurrentDir, "Text", self.selectText.filename))
+					self.CreateHTMLFile(os.path.join(settings.CurrentDir, "Text", self.selectText.filename))
 				else:
 					return
 			if wxPlatform == "__WXMSW__":
@@ -1476,20 +1473,20 @@ class EditorDialog (wxDialog):
 				editor = "\"" + self.mainform.settings["HTMLEditor"] + "\""
 				if not string.find(string.lower(editor), "mozilla") == -1:
 					editor = editor + " -edit" 
-				win32api.WinExec(editor + " \"" + os.path.join(self.CurrentDir, "Text", self.selectText.filename) + "\"")
+				win32api.WinExec(editor + " \"" + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + "\"")
 				
-				#path = win32api.GetShortPathName(os.path.join(self.CurrentDir, "Text", self.selectText.filename))
+				#path = win32api.GetShortPathName(os.path.join(settings.CurrentDir, "Text", self.selectText.filename))
 				#editor = win32api.GetShortPathName(self.mainform.settings["HTMLEditor"])
 				#if not string.find(string.lower(editor), "mozilla") == -1:
 				#	editor = editor + " -edit" 
 				#print editor + " " + path
 				#os.system(editor + " " + path)
-				#os.spawnv(1, self.mainform.settings["HTMLEditor"], [os.path.split(self.mainform.settings["HTMLEditor"])[1], "\"" + os.path.join(self.CurrentDir, "Text", self.selectText.filename) + "\""])
+				#os.spawnv(1, self.mainform.settings["HTMLEditor"], [os.path.split(self.mainform.settings["HTMLEditor"])[1], "\"" + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + "\""])
 			else:
 				editor = self.mainform.settings["HTMLEditor"] 
 				if wxPlatform == "__WXMAC__":
 					editor = "open -a '" + editor + "'"
-				path = editor + " '" + os.path.join(self.CurrentDir, "Text", self.selectText.filename) + "'"
+				path = editor + " '" + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + "'"
 				os.system(path)
 
 	def CreateHTMLFile(self, filename):
@@ -1513,7 +1510,7 @@ class EditorDialog (wxDialog):
 	def btnNewFileClicked(self, event):
 		savefile = False
 
-		f = wxFileDialog(self, _("New HTML Page"), os.path.join(self.CurrentDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wxSAVE)
+		f = wxFileDialog(self, _("New HTML Page"), os.path.join(settings.CurrentDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wxSAVE)
 		if f.ShowModal() == wxID_OK:
 			filename = f.GetPath()
 			if os.path.exists(filename):
@@ -1646,15 +1643,15 @@ class EditorDialog (wxDialog):
 		missingfiles = []
 		filenames = []
 		if len(self.page.media.image) > 0:
-			filenames.append(os.path.join(self.CurrentDir, "Graphics", self.page.media.image))
+			filenames.append(os.path.join(settings.CurrentDir, "Graphics", self.page.media.image))
 		if len(self.page.media.video) > 0:
-			filenames.append(os.path.join(self.CurrentDir, "Video", self.page.media.video))
+			filenames.append(os.path.join(settings.CurrentDir, "pub", "Video", self.page.media.video))
 		if len(self.page.media.audio) > 0:
-			filenames.append(os.path.join(self.CurrentDir, "Audio", self.page.media.audio))
+			filenames.append(os.path.join(settings.CurrentDir, "pub", "Audio", self.page.media.audio))
 		if len(self.page.media.text) > 0:
-			filenames.append(os.path.join(self.CurrentDir, "Text", self.page.media.text))
+			filenames.append(os.path.join(settings.CurrentDir, "Text", self.page.media.text))
 		if len(self.page.media.powerpoint) > 0:
-			filenames.append(os.path.join(self.CurrentDir, "Present", self.page.media.powerpoint))
+			filenames.append(os.path.join(settings.CurrentDir, "Present", self.page.media.powerpoint))
 
 		for file in filenames:
 			if not os.path.exists(file):
