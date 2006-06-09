@@ -200,3 +200,11 @@ def suggestFilename(filename):
         finalname = basename + `counter` + ext
         counter = counter + 1
 	return finalname
+	
+def escapeFilename(filename):
+    # escape any special characters for terminal commands
+    if not sys.platform.startswith("win"):
+        result = filename.replace(" ", "\\ ")
+        result = result.replace("(", "\\(")
+        result = result.replace(")", "\\)")
+    return result
