@@ -6,7 +6,6 @@ import re
 import os
 import glob
 import version
-build = version.build
 version_str = version.asString()
 
 if len(sys.argv) == 2:
