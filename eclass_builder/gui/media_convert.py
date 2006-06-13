@@ -1,5 +1,4 @@
-
-from sized_controls import *
+from wxaddons.sized_controls import *
 import string, sys, os
     
 class ConvertMediaDialog(SizedDialog):
