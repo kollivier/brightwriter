@@ -9,7 +9,7 @@ if __name__ != "__main__":
 	from conman.validate import *
 	from conman.HTMLFunctions import *
 	from conman.file_functions import *
-	from conman import plugins
+	import plugins
 	from mmedia import HTMLTemplates
 	#from conman.colorbutton import *
 

@@ -8,23 +8,10 @@ import string
 from wxPython.wx import *
 import conman.file_functions as files
 from conman.HTMLFunctions import *
+import plugins
 
 isPublic = True
-myDictionary={}
-#import plugins.eclass as eclass
-myplugins = []
-rootdir = os.path.join(os.path.abspath(sys.path[0]))
-sys.path.append(rootdir)
-for item in os.listdir(os.path.join(rootdir, "plugins")):
-	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
-		plugin = string.replace(item, ".py", "")
-		exec("import plugins." + plugin)
-		exec("myplugins.append(plugins." + plugin + ".plugin_info)") 
 from StringIO import StringIO
-
-def initial(the_dictionary):
-	global myDictionary
-	myDictionary=the_dictionary
 
 themename = "Default (frames)"
 
@@ -147,7 +134,7 @@ class BaseHTMLPublisher:
 	def _GetFilename(self, filename):
 		extension = string.split(filename, ".")[-1]
 		publisher = None
-		for plugin in myplugins:
+		for plugin in plugins.pluginList:
 			if extension in plugin["Extension"]:
 				publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
 		if publisher: 
@@ -185,7 +172,7 @@ class BaseHTMLPublisher:
 		if 1:
 			extension = string.split(node.content.filename, ".")[-1]
 			publisher = None
-			for plugin in myplugins:
+			for plugin in plugins.pluginList:
 				if extension in plugin["Extension"]:
 					publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
 			if publisher: 

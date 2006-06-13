@@ -1,5 +1,5 @@
 import string, sys, os
-from conman import plugins
+import plugins
 
 plugin_info = {	"Name":"file", 
 				"FullName":"File", 
