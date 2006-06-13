@@ -82,9 +82,6 @@ try:
 	import win32process, win32con
 except:
 	pass
-	
-#these 2 are needed for McMillan Installer to find these modules
-import conman.plugins
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
 import plugins

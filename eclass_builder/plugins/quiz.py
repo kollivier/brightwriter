@@ -7,7 +7,7 @@ import locale
 import re
 from conman.validate import *
 from conman.HTMLFunctions import *
-from conman import plugins
+import plugins
 from conman.file_functions import *
 from StringIO import StringIO
 import utils 

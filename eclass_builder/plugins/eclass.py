@@ -6,7 +6,7 @@ import conman
 import locale
 import re
 from conman.validate import *
-from conman import plugins
+import plugins
 from conman.HTMLFunctions import *
 from StringIO import StringIO
 import utils

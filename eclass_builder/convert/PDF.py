@@ -15,29 +15,15 @@ import shutil
 import utils
 import constants
 
-myDictionary={}
-#import plugins.eclass as eclass
-myplugins = []
-rootdir = os.path.abspath(sys.path[0])
-if not os.path.isdir(rootdir):
-	rootdir = os.path.dirname(rootdir)
-sys.path.append(rootdir)
-for item in os.listdir(os.path.join(rootdir, "plugins")):
-	if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and not item[0] == ".":
-		plugin = string.replace(item, ".py", "")
-		exec("import plugins." + plugin)
-		exec("myplugins.append(plugins." + plugin + ".plugin_info)") 
+import plugins
+
 from StringIO import StringIO
 
 themename = "PDF"
 Elements = []
-myDictionary = {}
 
 import errors
 log = errors.appErrorLog
-
-def initial(the_dictionary):
-	myDictionary=the_dictionary
 
 class PDFPublisher:
 	"""
@@ -169,7 +155,7 @@ class PDFPublisher:
 	def _GetFilename(self, filename):
 		extension = string.split(filename, ".")[-1]
 		publisher = None
-		for plugin in myplugins:
+		for plugin in plugins.pluginList:
 			if extension in plugin["Extension"]:
 				publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
 		if publisher: 
@@ -203,7 +189,7 @@ class PDFPublisher:
 		if 1: 
 			extension = string.split(node.content.filename, ".")[-1]
 			publisher = None
-			for plugin in myplugins:
+			for plugin in plugins.pluginList:
 				if extension in plugin["Extension"]:
 					publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher(self.parent, node, self.dir)")
 			if publisher: 
