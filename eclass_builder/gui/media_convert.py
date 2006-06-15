@@ -1,11 +1,11 @@
-from wxaddons.sized_controls import *
+import wxaddons.sized_controls as sc
 import string, sys, os
     
-class ConvertMediaDialog(SizedDialog):
+class ConvertMediaDialog(sc.SizedDialog):
     def __init__(self, parent, files=[]):
         self.files = files
         
-        SizedDialog.__init__(self, parent, -1, _("Convert Media Files?"), 
+        sc.SizedDialog.__init__(self, parent, -1, _("Convert Media Files?"), 
                             wx.DefaultPosition, wx.DefaultSize,
                             wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE)
         
