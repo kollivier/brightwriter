@@ -5,11 +5,12 @@ import os
 import conman
 import locale
 import re
-from conman.validate import *
 import plugins
-from conman.HTMLFunctions import *
+from htmlutils import *
+from xmlutils import *
 from StringIO import StringIO
 import utils
+import fileutils
 import mmedia
 import gui.media_convert
 import settings
@@ -551,6 +552,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			filename = os.path.join(self.dir, "EClass", self.node.content.filename)
 		self.mypage = EClassPage()
 		self.mypage.LoadPage(filename)
+		
 		self._CreateEClassPage(self.mypage, filename, False)
 
 	def _CreateEClassPage(self, mypage, filename, ishotword=False):
@@ -562,6 +564,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			if term.type == "Page":
 				myfilename = string.replace(os.path.basename(filename), ".ecp", "")
 				myfilename = myfilename + "hw" + `counter` + ".htm"
+				self.data['backlink'] = "<a href=\"javascript:window.close()\">" + _("Close") + "</a>"
 				html = self._CreateEClassPage(term.page, myfilename, True)
 			elif term.type == "URL":
 				myfilename = term.url
@@ -637,7 +640,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		myhtml = self._InsertTerms(myhtml, termlist)
 		
 		if len(mypage.objectives) > 0:
-			objtext = "<hr><h2>" + _("Objectives") + "</h2><ul>"
+			objtext = "<hr><h2>" + _("Objectives") + "</h2><ul id=\"objectives\">"
 			for obj in mypage.objectives:
 				objtext = objtext + "<li>" + TextToXMLChar(obj) + "</li>"
 			objtext = objtext + "</ul><hr>"
@@ -658,21 +661,14 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 		if not ishotword:
 			self.data['content'] = myhtml
-			#creditstring = self.
-			#if len(mypage.credit) > 0:
-			#	mypage.credit = string.replace(mypage.credit, "\r\n", "<br>")#mac
-			#	mypage.credit = string.replace(mypage.credit, "\n", "<br>")#win
-			#	mypage.credit = string.replace(mypage.credit, "\r", "<br>")#unix
-			#	mypage.credit = mypage.credit + "<h5 align=\'center\'>[ <a href=\'javascript:window.close()\'>" + _("Close") + "</a> ]</h5>"
-			#	mypage.credit = string.replace(mypage.credit, "'", "\\'")
-			#	creditstring = """[ <b><a href="javascript:openCredit('newWin','%(credit)s')">%(credittext)s</a></b> ]""" % {"credit":TextToHTMLChar(mypage.credit), "credittext":_("Credit")}	
-			self.data['credit'] = self.GetCreditString() # "<h5>" + mypage.author + " " + creditstring + "</h5>"
+			self.data['credit'] = self.GetCreditString() 
+			
 		else: #ugly hack for now...
 			if self.node.content.template == None or self.node.content.template == "None":
 				self.node.content.template = "Default"
 
 			try:
-				myhtml = self._CreateHTMLShell(mypage, self.node, myhtml, ishotword)
+				myhtml = self.ApplyTemplate(data=self.data)
 			except UnicodeError:
 				raise
 
@@ -754,8 +750,8 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		if len(imageHTML) > 0 and len(videoHTML) > 0:
 			HTML = HTML + """<CENTER>
 <table border="0" cellpadding="2" cellspacing="4">
-<td align="center" valign="top">%s</td>
-<td align="center" valign="top">%s</td>
+<td align="center" valign="top"><span id="image">%s</span></td>
+<td align="center" valign="top"><span id="video">%s</span></td>
 </table></CENTER>
 """ % (imageHTML, videoHTML)
 		elif len(mypage.media.image) > 0 or len(mypage.media.video) > 0:
@@ -767,44 +763,12 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			HTML = HTML + """<p align="center">%s</p>""" % (vidimage)
 
 		if len(mypage.media.audio) > 0:
-			HTML = HTML + "<br>%s" % (audioHTML)
+			HTML = HTML + "<br><span id="audio">%s</span>" % (audioHTML)
 
 		if len(mypage.media.powerpoint) > 0:
-			HTML = HTML + "<br><h3 align=\"center\">%s</h3>" % (presentHTML)
+			HTML = HTML + "<br><h3 align=\"center\"><span id="presentation">%s</span></h3>" % (presentHTML)
 		
 		return utils.makeUnicode(HTML)
-
-	def _CreateHTMLShell(self, mypage, node, content, ishotword=False):
-		template = "default.tpl"
-		temp = utils.openFile(os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme.themename, template), "r")
-
-		html = utils.makeUnicode(temp.read())
-		temp.close()
-		#print "in create html shell, my name = " + mypage.name
-		html = string.replace(html, "--[name]--", TextToHTMLChar(mypage.name))
-		html = string.replace(html, "--[description]--", TextToXMLAttr(node.content.description))
-		html = string.replace(html, "--[keywords]--", TextToXMLAttr(node.content.keywords))
-		html = string.replace(html, "--[URL]--", "pub/" + self.GetFilename(node.content.filename))
-		html = string.replace(html, "--[content]--", content)
-		
-		# These are from old versions of EClass.
-		html = string.replace(html, "--[nextlink]--", "")
-		if ishotword:
-			html = string.replace(html, "--[backlink]--", "<a href=\"javascript:window.close()\">" + _("Close") + "</a>")
-		else:
-			html = string.replace(html, "--[backlink]--", "")
-
-		
-		creditstring = ""
-		if len(mypage.credit) > 0:
-			mypage.credit = string.replace(mypage.credit, "\r\n", "<br>")#mac
-			mypage.credit = string.replace(mypage.credit, "\n", "<br>")#win
-			mypage.credit = string.replace(mypage.credit, "\r", "<br>")#unix
-			mypage.credit = mypage.credit + "<h5 align=\'center\'>[ <a href=\'javascript:window.close()\'>" + _("Close") + "</a> ]</h5>"
-			mypage.credit = string.replace(mypage.credit, "'", "\\'")
-			creditstring = """[ <b><a href="javascript:openCredit('newWin','%s')">%s</a></b> ]""" % (TextToHTMLChar(mypage.credit), _("Credit"))	
-		html = string.replace(html, "--[credit]--", "<h5>" + mypage.author + " " + creditstring + "</h5>")
-		return html
 
 class PDFPublisher:
 	def __init__(self, parent, node, dir):
@@ -863,7 +827,7 @@ class PDFPublisher:
 		objtext = ""
 		
 		if len(mypage.objectives) > 0:
-			objtext = "<hr><h2>" + _("Objectives") + "</h2><ul>"
+			objtext = "<hr><h2>" + _("Objectives") + "</h2><ul id=\"objectives\">"
 			for obj in mypage.objectives:
 				objtext = objtext + "<li>" + TextToXMLChar(obj) + "</li>"
 			objtext = objtext + "</ul><hr>"
@@ -876,9 +840,6 @@ class PDFPublisher:
 
 		return myhtml
 
-
-
-		return True
 #-------------------------- EDITOR INTERFACE ----------------------------------------
 
 class wxSelectBox:
@@ -1099,7 +1060,6 @@ class EClassHyperlinkEditorDialog(wxDialog):
 
 		self.parent = parent
 		self.mainform = parent.mainform
-		settings.CurrentDir = parent.CurrentDir
 		self.term = term
 		self.lblName = wxStaticText(self, -1, _("Name"), wxPoint(10, 5))
 		self.txtName = wxTextCtrl(self, -1, term.name, wxPoint(80, 5), wxSize(180, -1))
@@ -1615,7 +1575,7 @@ class EditorDialog (wxDialog):
 		
 			author.entity.fname.value = self.txtAuthor.GetValue()
 			if author.entity.filename == "":
-				afilename = os.path.join(self.parent.PrefDir, "Contacts", MakeFileName2(author.entity.fname.value) + ".vcf")
+				afilename = os.path.join(self.parent.PrefDir, "Contacts", fileutils.MakeFileName2(author.entity.fname.value) + ".vcf")
 				author.entity.filename = afilename
 			
 			author.entity.saveAsFile()

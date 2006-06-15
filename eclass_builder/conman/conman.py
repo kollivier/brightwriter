@@ -6,7 +6,7 @@ import string, os, sys
 import xml_settings
 import vcard
 import plugins
-from validate import *
+from xmlutils import *
 import locale
 import utils
 

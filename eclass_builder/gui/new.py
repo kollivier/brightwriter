@@ -1,7 +1,7 @@
 import string, sys, os
 from wxPython.wx import *
 import plugins
-from conman.validate import MakeFileName2
+from fileutils import MakeFileName2
 import utils
 import settings
 

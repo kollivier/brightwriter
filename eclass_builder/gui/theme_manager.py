@@ -1,8 +1,7 @@
 from wxPython.wx import *
 import string, sys, os
 import conman
-from conman.validate import MakeFileName2
-import conman.file_functions as files
+import fileutils
 import utils
 
 class ThemeManager(wxDialog):
@@ -120,7 +119,7 @@ class ThemeManager(wxDialog):
 		dialog = wxTextEntryDialog(self, _("Please type a name for your new theme"), _("New Theme"), _("New Theme"))
 		if dialog.ShowModal() == wxID_OK:
 			themedir = os.path.join(self.parent.AppDir, "themes")
-			filename = string.replace(MakeFileName2(dialog.GetValue()) + ".py", "-", "_")
+			filename = string.replace(fileutils.MakeFileName2(dialog.GetValue()) + ".py", "-", "_")
 			foldername = utils.createSafeFilename(dialog.GetValue())
 			try:
 				os.mkdir(os.path.join(themedir, foldername))
@@ -147,7 +146,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			myfile.close()
 
 			#copy support files from Default (no frames)
-			files.CopyFiles(os.path.join(themedir, "Default (no frames)"), os.path.join(themedir, foldername), 1)
+			fileutils.CopyFiles(os.path.join(themedir, "Default (no frames)"), os.path.join(themedir, foldername), 1)
 			#self.lstThemeList.Append(dialog.GetValue())
 			self.parent.themes.LoadThemes()
 			self.ReloadThemes()
@@ -157,7 +156,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 		dialog.Destroy()
 
 	def OnDeleteTheme(self, event):
-		filename = string.replace(MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
+		filename = string.replace(fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
 		modulename = string.replace(filename, ".py", "")
 		if self.parent.currentTheme == [self.lstThemeList.GetStringSelection(), modulename]:
 			wxMessageBox(_("Cannot delete theme because it is currently in use for this EClass. To delete this theme, please change your EClass theme."))
@@ -172,7 +171,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 				os.remove(themefile + "c")
 			foldername = os.path.join(themedir, self.lstThemeList.GetStringSelection())
 			if os.path.exists(foldername):
-				files.DeleteFolder(foldername)
+				fileutils.DeleteFolder(foldername)
 			
 			self.parent.themes.LoadThemes()
 			self.ReloadThemes()
@@ -186,8 +185,8 @@ class HTMLPublisher(BaseHTMLPublisher):
 		dialog = wxTextEntryDialog(self, _("Please type a name for your new theme"), _("New Theme"), "")
 		if dialog.ShowModal() == wxID_OK:  
 			themedir = os.path.join(self.parent.AppDir, "themes")
-			filename = string.replace(MakeFileName2(dialog.GetValue()) + ".py", " ", "_")
-			otherfilename = string.replace(MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
+			filename = string.replace(fileutils.MakeFileName2(dialog.GetValue()) + ".py", " ", "_")
+			otherfilename = string.replace(fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
 			otherfilename = string.replace(otherfilename, "(", "")
 			otherfilename = string.replace(otherfilename, ")", "")
 			foldername = utils.createSafeFilename(dialog.GetValue())
@@ -211,7 +210,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			myfile.close()
 
 			#copy support files from Default (no frames)
-			files.CopyFiles(os.path.join(themedir, self.lstThemeList.GetStringSelection()), os.path.join(themedir, foldername), 1)
+			fileutils.CopyFiles(os.path.join(themedir, self.lstThemeList.GetStringSelection()), os.path.join(themedir, foldername), 1)
 			self.parent.themes.LoadThemes()
 			self.ReloadThemes()
 			#self.lstThemeList.Append(dialog.GetValue())
@@ -222,7 +221,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 
 	def ExportTheme(self, event=None):
 		import zipfile
-		themename = MakeFileName2(self.lstThemeList.GetStringSelection())
+		themename = fileutils.MakeFileName2(self.lstThemeList.GetStringSelection())
 		dialog = wxFileDialog(self, _("Export Theme File"), "", themename + ".theme", _("Theme Files") + " (*.theme)|*.theme", wxSAVE|wxOVERWRITE_PROMPT) 
 		if dialog.ShowModal() == wxID_OK:
 			filename = dialog.GetPath()

@@ -1,5 +1,6 @@
 import string, sys, os
 from wxPython.wx import *
+from fileutils import *
 import utils
 import plugins
 

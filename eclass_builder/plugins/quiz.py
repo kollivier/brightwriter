@@ -1,14 +1,12 @@
 from wxPython.wx import *
 import string
 import os
-#import conman.conman as conman
-#import conman
 import locale
 import re
-from conman.validate import *
-from conman.HTMLFunctions import *
+from xmlutils import *
+from htmlutils import *
 import plugins
-from conman.file_functions import *
+from fileutils import *
 from StringIO import StringIO
 import utils 
 

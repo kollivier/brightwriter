@@ -6,8 +6,8 @@ import StringIO
 #import pre as re
 import string
 from wxPython.wx import *
-import conman.file_functions as files
-from conman.HTMLFunctions import *
+import fileutils
+from htmlutils import *
 import plugins
 
 isPublic = True
@@ -70,7 +70,7 @@ class BaseHTMLPublisher:
 		return not self.cancelled
 	
 	def CopySupportFiles(self):
-		files.CopyFiles(os.path.join(self.themedir, "Files"), self.dir, 1)
+		fileutils.CopyFiles(os.path.join(self.themedir, "Files"), self.dir, 1)
 
 	def CreateTOC(self):
 		filename = self._GetFilename(self.pub.nodes[0].content.filename)

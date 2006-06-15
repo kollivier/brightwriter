@@ -6,9 +6,8 @@ import StringIO
 import string
 import types
 from wxPython.wx import *
-import conman.file_functions as files
-from conman.HTMLFunctions import *
-from conman.validate import *
+from htmlutils import *
+from fileutils import *
 import settings
 import tempfile
 import shutil
