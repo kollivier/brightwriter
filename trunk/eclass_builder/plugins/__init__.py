@@ -1,8 +1,8 @@
 import string, os, sys
 import settings
 import csv
-from conman.validate import *
-from conman.HTMLFunctions import *
+from htmlutils import *
+from xmlutils import *
 import types
 import locale
 import utils

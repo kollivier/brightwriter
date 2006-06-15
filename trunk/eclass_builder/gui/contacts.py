@@ -2,6 +2,7 @@ import string, sys, os
 from wxPython.wx import *
 from conman import vcard
 import utils
+import fileutils
 
 class ContactsDialog(wxDialog):
 	def __init__(self, parent):
@@ -197,7 +198,7 @@ class ContactEditor(wxDialog):
 		self.myvcard.emails[0].value = self.txtEmail.GetValue()
 		if self.myvcard.filename == "":
 			prefdir = self.parent.parent.PrefDir
-			thisfilename = os.path.join(prefdir, "Contacts", MakeFileName2(self.myvcard.fname.value) + ".vcf")
+			thisfilename = os.path.join(prefdir, "Contacts", fileutils.MakeFileName2(self.myvcard.fname.value) + ".vcf")
 			if os.path.exists(thisfilename):
 				result = wxMessageDialog(self, _("A contact with this name already exists. Overwrite existing contact file?"), _("Overwrite contact?"), wxYES_NO).ShowModal()
 				if result == wxID_YES: 

@@ -29,18 +29,14 @@ except:
 import settings
 settings.AppDir = rootdir
 
-from conman.validate import *
 from wxPython.stc import * #this is for the HTML plugin
 
 import xml.dom.minidom
 
 import ftplib
 import themes.themes as themes
-import conman.HTMLFunctions
 import conman.xml_settings as xml_settings
-import conman.file_functions as files
 import conman.vcard as vcard
-from conman.validate import *
 from convert.PDF import PDFPublisher
 import wxbrowser
 
@@ -55,6 +51,7 @@ except:
 import conman
 import version
 import utils
+import fileutils
 import guiutils
 import constants
 
@@ -211,7 +208,7 @@ class MainFrame2(wxFrame):
 		# Move old AppDataDir if it exists.
 		if oldprefdir and os.path.exists(oldprefdir) and not oldprefdir == self.PrefDir:
 			try:
-				files.CopyFiles(oldprefdir, self.PrefDir, 1)
+				fileutils.CopyFiles(oldprefdir, self.PrefDir, 1)
 				shutil.rmtree(oldprefdir)
 			except:
 				#self.PrefDir = oldprefdir
@@ -866,7 +863,7 @@ class MainFrame2(wxFrame):
 		import zipfile
 		import tempfile
 		#zipname = os.path.join(self.CurrentDir, "myzip.zip")
-		deffilename = MakeFileName2(self.pub.name) + ".zip"
+		deffilename = fileutils.MakeFileName2(self.pub.name) + ".zip"
 		dialog = wxFileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wxSAVE)
 		if dialog.ShowModal() == wxID_OK: 
 			oldtheme = self.currentTheme
@@ -980,37 +977,37 @@ class MainFrame2(wxFrame):
 	def CopyCDFiles(self):
 		try:
 			#cleanup after old EClass versions
-			files.DeleteFiles(os.path.join(self.CurrentDir, "*.pyd"))
-			files.DeleteFiles(os.path.join(self.CurrentDir, "*.dll"))
-			files.DeleteFiles(os.path.join(self.CurrentDir, "*.exe"))
+			fileutils.DeleteFiles(os.path.join(self.CurrentDir, "*.pyd"))
+			fileutils.DeleteFiles(os.path.join(self.CurrentDir, "*.dll"))
+			fileutils.DeleteFiles(os.path.join(self.CurrentDir, "*.exe"))
 
 			pubdir = self.CurrentDir
 			if self.pub.settings["CDSaveDir"] != "":
 				pubdir = self.pub.settings["CDSaveDir"]
 
 			if pubdir != self.CurrentDir:
-				files.CopyFiles(self.CurrentDir, pubdir, 1)
+				fileutils.CopyFiles(self.CurrentDir, pubdir, 1)
 
 			# copy the server program
 			if sys.platform == "win32" and self.pub.settings["ServerProgram"] == "Documancer":
-				files.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),pubdir)
-				files.CopyFile("loader.exe", os.path.join(self.AppDir, "autorun"),pubdir)
+				fileutils.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),pubdir)
+				fileutils.CopyFile("loader.exe", os.path.join(self.AppDir, "autorun"),pubdir)
 				installerdir = os.path.join(pubdir, "installers")
 				if not os.path.exists(installerdir):
 					os.mkdir(installerdir)
-				files.CopyFile("documancer-0.2.6-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(pubdir, "installers"))
+				fileutils.CopyFile("documancer-0.2.6-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(pubdir, "installers"))
 			elif sys.platform == "win32":
-				files.CopyFiles(os.path.join(self.AppDir, "cgi-bin"), os.path.join(pubdir, "cgi-bin"))
-				files.CopyFiles(os.path.join(self.ThirdPartyDir, "Karrigell"), pubdir)
+				fileutils.CopyFiles(os.path.join(self.AppDir, "cgi-bin"), os.path.join(pubdir, "cgi-bin"))
+				fileutils.CopyFiles(os.path.join(self.ThirdPartyDir, "Karrigell"), pubdir)
 				#files.CopyFiles(os.path.join(self.AppDir, "web"), pubdir, 1)
 
 			if self.pub.settings["SearchProgram"] == "Greenstone":
 				cddir = os.path.join(self.settings["GSDL"], "tmp", "exported_collections")
 				if not os.path.exists(os.path.join(cddir, "gsdl", "eclass")):
 					os.mkdir(os.path.join(cddir, "gsdl", "eclass"))
-				files.CopyFiles(self.CurrentDir, os.path.join(cddir, "gsdl", "eclass"), True)
-				files.CopyFile("home.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
-				files.CopyFile("style.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
+				fileutils.CopyFiles(self.CurrentDir, os.path.join(cddir, "gsdl", "eclass"), True)
+				fileutils.CopyFile("home.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
+				fileutils.CopyFile("style.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
 			elif self.pub.settings["SearchProgram"] == "Lucene":
 				pass
 		except:
@@ -1046,7 +1043,7 @@ class MainFrame2(wxFrame):
 		ftp = FTPUpload(self)
 		dialog = wxMessageDialog(self, _("Would you like to upload files associated with these pages?"), _("Upload Dependent Files?"), wxYES_NO)
 		if dialog.ShowModal() == wxID_YES:
-			import conman.HTMLFunctions as importer
+			import htmlutils as importer
 			for file in files[:]:
 				if os.path.splitext(file)[1] == ".htm" or os.path.splitext(file)[1] == ".html":
 					myimporter = importer.HTMLImporter(os.path.join(self.CurrentDir, file))

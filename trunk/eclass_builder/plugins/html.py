@@ -6,9 +6,9 @@ import locale
 import re
 if __name__ != "__main__":
 	import conman
-	from conman.validate import *
-	from conman.HTMLFunctions import *
-	from conman.file_functions import *
+	from xmlutils import *
+	from htmlutils import *
+	from fileutils import *
 	import plugins
 	from mmedia import HTMLTemplates
 	#from conman.colorbutton import *
