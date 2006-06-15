@@ -1,6 +1,6 @@
 import wx
-from wxaddons.persistence import *
-from wxaddons.sized_controls import *
+import wxaddons.persistence
+import wxaddons.sized_controls as sc
 import tasks
 import string, os
 
@@ -20,9 +20,9 @@ class ActivityList(wx.HtmlListBox):
         
         return ""
 
-class ActivityMonitor(SizedDialog):
+class ActivityMonitor(sc.SizedDialog):
     def __init__(self, *args, **kwargs):
-        SizedDialog.__init__(self, *args, **kwargs)
+        sc.SizedDialog.__init__(self, *args, **kwargs)
         pane = self.GetContentsPane()
         self.taskList = ActivityList(pane, -1)
         self.taskList.SetItemCount(5)

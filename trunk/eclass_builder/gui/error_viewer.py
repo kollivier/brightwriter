@@ -4,15 +4,15 @@ import guiutils
 import time
 
 import wx
-from wxaddons.persistence import *
-from wxaddons.sized_controls import *
+import wxaddons.persistence
+import wxaddons.sized_controls as sc
 import errors
 
 appErrorLog = errors.appErrorLog
 
-class ErrorLogViewer(SizedDialog):
+class ErrorLogViewer(sc.SizedDialog):
 	def __init__(self, parent=None):
-		SizedDialog.__init__(self, parent, -1, _("Error log viewer"), wx.DefaultPosition, wx.Size(420, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		sc.SizedDialog.__init__(self, parent, -1, _("Error log viewer"), wx.DefaultPosition, wx.Size(420, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		pane = self.GetContentsPane()
 		self.listCtrl = wx.ListCtrl(pane, -1, style=wx.LC_REPORT)
 		self.listCtrl.SetSizerProp("expand", "true")
@@ -30,12 +30,12 @@ class ErrorLogViewer(SizedDialog):
 		self.listCtrl.SetColumnWidth(0, 100)
 		self.listCtrl.SetColumnWidth(1, 280)
 
-		btnpane = SizedPanel(pane, -1)
+		btnpane = sc.SizedPanel(pane, -1)
 		btnpane.SetSizerType("horizontal")
 		btnpane.SetSizerProp("expand", "true")
 
 		self.saveBtn = wx.Button(btnpane, wx.ID_SAVE)
-		spacer = SizedPanel(btnpane, -1)
+		spacer = sc.SizedPanel(btnpane, -1)
 		spacer.SetSizerProp("expand", "true")
 		spacer.SetSizerProp("proportion", 1)
 
