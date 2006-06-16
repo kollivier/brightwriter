@@ -187,9 +187,6 @@ class EClassPage(plugins.PluginData):
 					myterm.page = None
 	
 				self.terms.append(myterm)
-			#	
-		#	mythread = HotwordLoader(self)
-		#	mythread.run(terms)
 
 	def LoadHotwords(self):
 		"""
@@ -217,8 +214,6 @@ class EClassPage(plugins.PluginData):
 				if (child.nodeType == node.ELEMENT_NODE and child.tagName == "Term"):
 					terms.append(child)
 				
-			#mythread = HotwordLoader(self)
-			#mythread.run(terms)
 
 	def _GetMedia(self, root):
 		if root.getElementsByTagName("Image")[0].childNodes:
@@ -394,63 +389,6 @@ class EClassPage(plugins.PluginData):
 		</Term>""" % (TextToXMLChar(term.name), TextToXMLChar(term.type), myvalue)
 		return myterms
 
-class HotwordLoader(Thread):
-	"""
-	Class: eclass.HotwordLoader(Thread)
-	Last Updated: 9/24/02
-	Description: This class loads hotwords in a thread, to ensure GUI processing can continue. This class is not currently used and needs further testing.
-
-	Attributes:
-	- parent: the parent wxWindow to send status messages to and receive input from
-	- cancelload: boolean specifying whether or not to abort the process
-
-	Methods:
-	- run(terms): Given a list of terms in XML format, loads them into the hotword data structures
-	- cancel(): sets the cancelload variable to signal processing to stop
-	"""
-	def __init__(self, parent):
-		Thread.__init__(self)
-		self.parent = parent
-		self.cancelload = 0
-
-	def run(self, terms):
-		self.parent.hotwordsloaded = 0
-		for term in terms:
-			myterm = EClassTerm()
-		
-			if term.getElementsByTagName("Name"):
-				myterm.name = XMLCharToText(term.getElementsByTagName("Name")[0].childNodes[0].nodeValue)
-			else:
-				myterm.name = ""
-
-			if term.getElementsByTagName("Type"):
-				myterm.type = XMLCharToText(term.getElementsByTagName("Type")[0].childNodes[0].nodeValue)
-			else:
-				myterm.type = ""
-
-			if term.getElementsByTagName("URL"):
-				if term.getElementsByTagName("URL")[0].childNodes:
-					myterm.url = XMLCharToText(term.getElementsByTagName("URL")[0].childNodes[0].nodeValue)
-				else:
-					myterm.url = ""
-			else:
-				myterm.url = ""
-
-			if term.getElementsByTagName("Page"):
-				myterm.LoadPage(term.getElementsByTagName("Page")[0])
-			else:
-				myterm.page = None
-
-			self.parent.terms.append(myterm)
-			
-			if self.cancelload:
-				return #exit immediately
-			if self.parent.window != None:
-				wxPostEvent(self.parent.window,ResultEvent(myterm.name, self.parent.terms.index(myterm)))
-
-	def cancel(self):
-		self.cancelload = 1
-
 class ResultEvent(wxPyEvent):
 	def __init__(self, hwname, hwid):
 		wxPyEvent.__init__(self)
@@ -611,25 +549,9 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				#It might be a Word/RTF document, try to convert...
 				convert = True
 				myfilename = os.path.join(self.dir, "Text", mypage.media.text)
-				if wxPlatform == "__WXMSW__":
-					import win32api
-					myfilename = win32api.GetShortPathName(myfilename)
-
-				message = _("Unable to convert file %(filename)s") % {"filename": mypage.media.text}
-				try:
-					import converter
-					wxBeginBusyCursor()
-					myconverter = converter.DocConverter(self.parent)
-					thefilename = myconverter.ConvertFile(myfilename, "html", "ms_office")[0]
-					wxEndBusyCursor()
-					if thefilename == "":
-						wxMessageBox(message)
-						return ""
-					myhtml = GetBody(utils.openFile(thefilename, "rb"))
-				except:
-					wxEndBusyCursor()
-					global log
-					log.write(message)
+				
+				myhtml = self._ConvertFile(myfilename)
+				if myhtml == "":
 					return ""
 
 				myhtml = ImportFiles().ImportLinks(myhtml, os.path.join(os.path.dirname(thefilename)), self.dir)
@@ -683,6 +605,29 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				raise IOError, message
 				return False	
 		return myhtml
+		
+	def _ConvertFile(self, filename):
+		myfilename = filename
+		if wxPlatform == "__WXMSW__":
+			import win32api
+			myfilename = win32api.GetShortPathName(filename)
+
+		message = _("Unable to convert file %(filename)s") % {"filename": mypage.media.text}
+		try:
+			import converter
+			wxBeginBusyCursor()
+			myconverter = converter.DocConverter(self.parent)
+			thefilename = myconverter.ConvertFile(myfilename, "html", "ms_office")[0]
+			wxEndBusyCursor()
+			if thefilename == "":
+				wxMessageBox(message)
+				return ""
+			myhtml = GetBody(utils.openFile(thefilename, "rb"))
+		except:
+			wxEndBusyCursor()
+			global log
+			log.write(message)
+			return ""
 
 	def _InsertTerms(self, myhtml, termlist):
 		for term in termlist:	
@@ -763,14 +708,14 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			HTML = HTML + """<p align="center">%s</p>""" % (vidimage)
 
 		if len(mypage.media.audio) > 0:
-			HTML = HTML + "<br><span id="audio">%s</span>" % (audioHTML)
+			HTML = HTML + "<br><span id=\"audio\">%s</span>" % (audioHTML)
 
 		if len(mypage.media.powerpoint) > 0:
-			HTML = HTML + "<br><h3 align=\"center\"><span id="presentation">%s</span></h3>" % (presentHTML)
+			HTML = HTML + "<br><h3 align=\"center\"><span id=\"presentation\">%s</span></h3>" % (presentHTML)
 		
 		return utils.makeUnicode(HTML)
 
-class PDFPublisher:
+class PDFPublisher(HTMLPublisher):
 	def __init__(self, parent, node, dir):
 		self.parent = parent
 		self.node = node
@@ -784,60 +729,6 @@ class PDFPublisher:
 	def Publish(self):
 		filename = self.GetFilename(node.content.filename)
 		myhtml = self._CreateEClassPage(self.mypage, filename)
-		return myhtml
-
-	def _CreateEClassPage(self, mypage, filename, ishotword=False):
-		myhtml = ""
-		if len(mypage.media.text) > 0 and os.path.exists(os.path.join(self.dir, "Text", mypage.media.text)):
-			myfile = None
-			convert = False
-			if string.find(os.path.split(mypage.media.text)[1], "htm") != -1:
-				myfile = utils.openFile(os.path.join(self.dir, "Text", mypage.media.text), 'r')
-			else: #try to convert...
-				convert = True
-				myfilename = os.path.join(self.dir, "Text", mypage.media.text)
-				if wxPlatform == "__WXMSW__":
-					import win32api
-					myfilename = win32api.GetShortPathName(myfilename)
-
-				message = _("Unable to convert file %(filename)s") % {"filename":mypage.media.text}
-				try:
-					openofficedir = self.parent.settings["OpenOffice"]
-					if openofficedir != "" and os.path.exists(os.path.join(openofficedir, "program", "uno.py")):
-						programdir = os.path.join(openofficedir, "program")
-						sys.path.append(programdir)
-						os.environ['PATH'] = os.environ['PATH'] + ";" + programdir
-						import converter
-						
-						myconverter = converter.DocConverter(self.parent)
-						thefilename = myconverter.ConvertFile(myfilename, "html")
-						if thefilename == "":
-							wxMessageBox(message)
-						myfile = utils.openFile(thefilename, 'r')
-				except:
-					global log
-					log.write(message)
-					myhtml = ""
-				
-			if myfile:
-				myhtml = GetBody(myfile)
-				myfile.close()
-		else:
-			myhtml = ""
-		objtext = ""
-		
-		if len(mypage.objectives) > 0:
-			objtext = "<hr><h2>" + _("Objectives") + "</h2><ul id=\"objectives\">"
-			for obj in mypage.objectives:
-				objtext = objtext + "<li>" + TextToXMLChar(obj) + "</li>"
-			objtext = objtext + "</ul><hr>"
-
-		try:
-			myhtml = self._AddMedia(mypage) + objtext + myhtml
-			
-		except UnicodeError:
-			raise
-
 		return myhtml
 
 #-------------------------- EDITOR INTERFACE ----------------------------------------
