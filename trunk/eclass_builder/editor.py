@@ -61,6 +61,7 @@ import constants
 # examine the code to find module dependencies.
 import wxaddons.persistence
 import wxaddons.sized_controls
+import taskrunner
 
 from gui.theme_manager import *
 from gui.link_manager import *
