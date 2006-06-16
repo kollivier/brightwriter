@@ -59,6 +59,8 @@ import constants
 # so we will just import their contents for now to avoid conflicts.
 # In the future, I'd like to not do things this way so that we can
 # examine the code to find module dependencies.
+import wxaddons.persistence
+import wxaddons.sized_controls
 
 from gui.theme_manager import *
 from gui.link_manager import *
