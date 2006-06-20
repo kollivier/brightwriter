@@ -46,7 +46,8 @@ try:
 	import indexer
 	hasLucene = True
 except:
-	pass
+	import traceback
+	print `traceback.print_exc()`
 	
 import conman
 import version
@@ -272,7 +273,7 @@ class MainFrame2(wxFrame):
 				errCards.append(card)
 
 		if errOccurred:
-			message = _("EClass could not load the following vCards from your Contacts folder: " + `errCards` + ". You may want to try deleting these cards and re-creating or re-importing them.")
+			message = _("EClass could not load the following vCards from your Contacts folder: %(badCards)s. You may want to try deleting these cards and re-creating or re-importing them.") % {"badCards":`errCards`}
 			wxMessageBox(message)
 
 		self.statusBar = self.CreateStatusBar()
@@ -435,7 +436,6 @@ class MainFrame2(wxFrame):
 		#self.splitter1.sizer.Add(self.wxTree, 1) 
 
 		self.previewbook = wxNotebook(self.splitter1, -1, style=wxCLIP_CHILDREN)
-		self.booksizer = wxNotebookSizer(self.previewbook)
 		
 		self.splitter1.SplitVertically(self.wxTree, self.previewbook, 200)
 
@@ -909,11 +909,12 @@ class MainFrame2(wxFrame):
 		
 	def UpdateTextIndex(self):
 		searchEnabled = 0
+		print "in index method"
 		if not self.pub.settings["SearchEnabled"] == "":
 			searchEnabled = self.pub.settings["SearchEnabled"]
 		if int(searchEnabled) == 1:
 			if self.pub.settings["SearchProgram"] == "Lucene" and hasLucene:
-				engine = indexer.SearchEngine(self, os.path.join(settings.CurrentDir, "index.lucene"), os.path.join(settings.CurrentDir, "File"))
+				engine = indexer.SearchEngine(self, os.path.join(settings.CurrentDir, "index.lucene"), settings.CurrentDir)
 				maxfiles = engine.numFiles
 				#import threading
 				dialog = wxProgressDialog(_("Updating Index"), _("Preparing to update Index...") + "                             ", maxfiles, style=wxPD_CAN_ABORT | wxPD_APP_MODAL) 
