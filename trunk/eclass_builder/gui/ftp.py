@@ -229,7 +229,7 @@ class FTPUpload:
 					if self.isDialog:
 						wxPostEvent(self, evt)
 				elif self.parent:
-					self.parent.SetStatusText(_("Uploaded %(current)d of %(total)d bytes for file %(filename)s." % {"current":bytesuploaded, "total":bytes, "filename":destname})) 
+					self.parent.SetStatusText(_("Uploaded %(current)d of %(total)d bytes for file %(filename)s.") % {"current":bytesuploaded, "total":bytes, "filename":destname}) 
 				wxYield()
 
 			self.mysocket.close()
@@ -255,7 +255,7 @@ class FTPUpload:
 			code = repr(e)[:3]
 
 		if code == "550":
-			return _("Attempt to create a file or directory on the server failed. Please check your file permissions. The error reported was: \n\n" + str(e.args[0]))
+			return _("Attempt to create a file or directory on the server failed. Please check your file permissions. The error reported was: \n\n") + str(e.args[0]) 
 		elif code == "530":
 			return _("EClass was unable to connect to the specified FTP server. Please check to ensure your server name, username and password are correct. The error message returned was:") + "\n\n" + str(e)
 		elif code == "425":
@@ -265,7 +265,7 @@ class FTPUpload:
 		elif code == "452":
 			return _("Server is full. You will need to either delete files from the server or ask for more server space from your system administrator.")
 		else: 
-			return _("An unexpected error has occurred while uploading. Please click 'Upload' again to attempt to resume uploading. The error reported was: \n\n" + repr(e)) 
+			return _("An unexpected error has occurred while uploading. Please click 'Upload' again to attempt to resume uploading. The error reported was: \n\n") + repr(e) 
 			#self.parent.logfile.write(str(e))
 
 	def cwd(self, item):
