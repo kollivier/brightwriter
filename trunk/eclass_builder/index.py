@@ -9,10 +9,11 @@ from HTMLParser import HTMLParser, HTMLParseError
 import locale
 import settings
 import utils
+import stat
 
 import errors
 
-indexLog = errors.appErrorLog #utils.LogFile("indexing_log.txt")
+indexLog = utils.LogFile(os.path.join(settings.CurrentDir, "indexing_log.txt"))
 
 class Index:
     def __init__(self, parent, indexdir, rootFolder=""):
@@ -22,8 +23,6 @@ class Index:
         self.reader = None
         self.files = []
         self.keepgoing = True
-        
-        #store = PyLucene.FSDirectory.getDirectory(self.indexdir, True)
         
     def indexExists(self):
         return os.path.isfile(os.path.join(self.indexdir, "segments"))
@@ -39,10 +38,11 @@ class Index:
             
             # get document text
             mytext = ""
+            fullpath = os.path.join(self.folder, filename)
             try: 
                 #unfortunately, sometimes conversion is hit or miss. Worst case, index the doc with
                 #no text.
-                mytext = self.GetTextFromFile(os.path.join(self.folder, filename))
+                mytext = self.GetTextFromFile(fullpath)
             except:
                 import traceback
                 indexLog.write(`traceback.print_exc()`)#pass
@@ -50,7 +50,13 @@ class Index:
             if mytext == "":
                 print "No text indexed for file: " + filename
                 indexLog.write("No text indexed for file: " + filename)
-                
+            try:
+                props = os.stat(fullpath)
+                doc.add(PyLucene.Field("last_modified", `props[stat.ST_MTIME]`, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
+                doc.add(PyLucene.Field("filesize", `props[stat.ST_SIZE]`, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
+            except:
+                import traceback
+                print `traceback.print_exc()`
             doc.add(PyLucene.Field("contents", mytext, PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED))
             newIndex = not self.indexExists()
             store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
@@ -60,15 +66,14 @@ class Index:
             writer.close()
             
     def findDoc(self, filename):
-        result = -1
+        result = (-1, None)
         if self.indexExists():
             searcher = PyLucene.IndexSearcher(self.indexdir)
             analyzer = PyLucene.StandardAnalyzer()
             query = PyLucene.QueryParser("url", analyzer).parse(filename)
             hits = searcher.search(query)
             if hits.length() > 0:
-                #result = hits.doc(0)
-                result = hits.id(0)
+                result = (hits.id(0), hits.doc(0))
             searcher.close()
             
         return result
@@ -80,18 +85,35 @@ class Index:
         return metadata
     
     def getFileInfo(self, filename):
-        doc = self.findDoc(filename)
+        doc = self.findDoc(filename)[1]
         if doc:
             return (filename, self.getDocMetadata(doc))
         
-        return None
+        return (None, None)
     
     def updateFile(self, filename, metadata):
-        self.removeFile(filename)
-        self.addFile(filename, metadata)
+        myfilename, filedata = self.getFileInfo(filename)
+        needsUpdate = True #always true if file doesn't exist
+        if filedata and filedata.has_key('filesize'):
+            needsUpdate = False # file exists, use metadata to determine update.
+            try:
+                fullpath=os.path.join(self.folder, filename)
+                props = os.stat(fullpath)
+                
+                if filedata.has_key("last_modified") and `props[stat.ST_MTIME]` != filedata["last_modified"]:
+                    needsUpdate = True
+                if `props[stat.ST_SIZE]` != filedata["filesize"]:
+                    needsUpdate = True
+            except:
+                import traceback
+                print `traceback.print_exc()`
+            
+        if needsUpdate:
+            self.removeFile(filename)
+            self.addFile(filename, metadata)
         
     def removeFile(self, filename):
-        id = self.findDoc(filename)
+        id, doc = self.findDoc(filename)
         if id != -1:
             reader = PyLucene.IndexReader.open(self.indexdir)
             #for num in range(0, reader.numDocs()-1):
@@ -106,7 +128,7 @@ class Index:
         if self.indexExists():
             searcher = PyLucene.IndexSearcher(self.indexdir)
             analyzer = PyLucene.StandardAnalyzer()
-            query = PyLucene.QueryParser(field, analyzer).parse(term)
+            query = PyLucene.QueryParser(field, analyzer).parse(search_term)
             hits = searcher.search(query)
             if hits.length() > 0:
                 for fileNum in range(0, hits.length()-1):
