@@ -22,10 +22,6 @@ class SearchEngine:
 	def __init__(self, parent, indexdir, folder):
 		self.parent = parent
 		
-		# make sure we create a new index each time for speed purposes
-		fileutils.DeleteFolder(indexdir)
-		os.makedirs(indexdir)
-		
 		self.index = index.Index(self.parent, indexdir, folder)
 		self.folder = folder
 		self.keepgoing = True
@@ -75,7 +71,7 @@ class SearchEngine:
 		if org:
 			metadata["organization"] = author.entity.fname.value
 			
-		self.index.addFile(filename, metadata)
+		self.index.updateFile(filename, metadata)
 
 	def IndexFolder(self, dir):
 		for afile in glob.glob(os.path.join(dir, "*")):
@@ -98,7 +94,7 @@ class SearchEngine:
 					self.keepgoing = self.dialog.Update(self.filecount, self.statustext)
 				#	self.cancel = wxCallAfter(self.dialog.Update, self.filecount, statustext)
 				self.filecount = self.filecount + 1
-				self.index.addFile(filename, metadata)
+				self.index.updateFile(filename, metadata)
 
 	def IndexFiles(self, rootnode, dialog=None):
 		self.dialog = dialog

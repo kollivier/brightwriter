@@ -78,6 +78,7 @@ from gui.indexing import *
 from gui.project_props import *
 from gui.activity_monitor import *
 import gui.error_viewer
+import gui.project_find_dialog as pfdlg
 
 try:
 	import win32process, win32con
@@ -131,6 +132,7 @@ ID_UPLOAD_PAGE = wxNewId()
 ID_CONTACTS = wxNewId()
 ID_ERRORLOG = wxNewId()
 ID_ACTIVITY = wxNewId()
+ID_FIND_IN_PROJECT = wxNewId()
 
 eclassdirs = ["EClass", "Text", "pub", "Graphics", "File", "Present"]
 
@@ -333,6 +335,8 @@ class MainFrame2(wxFrame):
 		PasteMenu.Append(ID_PASTE_CHILD, _("Paste As Child"))
 		#self.PasteMenu = PasteMenu
 		EditMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu)
+		EditMenu.AppendSeparator()
+		EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
 
 		#create the PopUp Menu used when a user right-clicks on an item
 		self.PopMenu = wxMenu()
@@ -508,6 +512,7 @@ class MainFrame2(wxFrame):
 		EVT_MENU(self, ID_ERRORLOG, self.OnErrorLog)
 		EVT_MENU(self, ID_CONTACTS, self.OnContacts)
 		EVT_MENU(self, ID_ACTIVITY, self.OnActivityMonitor)
+		EVT_MENU(self, ID_FIND_IN_PROJECT, self.OnFindInProject)
 
 		EVT_CLOSE(self, self.TimeToQuit)
 
@@ -554,6 +559,10 @@ class MainFrame2(wxFrame):
 			self.activityMonitor = ActivityMonitor(self, -1, _("Activity Monitor"))
 			self.activityMonitor.Show()
 
+	def OnFindInProject(self, evt):
+		dlg = pfdlg.ProjectFindDialog(self)
+		dlg.Show()
+		
 	def SkipNotebookEvent(self, evt):
 		evt.Skip()
 
@@ -570,7 +579,7 @@ class MainFrame2(wxFrame):
 	def OnErrorLog(self, evt):
 		if not self.errorViewer:	
 			self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
-			self.errorViewer.Show() 		
+			self.errorViewer.Show()			
 		else:
 			self.errorViewer.Show()
 
@@ -805,7 +814,7 @@ class MainFrame2(wxFrame):
 				self.currentTheme = self.themes.FindTheme("Default (frames)")
 				self.AddNewEClassPage(None, self.pub.name, True)
 
-				self.SaveProject(event)  
+				self.SaveProject(event)	 
 				publisher = self.currentTheme.HTMLPublisher(self)
 				publisher.CopySupportFiles()
 				publisher.CreateTOC()
@@ -873,7 +882,7 @@ class MainFrame2(wxFrame):
 			imstheme = self.themes.FindTheme("IMS Package")
 			self.currentTheme = imstheme
 			publisher = imstheme.HTMLPublisher(self)
-			publisher.Publish()	
+			publisher.Publish() 
 
 			handle, zipname = tempfile.mkstemp()
 			os.close(handle)
@@ -917,7 +926,7 @@ class MainFrame2(wxFrame):
 				engine = indexer.SearchEngine(self, os.path.join(settings.CurrentDir, "index.lucene"), settings.CurrentDir)
 				maxfiles = engine.numFiles
 				#import threading
-				dialog = wxProgressDialog(_("Updating Index"), _("Preparing to update Index...") + "                             ", maxfiles, style=wxPD_CAN_ABORT | wxPD_APP_MODAL) 
+				dialog = wxProgressDialog(_("Updating Index"), _("Preparing to update Index...") + "							 ", maxfiles, style=wxPD_CAN_ABORT | wxPD_APP_MODAL) 
 				engine.IndexFiles(self.pub.nodes[0], dialog)
 
 				dialog.Destroy()
@@ -938,7 +947,7 @@ class MainFrame2(wxFrame):
 							return
 						try:
 							cddialog.UpdateIndex(gsdl, eclassdir)
-						except:	
+						except: 
 							message = _("There was an unexpected error publishing your course. For more details, check the Error Viewer from the 'Tools->Error Viewer' menu.")
 							self.log.write(message)
 							dialog = wxMessageDialog(self, message, _("Could Not Publish EClass"), wxOK).ShowModal()
@@ -1023,7 +1032,7 @@ class MainFrame2(wxFrame):
 	def PublishIt(self, event):
 		self.UpdateEClassDataFiles()
 		import webbrowser
-		webbrowser.open_new("file://" + os.path.join(self.CurrentDir, "index.htm"))	
+		webbrowser.open_new("file://" + os.path.join(self.CurrentDir, "index.htm")) 
 		
 	def UpdateEClassDataFiles(self, pubid=""):
 		result = False
@@ -1122,7 +1131,7 @@ class MainFrame2(wxFrame):
 		bookdata = utils.openFile(os.path.join(self.AppDir,"bookfile.book.in")).read()
 		bookdata = string.replace(bookdata, "<!-- insert title here-->", self.pub.name)
 		if self.pub.settings["SearchEnabled"] == "1" and self.pub.settings["SearchProgram"] == "Lucene":
-			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "<attr name='indexed'>1</attr>\n    <attr name='cachedir'>.</attr>")
+			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "<attr name='indexed'>1</attr>\n	   <attr name='cachedir'>.</attr>")
 		else: 
 			bookdata = string.replace(bookdata, "<!-- insert index info here -->", "")
 		try:
@@ -1208,7 +1217,7 @@ class MainFrame2(wxFrame):
 					newnode.content.metadata.name = dialog.txtTitle.GetValue() #"New Page"
 					newnode.content.filename = os.path.join(plugin.plugin_info["Directory"], dialog.txtFilename.GetValue())
 					myplugin = eval("plugins." + plugin.plugin_info["Name"])
-					try: 		
+					try:		
 						if myplugin.EditorDialog(self,self.CurrentItem).ShowModal() == wxID_OK:
 							if not isroot:
 								newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.metadata.name, -1, -1, wxTreeItemData(self.CurrentItem))
@@ -1658,7 +1667,7 @@ class MainFrame2(wxFrame):
 			self.dirtyNodes.append(nextitem)
 
 	def CheckSave(self):
-		msg = wxMessageDialog(self, _("Would you like to save the current project before continuing?"),  _("Save Project?"), wxYES_NO | wxCANCEL)
+		msg = wxMessageDialog(self, _("Would you like to save the current project before continuing?"),	 _("Save Project?"), wxYES_NO | wxCANCEL)
 		answer = msg.ShowModal()
 		return answer
 
