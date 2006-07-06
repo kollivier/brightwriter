@@ -30,7 +30,7 @@ log = errors.appErrorLog
 # This info is used so that EClass can be dynamically be added into
 # EClass.Builder's plugin registry.
 
-plugin_info = {	"Name":"quiz", 
+plugin_info = { "Name":"quiz", 
 				"FullName":"Quiz", 
 				"Directory":"EClass", 
 				"Extension":["quiz"], 
@@ -486,11 +486,11 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		script = """
 		<script language="Javascript">
 		//preload images
-    		correct_on = new Image();
-    		correct_on.src = "../Graphics/Quiz/correct.gif";
+		correct_on = new Image();
+		correct_on.src = "../Graphics/Quiz/correct.gif";
 
-    		incorrect_on = new Image();
-    		incorrect_on.src = "../Graphics/Quiz/incorrect.gif";	
+		incorrect_on = new Image();
+		incorrect_on.src = "../Graphics/Quiz/incorrect.gif";	
 
 
 		function GradeQuiz(){
@@ -552,11 +552,11 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 						conditiontext = conditiontext + """document.forms[0].%s[correctitem].checked &&""" % (item.id)
 			
 			if conditiontext[-3:] == " &&":
-				conditiontext = conditiontext[:-3] #get rid of the trailing && 			
+				conditiontext = conditiontext[:-3] #get rid of the trailing &&
 	
 			script = script + """
 				if (%s){
-					answerimg.src = correct_on.src;	
+					answerimg.src = correct_on.src; 
 					feedback.innerHTML = "%s";
 				}
 				else{
@@ -606,7 +606,10 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 		script = script + "} </script>"
 		html = html + "</table><input type=\"button\" onclick=\"javascript:GradeQuiz()\" name=\"Submit\" value=\"Submit\"></form>" + script
-		return html	
+		return html 
+
+	def GetFileLink(self, filename):
+		return "pub/" + self.GetFilename(filename)
 
 	def GetFilename(self, filename):
 		"""
@@ -647,7 +650,7 @@ class EditorDialog(wxDialog):
 		self.btnOK = wxButton(self, wxID_OK, _("OK"))
 		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
 
-		if len(self.item.content.filename) > 0:	
+		if len(self.item.content.filename) > 0: 
 			filename = os.path.join(self.parent.CurrentDir, self.item.content.filename)
 			try:
 				if not os.path.exists(filename):
@@ -740,23 +743,23 @@ class QuestionEditor(wxDialog):
 
 		self.chkCorrect1 = wxCheckBox(self, -1, "")
 		self.txtID1 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer1 = wxTextCtrl(self, -1, "",  wxDefaultPosition, wxSize(240, -1)) 
+		self.txtAnswer1 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
 		
 		self.chkCorrect2 = wxCheckBox(self, -1, "")
 		self.txtID2 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer2 = wxTextCtrl(self, -1, "",  wxDefaultPosition, wxSize(240, -1)) 
+		self.txtAnswer2 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
 
 		self.chkCorrect3 = wxCheckBox(self, -1, "")
 		self.txtID3 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer3 = wxTextCtrl(self, -1, "",  wxDefaultPosition, wxSize(240, -1)) 
+		self.txtAnswer3 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
 
 		self.chkCorrect4 = wxCheckBox(self, -1, "")
 		self.txtID4 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer4 = wxTextCtrl(self, -1, "",  wxDefaultPosition, wxSize(240, -1)) 
+		self.txtAnswer4 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
 
 		self.chkCorrect5 = wxCheckBox(self, -1, "")
 		self.txtID5 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer5 = wxTextCtrl(self, -1, "",  wxDefaultPosition, wxSize(240, -1)) 
+		self.txtAnswer5 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
 
 		self.txtID1.Show(false)
 		self.txtID2.Show(false)

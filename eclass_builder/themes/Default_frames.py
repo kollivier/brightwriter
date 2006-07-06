@@ -1,5 +1,10 @@
 from BaseTheme import *
 themename = "Default (frames)"
+import plugins
+import utils
+
+# all file links are relative to the directory specified here
+rootdir = ""
 
 class HTMLPublisher(BaseHTMLPublisher):
 	def __init__(self, parent):
@@ -7,16 +12,15 @@ class HTMLPublisher(BaseHTMLPublisher):
 		self.themedir = os.path.join(self.appdir, "themes", themename)
 
 	def CreateTOC(self):
-		filename = self._GetFilename(self.pub.nodes[0].content.filename)
+		filename = rootdir + utils.GetFileLink(self.pub.nodes[0].content.filename)
 
 		text = u"""level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename, string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""))
 		text = text + self.AddJoustItems(self.pub.nodes[0], 1)
-		if self.pub.settings["SearchEnabled"] != "" and int(self.pub.settings["SearchEnabled"]):
-			if self.pub.settings["SearchProgram"] == "Swish-e":
-				searchscript = u"../cgi-bin/search.py"
-				text = text + """searchID = theMenu.addEntry(-1, "Document", "%s", "%s", "%s");\n""" % ("Search", searchscript, "Search")
-			elif self.pub.settings["SearchProgram"] == "Greenstone" and self.pub.pubid != "":
-				text = text + """searchID = theMenu.addEntry(-1, "Document", "%s", "%s", "%s");\n""" % ("Search", "../gsdl?site=127.0.0.1&a=p&p=about&c=" + self.pub.pubid + "&ct=0", "Search")
+		
+		searchlink = self.GetSearchPageLink()
+		if searchlink != "":
+			text = text + """searchID = theMenu.addEntry(-1, "Document", "%s", "%s", "%s");\n""" % ("Search", rootdir + searchlink, "Search")
+			
 		file = open(os.path.join(self.themedir,"frame.tpl"), "r")
 		data = file.read().decode("utf-8")
 		file.close()
@@ -26,21 +30,6 @@ class HTMLPublisher(BaseHTMLPublisher):
 		data = string.replace(data, "<!-- INSERT MENU ITEMS HERE -->", text)
 		file.write(data.encode("utf-8"))
 		file.close()
-
-	def _GetFilename(self, filename):
-		extension = string.split(filename, ".")[-1]
-		publisher = None
-		for plugin in myplugins:
-			if extension in plugin["Extension"]:
-				publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
-		if publisher: 
-			try:
-				filename = "pub/" + publisher.GetFilename(filename)
-			except: 
-				pass
-		else:
-			filename = string.replace(filename, "\\", "/")
-		return filename
 
 	def GetContentsPage(self):
 		if os.path.exists(os.path.join(self.themedir,"frame.tpl")):
@@ -53,7 +42,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			if string.find(root.content.filename, "imsmanifest.xml") != -1:
 					root = root.pub.nodes[0]
 
-			filename = self._GetFilename(root.content.filename) 
+			filename = rootdir + self._GetFilename(root.content.filename) 
 
 			if not root.content.public == "false":
 				if len(root.children) > 0:

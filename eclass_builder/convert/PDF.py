@@ -151,21 +151,6 @@ class PDFPublisher:
 	def AddTOCItems(self, nodes, level):
 		pass				
 
-	def _GetFilename(self, filename):
-		extension = string.split(filename, ".")[-1]
-		publisher = None
-		for plugin in plugins.pluginList:
-			if extension in plugin["Extension"]:
-				publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
-		if publisher: 
-			try:
-				filename = publisher.GetFilename(filename)
-			except: 
-				pass
-		else:
-			filename = "../File/" + filename
-		return filename
-
 	def PublishPages(self, node):
 		page = ""
 		if self.cancelled:

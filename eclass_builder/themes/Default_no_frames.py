@@ -1,22 +1,23 @@
 from BaseTheme import *
 themename = "Default (no frames)"
 
+rootdir = "../"
+
 class HTMLPublisher(BaseHTMLPublisher):
 	def __init__(self, parent):
 		BaseHTMLPublisher.__init__(self, parent)
 		self.themedir = os.path.join(self.appdir, "themes", themename)
 
 	def CreateTOC(self):
-		filename = self._GetFilename(self.pub.nodes[0].content.filename)
+		filename = rootdir + self._GetFilename(self.pub.nodes[0].content.filename)
 
 		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
 		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
-		if self.pub.settings["SearchEnabled"] != "" and int(self.pub.settings["SearchEnabled"]):
-			if self.pub.settings["SearchProgram"] == "Swish-e":
-				searchscript = "../cgi-bin/search.py"
-				text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", searchscript)
-			elif self.pub.settings["SearchProgram"] == "Greenstone" and self.pub.pubid != "":
-				text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", "/gsdl?site=127.0.0.1&a=p&p=about&c=" + self.pub.pubid + "&ct=0")
+
+		searchlink = self.GetSearchPageLink()
+		if searchlink != "":
+			text = text + """searchID = theMenu.addEntry(-1, "Document", "%s", "%s", "%s");\n""" % ("Search", rootdir + searchlink, "Search")
+
 		file = open(os.path.join(self.themedir,"eclassNodes.js"), "r")
 		data = file.read()
 		file.close()
@@ -40,7 +41,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			if string.find(root.content.filename, "imsmanifest.xml") != -1:
 					root = root.pub.nodes[0]
 
-			filename = self._GetFilename(root.content.filename) 
+			filename = rootdir + self._GetFilename(root.content.filename) 
 
 			if not root.content.public == "false":
 				nodeName = "foldersTree"

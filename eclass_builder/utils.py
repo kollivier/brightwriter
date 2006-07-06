@@ -70,7 +70,7 @@ def isReadOnly(filename):
 
 def CreateJoustJavascript(pub):
 	try:
-		filename = _GetFilename(pub.nodes[0].content.filename)
+		filename = GetFileLink(pub.nodes[0].content.filename)
 		text = u"""
 function addJoustItems(theMenu){
 	var level1ID = -1;
@@ -96,7 +96,7 @@ def AddJoustItems(nodes, level):
 		if string.find(root.content.filename, "imsmanifest.xml") != -1:
 				root = root.pub.nodes[0]
 
-		filename = _GetFilename(root.content.filename) 
+		filename = GetFileLink(root.content.filename) 
 
 		if not root.content.public == "false":
 			if len(root.children) > 0:
@@ -111,18 +111,13 @@ def AddJoustItems(nodes, level):
 			print "Item " + root.content.metadata.name + " is marked private and was not published."
 	return text	
 
-def _GetFilename(filename):
-	extension = string.split(filename, ".")[-1]
-	plugin = plugins.GetPluginForExtension(extension)
-	if plugin:
-		publisher = plugin.HTMLPublisher() 
-		try:
-			filename = "pub/" + publisher.GetFilename(filename)
-		except: 
-			import traceback
-			print `traceback.print_exc()`
-	else:
+def GetFileLink(filename):
+	try:
+		publisher = plugins.GetPluginForFilename(filename).HTMLPublisher()
+		filename = publisher.GetFileLink(filename)
+	except: 
 		filename = string.replace(filename, "\\", "/")
+		
 	return filename
 
 def getCurrentEncoding():
