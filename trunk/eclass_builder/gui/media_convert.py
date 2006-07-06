@@ -1,3 +1,4 @@
+import wx
 import wxaddons.sized_controls as sc
 import string, sys, os
     
@@ -36,13 +37,3 @@ class ConvertMediaDialog(sc.SizedDialog):
                 files.append(self.fileList.GetString(item))
                 
         return files
-
-        
-if __name__ == "__main__":
-    # quick hack to let me use one of my app's dialogs as an example...
-    def _(text):
-        return text
-    
-    app = wx.PySimpleApp()
-    dlg = ConvertMediaDialog(None, ["hello.mpg"])
-    dlg.ShowModal()
