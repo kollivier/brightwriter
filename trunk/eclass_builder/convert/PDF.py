@@ -48,7 +48,7 @@ class PDFPublisher:
 	def __init__(self, parent=None):
 		self.parent = parent
 		self.pub = parent.pub
-		self.dir = settings.CurrentDir
+		self.dir = settings.ProjectDir
 		#if sys.platform != "win32":
 		#	self.dir = string.replace(self.dir, " ", "\\ ")
 		Title = self.pub.nodes[0].content.metadata.name
@@ -85,7 +85,7 @@ class PDFPublisher:
 			#self.CreateTOC()
 			self.counter = 1
 			self.PublishPages(self.pub.nodes[0])
-			#shutil.copytree(os.path.join(self.CurrentDir, "Graphics"), os.path.join(self.tempdir, "Graphics"))
+			#shutil.copytree(os.path.join(self.ProjectDir, "Graphics"), os.path.join(self.tempdir, "Graphics"))
 		except:
 			if self.progress:
 				self.progress.Destroy()

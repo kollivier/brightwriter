@@ -111,7 +111,7 @@ class UpdateIndexDialog(wxDialog):
 					self.log.write(message)
 					self.txtProgress.WriteText(message)
 	
-				files.CopyFiles(os.path.join(self.parent.CurrentDir, "pub"), os.path.join(eclassdir, "import"), 1)
+				files.CopyFiles(os.path.join(self.parent.ProjectDir, "pub"), os.path.join(eclassdir, "import"), 1)
 					#...and build the collection
 				self.call = win32api.GetShortPathName(os.path.join(self.parent.AppDir, "greenstone", "buildcol.bat")) + " " + self.parent.pub.pubid + " " + win32api.GetShortPathName(gsdl) 
 				if captureoutput:	 
@@ -124,7 +124,7 @@ class UpdateIndexDialog(wxDialog):
 					exportdir = os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pubid)
 					if not os.path.exists(os.path.join(exportdir, "gsdl", "eclass")):
 						os.mkdir(os.path.join(exportdir, "gsdl", "eclass"))
-					files.CopyFiles(self.parent.CurrentDir, os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pubid, "gsdl", "eclass"), 1)
+					files.CopyFiles(self.parent.ProjectDir, os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pubid, "gsdl", "eclass"), 1)
 					files.CopyFile("home.dm", os.path.join(self.parent.AppDir, "greenstone"), os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pubid, "gsdl", "macros"))
 					files.CopyFile("style.dm", os.path.join(self.parent.AppDir, "greenstone"), os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pubid, "gsdl", "macros"))
 					self.status.SetLabel(_("""Finished exporting. You can find the exported 
@@ -163,7 +163,7 @@ collection at:""") + os.path.join(gsdl, "tmp", "exported_" + self.parent.pub.pub
 				self.EndModal(wxID_OK)
 			self.status.SetLabel(_("Finished exporting!"))
 		elif self.parent.pub.settings["SearchProgram"] == "Lucene":
-			engine = indexer.SearchEngine(self, os.path.join(self.parent.CurrentDir, "index.lucene"), os.path.join(self.parent.CurrentDir, "File"))
+			engine = indexer.SearchEngine(self, os.path.join(self.parent.ProjectDir, "index.lucene"), os.path.join(self.parent.ProjectDir, "File"))
 			
 			self.mythread = threading.Thread(None, engine.IndexFiles, "Indexer", [self.parent.pub.nodes[0]])
 			self.mythread.run()

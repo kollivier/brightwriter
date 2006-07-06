@@ -671,13 +671,13 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		audioHTML = ""
 		presentHTML = ""
  
-		if len(mypage.media.image) > 0 and os.path.exists(os.path.join(settings.CurrentDir, "Graphics", mypage.media.image)):
+		if len(mypage.media.image) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "Graphics", mypage.media.image)):
 			imageHTML = "<IMG src='../Graphics/%s'>" % (mypage.media.image)
 		
-		if len(mypage.media.video) > 0 and os.path.exists(os.path.join(settings.CurrentDir, "pub", "Video", mypage.media.video)):
+		if len(mypage.media.video) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "pub", "Video", mypage.media.video)):
 			template = ""
 			url = "Video/" + mypage.media.video
-			template = mmedia.getHTMLTemplate(os.path.join(settings.CurrentDir, "pub", url), isVideo=True)
+			template = mmedia.getHTMLTemplate(os.path.join(settings.ProjectDir, "pub", url), isVideo=True)
 
 			videoHTML = string.replace(template, "_filename_", url)
 			autostart = "False"
@@ -685,10 +685,10 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				autostart = "True"
 			videoHTML = string.replace(videoHTML, "_autostart_", autostart)
 
-		if len(mypage.media.audio) > 0 and os.path.exists(os.path.join(settings.CurrentDir, "pub", "Audio", mypage.media.audio)):
+		if len(mypage.media.audio) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "pub", "Audio", mypage.media.audio)):
 			template = ""
 			url = "Audio/" + mypage.media.audio
-			template = mmedia.getHTMLTemplate(os.path.join(settings.CurrentDir, "pub", url), isVideo=False)
+			template = mmedia.getHTMLTemplate(os.path.join(settings.ProjectDir, "pub", url), isVideo=False)
 
 			audioHTML = string.replace(template, "_filename_", url)
 			autostart = "False"
@@ -696,7 +696,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				autostart = "True"
 			audioHTML = string.replace(audioHTML, "_autostart_", autostart)
 
-		if len(mypage.media.powerpoint) > 0 and os.path.exists(os.path.join(settings.CurrentDir, "Present", mypage.media.powerpoint)):
+		if len(mypage.media.powerpoint) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "Present", mypage.media.powerpoint)):
 			presentHTML = """<a href="../Present/%(pres)s" target="_blank">%(viewpres)s</a>""" % {"pres":mypage.media.powerpoint, "viewpres":_("View Presentation")}
 	
 		if len(imageHTML) > 0 and len(videoHTML) > 0:
@@ -797,12 +797,12 @@ class SelectBox(sc.SizedPanel):
 			self.type = "File"
 			filter = _("All Files") + "(*.*)|*.*"
 
-		f = wx.FileDialog(self.parent, _("Select a file"), os.path.join(settings.CurrentDir, self.type), "", filter, wx.OPEN)
+		f = wx.FileDialog(self.parent, _("Select a file"), os.path.join(settings.ProjectDir, self.type), "", filter, wx.OPEN)
 		if f.ShowModal() == wx.ID_OK:
 			self.selecteddir = f.GetDirectory()
-			dir = os.path.join(settings.CurrentDir, self.type)
+			dir = os.path.join(settings.ProjectDir, self.type)
 			if self.type in ["Video", "Audio"]:
-				dir = os.path.join(settings.CurrentDir, "pub", self.type)
+				dir = os.path.join(settings.ProjectDir, "pub", self.type)
 			
 			if string.find(f.GetPath(), dir) == -1:
 				self.CopyFile(f.GetPath(), f.GetFilename(), dir)
@@ -834,7 +834,7 @@ class SelectBox(sc.SizedPanel):
 							myfilename = myname[:-1] + `counter` + myext
 						counter = counter + 1
 						#print "new filename is: " + myfilename + "\n"
-					os.rename(os.path.join(settings.CurrentDir, "File", oldfilename), os.path.join(settings.CurrentDir, "File", myfilename))
+					os.rename(os.path.join(settings.ProjectDir, "File", oldfilename), os.path.join(settings.ProjectDir, "File", myfilename))
 					self.filename = "../File/" + myfilename
 			else:
 				self.filename = f.GetFilename()
@@ -851,7 +851,7 @@ class SelectBox(sc.SizedPanel):
 			data = file.read()
 			if string.lower(os.path.splitext(filename)[1]) in [".html", ".htm"]:
 				importer = ImportFiles()
-				data = importer.ImportLinks(data, self.selecteddir, settings.CurrentDir)
+				data = importer.ImportLinks(data, self.selecteddir, settings.ProjectDir)
 			file.close()
 		except IOError:
 			error = True
@@ -1013,7 +1013,7 @@ class EditorDialog (sc.SizedDialog):
 	- item: the ConNode selected on the main EClass editor, or an EClassPage
 	- parent: the parent window that called this dialog
 	- mainform: the main window of the application - needed to update status messages
-	- CurrentDir: the root directory of the currently selected node
+	- ProjectDir: the root directory of the currently selected node
 	- CurrentObj: the currently-selected objective
 
 	Methods:
@@ -1052,33 +1052,33 @@ class EditorDialog (sc.SizedDialog):
 			self.page = EClassPage(self)
 			if len(self.filename) > 0:
 				
-				if not os.path.exists(os.path.join(settings.CurrentDir, "EClass", os.path.basename(self.filename))):
-					self.page.SaveAsXML(os.path.join(settings.CurrentDir, "EClass", os.path.basename(self.filename)))
+				if not os.path.exists(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))):
+					self.page.SaveAsXML(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
 
 				try:
-					self.page.LoadPage(os.path.join(settings.CurrentDir, "EClass", os.path.basename(self.filename)))
+					self.page.LoadPage(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
 					item.content.filename = self.filename
 				except RuntimeError, e:
 					global log
-					message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.CurrentDir, "EClass", self.filename), "error":str(e)}
+					message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
 					wx.MessageDialog(parent, message, _("Error loading page"), wx.OK).ShowModal()
 					log.write(message)
 					del busy
 					return
 			else:
-				myfilename = os.path.join(settings.CurrentDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
+				myfilename = os.path.join(settings.ProjectDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
 				self.filename = item.content.filename = myfilename
 				try:
-					self.page.SaveAsXML(os.path.join(settings.CurrentDir, "EClass", myfilename))
+					self.page.SaveAsXML(os.path.join(settings.ProjectDir, "EClass", myfilename))
 				except IOError, e:
 					global log
-					message = _("There was an error saving the EClass page '%(page)s'. The error message returned by the system is: %(error)s") % {"page":os.path.join(self.parent.CurrentDir, "EClass", myfilename), "error":str(e)}
+					message = _("There was an error saving the EClass page '%(page)s'. The error message returned by the system is: %(error)s") % {"page":os.path.join(self.parent.ProjectDir, "EClass", myfilename), "error":str(e)}
 					log.write(message)
 					wx.MessageDialog(self, message, _("File Write Error"), wx.OK)
 
 			self.page.name = item.content.metadata.name
 		else:
-			settings.CurrentDir = self.parent.CurrentDir
+			settings.ProjectDir = self.parent.ProjectDir
 			self.page = item.page
 			self.isHotword = True
 		
@@ -1219,11 +1219,11 @@ class EditorDialog (sc.SizedDialog):
 		self.Fit()
 		self.SetMinSize(self.GetSize())
 		convertFiles = []
-		audioFile = os.path.join(settings.CurrentDir, "pub", "Audio", self.page.media.audio)
+		audioFile = os.path.join(settings.ProjectDir, "pub", "Audio", self.page.media.audio)
 		if mmedia.canConvertFile(self.page.media.audio) and not mmedia.wasConverted(audioFile):
 			convertFiles.append(self.page.media.audio)
 		
-		videoFile = os.path.join(settings.CurrentDir, "pub", "Video", self.page.media.video)
+		videoFile = os.path.join(settings.ProjectDir, "pub", "Video", self.page.media.video)
 		if mmedia.canConvertFile(self.page.media.video) and not mmedia.wasConverted(videoFile):
 			convertFiles.append(self.page.media.video)
 			
@@ -1232,9 +1232,9 @@ class EditorDialog (sc.SizedDialog):
 			if dlg.ShowModal() == wx.ID_OK:
 				files = dlg.GetSelectedFiles()
 				for afile in files:
-					filepath = os.path.join(settings.CurrentDir, "pub", "Video", afile)
+					filepath = os.path.join(settings.ProjectDir, "pub", "Video", afile)
 					if not os.path.exists(filepath):
-						filepath = os.path.join(settings.CurrentDir, "pub", "Audio", afile)
+						filepath = os.path.join(settings.ProjectDir, "pub", "Audio", afile)
 					if os.path.exists(filepath):
 						mmedia.convertFile(filepath)
 
@@ -1271,7 +1271,7 @@ class EditorDialog (sc.SizedDialog):
 			try:
 				from OSATools import AppModels
 				dreamweaver = AppModels.AppleScriptApp("Dreamweaver MX")
-				opencommand = 'set myPath to POSIX file "' + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + '"'
+				opencommand = 'set myPath to POSIX file "' + os.path.join(settings.ProjectDir, "Text", self.selectText.filename) + '"'
 				result = dreamweaver.tellBlock(['activate',opencommand, 'open file myPath'])
 			except:
 				pass
@@ -1280,10 +1280,10 @@ class EditorDialog (sc.SizedDialog):
 		if self.mainform.settings["HTMLEditor"] == "":
 			wx.MessageDialog(self, _("To edit the page, E-Class needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wx.OK).ShowModal()
 		else:
-			if not os.path.exists(os.path.join(settings.CurrentDir, "Text", self.selectText.filename)):
+			if not os.path.exists(os.path.join(settings.ProjectDir, "Text", self.selectText.filename)):
 				dialog = wx.MessageDialog(self, _("The text file '%(filename)s' does not exist. Would you like EClass to create it for you?") % {"filename":self.selectText.filename}, _("File not found"), wx.YES_NO)
 				if dialog.ShowModal() == wx.ID_YES:
-					self.CreateHTMLFile(os.path.join(settings.CurrentDir, "Text", self.selectText.filename))
+					self.CreateHTMLFile(os.path.join(settings.ProjectDir, "Text", self.selectText.filename))
 				else:
 					return
 			if wx.Platform == "__wx.MSW__":
@@ -1291,20 +1291,20 @@ class EditorDialog (sc.SizedDialog):
 				editor = "\"" + self.mainform.settings["HTMLEditor"] + "\""
 				if not string.find(string.lower(editor), "mozilla") == -1:
 					editor = editor + " -edit" 
-				win32api.WinExec(editor + " \"" + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + "\"")
+				win32api.WinExec(editor + " \"" + os.path.join(settings.ProjectDir, "Text", self.selectText.filename) + "\"")
 				
-				#path = win32api.GetShortPathName(os.path.join(settings.CurrentDir, "Text", self.selectText.filename))
+				#path = win32api.GetShortPathName(os.path.join(settings.ProjectDir, "Text", self.selectText.filename))
 				#editor = win32api.GetShortPathName(self.mainform.settings["HTMLEditor"])
 				#if not string.find(string.lower(editor), "mozilla") == -1:
 				#	editor = editor + " -edit" 
 				#print editor + " " + path
 				#os.system(editor + " " + path)
-				#os.spawnv(1, self.mainform.settings["HTMLEditor"], [os.path.split(self.mainform.settings["HTMLEditor"])[1], "\"" + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + "\""])
+				#os.spawnv(1, self.mainform.settings["HTMLEditor"], [os.path.split(self.mainform.settings["HTMLEditor"])[1], "\"" + os.path.join(settings.ProjectDir, "Text", self.selectText.filename) + "\""])
 			else:
 				editor = self.mainform.settings["HTMLEditor"] 
 				if wx.Platform == "__wx.MAC__":
 					editor = "open -a '" + editor + "'"
-				path = editor + " '" + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + "'"
+				path = editor + " '" + os.path.join(settings.ProjectDir, "Text", self.selectText.filename) + "'"
 				os.system(path)
 
 	def CreateHTMLFile(self, filename):
@@ -1328,7 +1328,7 @@ class EditorDialog (sc.SizedDialog):
 	def btnNewFileClicked(self, event):
 		savefile = False
 
-		f = wx.FileDialog(self, _("New HTML Page"), os.path.join(settings.CurrentDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wx.SAVE)
+		f = wx.FileDialog(self, _("New HTML Page"), os.path.join(settings.ProjectDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wx.SAVE)
 		if f.ShowModal() == wx.ID_OK:
 			filename = f.GetPath()
 			if os.path.exists(filename):
@@ -1461,15 +1461,15 @@ class EditorDialog (sc.SizedDialog):
 		missingfiles = []
 		filenames = []
 		if len(self.page.media.image) > 0:
-			filenames.append(os.path.join(settings.CurrentDir, "Graphics", self.page.media.image))
+			filenames.append(os.path.join(settings.ProjectDir, "Graphics", self.page.media.image))
 		if len(self.page.media.video) > 0:
-			filenames.append(os.path.join(settings.CurrentDir, "pub", "Video", self.page.media.video))
+			filenames.append(os.path.join(settings.ProjectDir, "pub", "Video", self.page.media.video))
 		if len(self.page.media.audio) > 0:
-			filenames.append(os.path.join(settings.CurrentDir, "pub", "Audio", self.page.media.audio))
+			filenames.append(os.path.join(settings.ProjectDir, "pub", "Audio", self.page.media.audio))
 		if len(self.page.media.text) > 0:
-			filenames.append(os.path.join(settings.CurrentDir, "Text", self.page.media.text))
+			filenames.append(os.path.join(settings.ProjectDir, "Text", self.page.media.text))
 		if len(self.page.media.powerpoint) > 0:
-			filenames.append(os.path.join(settings.CurrentDir, "Present", self.page.media.powerpoint))
+			filenames.append(os.path.join(settings.ProjectDir, "Present", self.page.media.powerpoint))
 
 		for file in filenames:
 			if not os.path.exists(file):
@@ -1487,7 +1487,7 @@ class EditorDialog (sc.SizedDialog):
 
 		if isinstance(self.item, conman.conman.ConNode):
 			if len(self.filename) > 0:
-				filename = os.path.join(self.parent.CurrentDir, "EClass", os.path.basename(self.filename))
+				filename = os.path.join(self.parent.ProjectDir, "EClass", os.path.basename(self.filename))
 				try:
 					self.page.SaveAsXML(filename,self.mainform.encoding)
 				except IOError, e:
@@ -1497,10 +1497,10 @@ class EditorDialog (sc.SizedDialog):
 					wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
 					return
 			else:
-				myfilename = os.path.join(self.parent.CurrentDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
+				myfilename = os.path.join(self.parent.ProjectDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
 				self.item.content.filename = myfilename
 				try: 
-					self.page.SaveAsXML(os.path.join(self.parent.CurrentDir, "EClass", myfilename),self.mainform.encoding)
+					self.page.SaveAsXML(os.path.join(self.parent.ProjectDir, "EClass", myfilename),self.mainform.encoding)
 				except IOError, e:
 					import traceback
 					print `traceback.print_exc()`
@@ -1509,7 +1509,7 @@ class EditorDialog (sc.SizedDialog):
 
 			eclassPub = HTMLPublisher()
 			try:
-				#filename = eclassPub.Publish(self.parent, self.parent.CurrentItem, self.parent.CurrentDir)
+				#filename = eclassPub.Publish(self.parent, self.parent.CurrentItem, self.parent.ProjectDir)
 				#self.parent.Preview(filename)
 				del busy
 			except Exception, ex:

@@ -81,7 +81,7 @@ function addJoustItems(theMenu){
 		text = text + AddJoustItems(pub.nodes[0], 1)
 		text = text + "return theMenu; \n}"
 
-		afile = open(os.path.join(settings.CurrentDir, "joustitems.js"), "w")
+		afile = open(os.path.join(settings.ProjectDir, "joustitems.js"), "w")
 		afile.write(text.encode("utf-8"))
 		afile.close()
 	except:
@@ -180,7 +180,7 @@ def checkNameExists(filename):
     basename = os.path.splitext(os.path.basename(filename))[0]
     for dir in ["EClass", "Text", "pub"]:
         for ext in [".htm", ".html", ".quiz", ".ecp"]:
-            if os.path.exists(os.path.join(settings.CurrentDir, dir, basename + ext)):
+            if os.path.exists(os.path.join(settings.ProjectDir, dir, basename + ext)):
                 return True
                 
     return False

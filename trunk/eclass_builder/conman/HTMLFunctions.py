@@ -15,9 +15,9 @@ import utils
 # files to have non-standard HTML in them that I can't seem to figure out.
 # even OpenOffice has created HTML files that choke the parser...
 class HTMLImporter:
-	def __init__(self, filename="", sourcedir="", currentdir="", data=""):
+	def __init__(self, filename="", sourcedir="", ProjectDir="", data=""):
 		self.sourcedir = sourcedir
-		self.currentdir = currentdir
+		self.ProjectDir = ProjectDir
 		self.dependentFiles = []
 		self.title = ""
 		self.metadata = {}
@@ -60,7 +60,7 @@ class HTMLImporter:
 					link = string.replace(link, "/", os.sep)
 			
 				#TODO: Re-evaluate this logic... Why did I do it this way?
-				checklink = os.path.join(self.currentdir, "Text", link)
+				checklink = os.path.join(self.ProjectDir, "Text", link)
 			
 				if os.path.isfile(checklink):
 					break
@@ -84,7 +84,7 @@ class HTMLImporter:
 						break
 			if subdir == "":
 				subdir = "File"
-			destdir = os.path.join(self.currentdir,subdir)
+			destdir = os.path.join(self.ProjectDir,subdir)
 			#print destdir
 			result = 0
 			if string.find(string.lower(link), "file://") != -1:
@@ -111,17 +111,17 @@ class HTMLImporter:
 class ImportFiles:
 	def __init__(self, filename=""):
 		self.sourcedir = ""
-		self.currentdir = ""
+		self.ProjectDir = ""
 		self.dependentFiles = []
 		self.filename = ""
 
-	def ImportLinks(self, myhtml, mysourcedir, mycurrentdir):
+	def ImportLinks(self, myhtml, mysourcedir, myProjectDir):
 		"""
 		Detects any relative links (including hyperlinks and images) and copies the linked file into the EClass project folder.
 		"""
 		self.sourcedir = mysourcedir
 		#print "self.sourcedir = " + self.sourcedir
-		self.currentdir = mycurrentdir
+		self.ProjectDir = myProjectDir
 		imagelinks = re.compile("src\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
 		myhtml = imagelinks.sub(self.CopyLink,myhtml)
 		weblinks = re.compile("href\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
@@ -145,7 +145,7 @@ class ImportFiles:
 				if not os.sep == "/":
 					link = string.replace(link, "/", os.sep)
 			
-				checklink = os.path.join(self.currentdir, "Text", link)
+				checklink = os.path.join(self.ProjectDir, "Text", link)
 			
 				if os.path.isfile(checklink):
 					return match.group()
@@ -171,7 +171,7 @@ class ImportFiles:
 						break
 			if subdir == "":
 				subdir = "File"
-			destdir = os.path.join(self.currentdir,subdir)
+			destdir = os.path.join(self.ProjectDir,subdir)
 			#print destdir
 			result = 0
 			if string.find(string.lower(link), "file://") != -1:
@@ -221,7 +221,7 @@ class ImportFiles:
 				if not os.sep == "/":
 					link = string.replace(link, "/", os.sep)
 			
-				checklink = os.path.join(self.currentdir, "Text", link)
+				checklink = os.path.join(self.ProjectDir, "Text", link)
 			
 				if os.path.isfile(checklink):
 					return match.group()
@@ -247,7 +247,7 @@ class ImportFiles:
 						break
 			if subdir == "":
 				subdir = "File"
-			destdir = os.path.join(self.currentdir,subdir)
+			destdir = os.path.join(self.ProjectDir,subdir)
 			#print destdir
 			result = 0
 			if string.find(string.lower(link), "file://") != -1:

@@ -30,7 +30,7 @@ class SearchEngine:
 		#get a tally of all the files being indexed
 		self.numFiles = self.parent.pub.GetNodeCount()
 				
-		for (dir, subdirs, files) in os.walk(os.path.join(settings.CurrentDir, "File"),False):
+		for (dir, subdirs, files) in os.walk(os.path.join(settings.ProjectDir, "File"),False):
 			self.numFiles = self.numFiles + len(files)
 
 		#self.dialog = dialogs.ProgressMonitor(_("Updating Index..."), self.numFiles, _("Preparing to update Index...") + "                             ")

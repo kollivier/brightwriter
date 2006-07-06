@@ -171,7 +171,7 @@ class MainFrame2(wxFrame):
 		self.isDirty = False
 		self.isNewCourse = False
 		self.CurrentItem = None #current node
-		self.CurrentDir = ""
+		self.ProjectDir = ""
 		self.CurrentTreeItem = None
 		self.pub = conman.ConMan()
 		#dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
@@ -739,7 +739,7 @@ class MainFrame2(wxFrame):
 		self.CurrentItem = None
 		self.CurrentFilename = ""
 		self.CurrentTreeItem = None
-		self.CurrentDir = ""
+		self.ProjectDir = ""
 		if wxPlatform == "__WXMSW__":
 			self.ie.Navigate("about:blank")
 			self.mozilla.Navigate("about:blank")
@@ -799,16 +799,16 @@ class MainFrame2(wxFrame):
 			if result == wxID_OK:
 				self.isNewCourse = True
 				self.wxTree.DeleteAllItems()
-				self.CurrentFilename = os.path.join(settings.CurrentDir, "imsmanifest.xml")
-				self.CurrentItem = self.pub.NewPub(self.pub.name, "English", self.CurrentDir)
+				self.CurrentFilename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
+				self.CurrentItem = self.pub.NewPub(self.pub.name, "English", self.ProjectDir)
 				self.isDirty = True
 				global eclassdirs
 				for dir in eclassdirs:
-					if not os.path.exists(os.path.join(self.CurrentDir, dir)):
-						os.mkdir(os.path.join(self.CurrentDir, dir))
+					if not os.path.exists(os.path.join(self.ProjectDir, dir)):
+						os.mkdir(os.path.join(self.ProjectDir, dir))
 				#if wxPlatform == '__WXMSW__':
-					#self.CurrentDir = win32api.GetShortPathName(self.CurrentDir)
-					#settings.CurrentDir = self.CurrentDir
+					#self.ProjectDir = win32api.GetShortPathName(self.ProjectDir)
+					#settings.ProjectDir = self.ProjectDir
 				self.BindTowxTree(self.pub.nodes[0])	
 				self.CurrentTreeItem = self.wxTree.GetRootItem()
 				
@@ -875,7 +875,7 @@ class MainFrame2(wxFrame):
 	def PublishToIMS(self, event):
 		import zipfile
 		import tempfile
-		#zipname = os.path.join(self.CurrentDir, "myzip.zip")
+		#zipname = os.path.join(self.ProjectDir, "myzip.zip")
 		deffilename = fileutils.MakeFileName2(self.pub.name) + ".zip"
 		dialog = wxFileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wxSAVE)
 		if dialog.ShowModal() == wxID_OK: 
@@ -908,7 +908,7 @@ class MainFrame2(wxFrame):
 		wxMessageBox("Finished exporting!")
 		
 	def _DirToZipFile(self, dir, myzip):
-		mydir = os.path.join(self.CurrentDir, dir)
+		mydir = os.path.join(self.ProjectDir, dir)
 		if not os.path.basename(dir) in ["installers", "cgi-bin"]:
 			for file in os.listdir(mydir):
 				mypath = os.path.join(mydir, file)
@@ -924,7 +924,7 @@ class MainFrame2(wxFrame):
 			searchEnabled = self.pub.settings["SearchEnabled"]
 		if int(searchEnabled) == 1:
 			if self.pub.settings["SearchProgram"] == "Lucene" and hasLucene:
-				engine = indexer.SearchEngine(self, os.path.join(settings.CurrentDir, "index.lucene"), settings.CurrentDir)
+				engine = indexer.SearchEngine(self, os.path.join(settings.ProjectDir, "index.lucene"), settings.ProjectDir)
 				maxfiles = engine.numFiles
 				#import threading
 				dialog = wxProgressDialog(_("Updating Index"), _("Preparing to update Index...") + "							 ", maxfiles, style=wxPD_CAN_ABORT | wxPD_APP_MODAL) 
@@ -960,7 +960,7 @@ class MainFrame2(wxFrame):
 					dialog.Destroy()
 
 	def PublishToCD(self,event):
-		folder = self.CurrentDir
+		folder = self.ProjectDir
 		if self.pub.settings["CDSaveDir"] == "":
 			result = wxMessageDialog(self, _("You need to specify a directory in which to store the CD files for burning.\nWould you like to do so now?"), _("Specify CD Save Directory?"), wxYES_NO).ShowModal()
 			if result == wxID_YES:
@@ -991,16 +991,16 @@ class MainFrame2(wxFrame):
 	def CopyCDFiles(self):
 		try:
 			#cleanup after old EClass versions
-			fileutils.DeleteFiles(os.path.join(self.CurrentDir, "*.pyd"))
-			fileutils.DeleteFiles(os.path.join(self.CurrentDir, "*.dll"))
-			fileutils.DeleteFiles(os.path.join(self.CurrentDir, "*.exe"))
+			fileutils.DeleteFiles(os.path.join(self.ProjectDir, "*.pyd"))
+			fileutils.DeleteFiles(os.path.join(self.ProjectDir, "*.dll"))
+			fileutils.DeleteFiles(os.path.join(self.ProjectDir, "*.exe"))
 
-			pubdir = self.CurrentDir
+			pubdir = self.ProjectDir
 			if self.pub.settings["CDSaveDir"] != "":
 				pubdir = self.pub.settings["CDSaveDir"]
 
-			if pubdir != self.CurrentDir:
-				fileutils.CopyFiles(self.CurrentDir, pubdir, 1)
+			if pubdir != self.ProjectDir:
+				fileutils.CopyFiles(self.ProjectDir, pubdir, 1)
 
 			# copy the server program
 			if sys.platform == "win32" and self.pub.settings["ServerProgram"] == "Documancer":
@@ -1019,7 +1019,7 @@ class MainFrame2(wxFrame):
 				cddir = os.path.join(self.settings["GSDL"], "tmp", "exported_collections")
 				if not os.path.exists(os.path.join(cddir, "gsdl", "eclass")):
 					os.mkdir(os.path.join(cddir, "gsdl", "eclass"))
-				fileutils.CopyFiles(self.CurrentDir, os.path.join(cddir, "gsdl", "eclass"), True)
+				fileutils.CopyFiles(self.ProjectDir, os.path.join(cddir, "gsdl", "eclass"), True)
 				fileutils.CopyFile("home.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
 				fileutils.CopyFile("style.dm", os.path.join(self.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
 			elif self.pub.settings["SearchProgram"] == "Lucene":
@@ -1033,7 +1033,7 @@ class MainFrame2(wxFrame):
 	def PublishIt(self, event):
 		self.UpdateEClassDataFiles()
 		import webbrowser
-		webbrowser.open_new("file://" + os.path.join(self.CurrentDir, "index.htm")) 
+		webbrowser.open_new("file://" + os.path.join(self.ProjectDir, "index.htm")) 
 		
 	def UpdateEClassDataFiles(self, pubid=""):
 		result = False
@@ -1060,12 +1060,12 @@ class MainFrame2(wxFrame):
 			import htmlutils as importer
 			for file in files[:]:
 				if os.path.splitext(file)[1] == ".htm" or os.path.splitext(file)[1] == ".html":
-					myimporter = importer.HTMLImporter(os.path.join(self.CurrentDir, file))
-					#html = open(os.path.join(self.CurrentDir, file), "r").read()
+					myimporter = importer.HTMLImporter(os.path.join(self.ProjectDir, file))
+					#html = open(os.path.join(self.ProjectDir, file), "r").read()
 					depFiles = myimporter.GetDocInfo()[3]
 					for dep in depFiles:
 						depFile = string.replace(dep, "../", "")
-						if os.path.exists(os.path.join(self.CurrentDir, depFile)) and not depFile in files:
+						if os.path.exists(os.path.join(self.ProjectDir, depFile)) and not depFile in files:
 							files.append(depFile)
 				
 		ftp.filelist = files
@@ -1100,7 +1100,7 @@ class MainFrame2(wxFrame):
 				self.CurrentFilename = f.GetPath()
 				self.isDirty = False
 			f.Destroy()
-		ftppass_file = os.path.join(self.CurrentDir, "ftppass.txt")
+		ftppass_file = os.path.join(self.ProjectDir, "ftppass.txt")
 		try:
 			file = utils.openFile(ftppass_file, "w")
 			file.write(munge(self.ftppass, 'foobar'))
@@ -1124,11 +1124,11 @@ class MainFrame2(wxFrame):
 	def CreateDevHelpBook(self):
 		import devhelp
 		converter = devhelp.DevHelpConverter(self.pub)
-		converter.ExportDevHelpFile(os.path.join(self.CurrentDir, "eclass.devhelp"))
+		converter.ExportDevHelpFile(os.path.join(self.ProjectDir, "eclass.devhelp"))
 
 	def CreateDocumancerBook(self):
 		#update the Documancer book file
-		filename = os.path.join(self.CurrentDir, "eclass.dmbk")
+		filename = os.path.join(self.ProjectDir, "eclass.dmbk")
 		bookdata = utils.openFile(os.path.join(self.AppDir,"bookfile.book.in")).read()
 		bookdata = string.replace(bookdata, "<!-- insert title here-->", self.pub.name)
 		if self.pub.settings["SearchEnabled"] == "1" and self.pub.settings["SearchProgram"] == "Lucene":
@@ -1175,7 +1175,7 @@ class MainFrame2(wxFrame):
 			parent = self.CurrentTreeItem
 			newnode = conman.ConNode(conman.GetUUID(),None, self.pub.CurrentNode)
 			try:
-				dlg = PagePropertiesDialog(self, newnode, newnode.content, os.path.join(self.CurrentDir, "File"))
+				dlg = PagePropertiesDialog(self, newnode, newnode.content, os.path.join(self.ProjectDir, "File"))
 				if dlg.ShowModal() == wxID_OK:
 					self.pub.CurrentNode.children.append(newnode)
 					self.pub.content.append(newnode.content)
@@ -1243,7 +1243,7 @@ class MainFrame2(wxFrame):
 
 	def EditItem(self, event):
 		if self.CurrentItem and self.wxTree.IsSelected(self.CurrentTreeItem):
-			result = PagePropertiesDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
+			result = PagePropertiesDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.ProjectDir, "Text")).ShowModal()
 			self.wxTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
 			self.Update()
 			self.isDirty = True
@@ -1252,7 +1252,7 @@ class MainFrame2(wxFrame):
 		if page != None:
 			publisher = self.GetPublisher(page.content.filename)
 			if publisher:
-				publisher.Publish(self, page, settings.CurrentDir)
+				publisher.Publish(self, page, settings.ProjectDir)
 				
 	def PublishPageAndChildren(self, page):
 		self.PublishPage(page)
@@ -1352,10 +1352,10 @@ class MainFrame2(wxFrame):
 				#if not plugin:
 				#	result = 0
 				#	import guiutils
-				#	myFilename = os.path.join(settings.CurrentDir, self.CurrentItem.content.filename)
+				#	myFilename = os.path.join(settings.ProjectDir, self.CurrentItem.content.filename)
 				#	started_app = guiutils.sendCommandToApplication(myFilename, "open")
 				#	if not started_app:
-				#		result = PagePropertiesDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.CurrentDir, "Text")).ShowModal()
+				#		result = PagePropertiesDialog(self, self.CurrentItem, self.CurrentItem.content, os.path.join(self.ProjectDir, "Text")).ShowModal()
 	
 				if result == wxID_OK:
 					self.Update()
@@ -1396,9 +1396,9 @@ class MainFrame2(wxFrame):
 			wxMessageDialog(self, result, _("Could not find EClass file:") + filename, wxOK).ShowModal()
 			return 
 		
-		settings.CurrentDir = self.CurrentDir = os.path.dirname(filename)
+		settings.ProjectDir = self.ProjectDir = os.path.dirname(filename)
 		#if sys.platform == "win32":
-		#	settings.CurrentDir = self.CurrentDir = win32api.GetShortPathName(settings.CurrentDir)
+		#	settings.ProjectDir = self.ProjectDir = win32api.GetShortPathName(settings.ProjectDir)
 		self.wxTree.DeleteAllItems()
 		self.CurrentFilename = filename
 		self.pub = conman.ConMan()
@@ -1406,7 +1406,7 @@ class MainFrame2(wxFrame):
 		if result != "":
 			wxMessageDialog(self, result, _("Error loading XML file."), wxOK).ShowModal()
 		else:
-			self.pub.directory = settings.CurrentDir
+			self.pub.directory = settings.ProjectDir
 			global eclassdirs
 			for dir in eclassdirs:
 				subdir = os.path.join(self.pub.directory, dir)
@@ -1429,8 +1429,8 @@ class MainFrame2(wxFrame):
 				wxMessageBox(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
 
 			self.isDirty = False
-			if os.path.exists(os.path.join(settings.CurrentDir, "ftppass.txt")):
-				file = utils.openFile(os.path.join(settings.CurrentDir, "ftppass.txt"), "r")
+			if os.path.exists(os.path.join(settings.ProjectDir, "ftppass.txt")):
+				file = utils.openFile(os.path.join(settings.ProjectDir, "ftppass.txt"), "r")
 				self.ftppass = munge(file.read(), 'foobar')
 				file.close()	 
 			self.Preview()
@@ -1439,13 +1439,13 @@ class MainFrame2(wxFrame):
 			self.SetFocus()
 			self.SwitchMenus(True)
 			self.settings["LastOpened"] = filename
-			viddir = os.path.join(settings.CurrentDir, "Video")
-			auddir = os.path.join(settings.CurrentDir, "Audio")
+			viddir = os.path.join(settings.ProjectDir, "Video")
+			auddir = os.path.join(settings.ProjectDir, "Audio")
 			
 			if os.path.exists(viddir) or os.path.exists(auddir):
 				wxMessageBox(_("Due to new security restrictions in some media players, video and audio files need to be moved underneath of the 'pub' directory. EClass will now do this automatically and update your pages. Sorry for any inconvenience!"), _("Moving media files"))
-				os.rename(viddir, os.path.join(settings.CurrentDir, "pub", "Video"))
-				os.rename(auddir, os.path.join(settings.CurrentDir, "pub", "Audio"))
+				os.rename(viddir, os.path.join(settings.ProjectDir, "pub", "Video"))
+				os.rename(auddir, os.path.join(settings.ProjectDir, "pub", "Audio"))
 				#busy2 = wxBusyCursor()
 				self.PublishPageAndChildren(self.pub.nodes[0])
 				#del busy2
@@ -1542,7 +1542,7 @@ class MainFrame2(wxFrame):
 		plugin = plugins.GetPluginForFilename(filename)
 		publisher = plugin.HTMLPublisher()
 		filelink = publisher.GetFileLink(filename).replace("/", os.sep)
-		filename = os.path.join(settings.CurrentDir, filelink)
+		filename = os.path.join(settings.ProjectDir, filelink)
 		print "Filename is: " + `filename`	
 		#we shouldn't preview files that EClass can't view
 		ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]

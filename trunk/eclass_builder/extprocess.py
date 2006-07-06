@@ -19,7 +19,7 @@ if sys.platform == 'win32':
                         1,     # bInheritHandles
                         win32con.CREATE_NO_WINDOW,     # dwCreationFlags
                         None,  # newEnvironment
-                        None,  # currentDirectory
+                        None,  # ProjectDirectory
                         win32process.STARTUPINFO()) # startupinfo
             procHandles = win32process.CreateProcess(*procArgs)
             self.handle, self.thread, self.pid, self.tid = procHandles

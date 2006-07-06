@@ -40,7 +40,7 @@ class BaseHTMLPublisher:
 	def __init__(self, parent=None):
 		self.parent = parent
 		self.pub = parent.pub
-		self.dir = parent.CurrentDir
+		self.dir = parent.ProjectDir
 		self.counter = 1
 		self.appdir = parent.AppDir
 		self.themedir = os.path.join(self.appdir, "themes", themename)

@@ -1,6 +1,6 @@
 AppDir = ""
 ThirdPartyDir = ""
-CurrentDir = ""
+ProjectDir = ""
 PrefDir = ""
 plugins = []
 options = {}

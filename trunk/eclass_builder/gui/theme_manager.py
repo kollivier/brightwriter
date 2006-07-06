@@ -13,13 +13,13 @@ class ThemeManager(wxDialog):
 		self.lstThemeList = wxListBox(self, -1, choices=self.parent.themes.GetPublicThemeNames())
 		self.lstThemeList.SetSelection(0)
 		self.AppDir = parent.AppDir
-		self.CurrentDir = os.path.join(self.parent.AppDir, "themes", "ThemePreview")
+		self.ProjectDir = os.path.join(self.parent.AppDir, "themes", "ThemePreview")
 		#if wxPlatform == "__WXMSW__":
-		#	self.CurrentDir = win32api.GetShortPathName(self.CurrentDir)
+		#	self.ProjectDir = win32api.GetShortPathName(self.ProjectDir)
 		#self.templates = parent.templates
 		self.lblPreview = wxStaticText(self, -1, _("Theme Preview"))
 		self.pub = conman.ConMan()
-		self.pub.LoadFromXML(os.path.join(self.CurrentDir, "imsmanifest.xml"))
+		self.pub.LoadFromXML(os.path.join(self.ProjectDir, "imsmanifest.xml"))
 		self.btnOK = wxButton(self, wxID_OK, _("OK"))
 		self.oldtheme = self.parent.pub.settings["Theme"]
 		
@@ -87,7 +87,7 @@ class ThemeManager(wxDialog):
 		publisher = self.currentTheme.HTMLPublisher(self)
 		result = publisher.Publish()
 		if result:
-			self.browser.LoadPage(os.path.join(self.CurrentDir, "index.htm"))
+			self.browser.LoadPage(os.path.join(self.ProjectDir, "index.htm"))
 
 	def OnSetTheme(self, event):
 		self.UpdateTheme()

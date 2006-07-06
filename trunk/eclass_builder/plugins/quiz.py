@@ -651,7 +651,7 @@ class EditorDialog(wxDialog):
 		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
 
 		if len(self.item.content.filename) > 0: 
-			filename = os.path.join(self.parent.CurrentDir, self.item.content.filename)
+			filename = os.path.join(self.parent.ProjectDir, self.item.content.filename)
 			try:
 				if not os.path.exists(filename):
 					self.quiz.SaveAsXML(filename)
@@ -703,7 +703,7 @@ class EditorDialog(wxDialog):
 		EVT_LEFT_DCLICK(self.lstQuestions, self.btnEditClicked)
 
 	def btnOKClicked(self, event):
-		filename = os.path.join(self.parent.CurrentDir, self.item.content.filename)
+		filename = os.path.join(self.parent.ProjectDir, self.item.content.filename)
 		try:
 			self.quiz.SaveAsXML(filename)
 			self.EndModal(wxID_OK)
