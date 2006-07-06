@@ -1,4 +1,4 @@
-from wxPython.wx import *
+#from wxPython.wx import *
 import string
 import os
 #import conman.conman as conman
@@ -14,6 +14,10 @@ import fileutils
 import mmedia
 import gui.media_convert
 import settings
+
+import wx
+import wxaddons.persistence
+import wxaddons.sized_controls as sc
 
 USE_MINIDOM=0
 try:
@@ -34,7 +38,7 @@ log = errors.appErrorLog
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into
 # EClass.Builder's plugin registry.
-plugin_info = {	"Name":"eclass", 
+plugin_info = { "Name":"eclass", 
 				"FullName":"EClass Page", 
 				"Directory":"EClass", 
 				"Extension":["ecp"], 
@@ -44,10 +48,10 @@ plugin_info = {	"Name":"eclass",
 
 #-------------------------- DATA CLASSES ----------------------------
 
-EVT_RESULT_ID = wxNewId()
+EVT_RESULT_ID = wx.NewId()
 
 def EVT_RESULT(win, func):
-	win.Connect(-1, -1, EVT_RESULT_ID, func)
+	win.Connect(-1, -1, wx.EVT_RESULT_ID, func)
 
 def CreateNewFile(name, filename):
 	try:
@@ -389,10 +393,10 @@ class EClassPage(plugins.PluginData):
 		</Term>""" % (TextToXMLChar(term.name), TextToXMLChar(term.type), myvalue)
 		return myterms
 
-class ResultEvent(wxPyEvent):
+class ResultEvent(wx.PyEvent):
 	def __init__(self, hwname, hwid):
-		wxPyEvent.__init__(self)
-		self.SetEventType(EVT_RESULT_ID)
+		wx.PyEvent.__init__(self)
+		self.SetEventType(wx.EVT_RESULT_ID)
 		self.hwname = hwname
 		self.hwid = hwid
 	
@@ -464,6 +468,9 @@ class EClassTerm(plugins.PluginData):
 #------------------------ PUBLISHER CLASSES -------------------------------------------
 class HTMLPublisher(plugins.BaseHTMLPublisher):
 
+	def GetFileLink(self, filename):
+		return "pub/" + self.GetFilename(filename)
+
 	def GetFilename(self, filename):
 		"""
 		Function: GetFilename(filename)
@@ -512,8 +519,8 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				if len(basename) > 31:
 					if self.parent.pub.settings["ShortenFilenames"] == "":
 						message = _("EClass has detected filenames containing more than 31 characters in the EClass Page '%(pagename)s. This could cause compatibility problems with older browsers and operating systems. Would you like EClass to automatically rename these files?") % {"pagename":mypage.name}
-						mydialog = wxMessageDialog(self.parent, message, _("Rename file?"), wxYES_NO)
-						if mydialog.ShowModal() == wxID_YES:
+						mydialog = wx.MessageDialog(self.parent, message, _("Rename file?"), wx.YES_NO)
+						if mydialog.ShowModal() == wx.ID_YES:
 							self.parent.pub.settings["ShortenFilenames"] = "Yes"
 						else:
 							self.parent.pub.settings["ShortenFilenames"] = "No"
@@ -535,7 +542,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 						
 						#print "new filename length is: " + `len(myfilename)` + "\n"
 			termlist.append([term.name, myfilename])
-			counter = counter + 1 	
+			counter = counter + 1	
 		if self.parent.pub.settings["ShortenFilenames"] == "Yes":
 			mypage.SaveAsXML()	
 
@@ -608,23 +615,23 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		
 	def _ConvertFile(self, filename):
 		myfilename = filename
-		if wxPlatform == "__WXMSW__":
+		if wx.Platform == "__WXMSW__":
 			import win32api
 			myfilename = win32api.GetShortPathName(filename)
 
 		message = _("Unable to convert file %(filename)s") % {"filename": mypage.media.text}
 		try:
 			import converter
-			wxBeginBusyCursor()
+			wx.BeginBusyCursor()
 			myconverter = converter.DocConverter(self.parent)
 			thefilename = myconverter.ConvertFile(myfilename, "html", "ms_office")[0]
-			wxEndBusyCursor()
+			wx.EndBusyCursor()
 			if thefilename == "":
-				wxMessageBox(message)
+				wx.MessageBox(message)
 				return ""
 			myhtml = GetBody(utils.openFile(thefilename, "rb"))
 		except:
-			wxEndBusyCursor()
+			wx.EndBusyCursor()
 			global log
 			log.write(message)
 			return ""
@@ -733,9 +740,9 @@ class PDFPublisher(HTMLPublisher):
 
 #-------------------------- EDITOR INTERFACE ----------------------------------------
 
-class wxSelectBox:
+class SelectBox(sc.SizedPanel):
 	"""
-	Class: eclass.wxSelectBox
+	Class: eclass.SelectBox
 	Last Updated: 9/24/02
 	Description: A customized text box class to integrate file selection capabilities.
 
@@ -753,22 +760,25 @@ class wxSelectBox:
 	- textboxChanged: updates the textbox attribute whenever the textbox changes
 	"""
 
-	def __init__(self, parent, title, filename, type, x, y, length=120):
+	def __init__(self, parent, filename, type):
+		sc.SizedPanel.__init__(self, parent, -1)
 		self.parent = parent
 		self.filename = filename
 		self.type = type
-		self.title = title
 		self.selecteddir = ""
-		icnFolder = wxBitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wxBITMAP_TYPE_GIF)
-		self.label = wxStaticText(parent, -1, title, wxPoint(x, y+4))
-		height = 20
-		if wxPlatform == "__WXMAC__":
-			height = 25
-		self.textbox = wxTextCtrl(parent, -1, filename, wxPoint(x+70, y), wxSize(length,-1))
-		self.selectbtn = wxBitmapButton(parent, -1, icnFolder, wxPoint(x+length+72, y+2), wxSize(20, 18))
+		#pane = sc.SizedPanel(parent, -1)
+		self.SetSizerType("horizontal")
+		self.SetSizerProp("expand", True)
+		self.SetSizerProp("proportion", 1)
+		
+		icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wx.BITMAP_TYPE_GIF)
+		self.textbox = wx.TextCtrl(self, -1, filename)
+		self.textbox.SetSizerProp("expand", True)
+		self.textbox.SetSizerProp("proportion", 1)
+		self.selectbtn = wx.BitmapButton(self, -1, icnFolder)
 
-		EVT_BUTTON(self.selectbtn, self.selectbtn.GetId(), self.selectbtnClicked)
-		EVT_TEXT(self.textbox, self.textbox.GetId(), self.textboxChanged)
+		wx.EVT_BUTTON(self.selectbtn, self.selectbtn.GetId(), self.selectbtnClicked)
+		wx.EVT_TEXT(self.textbox, self.textbox.GetId(), self.textboxChanged)
 
 	def selectbtnClicked(self, event):
 		hyperlink = False
@@ -787,8 +797,8 @@ class wxSelectBox:
 			self.type = "File"
 			filter = _("All Files") + "(*.*)|*.*"
 
-		f = wxFileDialog(self.parent, _("Select a file"), os.path.join(settings.CurrentDir, self.type), "", filter, wxOPEN)
-		if f.ShowModal() == wxID_OK:
+		f = wx.FileDialog(self.parent, _("Select a file"), os.path.join(settings.CurrentDir, self.type), "", filter, wx.OPEN)
+		if f.ShowModal() == wx.ID_OK:
 			self.selecteddir = f.GetDirectory()
 			dir = os.path.join(settings.CurrentDir, self.type)
 			if self.type in ["Video", "Audio"]:
@@ -801,7 +811,7 @@ class wxSelectBox:
 				result = False
 				if len(f.GetFilename()) > 31 and self.parent.mainform.pub.settings["ShortenFilenames"] == "":
 					message = _("This filename contains more than 31 characters. This could cause compatibility problems with older browsers and operating systems. Would you like EClass to automatically rename the file?")
-					dialog = wxMessageDialog(self.parent, message, _("Rename File?"), wxYES_NO)			
+					dialog = wx.MessageDialog(self.parent, message, _("Rename File?"), wx.YES_NO)			
 					if dialog.ShowModal() == wxID_YES:
 						result = True
 				elif len(f.GetFilename()) > 31 and self.parent.mainform.pub.settings["ShortenFilenames"] == "Yes":
@@ -849,7 +859,7 @@ class wxSelectBox:
 			message = utils.getStdErrorMessage("IOError", {"type":"read", "filename":path})
 			log.write(message)
 			if showgui:
-				wxMessageDialog(self.parent, message, _("File Read Error"), wxOK).ShowModal()
+				wx.MessageDialog(self.parent, message, _("File Read Error"), wx.OK).ShowModal()
 				
 		if not error:
 			if not os.path.exists(destdir):
@@ -864,14 +874,14 @@ class wxSelectBox:
 				global log
 				log.write(message)
 				if showgui:
-					wxMessageDialog(self, message, _("File Write Error."), wxOK).ShowModal()
+					wx.MessageDialog(self, message, _("File Write Error."), wx.OK).ShowModal()
 		self.parent.mainform.SetStatusText("")
 
 	def textboxChanged(self, event):
 		self.filename = self.textbox.GetValue()
 		#print self.filename
 
-class EClassObjectiveEditorDialog(wxDialog):
+class EClassObjectiveEditorDialog(sc.SizedDialog):
 	"""
 	class: eclass.EClassObjectiveEditorDialog(wxDialog)
 	Last Updated: 9/24/02
@@ -887,43 +897,42 @@ class EClassObjectiveEditorDialog(wxDialog):
 	"""
 
 	def __init__(self, parent):
-		wxDialog.__init__ (self, parent, -1, _("Objective Editor"),
-						 wxDefaultPosition,
-						   wxSize(200,150),
-						   wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		sc.SizedDialog.__init__ (self, parent, -1, _("Objective Editor"),
+						 wx.DefaultPosition,
+						   wx.Size(200,150),
+						   wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
-		self.txtObj = wxTextCtrl(self, -1, parent.CurrentObj, wxPoint(10, 5), wxSize(180, 80), wxTE_MULTILINE)
-		self.btnOK = wxButton(self,wxID_OK,_("OK"),wxPoint(30, 100),wxSize(76, 24))
-		self.btnOK.SetDefault()
+		pane = self.GetContentsPane()
+		self.txtObj = wx.TextCtrl(pane, -1, parent.CurrentObj, style=wx.TE_MULTILINE)
+		self.txtObj.SetSizerProps({"expand":"true", "proportion": 1})
 		self.txtObj.SetFocus()
 		self.txtObj.SetSelection(0, -1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"),wxPoint(110, 100),wxSize(76,24))
 		
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.mysizer.Add(self.txtObj, 1, wxEXPAND)
+		self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
+		self.btnOK.SetDefault()
+		self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
 
-		self.buttonsizer = wxStdDialogButtonSizer()
-		self.buttonsizer.AddButton(self.btnOK)
-		self.buttonsizer.AddButton(self.btnCancel)
-		self.buttonsizer.Realize()
-		self.mysizer.Add(self.buttonsizer, 0)
+		buttonsizer = wx.StdDialogButtonSizer()
+		buttonsizer.AddButton(self.btnOK)
+		buttonsizer.AddButton(self.btnCancel)
+		buttonsizer.Realize()
+		self.SetButtonSizer(buttonsizer)
+		
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 
-		self.SetAutoLayout(True)
-		self.SetSizerAndFit(self.mysizer)
-		self.Layout()
-
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 
 		self.ShowModal()
 
 	def btnOKClicked(self, event):
-		if len(self.txtObj.GetValue()):	
+		if len(self.txtObj.GetValue()): 
 			self.parent.CurrentObj = self.txtObj.GetValue()
-			self.EndModal(wxID_OK)
+			self.EndModal(wx.ID_OK)
 		else:
-			wxMessageDialog(self, _("Please enter some text for your objective, or click Cancel to quit."), _("Empty Objective"), wxICON_INFORMATION | wxOK).ShowModal() 
+			wx.MessageDialog(self, _("Please enter some text for your objective, or click Cancel to quit."), _("Empty Objective"), wx.ICON_INFORMATION | wx.OK).ShowModal() 
 
-class EClassHyperlinkEditorDialog(wxDialog):
+class EClassHyperlinkEditorDialog(sc.SizedDialog):
 	"""
 	Class: eclass.EClassHyperlinkEditorDialog(wxDialog)
 	Last Updated: 9/24/002
@@ -933,7 +942,7 @@ class EClassHyperlinkEditorDialog(wxDialog):
 	- parent: the parent window which called the dialog
 	- term: the hotword to be edited
 	- txtName: textbox to edit hotword name
-	- selectFile: wxSelectBox to choose the file to link to
+	- selectFile: SelectBox to choose the file to link to
 	- btnOK: OK button
 	
 	Methods:
@@ -941,57 +950,60 @@ class EClassHyperlinkEditorDialog(wxDialog):
 	"""
 
 	def __init__(self, parent, term):
-		wxDialog.__init__ (self, parent, -1, _("Hyperlink Editor"),
-						 wxDefaultPosition,
-						   wxSize(300,120),
-						   wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
-		height = 20
-		if wxPlatform == "__WXMAC__":
-			height = 25
+		sc.SizedDialog.__init__ (self, parent, -1, _("Hyperlink Editor"),
+						 wx.DefaultPosition,
+						   wx.DefaultSize,
+						   wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
 		self.parent = parent
 		self.mainform = parent.mainform
 		self.term = term
-		self.lblName = wxStaticText(self, -1, _("Name"), wxPoint(10, 5))
-		self.txtName = wxTextCtrl(self, -1, term.name, wxPoint(80, 5), wxSize(180, -1))
-		self.selectFile = wxSelectBox(self, _("Link Address"), term.url, _("Link"), 10, 30, 180)
-		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(130, 60),wxSize(76, 24))
-		self.btnOK.SetDefault()
+		
+		pane = self.GetContentsPane()
+		# make it a grid sizer
+		pane.SetSizerType("form")
+		
+		self.lblName = wx.StaticText(pane, -1, _("Name"))
+		self.lblName.SetSizerProps({"halign":"left", "valign":"center"})
+		
+		self.txtName = wx.TextCtrl(pane, -1, term.name)
+		self.txtName.SetSizerProps({"expand":True, "proportion":1,"align":"center"})
 		self.txtName.SetFocus()
 		self.txtName.SetSelection(0, -1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))
 		
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.filesizer = wxFlexGridSizer(0, 3, 4, 4)
-		self.filesizer.Add(self.lblName, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-		self.filesizer.Add(self.txtName, 0, wxALIGN_CENTER|wxALL, 4)
-		self.filesizer.Add((10, 25), 0)
-		self.filesizer.Add(self.selectFile.label, 0, wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL|wxALL, 4)
-		self.filesizer.Add(self.selectFile.textbox, 0, wxALIGN_CENTER|wxALL, 4)
-		self.filesizer.Add(self.selectFile.selectbtn, 0, wxALIGN_CENTER|wxALL, 4)
-		self.mysizer.Add(self.filesizer)
+		#spacer = sc.SizedPanel(pane, -1)
+		#spacer.SetSizerProp("expand", "true")
 		
-		self.buttonsizer = wxStdDialogButtonSizer()
+		wx.StaticText(pane, -1, _("Link Address")).SetSizerProp("valign", "center")
+		self.selectFile = SelectBox(pane, term.url, _("Link"))
+		
+		self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
+		self.btnOK.SetDefault()
+		self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
+		
+		self.buttonsizer = wx.StdDialogButtonSizer()
 		self.buttonsizer.AddButton(self.btnOK)
 		self.buttonsizer.AddButton(self.btnCancel)
 		self.buttonsizer.Realize()
-		self.mysizer.Add(self.buttonsizer, 0, wxEXPAND)
+		self.SetButtonSizer(self.buttonsizer)
+		
+		self.LoadState("HyperlinkEditor")
 
-		self.SetAutoLayout(True)
-		self.SetSizerAndFit(self.mysizer)
-		self.Layout()
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 
 		self.ShowModal()
 
 	def btnOKClicked(self, event):
 		self.term.name = self.txtName.GetValue()
 		self.term.url = self.selectFile.textbox.GetValue()
+		self.SaveState("HyperlinkEditor")
 		self.EndModal(wxID_OK)
 
 #--------------------------- E-Class Page Editor Class ------------------------------------
-class EditorDialog (wxDialog):
+class EditorDialog (sc.SizedDialog):
 	"""
 	Class: EditorDialog
 	Last Updated: 10/21/02
@@ -1020,13 +1032,13 @@ class EditorDialog (wxDialog):
 
 	def __init__(self, parent, item):
 		height = 20
-		if wxPlatform == "__WXMAC__":
+		if wx.Platform == "__WXMAC__":
 			height = 25
-		busy = wxBusyCursor()
+		busy = wx.BusyCursor()
 		self.item = item
 		self.parent = parent
 		# We need to have a pointer to the main frame to get global settings
-		if isinstance(parent, wxFrame):
+		if isinstance(parent, wx.Frame):
 			self.mainform = parent
 		else:
 			self.mainform = parent.mainform
@@ -1049,7 +1061,7 @@ class EditorDialog (wxDialog):
 				except RuntimeError, e:
 					global log
 					message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.CurrentDir, "EClass", self.filename), "error":str(e)}
-					wxMessageDialog(parent, message, _("Error loading page"), wxOK).ShowModal()
+					wx.MessageDialog(parent, message, _("Error loading page"), wx.OK).ShowModal()
 					log.write(message)
 					del busy
 					return
@@ -1062,7 +1074,7 @@ class EditorDialog (wxDialog):
 					global log
 					message = _("There was an error saving the EClass page '%(page)s'. The error message returned by the system is: %(error)s") % {"page":os.path.join(self.parent.CurrentDir, "EClass", myfilename), "error":str(e)}
 					log.write(message)
-					wxMessageDialog(self, message, _("File Write Error"), wxOK)
+					wx.MessageDialog(self, message, _("File Write Error"), wx.OK)
 
 			self.page.name = item.content.metadata.name
 		else:
@@ -1070,21 +1082,8 @@ class EditorDialog (wxDialog):
 			self.page = item.page
 			self.isHotword = True
 		
-		wxDialog.__init__ (self, parent, -1, _("EClass Page Editor"),
-						 wxPoint(100, 100),
-						   wxDefaultSize,
-						   wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
-
-		#mytuple = self.parent.GetPositionTuple()
-		#self.MoveXY(mytuple[0] + 30, mytuple[1] + 30)
-		self.lblTitle = wxStaticText(self, -1, _("Name"), wxPoint(10, 5))
-		self.lblAuthor = wxStaticText(self, -1, _("Author:          "),wxPoint(10,5 + height))
-		self.lblCredit = wxStaticText(self, -1, _("Credit"), wxPoint(10, 5 + (height*2)))
-		
-		self.txtTitle = wxTextCtrl(self, -1, self.page.name, wxPoint(80, 5), wxSize(280, -1))
-
 		authorname = ""
- 		if self.isHotword:
+		if self.isHotword:
 			authorname = self.page.author
 		else:
 			if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
@@ -1093,9 +1092,7 @@ class EditorDialog (wxDialog):
 			author = self.item.content.metadata.lifecycle.getAuthor()
 			if author:
 				authorname = author.entity.fname.value
- 
-		self.txtAuthor = wxTextCtrl(self, -1, authorname, wxPoint(80, 25), wxSize(280, -1))
-		
+				
 		credits = ""
 		if self.isHotword:
 			credits = self.page.credit
@@ -1105,152 +1102,122 @@ class EditorDialog (wxDialog):
 
 			credits = self.item.content.metadata.rights.description
 
-		self.txtCredit = wxTextCtrl(self, -1, credits, wxDefaultPosition, wxSize(280, height*3), wxTE_MULTILINE)
+		
+		sc.SizedDialog.__init__ (self, parent, -1, _("EClass Page Editor"),
+						 wx.DefaultPosition,
+						   wx.DefaultSize,
+						   wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+						   
+		pane = self.GetContentsPane()
+		topPane = sc.SizedPanel(pane, -1)
+		topPane.SetSizerType("form")
+		topPane.SetSizerProp("expand", True)
+		
+		self.lblTitle = wx.StaticText(topPane, -1, _("Name"))
+		self.txtTitle = wx.TextCtrl(topPane, -1, self.page.name)
+		self.txtTitle.SetSizerProp("expand", True)
+		
+		self.lblAuthor = wx.StaticText(topPane, -1, _("Author"))
+		self.txtAuthor = wx.TextCtrl(topPane, -1, authorname)
+		self.txtAuthor.SetSizerProp("expand", True)
+		
+		self.lblCredit = wx.StaticText(topPane, -1, _("Credit"))
+		self.txtCredit = wx.TextCtrl(topPane, -1, credits, style=wx.TE_MULTILINE)
+		self.txtCredit.SetSizerProp("expand", True)
 
-		#Left Input Labels
-		self.selectImage = wxSelectBox(self, _("Image:"), self.page.media.image, _("Graphics"), 10, 100, 160)
-		self.selectVideo = wxSelectBox(self, _("Video:"), self.page.media.video, _("Video"), 10, 100 + height, 160)
-		self.chkVideoAutostart = wxCheckBox(self, -1, _("Play on load"), wxPoint(80, 100 + (height*2)))
+		midPane = sc.SizedPanel(pane, -1)
+		midPane.SetSizerType("grid", {"cols": 2})
+		midPane.SetSizerProp("expand", True)
+		midPane.GetSizer().AddGrowableCol(0)
+		midPane.GetSizer().AddGrowableCol(1)
+		
+		# Left-hand side
+		midleftPane = sc.SizedPanel(midPane, -1)
+		midleftPane.SetSizerType("form")
+		midleftPane.SetSizerProp("expand", True)
+		midleftPane.SetSizerProp("proportion", 1)
+		
+		wx.StaticText(midleftPane, -1, _("Image:")).SetSizerProps({"halign": "right", "valign":"center"})
+		self.selectImage = SelectBox(midleftPane, self.page.media.image, _("Graphics"))
+		
+		wx.StaticText(midleftPane, -1, _("Video:")).SetSizerProps({"halign": "right", "valign":"center"})
+		self.selectVideo = SelectBox(midleftPane, self.page.media.video, _("Video"))
+		
+		sc.SizedPanel(midleftPane, -1) #spacer
+		self.chkVideoAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
+		self.chkVideoAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+		#self.chkVideoAutostart.SetSizerProp("all", 0)
 		if self.page.media.videoautostart == True:
 			self.chkVideoAutostart.SetValue(True)
-		self.selectAudio = wxSelectBox(self, _("Audio:"), self.page.media.audio, _("Audio"), 10, 100 + (height*2), 160)
-		self.chkAudioAutostart = wxCheckBox(self, -1, _("Play on load"), wxPoint(460, 50 + (height*2) + 1))
+		
+		wx.StaticText(midleftPane, -1, _("Audio:")).SetSizerProps({"halign": "right", "valign":"center"})
+		self.selectAudio = SelectBox(midleftPane, self.page.media.audio, _("Audio"))
+		sc.SizedPanel(midleftPane, -1) #spacer
+		self.chkAudioAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
+		self.chkAudioAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
 		if self.page.media.audioautostart == True:
 			self.chkAudioAutostart.SetValue(True)
 
-		#self.selectIntroduction = wxSelectBox(self, "Intro", self.page.media.introduction, "Text", 240, 100, 160)
-		self.selectText = wxSelectBox(self, _("Web Page:"), self.page.media.text, "Text", 240, 100, 160)
-		self.btnEditText = wxButton(self,-1,_("Edit"))
-		self.btnNewFile = wxButton(self,-1,_("New"))
-		self.selectPowerPoint = wxSelectBox(self, _("Presentation:"), self.page.media.powerpoint, "Present", 240, 100 + (height*2), 160)
+		midrightPane = sc.SizedPanel(midPane, -1)
+		midrightPane.SetSizerType("form")
+		midrightPane.SetSizerProp("expand", True)
 		
-		self.lblHotwords = wxStaticText(self, -1, _("Hotwords"), wxPoint(10, 100 + (height*5)))
+		wx.StaticText(midrightPane, -1, _("Text:")).SetSizerProps({"halign": "right", "valign":"center"})
+		self.selectText = SelectBox(midrightPane, self.page.media.text, _("Text"))
+		sc.SizedPanel(midrightPane, -1)
+		btnPane = sc.SizedPanel(midrightPane, -1)
+		btnPane.SetSizerType("horizontal")
+		self.btnNewFile = wx.Button(btnPane,-1,_("New"))
+		self.btnNewFile.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+		self.btnEditText = wx.Button(btnPane,-1,_("Edit"))
+		self.btnEditText.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
 
-		self.lstTerms = wxListBox(self, -1, wxPoint(10, 115 + (height*5)), wxSize(200, 100))
+		wx.StaticText(midrightPane, -1, _("Presentation:")).SetSizerProps({"halign": "right", "valign":"center"})
+		self.selectPowerPoint = SelectBox(midrightPane, self.page.media.powerpoint, "Present")
+		
+		bottomPane = sc.SizedPanel(pane, -1)
+		bottomPane.SetSizerType("grid", {"cols": 2})
+		bottomPane.SetSizerProp("expand", True)
+		bottomPane.GetSizer().AddGrowableCol(0)
+		bottomPane.GetSizer().AddGrowableCol(1)
+		wx.StaticText(bottomPane, -1, _("Hotwords"))
+		wx.StaticText(bottomPane, -1, _("Objectives"))
+
+		self.lstTerms = wx.ListBox(bottomPane, -1)
+		self.lstTerms.SetSizerProp("expand", True)
 		self.LoadTerms()
 
-		self.btnAddTerm = wxButton(self,-1,_("Add"),wxPoint(15, 215 + (height*5)),wxDefaultSize)
-		self.btnEditTerm = wxButton(self,-1,_("Edit"),wxPoint(80, 215 + (height*5)),wxDefaultSize)
-		self.btnRemoveTerm = wxButton(self,-1,_("Remove"),wxPoint(145, 215 + (height*5)),wxDefaultSize)
-
-		self.lblObjectives = wxStaticText(self, -1, _("Objectives"), wxPoint(240, 100 + (height*5)))
-
-		self.lstObjectives = wxListBox(self, -1, wxPoint(240, 115 + (height*5)), wxSize(200, 100))
+		self.lstObjectives = wx.ListBox(bottomPane, -1)
+		self.lstObjectives.SetSizerProp("expand", True)
 		self.LoadObjectives()
+		
+		hwBtnPane = sc.SizedPanel(bottomPane, -1)
+		hwBtnPane.SetSizerType("horizontal")
+		
+		self.btnAddTerm = wx.Button(hwBtnPane,-1,_("Add"))
+		self.btnEditTerm = wx.Button(hwBtnPane,-1,_("Edit"))
+		self.btnRemoveTerm = wx.Button(hwBtnPane,-1,_("Remove"))
 
-		self.btnAddObjective = wxButton(self,-1,_("Add"),wxPoint(245, 215 + (height*5)),wxDefaultSize)
-		self.btnEditObjective = wxButton(self,-1,_("Edit"),wxPoint(310, 215 + (height*5)),wxDefaultSize)
-		self.btnRemoveObjective = wxButton(self,-1,_("Remove"),wxPoint(375, 215 + (height*5)),wxDefaultSize)
+		objBtnPane = sc.SizedPanel(bottomPane, -1)
+		objBtnPane.SetSizerType("horizontal")
+		self.btnAddObjective = wx.Button(objBtnPane,-1,_("Add"))
+		self.btnEditObjective = wx.Button(objBtnPane,-1,_("Edit"))
+		self.btnRemoveObjective = wx.Button(objBtnPane,-1,_("Remove"))
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"))
+		self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
 		self.btnOK.SetDefault()
 		self.txtTitle.SetSelection(0, -1)
 		self.txtTitle.SetFocus()
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))
+		self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
 
-		bordersize = 2
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.topgridsizer = wxFlexGridSizer(0, 3, 4, 4)
-		self.topgridsizer.Add(self.lblTitle, 0, wxALL|wxALIGN_LEFT|wxALIGN_TOP, bordersize)
-		self.topgridsizer.Add(self.txtTitle, 0, wxALL|wxALIGN_CENTER, bordersize)
-		self.topgridsizer.Add((1, height), 1, wxEXPAND)
-
-		self.topgridsizer.Add(self.lblAuthor, 0, wxALL|wxALIGN_LEFT|wxALIGN_TOP, bordersize)
-		self.topgridsizer.Add(self.txtAuthor, 0, wxALL|wxALIGN_CENTER, bordersize)
-		self.topgridsizer.Add((1, height), 1, wxEXPAND)
-		#self.mysizer.Add(self.row3sizer, 1, wxEXPAND)
-
-		#self.row4sizer = wxBoxSizer(wxHORIZONTAL)
-		self.topgridsizer.Add(self.lblCredit, 0, wxALL|wxALIGN_LEFT|wxALIGN_TOP, bordersize)
-		self.topgridsizer.Add(self.txtCredit, 0, wxALL|wxALIGN_CENTER, bordersize)
-		self.topgridsizer.Add((1, height), 1, wxEXPAND)
-		#self.topgridsizer.AddGrowableRow(2)
-		self.mysizer.Add(self.topgridsizer, 0, wxEXPAND|wxLEFT|wxRIGHT, 10)
-
-		self.midgridsizer = wxBoxSizer(wxHORIZONTAL)
-		self.leftgridsizer = wxFlexGridSizer(0, 3, bordersize, bordersize)
-		self.leftgridsizer.Add(self.selectImage.label, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT, bordersize)
-		self.leftgridsizer.Add(self.selectImage.textbox, 0, wxALIGN_CENTER|wxALL, bordersize)
-		self.leftgridsizer.Add(self.selectImage.selectbtn, 0, wxLEFT|wxRIGHT|wxALIGN_CENTER, bordersize)
-		
-		self.rightgridsizer = wxFlexGridSizer(0, 3, bordersize, bordersize)
-		self.rightgridsizer.Add(self.selectText.label, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT, bordersize)
-		self.rightgridsizer.Add(self.selectText.textbox, 1, wxALIGN_CENTER|wxLEFT, 10)
-		self.rightgridsizer.Add(self.selectText.selectbtn, 0, wxLEFT|wxRIGHT|wxALIGN_CENTER, bordersize)
-		
-		self.leftgridsizer.Add(self.selectVideo.label, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT, bordersize)
-		self.leftgridsizer.Add(self.selectVideo.textbox, 1, wxALIGN_CENTER|wxALL, bordersize)
-		self.leftgridsizer.Add(self.selectVideo.selectbtn, 0, wxLEFT|wxRIGHT|wxALIGN_CENTER, bordersize)
-		
-		#new and edit buttons
-		self.rightgridsizer.Add((1, height), 0, wxALL, bordersize)
-		self.neweditsizer = wxBoxSizer(wxHORIZONTAL)
-		self.neweditsizer.Add(self.btnNewFile, 0, wxALL|wxALIGN_CENTER, 4)
-		self.neweditsizer.Add(self.btnEditText, 0, wxALL|wxALIGN_CENTER, 4)
-		self.rightgridsizer.Add(self.neweditsizer, 0, wxALL|wxALIGN_CENTER, bordersize)
-		self.rightgridsizer.Add((1, 1), 0, wxALL, bordersize)
-		
-		#autoplay video checkbox
-		self.leftgridsizer.Add((1, 1), 0, wxALL, bordersize)
-		self.leftgridsizer.Add(self.chkVideoAutostart, 0, wxALL|wxALIGN_TOP|wxALIGN_LEFT, bordersize)
-		self.leftgridsizer.Add((1, 1), 0, wxALL, bordersize)
-
-		self.rightgridsizer.Add(self.selectPowerPoint.label, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT, bordersize)
-		self.rightgridsizer.Add(self.selectPowerPoint.textbox, 1, wxALL|wxALIGN_CENTER|wxALL, bordersize)
-		self.rightgridsizer.Add(self.selectPowerPoint.selectbtn, 0, wxLEFT|wxRIGHT|wxALIGN_CENTER, bordersize)	
-
-		self.leftgridsizer.Add(self.selectAudio.label, 0, wxALL|wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT, bordersize)
-		self.leftgridsizer.Add(self.selectAudio.textbox, 0, wxALL|wxALIGN_CENTER, bordersize)
-		self.leftgridsizer.Add(self.selectAudio.selectbtn, 0, wxLEFT|wxRIGHT|wxALIGN_CENTER, bordersize)	
-
-		self.rightgridsizer.Add((1, height), 0, wxALL, bordersize)
-		self.rightgridsizer.Add((1, height), 0, wxALL, bordersize)
-		self.rightgridsizer.Add((1, height), 0, wxALL, bordersize)
-
-		self.leftgridsizer.Add((1, height), 0, wxALL, bordersize)
-		self.leftgridsizer.Add(self.chkAudioAutostart, 0, wxALL|wxALIGN_LEFT|wxALIGN_TOP, bordersize)
-		self.leftgridsizer.Add((1, height), 0, wxALL, bordersize)
-
-		self.rightgridsizer.Add((1, height), 0, wxALL, bordersize)
-		self.rightgridsizer.Add((1, height), 0, wxALL, bordersize)
-		self.rightgridsizer.Add((1, height), 0, wxALL, bordersize)
-		self.midgridsizer.Add(self.leftgridsizer, 1, wxEXPAND|wxALIGN_CENTER)
-		self.midgridsizer.Add(self.rightgridsizer, 1, wxEXPAND|wxALIGN_CENTER)
-		self.mysizer.Add(self.midgridsizer, 0, wxEXPAND|wxLEFT|wxRIGHT, 10)
-
-		self.bottomsizer = wxFlexGridSizer(0, 2, bordersize, bordersize)
-		self.bottomsizer.Add(self.lblHotwords, 1, wxALL|wxEXPAND|wxALIGN_LEFT, bordersize)
-		self.bottomsizer.Add(self.lblObjectives, 1, wxALL|wxEXPAND|wxALIGN_LEFT, bordersize)
-
-		self.bottomsizer.Add(self.lstTerms, 1, wxRIGHT|wxLEFT|wxEXPAND, 8)
-		self.bottomsizer.Add(self.lstObjectives, 1, wxLEFT|wxRIGHT|wxEXPAND, 8)
-
-		self.termbuttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.termbuttonsizer.Add(self.btnAddTerm, 0, wxALL|wxALIGN_CENTER, 8)
-		self.termbuttonsizer.Add(self.btnEditTerm, 0, wxALL|wxALIGN_CENTER, 8)
-		self.termbuttonsizer.Add(self.btnRemoveTerm, 0, wxALL|wxALIGN_CENTER, 8)
-		self.bottomsizer.Add(self.termbuttonsizer,1, wxEXPAND|wxALL|wxALIGN_CENTER,bordersize)
-
-		self.objbuttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.objbuttonsizer.Add(self.btnAddObjective, 0, wxALL|wxALIGN_CENTER, 8)
-		self.objbuttonsizer.Add(self.btnEditObjective, 0, wxALL|wxALIGN_CENTER, 8)
-		self.objbuttonsizer.Add(self.btnRemoveObjective, 0, wxALL|wxALIGN_CENTER, 8)	
-		self.bottomsizer.Add(self.objbuttonsizer, 1, wxEXPAND|wxALL|wxALIGN_CENTER, bordersize)
-		self.bottomsizer.AddGrowableRow(0)
-		self.bottomsizer.AddGrowableRow(1)
-		self.mysizer.Add(self.bottomsizer, 0, wxEXPAND|wxALIGN_CENTER|wxLEFT|wxRIGHT, 10)
-
-		self.okcancelsizer = wxStdDialogButtonSizer()
+		self.okcancelsizer = wx.StdDialogButtonSizer()
 		self.okcancelsizer.AddButton(self.btnOK)
 		self.okcancelsizer.AddButton(self.btnCancel)
 		self.okcancelsizer.Realize()
-		self.mysizer.Add(self.okcancelsizer, 0, wxEXPAND|wxRIGHT|wxLEFT, 10)
+		self.SetButtonSizer(self.okcancelsizer)
 
-		self.SetAutoLayout(True)
-		self.SetSizer(self.mysizer)
-		self.mysizer.Fit(self)
-		self.Layout()
-			
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 		convertFiles = []
 		audioFile = os.path.join(settings.CurrentDir, "pub", "Audio", self.page.media.audio)
 		if mmedia.canConvertFile(self.page.media.audio) and not mmedia.wasConverted(audioFile):
@@ -1262,7 +1229,7 @@ class EditorDialog (wxDialog):
 			
 		if mmedia.findFFMpeg() != "" and convertFiles != []:
 			dlg = gui.media_convert.ConvertMediaDialog(self, convertFiles)
-			if dlg.ShowModal() == wxID_OK:
+			if dlg.ShowModal() == wx.ID_OK:
 				files = dlg.GetSelectedFiles()
 				for afile in files:
 					filepath = os.path.join(settings.CurrentDir, "pub", "Video", afile)
@@ -1271,19 +1238,19 @@ class EditorDialog (wxDialog):
 					if os.path.exists(filepath):
 						mmedia.convertFile(filepath)
 
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
-		EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
-		EVT_BUTTON(self.btnEditText, self.btnEditText.GetId(), self.btnEditTextClicked)
-		EVT_BUTTON(self.btnEditTerm, self.btnEditTerm.GetId(), self.btnEditTermClicked)
-		EVT_BUTTON(self.btnEditObjective, self.btnEditObjective.GetId(), self.btnEditObjectiveClicked)
-		EVT_BUTTON(self.btnRemoveTerm, self.btnRemoveTerm.GetId(), self.btnRemoveTermClicked)
-		EVT_BUTTON(self.btnRemoveObjective, self.btnRemoveObjective.GetId(), self.btnRemoveObjectiveClicked)
-		EVT_BUTTON(self.btnAddTerm, self.btnAddTerm.GetId(), self.btnAddTermClicked)
-		EVT_BUTTON(self.btnAddObjective, self.btnAddObjective.GetId(), self.btnAddObjectiveClicked)
-		#EVT_KEY_UP(self, self.checkKey)
-		EVT_LISTBOX_DCLICK(self.lstTerms, self.lstTerms.GetId(), self.btnEditTermClicked)
-		EVT_LISTBOX_DCLICK(self.lstObjectives, self.lstObjectives.GetId(), self.btnEditObjectiveClicked)
-		#EVT_RESULT(self, self.NewHotwordLoaded)
+		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+		wx.EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
+		wx.EVT_BUTTON(self.btnEditText, self.btnEditText.GetId(), self.btnEditTextClicked)
+		wx.EVT_BUTTON(self.btnEditTerm, self.btnEditTerm.GetId(), self.btnEditTermClicked)
+		wx.EVT_BUTTON(self.btnEditObjective, self.btnEditObjective.GetId(), self.btnEditObjectiveClicked)
+		wx.EVT_BUTTON(self.btnRemoveTerm, self.btnRemoveTerm.GetId(), self.btnRemoveTermClicked)
+		wx.EVT_BUTTON(self.btnRemoveObjective, self.btnRemoveObjective.GetId(), self.btnRemoveObjectiveClicked)
+		wx.EVT_BUTTON(self.btnAddTerm, self.btnAddTerm.GetId(), self.btnAddTermClicked)
+		wx.EVT_BUTTON(self.btnAddObjective, self.btnAddObjective.GetId(), self.btnAddObjectiveClicked)
+		#wx.EVT_KEY_UP(self, self.checkKey)
+		wx.EVT_LISTBOX_DCLICK(self.lstTerms, self.lstTerms.GetId(), self.btnEditTermClicked)
+		wx.EVT_LISTBOX_DCLICK(self.lstObjectives, self.lstObjectives.GetId(), self.btnEditObjectiveClicked)
+		#wx.EVT_RESULT(self, self.NewHotwordLoaded)
 
 		del busy
 
@@ -1296,11 +1263,11 @@ class EditorDialog (wxDialog):
 	#	self.lstTerms.Append(event.hwname, self.page.terms[event.hwid])
 
 	def checkKey(self, event):
-		if event.keyCode == wxRETURN:
+		if event.keyCode == wx.RETURN:
 			self.btnOKClicked(event)		
 
 	def btnEditTextClicked(self, event):
-		if wxPlatform == '__WXMAC__':	
+		if wx.Platform == '__wx.MAC__': 
 			try:
 				from OSATools import AppModels
 				dreamweaver = AppModels.AppleScriptApp("Dreamweaver MX")
@@ -1311,15 +1278,15 @@ class EditorDialog (wxDialog):
 			return
 
 		if self.mainform.settings["HTMLEditor"] == "":
-			wxMessageDialog(self, _("To edit the page, E-Class needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wxOK).ShowModal()
+			wx.MessageDialog(self, _("To edit the page, E-Class needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wx.OK).ShowModal()
 		else:
 			if not os.path.exists(os.path.join(settings.CurrentDir, "Text", self.selectText.filename)):
-				dialog = wxMessageDialog(self, _("The text file '%(filename)s' does not exist. Would you like EClass to create it for you?") % {"filename":self.selectText.filename}, _("File not found"), wxYES_NO)
-				if dialog.ShowModal() == wxID_YES:
+				dialog = wx.MessageDialog(self, _("The text file '%(filename)s' does not exist. Would you like EClass to create it for you?") % {"filename":self.selectText.filename}, _("File not found"), wx.YES_NO)
+				if dialog.ShowModal() == wx.ID_YES:
 					self.CreateHTMLFile(os.path.join(settings.CurrentDir, "Text", self.selectText.filename))
 				else:
 					return
-			if wxPlatform == "__WXMSW__":
+			if wx.Platform == "__wx.MSW__":
 				import win32api
 				editor = "\"" + self.mainform.settings["HTMLEditor"] + "\""
 				if not string.find(string.lower(editor), "mozilla") == -1:
@@ -1335,7 +1302,7 @@ class EditorDialog (wxDialog):
 				#os.spawnv(1, self.mainform.settings["HTMLEditor"], [os.path.split(self.mainform.settings["HTMLEditor"])[1], "\"" + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + "\""])
 			else:
 				editor = self.mainform.settings["HTMLEditor"] 
-				if wxPlatform == "__WXMAC__":
+				if wx.Platform == "__wx.MAC__":
 					editor = "open -a '" + editor + "'"
 				path = editor + " '" + os.path.join(settings.CurrentDir, "Text", self.selectText.filename) + "'"
 				os.system(path)
@@ -1356,18 +1323,18 @@ class EditorDialog (wxDialog):
 			global log
 			message = _("Unable to create the file '%(filename)s'. Please make sure that this is a valid filename and try again.") % {"filename":filename}
 			log.write(message)
-			wxMessageDialog(self, message, _("File write error"), wxOK)
+			wx.MessageDialog(self, message, _("File write error"), wx.OK)
 
 	def btnNewFileClicked(self, event):
 		savefile = False
 
-		f = wxFileDialog(self, _("New HTML Page"), os.path.join(settings.CurrentDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wxSAVE)
-		if f.ShowModal() == wxID_OK:
+		f = wx.FileDialog(self, _("New HTML Page"), os.path.join(settings.CurrentDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wx.SAVE)
+		if f.ShowModal() == wx.ID_OK:
 			filename = f.GetPath()
 			if os.path.exists(filename):
-				msg = wxMessageDialog(self, _("A file with this name already exists. Would you like to overwrite it?"), _("Overwrite File?"), wxYES_NO)
+				msg = wx.MessageDialog(self, _("A file with this name already exists. Would you like to overwrite it?"), _("Overwrite File?"), wx.YES_NO)
 				answer = msg.ShowModal()
-				if answer == wxID_YES:
+				if answer == wx.ID_YES:
 					savefile = True
 			else:
 				savefile = True
@@ -1417,7 +1384,7 @@ class EditorDialog (wxDialog):
 		index = self.page.objectives.index(self.lstObjectives.GetStringSelection())
 		self.CurrentObj = self.page.objectives[index]
 		result = EClassObjectiveEditorDialog(self).GetReturnCode()
-		if result == wxID_OK:
+		if result == wx.ID_OK:
 			self.page.objectives[index] = self.CurrentObj
 			self.LoadObjectives()
 		else:
@@ -1434,21 +1401,21 @@ class EditorDialog (wxDialog):
 
 	def btnRemoveTermClicked(self,event):	
 		myterm = self.lstTerms.GetClientData(self.lstTerms.GetSelection())
-		result = wxMessageDialog(self, _("Are you sure you want to delete the term '%(term)s'?") % {"term":myterm.name}, _("Delete Term?"), wxYES_NO).ShowModal()  
-		if result == wxID_YES:
+		result = wx.MessageDialog(self, _("Are you sure you want to delete the term '%(term)s'?") % {"term":myterm.name}, _("Delete Term?"), wx.YES_NO).ShowModal()	 
+		if result == wx.ID_YES:
 			self.page.terms.remove(myterm)
 			self.LoadTerms()
 
 	def btnRemoveObjectiveClicked(self,event):	
 		index = self.page.objectives.index(self.lstObjectives.GetStringSelection())
 		obj = self.page.objectives[index]
-		result = wxMessageDialog(self, _("Are you sure you want to delete the objective '%(objective)s'?") % {"objective":obj}, _("Delete Objective?"), wxYES_NO).ShowModal()  
-		if result == wxID_YES:
+		result = wx.MessageDialog(self, _("Are you sure you want to delete the objective '%(objective)s'?") % {"objective":obj}, _("Delete Objective?"), wx.YES_NO).ShowModal()	 
+		if result == wx.ID_YES:
 			self.page.objectives.remove(obj)
 			self.LoadObjectives()
 
 	def btnOKClicked(self,event):
-		busy = wxBusyCursor()
+		busy = wx.BusyCursor()
 		self.page.name = self.txtTitle.GetValue()
 		if isinstance(self.item, conman.conman.ConNode):
 			self.item.content.metadata.name = self.page.name
@@ -1514,8 +1481,8 @@ class EditorDialog (wxDialog):
 				filelist = filelist + file + "\n"
 
 			message = _("The following files could not be found:\n\n %(filelist)s \n\nWould you still like to save and exit this page?") % {"filelist":filelist}
-			result = wxMessageDialog(self, message, _("Missing files"), wxYES_NO).ShowModal()
-			if result == wxID_NO:
+			result = wx.MessageDialog(self, message, _("Missing files"), wx.YES_NO).ShowModal()
+			if result == wx.ID_NO:
 				return
 
 		if isinstance(self.item, conman.conman.ConNode):
@@ -1527,7 +1494,7 @@ class EditorDialog (wxDialog):
 					global log
 					message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
 					log.write(message)
-					wxMessageDialog(self, message, _("File Write Error"), wxOK).ShowModal()
+					wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
 					return
 			else:
 				myfilename = os.path.join(self.parent.CurrentDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
@@ -1537,7 +1504,7 @@ class EditorDialog (wxDialog):
 				except IOError, e:
 					import traceback
 					print `traceback.print_exc()`
-					wxMessageDialog(self, str(e), _("File Write Error"), wxOK).ShowModal()
+					wx.MessageDialog(self, str(e), _("File Write Error"), wx.OK).ShowModal()
 					return
 
 			eclassPub = HTMLPublisher()
@@ -1550,13 +1517,13 @@ class EditorDialog (wxDialog):
 				message = _("There was an error publishing the EClass Page to HTML. Please check to make sure you have sufficient disk space, have write permission to the 'pub' directory, and that the page does not contain any foreign characters.")
 				global log
 				log.write(message)
-				wxMessageDialog(self, message, _("Publishing Error")).ShowModal()
+				wx.MessageDialog(self, message, _("Publishing Error")).ShowModal()
 			
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
-class NewTermDialog(wxDialog):
+class NewTermDialog(wx.Dialog):
 	"""
-	Class: eclass.NewTermDialog(wxDialog)
+	Class: eclass.NewTermDialog(wx.Dialog)
 	Last Updated: 9/24/02
 	Description: This dialog creates a new term using the options specified by the user.
 	
@@ -1570,42 +1537,42 @@ class NewTermDialog(wxDialog):
 	- btnOKClicked: Creates the new term, passes control back to the claling window, and closes the dialog
 	"""
 	def __init__(self, parent):
-		wxDialog.__init__ (self, parent, -1, _("Create New Hotword"),
-						 wxDefaultPosition,
-						   wxDefaultSize, 
-						   wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		wx.Dialog.__init__ (self, parent, -1, _("Create New Hotword"),
+						 wx.DefaultPosition,
+						   wx.DefaultSize, 
+						   wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE)
 
 		self.parent = parent
-		self.lblName = wxStaticText(self, -1, _("Name")) #wxPoint(10, 10))
-		self.lblType = wxStaticText(self, -1, _("Type"))#,wxPoint(10,30))
+		self.lblName = wx.StaticText(self, -1, _("Name")) #wx.Point(10, 10))
+		self.lblType = wx.StaticText(self, -1, _("Type"))#,wx.Point(10,30))
 
 		choices = [_("EClass Page"), _("Link to File")]
-		self.txtName = wxTextCtrl(self, -1, "", wxPoint(40, 10), wxSize(160, -1))
-		self.cmbType = wxChoice(self, -1, wxPoint(40, 30), wxSize(160, -1), choices)
+		self.txtName = wx.TextCtrl(self, -1, "", wx.Point(40, 10), wx.Size(160, -1))
+		self.cmbType = wx.Choice(self, -1, wx.Point(40, 30), wx.Size(160, -1), choices)
 		self.cmbType.SetSelection(1)
-		self.btnOK = wxButton(self,wxID_OK,_("OK"),wxDefaultPosition,wxDefaultSize)
+		self.btnOK = wx.Button(self,wx.ID_OK,_("OK"),wx.DefaultPosition,wx.DefaultSize)
 		self.btnOK.SetDefault()
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"),wxDefaultPosition,wxDefaultSize)
+		self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"),wx.DefaultPosition,wx.DefaultSize)
 	
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.flexsizer = wxFlexGridSizer(0, 2, 4, 4)
-		self.flexsizer.Add(self.lblName, 0, wxALIGN_LEFT|wxALL, 4)
-		self.flexsizer.Add(self.txtName, 0, wxALIGN_LEFT|wxALL, 4)
-		self.flexsizer.Add(self.lblType, 0, wxALIGN_LEFT|wxALL, 4)
-		self.flexsizer.Add(self.cmbType, 0, wxALIGN_LEFT|wxALL, 4)
-		self.mysizer.Add(self.flexsizer, 0, wxLEFT|wxRIGHT, 10)
+		self.mysizer = wx.BoxSizer(wx.VERTICAL)
+		self.flexsizer = wx.FlexGridSizer(0, 2, 4, 4)
+		self.flexsizer.Add(self.lblName, 0, wx.ALIGN_LEFT|wx.ALL, 4)
+		self.flexsizer.Add(self.txtName, 0, wx.ALIGN_LEFT|wx.ALL, 4)
+		self.flexsizer.Add(self.lblType, 0, wx.ALIGN_LEFT|wx.ALL, 4)
+		self.flexsizer.Add(self.cmbType, 0, wx.ALIGN_LEFT|wx.ALL, 4)
+		self.mysizer.Add(self.flexsizer, 0, wx.LEFT|wx.RIGHT, 10)
 		
-		self.buttonsizer = wxStdDialogButtonSizer()
+		self.buttonsizer = wx.StdDialogButtonSizer()
 		self.buttonsizer.AddButton(self.btnOK)
 		self.buttonsizer.AddButton(self.btnCancel)
 		self.buttonsizer.Realize()
-		self.mysizer.Add(self.buttonsizer, 0, wxLEFT|wxRIGHT|wxEXPAND, 10)
+		self.mysizer.Add(self.buttonsizer, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
 
 		self.SetAutoLayout(True)
 		self.SetSizerAndFit(self.mysizer)
 		self.Layout()
 
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 		
 	def btnOKClicked(self, event):
 		myterm = EClassTerm()
@@ -1617,10 +1584,10 @@ class NewTermDialog(wxDialog):
 				myterm.NewPage()
 			else:
 				myterm.type = "URL"
-			self.EndModal(wxID_OK)
+			self.EndModal(wx.ID_OK)
 			self.parent.AddTerm(myterm)
 		else:
-			wxMessageDialog(self, _("Please enter a name for your hotword, or click Cancel to exit without creating a hotword."), _("Please enter a name"), wxOK).ShowModal()  
+			wx.MessageDialog(self, _("Please enter a name for your hotword, or click Cancel to exit without creating a hotword."), _("Please enter a name"), wx.OK).ShowModal()	 
 
 def strict(char):
 	print "Unicode Error on character: " + chr(char)
