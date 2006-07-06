@@ -61,7 +61,7 @@ class conmanHTMLPublisher:
 		#print parent.wxTree.GetCount()
 
 		self.pub = parent.pub
-		self.dir = parent.CurrentDir
+		self.dir = parent.ProjectDir
 		self.counter = 1
 		self.appdir = parent.AppDir
 		self.useswishe= useswishe

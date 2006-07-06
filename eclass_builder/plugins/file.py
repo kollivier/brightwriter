@@ -23,13 +23,13 @@ class EditorDialog:
 
 	def ShowModal(self):
 		import guiutils
-		myFilename = os.path.join(settings.CurrentDir, self.item.content.filename)
+		myFilename = os.path.join(settings.ProjectDir, self.item.content.filename)
 		result = False
 
 		if os.path.exists(myFilename):
 			result = guiutils.sendCommandToApplication(myFilename, "open")
 
 		if not result:
-			result = PagePropertiesDialog(parent, parent.CurrentItem, parent.CurrentItem.content, os.path.join(parent.CurrentDir, "Text")).ShowModal()
+			result = PagePropertiesDialog(parent, parent.CurrentItem, parent.CurrentItem.content, os.path.join(parent.ProjectDir, "Text")).ShowModal()
 
 		return result

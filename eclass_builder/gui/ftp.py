@@ -57,7 +57,7 @@ class FTPUpload:
 
 	def GetUploadDirName(self, indir):
 		#first, strip out any hardcoded path reference
-		parentdir = settings.CurrentDir
+		parentdir = settings.ProjectDir
 		#print "Parentdir: " + parentdir
 
 		mydir = string.replace(indir, parentdir, "")
@@ -94,7 +94,7 @@ class FTPUpload:
 			myitem = os.path.join(indir, item)
 			
 			if os.path.isfile(myitem) and not string.find(item, "._") == 0 and string.find(item, "Karrigell") == -1 and string.find(item, "httpserver") == -1 and string.find(item, "ftppass.txt") == -1:
-				finalname = string.replace(myitem, settings.CurrentDir, "")
+				finalname = string.replace(myitem, settings.ProjectDir, "")
 				if wxPlatform == "__WXMSW__":
 					finalname = string.replace(finalname, "\\", "/")
 				#finalname = string.replace(finalname, os.pathsep, "/")
@@ -129,7 +129,7 @@ class FTPUpload:
 
 	def CreateDestFilename(self, sourcefile):
 		destdir = self.ValidateUploadDir(self.Directory)
-		inputfile = sourcefile.replace(settings.CurrentDir, "")
+		inputfile = sourcefile.replace(settings.ProjectDir, "")
 
 		adir, aname = os.path.split(inputfile)
 		if adir != "":					
@@ -164,7 +164,7 @@ class FTPUpload:
 						wxPostEvent(self, evt)
 					return
 
-				sourcename = settings.CurrentDir + os.sep + item
+				sourcename = settings.ProjectDir + os.sep + item
 				destname = self.CreateDestFilename(item)	
 				success = self.UploadFile(sourcename, destname)
 
@@ -457,7 +457,7 @@ class FTPUploadDialog(wxDialog, FTPUpload):
 		#self.btnOK.Enable(False)
 		#self.btnCancel.SetLabel(_("Cancel"))
 		if self.makefilelist:
-			self.GenerateFileList(self.parent.CurrentDir)
+			self.GenerateFileList(self.parent.ProjectDir)
 			self.makefilelist = False
 		self.LoadFileList()
 		self.txtTotalProg.SetLabel(_("Total Progress: "))

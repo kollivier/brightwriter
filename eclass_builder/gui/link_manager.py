@@ -44,12 +44,12 @@ class LinkChecker(wxDialog):
 		self.EndModal(wxID_CANCEL)
 
 	def CheckLinks(self):
-		files = os.listdir(os.path.join(self.parent.CurrentDir, "pub"))
+		files = os.listdir(os.path.join(self.parent.ProjectDir, "pub"))
 		for file in files:
 			if not self.isChecking:
 				return
 			self.currentFile = file
-			filename = os.path.join(self.parent.CurrentDir, "pub", file)
+			filename = os.path.join(self.parent.ProjectDir, "pub", file)
 			if os.path.isfile(filename):
 				if string.find(os.path.splitext(file)[1], "htm") != -1: 
 					myhtml = utils.openFile(filename, "r").read()

@@ -13,7 +13,7 @@ import stat
 
 import errors
 
-indexLog = utils.LogFile(os.path.join(settings.CurrentDir, "indexing_log.txt"))
+indexLog = utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
 
 class Index:
     def __init__(self, parent, indexdir, rootFolder=""):

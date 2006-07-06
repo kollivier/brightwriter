@@ -49,11 +49,11 @@ class NewPubDialog(wxDialog):
 		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 	
 	def btnOKClicked(self, event):
-		settings.CurrentDir = self.parent.CurrentDir = self.parent.pub.directory = os.path.join(self.parent.settings["CourseFolder"], utils.createSafeFilename(self.txtTitle.GetValue()))
-		#print self.parent.CurrentDir
+		settings.ProjectDir = self.parent.ProjectDir = self.parent.pub.directory = os.path.join(self.parent.settings["CourseFolder"], utils.createSafeFilename(self.txtTitle.GetValue()))
+		#print self.parent.ProjectDir
 
-		if not os.path.exists(self.parent.CurrentDir):
-			os.mkdir(self.parent.CurrentDir)
+		if not os.path.exists(self.parent.ProjectDir):
+			os.mkdir(self.parent.ProjectDir)
 			self.parent.pub.name = self.txtTitle.GetValue()
 			self.parent.pub.description = self.txtDescription.GetValue()
 			self.parent.pub.keywords = self.txtKeywords.GetValue()
@@ -153,7 +153,7 @@ class NewPageDialog(wxDialog):
 		counter = 2
 		oldtitle = title
 		import glob
-		while len(glob.glob(os.path.join(self.parent.CurrentDir, "EClass", title + ".*"))) > 0 or len(glob.glob(os.path.join(self.parent.CurrentDir, "Text", title + ".*"))) > 0:
+		while len(glob.glob(os.path.join(self.parent.ProjectDir, "EClass", title + ".*"))) > 0 or len(glob.glob(os.path.join(self.parent.ProjectDir, "Text", title + ".*"))) > 0:
 			#name = "New Page " + `counter`
 			title = oldtitle + " " + `counter`
 			filename = title + extension
@@ -174,7 +174,7 @@ class NewPageDialog(wxDialog):
 			if plugin.plugin_info["FullName"] == pluginname:
 				break
 
-		if os.path.exists(os.path.join(self.parent.CurrentDir, plugin.plugin_info["Directory"], self.txtFilename.GetValue())):
+		if os.path.exists(os.path.join(self.parent.ProjectDir, plugin.plugin_info["Directory"], self.txtFilename.GetValue())):
 			wxMessageBox(_("Filename already exists. Please rename the file and try again."))
 		else:
 			self.EndModal(wxID_OK)

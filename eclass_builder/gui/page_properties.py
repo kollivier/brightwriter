@@ -280,7 +280,7 @@ class PagePropertiesDialog (wxDialog):
 					filterext = filterext + "; "
 			filtertext = filtertext + plugin.plugin_info["FullName"] + " Files (" + textext + ")|" + filterext
 			
-		f = wxFileDialog(self, _("Select a file"), os.path.join(settings.CurrentDir), "", filtertext, wxOPEN)
+		f = wxFileDialog(self, _("Select a file"), os.path.join(settings.ProjectDir), "", filtertext, wxOPEN)
 		if f.ShowModal() == wxID_OK:
 			self.filedir = f.GetDirectory()
 			self.filename = f.GetFilename()
@@ -296,9 +296,9 @@ class PagePropertiesDialog (wxDialog):
 
 			if isEClassPluginPage and page_plugin:
 				overwrite = False 
-				if os.path.join(self.parent.CurrentDir, page_plugin.plugin_info["Directory"], self.filename) == os.path.join(self.filedir, self.filename):
+				if os.path.join(self.parent.ProjectDir, page_plugin.plugin_info["Directory"], self.filename) == os.path.join(self.filedir, self.filename):
 					pass
-				elif os.path.exists(os.path.join(self.parent.CurrentDir, page_plugin.plugin_info["Directory"], self.filename)):
+				elif os.path.exists(os.path.join(self.parent.ProjectDir, page_plugin.plugin_info["Directory"], self.filename)):
 					msg = wxMessageDialog(self, _("The file %(filename)s already exists. Do you want to overwrite this file?") % {"filename": self.content.filename}, _("Save Project?"), wxYES_NO)
 					answer = msg.ShowModal()
 					msg.Destroy()
@@ -307,15 +307,15 @@ class PagePropertiesDialog (wxDialog):
 				else:
 					overwrite = True
 				if overwrite:
-					files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.CurrentDir, page_plugin.plugin_info["Directory"]))
+					files.CopyFile(self.filename, self.filedir, os.path.join(self.parent.ProjectDir, page_plugin.plugin_info["Directory"]))
 				self.filename = os.path.join(page_plugin.plugin_info["Directory"], self.filename)
 			elif self.filename == "imsmanifest.xml": #another publication
 				self.node = conman.ConMan()
 				self.node.LoadFromXML(os.path.join(self.filedir, self.filename))
 			else:
 				self.filename = os.path.join("File", self.filename)
-				if not os.path.exists(os.path.join(self.parent.CurrentDir, self.filename)):
-					shutil.copy(self.file, os.path.join(self.parent.CurrentDir, "File"))
+				if not os.path.exists(os.path.join(self.parent.ProjectDir, self.filename)):
+					shutil.copy(self.file, os.path.join(self.parent.ProjectDir, "File"))
 			
 			self.txtExistingFile.SetValue(self.filename)
 		f.Destroy()

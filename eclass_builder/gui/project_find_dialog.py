@@ -49,7 +49,7 @@ class ProjectFindDialog(sc.SizedDialog):
         #wx.EVT_ACTIVATE(self, self.OnActivate)
 
     def OnSearch(self, evt):
-        searcher = index.Index(self, os.path.join(settings.CurrentDir, "index.lucene"), settings.CurrentDir)
+        searcher = index.Index(self, os.path.join(settings.ProjectDir, "index.lucene"), settings.ProjectDir)
         results = searcher.search("contents", self.searchBox.GetValue())
         self.listCtrl.DeleteAllItems()
         for result in results:
