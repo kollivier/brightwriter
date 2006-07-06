@@ -7,6 +7,7 @@ rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
 	rootdir = os.path.dirname(rootdir)
 
+print "root is: " + rootdir
 # do this first because other modules may rely on _()
 localedir = os.path.join(rootdir, 'locale')
 import gettext
@@ -1279,25 +1280,10 @@ class MainFrame2(wxFrame):
 		myitem = self.CurrentItem
 		publisher = self.GetPublisher(myitem.content.filename)
 		if publisher: 
-			ftpfiles.append("pub/" + publisher.GetFilename(myitem.content.filename))
+			ftpfiles.append(publisher.GetFileLink(myitem.content.filename))
 		else:
-			ftpfiles.append("File/" + myitem.content.filename)
+			ftpfiles.append(myitem.content.filename)
 
-		backnode = myitem.back()
-		if backnode != None:
-			publisher = self.GetPublisher(backnode.content.filename)
-			if publisher:
-				ftpfiles.append("pub/" + publisher.GetFilename(backnode.content.filename))
-			else:
-				ftpfiles.append("File/" + backnode.content.filename)
-				
-		nextnode = myitem.next()
-		if nextnode != None:
-			publisher = self.GetPublisher(nextnode.content.filename)
-			if publisher:
-				ftpfiles.append("pub/" + publisher.GetFilename(nextnode.content.filename))
-			else:
-				ftpfiles.append("File/" + nextnode.content.filename)
 		#exec("mytheme = themes." + self.currentTheme[1])
 		publisher = self.currentTheme.HTMLPublisher(self)
 		if publisher.GetContentsPage() != "":
@@ -1555,13 +1541,9 @@ class MainFrame2(wxFrame):
 		filename = self.CurrentItem.content.filename
 		plugin = plugins.GetPluginForFilename(filename)
 		publisher = plugin.HTMLPublisher()
-		filename = publisher.GetFilename(filename)
-					
-		# Still needed? we need to do this again because we use external HTML editor
-		#if extension in ["htm", "html"]:
-		#	publisher.Publish(self, self.CurrentItem, self.CurrentItem.dir)
-		filename = os.path.join(settings.CurrentDir, "pub", os.path.basename(filename))
-			
+		filelink = publisher.GetFileLink(filename).replace("/", os.sep)
+		filename = os.path.join(settings.CurrentDir, filelink)
+		print "Filename is: " + `filename`	
 		#we shouldn't preview files that EClass can't view
 		ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
 		if sys.platform == "win32":

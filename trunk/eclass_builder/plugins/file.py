@@ -15,12 +15,6 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 	def GetData(self):
 		return None
 
-	def GetFilename(self, filename):
-		"""
-		For the file plugin, we don't convert so filename doesn't change.
-		"""
-
-		return filename
 
 class EditorDialog:
 	def __init__(self, parent, item):

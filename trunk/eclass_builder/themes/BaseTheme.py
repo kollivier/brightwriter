@@ -9,6 +9,7 @@ from wxPython.wx import *
 import fileutils
 from htmlutils import *
 import plugins
+import utils
 
 isPublic = True
 from StringIO import StringIO
@@ -73,8 +74,8 @@ class BaseHTMLPublisher:
 		fileutils.CopyFiles(os.path.join(self.themedir, "Files"), self.dir, 1)
 
 	def CreateTOC(self):
-		filename = self._GetFilename(self.pub.nodes[0].content.filename)
-        
+		filename = utils.GetFileLink(self.pub.nodes[0].content.filename)
+		
 		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
 		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
 		searchenabled = False
@@ -99,7 +100,7 @@ class BaseHTMLPublisher:
 		data = file.read()
 		file.close()
 		file = open(os.path.join(self.dir, "index.htm"),"w")
-		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", "pub/" + os.path.basename(self._GetFilename(self.pub.nodes[0].content.filename)))
+		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", utils.GetFileLink(self.pub.nodes[0].content.filename))
 		file.write(data)
 		file.close()
 
@@ -110,7 +111,7 @@ class BaseHTMLPublisher:
 			if string.find(root.content.filename, "imsmanifest.xml") != -1:
 					root = root.pub.nodes[0]
 
-			filename = self._GetFilename(root.content.filename) 
+			filename = utils.GetFileLink(root.content.filename) 
 
 			if not root.content.public == "false":
 				nodeName = "foldersTree"
@@ -120,7 +121,7 @@ class BaseHTMLPublisher:
 					nodeType = "../Graphics/menu/win/chapter.gif"
 				else:
 					nodeType = "../Graphics/menu/win/page.gif"
-				self.counter = self.counter + 1                            
+				self.counter = self.counter + 1							   
 			
 				if len(root.children) > 0:
 					text = text + """level%sNode = insFld(%s, gFld("%s", "%s"))\n""" % (level + 1, nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
@@ -129,26 +130,21 @@ class BaseHTMLPublisher:
 					text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
 			else:
 				print "Item " + root.content.metadata.name + " is marked private and was not published."
-        	return text					
-
-	def _GetFilename(self, filename):
-		extension = string.split(filename, ".")[-1]
-		publisher = None
-		for plugin in plugins.pluginList:
-			if extension in plugin["Extension"]:
-				publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
-		if publisher: 
-			try:
-				filename = "../pub/" + publisher.GetFilename(filename)
-			except: 
-				pass
-		else:
-			filename = "../" + string.replace(filename, "\\", "/")
-		return filename
+			return text					
 
 	def GetContentsPage(self):
 		if os.path.exists(os.path.join(self.themedir,"eclassNodes.js")):
 			return "eclassNodes.js"
+			
+	def GetSearchPageLink(self):
+		link = ""
+		if self.pub.settings["SearchEnabled"] != "" and int(self.pub.settings["SearchEnabled"]):
+			if self.pub.settings["SearchProgram"] == "Swish-e":
+				link = "cgi-bin/search.py"
+			elif self.pub.settings["SearchProgram"] == "Greenstone" and self.pub.pubid != "":
+				link = "gsdl?site=127.0.0.1&a=p&p=about&c=" + self.pub.pubid + "&ct=0"
+		
+		return link
 
 	def PublishPages(self, node):
 		page = ""
@@ -184,7 +180,7 @@ class BaseHTMLPublisher:
 					import traceback
 					print "Traceback is:\n" 
 					traceback.print_exc()
-        	
+			
 		if len(node.children) > 0:
-        		for child in node.children:
-        			self.PublishPages(child)
+				for child in node.children:
+					self.PublishPages(child)

@@ -53,7 +53,7 @@ class SearchEngine:
 		metadata["title"] = node.content.metadata.name
 		
 		if self.publisher:
-			filename = "pub/" + self.publisher.GetFilename(node.content.filename)
+			filename = self.publisher.GetFileLink(node.content.filename)
 		import urllib
 		filename = string.replace(filename, "\\", "/")
 
