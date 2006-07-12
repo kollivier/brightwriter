@@ -63,6 +63,7 @@ import constants
 # examine the code to find module dependencies.
 import wxaddons.persistence
 import wxaddons.sized_controls
+import wx.lib.mixins.listctrl
 import taskrunner
 
 from gui.theme_manager import *
@@ -389,7 +390,7 @@ class MainFrame2(wxFrame):
 		ToolsMenu = wxMenu()
 		ToolsMenu.Append(ID_THEME, _("Change Theme"))
 		ToolsMenu.Append(ID_LINKCHECK, _("Check Links"))
-		ToolsMenu.Append(ID_CONTACTS, _("Contact List"))
+		ToolsMenu.Append(ID_CONTACTS, _("Manage Contacts"))
 		
 		ToolsMenu.Append(ID_ERRORLOG, _("Error Viewer"))
 		ToolsMenu.AppendSeparator()
