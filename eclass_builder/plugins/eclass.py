@@ -770,6 +770,7 @@ class SelectBox(sc.SizedPanel):
 		self.SetSizerType("horizontal")
 		self.SetSizerProp("expand", True)
 		self.SetSizerProp("proportion", 1)
+		self.SetSizerProp("border", (["all"], 0))
 		
 		icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wx.BITMAP_TYPE_GIF)
 		self.textbox = wx.TextCtrl(self, -1, filename)
@@ -1131,6 +1132,7 @@ class EditorDialog (sc.SizedDialog):
 		midPane = sc.SizedPanel(pane, -1)
 		midPane.SetSizerType("grid", {"cols": 2})
 		midPane.SetSizerProp("expand", True)
+		midPane.SetSizerProp("border", (["all"], 0))
 		midPane.GetSizer().AddGrowableCol(0)
 		midPane.GetSizer().AddGrowableCol(1)
 		
@@ -1201,6 +1203,7 @@ class EditorDialog (sc.SizedDialog):
 		
 		hwBtnPane = sc.SizedPanel(bottomPane, -1)
 		hwBtnPane.SetSizerType("horizontal")
+		hwBtnPane.SetSizerProps({"border": (["all"], 0), "halign": "center"})
 		
 		self.btnAddTerm = wx.Button(hwBtnPane,-1,_("Add"))
 		self.btnEditTerm = wx.Button(hwBtnPane,-1,_("Edit"))
@@ -1208,6 +1211,7 @@ class EditorDialog (sc.SizedDialog):
 
 		objBtnPane = sc.SizedPanel(bottomPane, -1)
 		objBtnPane.SetSizerType("horizontal")
+		objBtnPane.SetSizerProps({"border": (["all"], 0), "halign": "center"})
 		self.btnAddObjective = wx.Button(objBtnPane,-1,_("Add"))
 		self.btnEditObjective = wx.Button(objBtnPane,-1,_("Edit"))
 		self.btnRemoveObjective = wx.Button(objBtnPane,-1,_("Remove"))
