@@ -165,21 +165,14 @@ class BaseHTMLPublisher:
 		if string.find(node.content.filename, "imsmanifest.xml") != -1:
 			node = node.pub.nodes[0]
 
-		if 1:
-			extension = string.split(node.content.filename, ".")[-1]
-			publisher = None
-			for plugin in plugins.pluginList:
-				if extension in plugin["Extension"]:
-					publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher()")
-			if publisher: 
-				try:
-					filename = publisher.GetFilename(node.content.filename)
-					publisher.Publish(self.parent, node, self.dir)
-				except:
-					print "Could not publish page " + os.path.join(self.dir, "pub", node.content.filename)
-					import traceback
-					print "Traceback is:\n" 
-					traceback.print_exc()
+		try:
+			publisher = plugins.GetPluginForFilename(node.content.filename).HTMLPublisher()
+			publisher.Publish(self.parent, node, self.dir)
+		except:
+			print "Could not publish page " + os.path.join(self.dir, "pub", node.content.filename)
+			import traceback
+			print "Traceback is:\n" 
+			traceback.print_exc()
 			
 		if len(node.children) > 0:
 				for child in node.children:
