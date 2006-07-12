@@ -1,52 +1,50 @@
 import string, sys, os
-from wxPython.wx import *
+import wx
+import wxaddons.sized_controls as sc
+import wxaddons.persistence
 import plugins
 from fileutils import MakeFileName2
 import utils
 import settings
 
-class NewPubDialog(wxDialog):
+class NewPubDialog(sc.SizedDialog):
 	def __init__(self, parent):
-		wxDialog.__init__ (self, parent, -1, _("New Project"), wxPoint(100,100),wxSize(400,200), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
-		height = 20
-		if wxPlatform == "__WXMAC__":
-			height = 25
+		sc.SizedDialog.__init__ (self, parent, -1, _("New Project"), wx.Point(100,100),wx.Size(400,-1), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
-		self.lblTitle = wxStaticText(self, -1, _("Name"), wxPoint(10, 12))
-		self.txtTitle = wxTextCtrl(self, -1, "", wxPoint(80, 10), wxDefaultSize) #wxSize(160, height))
-		self.lblDescription = wxStaticText(self, -1, _("Description"), wxPoint(10, 12 + (height)))
-		self.txtDescription = wxTextCtrl(self, -1, "", wxPoint(80, 10 + (height)), wxDefaultSize, wxTE_MULTILINE)
-		self.lblKeywords = wxStaticText(self, -1, _("Keywords"), wxPoint(10, 12 + (height*4)))
-		self.txtKeywords = wxTextCtrl(self, -1, "", wxPoint(80, 10 + (height*4)), wxDefaultSize) #wxSize(160, height))
+		pane = self.GetContentsPane()
+		pane.SetSizerType("form")
+		self.lblTitle = wx.StaticText(pane, -1, _("Name"))
+		self.lblTitle.SetSizerProp("valign", "center")
+		self.txtTitle = wx.TextCtrl(pane, -1)
+		self.txtTitle.SetSizerProp("expand", True)
+		self.lblDescription = wx.StaticText(pane, -1, _("Description"))
+		self.lblDescription.SetSizerProp("valign", "center")
+		self.txtDescription = wx.TextCtrl(pane, -1, style=wx.TE_MULTILINE)
+		self.txtDescription.SetSizerProps({"expand":True, "proportion":1})
+		self.lblKeywords = wx.StaticText(pane, -1, _("Keywords"))
+		self.lblKeywords.SetSizerProp("valign", "center")
+		self.txtKeywords = wx.TextCtrl(pane, -1)
+		self.txtKeywords.SetSizerProp("expand", True)
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(100, 12 + (height*6)),wxSize(76, 24))
+		self.btnOK = wx.Button(self,wx.ID_OK)
 		self.btnOK.SetDefault()
 		self.txtTitle.SetFocus()
 		self.txtTitle.SetSelection(0, -1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(190, 12 + (height*6)),wxSize(76,24))
+		self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
 
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.TitleSizer = wxFlexGridSizer(0, 2, 4, 4)
-		self.TitleSizer.Add(self.lblTitle, 0, wxALIGN_RIGHT|wxALL, 4)
-		self.TitleSizer.Add(self.txtTitle, 1, wxALIGN_RIGHT|wxEXPAND|wxALL, 2)
-		self.TitleSizer.Add(self.lblDescription, 0, wxALIGN_RIGHT|wxALL, 4)
-		self.TitleSizer.Add(self.txtDescription, 1, wxALIGN_RIGHT|wxEXPAND|wxALL, 2)
-		self.TitleSizer.Add(self.lblKeywords, 0, wxALIGN_RIGHT|wxALL, 4)
-		self.TitleSizer.Add(self.txtKeywords, 1, wxALIGN_RIGHT|wxEXPAND|wxALL, 2)
-		self.TitleSizer.AddGrowableCol(1)
-		self.mysizer.Add(self.TitleSizer, 1, wxEXPAND)
-		#self.mysizer.Add(25, 300, 0)
-		self.buttonSizer = wxStdDialogButtonSizer()
+		self.buttonSizer = wx.StdDialogButtonSizer()
 		self.buttonSizer.AddButton(self.btnOK)
 		self.buttonSizer.AddButton(self.btnCancel)
 		self.buttonSizer.Realize()
-		self.mysizer.Add(self.buttonSizer, 0)
-		self.SetAutoLayout(True)
-		self.SetSizer(self.mysizer)
-		self.mysizer.Fit(self)
-		self.Layout()
+		self.SetButtonSizer(self.buttonSizer)
+		
+		#self.Fit()
+		#self.SetMinSize(self.GetSize())
+		
+		# TODO: Add close dialog support for this
+		#self.LoadState("NewPubDialog")
 
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 	
 	def btnOKClicked(self, event):
 		settings.ProjectDir = self.parent.ProjectDir = self.parent.pub.directory = os.path.join(self.parent.settings["CourseFolder"], utils.createSafeFilename(self.txtTitle.GetValue()))
@@ -59,22 +57,28 @@ class NewPubDialog(wxDialog):
 			self.parent.pub.keywords = self.txtKeywords.GetValue()
 			self.EndModal(wxID_OK)
 		else:
-			wxMessageDialog(self, _("A publication with this name already exists. Please choose another name."), _("Publication exists!"), wxOK).ShowModal()
+			wx.MessageDialog(self, _("A publication with this name already exists. Please choose another name."), _("Publication exists!"), wx.OK).ShowModal()
 
-class NewPageDialog(wxDialog):
+class NewPageDialog(sc.SizedDialog):
 	def __init__(self, parent):
-		wxDialog.__init__ (self, parent, -1, _("New Page"), wxPoint(100,100),wxSize(400,200), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
-		height = 20
-		if wxPlatform == "__WXMAC__":
-			height = 25
+		sc.SizedDialog.__init__ (self, parent, -1, _("New Page"), wx.Point(100,100),wx.Size(400,180), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
-		self.lblTitle = wxStaticText(self, -1, _("Name"), wxPoint(10, 12))
-		self.txtTitle = wxTextCtrl(self, -1, _("New Page"))
-		self.lblType = wxStaticText(self, -1, "Type")
-		self.cmbType = wxChoice(self, -1)
+		pane = self.GetContentsPane()
+		pane.SetSizerType("form")
 
-		self.lblFilename = wxStaticText(self, -1, "Filename")
-		self.txtFilename = wxTextCtrl(self, -1, _("New Page"))
+		self.lblTitle = wx.StaticText(pane, -1, _("Name"))
+		self.lblTitle.SetSizerProp("valign", "center")
+		self.txtTitle = wx.TextCtrl(pane, -1, _("New Page"))
+		self.txtTitle.SetSizerProp("expand", True)
+		self.lblType = wx.StaticText(pane, -1, "Type")
+		self.lblType.SetSizerProp("valign", "center")
+		self.cmbType = wx.Choice(pane, -1)
+		self.cmbType.SetSizerProp("expand", True)
+
+		self.lblFilename = wx.StaticText(pane, -1, "Filename")
+		self.lblFilename.SetSizerProp("valign", "center")
+		self.txtFilename = wx.TextCtrl(pane, -1, _("New Page"))
+		self.txtFilename.SetSizerProp("expand", True)
 		self.filenameEdited = False
 		
 		extension = ".ecp"
@@ -91,41 +95,29 @@ class NewPageDialog(wxDialog):
 		self.txtFilename.SetValue(self.txtTitle.GetValue())
 		self.UpdateFilename(None)
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"))#,wxPoint(100, 12 + (height*6)),wxSize(76, 24))
+		self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
 		self.btnOK.SetDefault()
 		self.txtTitle.SetFocus()
 		self.txtTitle.SetSelection(0, -1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(190, 12 + (height*6)),wxSize(76,24))
+		self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
 
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.TitleSizer = wxFlexGridSizer(0, 2, 4, 4)
-		self.TitleSizer.Add(self.lblTitle, 0, wxALIGN_RIGHT|wxALL, 4)
-		self.TitleSizer.Add(self.txtTitle, 1, wxALIGN_RIGHT|wxEXPAND|wxALL, 2)
-		self.TitleSizer.Add(self.lblFilename, 0, wxALIGN_RIGHT|wxALL, 4)
-		self.TitleSizer.Add(self.txtFilename, 1, wxALIGN_RIGHT|wxEXPAND|wxALL, 2)
-		self.TitleSizer.Add(self.lblType, 0, wxALIGN_RIGHT|wxALL, 4)
-		self.TitleSizer.Add(self.cmbType, 1, wxALIGN_RIGHT|wxEXPAND|wxALL, 2)
-		self.TitleSizer.AddGrowableCol(1)
-		self.mysizer.Add(self.TitleSizer, 1, wxEXPAND)
-		#self.mysizer.Add(25, 300, 0)
-		self.buttonSizer = wxStdDialogButtonSizer()
+		self.buttonSizer = wx.StdDialogButtonSizer()
 		self.buttonSizer.AddButton(self.btnOK)
 		self.buttonSizer.AddButton(self.btnCancel)
 		self.buttonSizer.Realize()
-		self.mysizer.Add(self.buttonSizer, 0)
-		self.SetAutoLayout(True)
-		self.SetSizer(self.mysizer)
-		self.mysizer.Fit(self)
-		self.Layout()
+		self.SetButtonSizer(self.buttonSizer)
+		
+		#self.Fit()
+		#self.SetMinSize(self.GetSize())
 
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
-		EVT_BUTTON(self.btnCancel, self.btnCancel.GetId(), self.btnCancelClicked)
-		EVT_CHOICE(self, self.cmbType.GetId(), self.UpdateFilename)
-		EVT_CHAR(self.txtFilename, self.CheckFilename)
-		EVT_TEXT(self, self.txtTitle.GetId(), self.UpdateFilename)
+		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+		wx.EVT_BUTTON(self.btnCancel, self.btnCancel.GetId(), self.btnCancelClicked)
+		wx.EVT_CHOICE(self, self.cmbType.GetId(), self.UpdateFilename)
+		wx.EVT_CHAR(self.txtFilename, self.CheckFilename)
+		wx.EVT_TEXT(self, self.txtTitle.GetId(), self.UpdateFilename)
 
 	def CheckFilename(self, event):
-		if len(self.txtFilename.GetValue()) >= 31 and not event.GetKeyCode() == WXK_BACK:
+		if len(self.txtFilename.GetValue()) >= 31 and not event.GetKeyCode() == wx.WXK_BACK:
 			return
 		else: 
 			self.filenameEdited = True
@@ -153,7 +145,7 @@ class NewPageDialog(wxDialog):
 		counter = 2
 		oldtitle = title
 		import glob
-		while len(glob.glob(os.path.join(self.parent.ProjectDir, "EClass", title + ".*"))) > 0 or len(glob.glob(os.path.join(self.parent.ProjectDir, "Text", title + ".*"))) > 0:
+		while len(glob.glob(os.path.join(settings.ProjectDir, "EClass", title + ".*"))) > 0 or len(glob.glob(os.path.join(settings.ProjectDir, "Text", title + ".*"))) > 0:
 			#name = "New Page " + `counter`
 			title = oldtitle + " " + `counter`
 			filename = title + extension
@@ -163,10 +155,10 @@ class NewPageDialog(wxDialog):
 
 	def btnCancelClicked(self, event):
 		if self.parent.isNewCourse:
-			wxMessageBox(_("You must create a root page for this course."))
+			wx.MessageBox(_("You must create a root page for this course."))
 			return
 
-		self.EndModal(wxID_CANCEL)
+		self.EndModal(wx.ID_CANCEL)
 
 	def btnOKClicked(self, event):
 		pluginname = self.cmbType.GetStringSelection()
@@ -174,7 +166,7 @@ class NewPageDialog(wxDialog):
 			if plugin.plugin_info["FullName"] == pluginname:
 				break
 
-		if os.path.exists(os.path.join(self.parent.ProjectDir, plugin.plugin_info["Directory"], self.txtFilename.GetValue())):
-			wxMessageBox(_("Filename already exists. Please rename the file and try again."))
+		if os.path.exists(os.path.join(settings.ProjectDir, plugin.plugin_info["Directory"], self.txtFilename.GetValue())):
+			wx.MessageBox(_("Filename already exists. Please rename the file and try again."))
 		else:
-			self.EndModal(wxID_OK)
+			self.EndModal(wx.ID_OK)

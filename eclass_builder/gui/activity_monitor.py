@@ -21,8 +21,8 @@ class ActivityList(wx.HtmlListBox):
         return ""
 
 class ActivityMonitor(sc.SizedDialog):
-    def __init__(self, *args, **kwargs):
-        sc.SizedDialog.__init__(self, *args, **kwargs)
+    def __init__(self, parent=None):
+        sc.SizedDialog.__init__(self, parent, -1, _("Activity Monitor"), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
         self.taskList = ActivityList(pane, -1)
         self.taskList.SetItemCount(5)
@@ -31,7 +31,8 @@ class ActivityMonitor(sc.SizedDialog):
         
         self.details = wx.Button(pane, -1, _("Task Log"))
         self.Bind(wx.EVT_BUTTON, self.OnDetailsClick, self.details)
-        #self.Fit()
+        self.Fit()
+        self.SetMinSize(self.GetSize())
         
         self.Bind(wx.EVT_TIMER, self.OnTimerFired)
         
