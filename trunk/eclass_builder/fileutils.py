@@ -14,16 +14,16 @@ def CopyFiles(indir, outdir, recurse=0):
 		if os.path.isfile(os.path.join(indir, item)):
 			CopyFile(item, indir, outdir)
 		elif os.path.isdir(os.path.join(indir, item)) and recurse:
-			myoutdir = os.path.join(outdir, item)
-			if not os.path.isdir(myoutdir):
-				try:
-					if not item == "CVS":
+			if not item.upper() == "CVS":
+				myoutdir = os.path.join(outdir, item)
+				if not os.path.isdir(myoutdir):
+					try:
 						os.mkdir(myoutdir)
-				except: 
-					print "Could not make directory: " + myoutdir
+					except: 
+						print "Could not make directory: " + myoutdir
 			
-			if os.path.isdir(myoutdir):
-				CopyFiles(os.path.join(indir,item) ,myoutdir, 1)
+				if os.path.isdir(myoutdir):
+					CopyFiles(os.path.join(indir,item) ,myoutdir, 1)
 
 def CopyFile(filename, indir, outdir): 
 	try: 
