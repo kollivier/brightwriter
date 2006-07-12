@@ -42,7 +42,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			if string.find(root.content.filename, "imsmanifest.xml") != -1:
 					root = root.pub.nodes[0]
 
-			filename = rootdir + self._GetFilename(root.content.filename) 
+			filename = rootdir + utils.GetFileLink(root.content.filename) 
 
 			if not root.content.public == "false":
 				if len(root.children) > 0:

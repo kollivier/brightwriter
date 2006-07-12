@@ -1,5 +1,6 @@
 from BaseTheme import *
 themename = "Default (no frames)"
+import utils
 
 rootdir = "../"
 
@@ -9,7 +10,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 		self.themedir = os.path.join(self.appdir, "themes", themename)
 
 	def CreateTOC(self):
-		filename = rootdir + self._GetFilename(self.pub.nodes[0].content.filename)
+		filename = rootdir + utils.GetFileLink(self.pub.nodes[0].content.filename)
 
 		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
 		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
@@ -30,7 +31,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 		data = file.read()
 		file.close()
 		file = open(os.path.join(self.dir, "index.htm"),"w")
-		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", "pub/" + os.path.basename(self._GetFilename(self.pub.nodes[0].content.filename)))
+		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", utils.GetFileLink(self.pub.nodes[0].content.filename))
 		file.write(data.encode("utf-8"))
 		file.close()
 
@@ -41,16 +42,16 @@ class HTMLPublisher(BaseHTMLPublisher):
 			if string.find(root.content.filename, "imsmanifest.xml") != -1:
 					root = root.pub.nodes[0]
 
-			filename = rootdir + self._GetFilename(root.content.filename) 
+			filename = rootdir + utils.GetFileLink(root.content.filename) 
 
 			if not root.content.public == "false":
 				nodeName = "foldersTree"
 				if (level > 1):
 					nodeName = "level" + `level` + "Node"
 				if len(root.children) > 0:
-					nodeType = "../Graphics/menu/win/chapter.gif"
+					nodeType = rootdir + "Graphics/menu/win/chapter.gif"
 				else:
-					nodeType = "../Graphics/menu/win/page.gif"
+					nodeType = rootdir + "Graphics/menu/win/page.gif"
 				self.counter = self.counter + 1                            
 			
 				if len(root.children) > 0:

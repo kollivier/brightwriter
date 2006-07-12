@@ -117,6 +117,8 @@ def EVT_RESULT(win, func):
 if __name__ != "__main__":
 	class HTMLPublisher(plugins.BaseHTMLPublisher):
 		#init defined by parent class
+		def GetFileLink(self, filename):
+			return "pub/" + os.path.basename(self.GetFilename(filename))
 
 		def GetData(self):
 			filename = os.path.join(self.dir, string.replace(self.node.content.filename, "/", os.sep))
