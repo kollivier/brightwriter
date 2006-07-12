@@ -1125,6 +1125,7 @@ class EditorDialog (sc.SizedDialog):
 		
 		self.lblCredit = wx.StaticText(topPane, -1, _("Credit"))
 		self.txtCredit = wx.TextCtrl(topPane, -1, credits, style=wx.TE_MULTILINE)
+		self.txtCredit.SetSize(wx.Size(self.txtCredit.GetSize()[0], 80))
 		self.txtCredit.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
 
 		midPane = sc.SizedPanel(pane, -1)
