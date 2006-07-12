@@ -156,7 +156,8 @@ class BaseHTMLPublisher:
 		self.data['name'] = TextToHTMLChar(node.content.metadata.name)
 		self.data['description'] = TextToXMLAttr(node.content.description)
 		self.data['keywords'] = TextToXMLAttr(node.content.keywords)
-		self.data['URL'] = "pub/" + self.GetFilename(node.content.filename)
+		self.data['URL'] = utils.GetFileLink(node.content.filename)
+		self.data['SourceFile'] = node.content.filename
 		self.data['credit'] = self.GetCreditString()
 		filename = os.path.join(self.dir, "Text", node.content.filename)
 		filename = self.GetFilename(node.content.filename)
