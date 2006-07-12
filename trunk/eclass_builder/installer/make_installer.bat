@@ -1,7 +1,7 @@
 call "%VS71COMNTOOLS%vsvars32.bat"
 REM Python24 gives an "invalid group reference" error
 C:\Python23\python ..\updateVersion.py %1
-C:\Python24\python make_py_dist.py
+C:\Python24\python make_py_dist.py --unicode
 nmake -f makefile.vc
 cd ..\autorun\loader
 nmake -f loader.mak
