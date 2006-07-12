@@ -1147,7 +1147,8 @@ class EditorDialog (sc.SizedDialog):
 		
 		sc.SizedPanel(midleftPane, -1) #spacer
 		self.chkVideoAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
-		self.chkVideoAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+		if wx.Platform == "__WXMAC__":
+			self.chkVideoAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
 		#self.chkVideoAutostart.SetSizerProp("all", 0)
 		if self.page.media.videoautostart == True:
 			self.chkVideoAutostart.SetValue(True)
@@ -1156,7 +1157,8 @@ class EditorDialog (sc.SizedDialog):
 		self.selectAudio = SelectBox(midleftPane, self.page.media.audio, _("Audio"))
 		sc.SizedPanel(midleftPane, -1) #spacer
 		self.chkAudioAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
-		self.chkAudioAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+		if wx.Platform == "__WXMAC__":
+			self.chkAudioAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
 		if self.page.media.audioautostart == True:
 			self.chkAudioAutostart.SetValue(True)
 
@@ -1170,9 +1172,11 @@ class EditorDialog (sc.SizedDialog):
 		btnPane = sc.SizedPanel(midrightPane, -1)
 		btnPane.SetSizerType("horizontal")
 		self.btnNewFile = wx.Button(btnPane,-1,_("New"))
-		self.btnNewFile.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+		if wx.Platform == "__WXMAC__":
+			self.btnNewFile.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
 		self.btnEditText = wx.Button(btnPane,-1,_("Edit"))
-		self.btnEditText.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+		if wx.Platform == "__WXMAC__":
+			self.btnEditText.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
 
 		wx.StaticText(midrightPane, -1, _("Presentation:")).SetSizerProps({"halign": "right", "valign":"center"})
 		self.selectPowerPoint = SelectBox(midrightPane, self.page.media.powerpoint, "Present")
