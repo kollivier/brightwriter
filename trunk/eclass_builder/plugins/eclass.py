@@ -1109,21 +1109,23 @@ class EditorDialog (sc.SizedDialog):
 						   wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 						   
 		pane = self.GetContentsPane()
+
 		topPane = sc.SizedPanel(pane, -1)
 		topPane.SetSizerType("form")
-		topPane.SetSizerProp("expand", True)
+		topPane.SetSizerProps({"expand":True})
+		#topPane.SetSizerProps({"hgrow": 100})
 		
 		self.lblTitle = wx.StaticText(topPane, -1, _("Name"))
 		self.txtTitle = wx.TextCtrl(topPane, -1, self.page.name)
-		self.txtTitle.SetSizerProp("expand", True)
+		self.txtTitle.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
 		
 		self.lblAuthor = wx.StaticText(topPane, -1, _("Author"))
 		self.txtAuthor = wx.TextCtrl(topPane, -1, authorname)
-		self.txtAuthor.SetSizerProp("expand", True)
+		self.txtAuthor.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
 		
 		self.lblCredit = wx.StaticText(topPane, -1, _("Credit"))
 		self.txtCredit = wx.TextCtrl(topPane, -1, credits, style=wx.TE_MULTILINE)
-		self.txtCredit.SetSizerProp("expand", True)
+		self.txtCredit.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
 
 		midPane = sc.SizedPanel(pane, -1)
 		midPane.SetSizerType("grid", {"cols": 2})
@@ -1177,18 +1179,19 @@ class EditorDialog (sc.SizedDialog):
 		
 		bottomPane = sc.SizedPanel(pane, -1)
 		bottomPane.SetSizerType("grid", {"cols": 2})
-		bottomPane.SetSizerProp("expand", True)
+		bottomPane.SetSizerProps({"expand": True, "proportion":1})
 		bottomPane.GetSizer().AddGrowableCol(0)
 		bottomPane.GetSizer().AddGrowableCol(1)
+		bottomPane.GetSizer().AddGrowableRow(1)
 		wx.StaticText(bottomPane, -1, _("Hotwords"))
 		wx.StaticText(bottomPane, -1, _("Objectives"))
 
 		self.lstTerms = wx.ListBox(bottomPane, -1)
-		self.lstTerms.SetSizerProp("expand", True)
+		self.lstTerms.SetSizerProps({"expand": True, "proportion":1})
 		self.LoadTerms()
 
 		self.lstObjectives = wx.ListBox(bottomPane, -1)
-		self.lstObjectives.SetSizerProp("expand", True)
+		self.lstObjectives.SetSizerProps({"expand": True, "proportion":1})
 		self.LoadObjectives()
 		
 		hwBtnPane = sc.SizedPanel(bottomPane, -1)

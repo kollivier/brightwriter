@@ -6,6 +6,7 @@ import time
 import wx
 import wxaddons.persistence
 import wxaddons.sized_controls as sc
+import autolist
 import errors
 
 appErrorLog = errors.appErrorLog
@@ -14,7 +15,7 @@ class ErrorLogViewer(sc.SizedDialog):
 	def __init__(self, parent=None):
 		sc.SizedDialog.__init__(self, parent, -1, _("Error log viewer"), wx.DefaultPosition, wx.Size(420, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		pane = self.GetContentsPane()
-		self.listCtrl = wx.ListCtrl(pane, -1, style=wx.LC_REPORT)
+		self.listCtrl = autolist.AutoSizeListCtrl(pane, -1, style=wx.LC_REPORT)
 		self.listCtrl.SetSizerProp("expand", "true")
 		self.listCtrl.SetSizerProp("proportion", 1)
 		
@@ -47,6 +48,8 @@ class ErrorLogViewer(sc.SizedDialog):
 		wx.EVT_LIST_ITEM_SELECTED(self, self.listCtrl.GetId(), self.OnSelection)
 
 		self.LoadErrorLog()
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 		wx.EVT_ACTIVATE(self, self.OnActivate)
 
 	def OnSelection(self, evt):

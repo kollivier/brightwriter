@@ -387,9 +387,9 @@ class MainFrame2(wxFrame):
 		self.FileMenu = FileMenu		
 		
 		ToolsMenu = wxMenu()
-		ToolsMenu.Append(ID_THEME, _("Theme Manager"))
-		ToolsMenu.Append(ID_LINKCHECK, _("Link Checker"))
-		ToolsMenu.Append(ID_CONTACTS, _("Contact Manager"))
+		ToolsMenu.Append(ID_THEME, _("Change Theme"))
+		ToolsMenu.Append(ID_LINKCHECK, _("Check Links"))
+		ToolsMenu.Append(ID_CONTACTS, _("Contact List"))
 		
 		ToolsMenu.Append(ID_ERRORLOG, _("Error Viewer"))
 		ToolsMenu.AppendSeparator()
@@ -527,7 +527,7 @@ class MainFrame2(wxFrame):
 		#EVT_SIZE(self.splitter1, self.SplitterSize)
 		self.Show()
 		
-		self.activityMonitor = ActivityMonitor(self, -1, _("Activity Monitor"))
+		self.activityMonitor = ActivityMonitor(self)
 		self.activityMonitor.LoadState("ActivityMonitor")
 		
 		self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
@@ -1003,17 +1003,14 @@ class MainFrame2(wxFrame):
 				fileutils.CopyFiles(self.ProjectDir, pubdir, 1)
 
 			# copy the server program
-			if sys.platform == "win32" and self.pub.settings["ServerProgram"] == "Documancer":
+			if self.pub.settings["SearchProgram"] != "Greenstone":
 				fileutils.CopyFile("autorun.inf", os.path.join(self.AppDir, "autorun"),pubdir)
 				fileutils.CopyFile("loader.exe", os.path.join(self.AppDir, "autorun"),pubdir)
-				installerdir = os.path.join(pubdir, "installers")
-				if not os.path.exists(installerdir):
-					os.mkdir(installerdir)
-				fileutils.CopyFile("documancer-0.2.6-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(pubdir, "installers"))
-			elif sys.platform == "win32":
-				fileutils.CopyFiles(os.path.join(self.AppDir, "cgi-bin"), os.path.join(pubdir, "cgi-bin"))
-				fileutils.CopyFiles(os.path.join(self.ThirdPartyDir, "Karrigell"), pubdir)
-				#files.CopyFiles(os.path.join(self.AppDir, "web"), pubdir, 1)
+				if self.pub.settings["ServerProgram"] == "Documancer":
+					installerdir = os.path.join(pubdir, "installers")
+					if not os.path.exists(installerdir):
+						os.mkdir(installerdir)
+					fileutils.CopyFile("documancer-0.2.6-setup.exe", os.path.join(self.AppDir, "installers"), os.path.join(pubdir, "installers"))
 
 			if self.pub.settings["SearchProgram"] == "Greenstone":
 				cddir = os.path.join(self.settings["GSDL"], "tmp", "exported_collections")
