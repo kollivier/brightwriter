@@ -9,7 +9,7 @@ import settings
 
 class NewPubDialog(sc.SizedDialog):
 	def __init__(self, parent):
-		sc.SizedDialog.__init__ (self, parent, -1, _("New Project"), wx.Point(100,100),wx.Size(400,-1), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		sc.SizedDialog.__init__ (self, parent, -1, _("New Project"), wx.Point(100,100), style=wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
 		pane = self.GetContentsPane()
 		pane.SetSizerType("form")
@@ -38,9 +38,8 @@ class NewPubDialog(sc.SizedDialog):
 		self.buttonSizer.Realize()
 		self.SetButtonSizer(self.buttonSizer)
 		
-		#self.Fit()
-		#self.SetMinSize(self.GetSize())
-		
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 		# TODO: Add close dialog support for this
 		#self.LoadState("NewPubDialog")
 
@@ -55,13 +54,13 @@ class NewPubDialog(sc.SizedDialog):
 			self.parent.pub.name = self.txtTitle.GetValue()
 			self.parent.pub.description = self.txtDescription.GetValue()
 			self.parent.pub.keywords = self.txtKeywords.GetValue()
-			self.EndModal(wxID_OK)
+			self.EndModal(wx.ID_OK)
 		else:
 			wx.MessageDialog(self, _("A publication with this name already exists. Please choose another name."), _("Publication exists!"), wx.OK).ShowModal()
 
 class NewPageDialog(sc.SizedDialog):
 	def __init__(self, parent):
-		sc.SizedDialog.__init__ (self, parent, -1, _("New Page"), wx.Point(100,100),wx.Size(400,180), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		sc.SizedDialog.__init__ (self, parent, -1, _("New Page"), wx.Point(100,100), style=wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
 		pane = self.GetContentsPane()
 		pane.SetSizerType("form")
@@ -107,8 +106,8 @@ class NewPageDialog(sc.SizedDialog):
 		self.buttonSizer.Realize()
 		self.SetButtonSizer(self.buttonSizer)
 		
-		#self.Fit()
-		#self.SetMinSize(self.GetSize())
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 
 		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 		wx.EVT_BUTTON(self.btnCancel, self.btnCancel.GetId(), self.btnCancelClicked)
