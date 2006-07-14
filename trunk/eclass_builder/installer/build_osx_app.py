@@ -29,6 +29,7 @@ setup(
     						glob.glob(rootdir + 'icons') +
     						glob.glob(rootdir + 'locale') +
     						glob.glob(rootdir + 'license') +
+    						glob.glob(rootdir + 'mmedia') +
     						glob.glob(rootdir + 'plugins') +
     						glob.glob(rootdir + 'themes') +
     						[rootdir + "bookfile.book.in"]
