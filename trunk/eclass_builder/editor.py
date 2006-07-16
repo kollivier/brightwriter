@@ -56,6 +56,7 @@ import utils
 import fileutils
 import guiutils
 import constants
+import mmedia
 
 # Import the gui dialogs. They used to be embedded in editor.py
 # so we will just import their contents for now to avoid conflicts.
