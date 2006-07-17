@@ -98,7 +98,7 @@ def getHTMLTemplate(filename, isVideo=True):
     mimetype = getMediaMimeType(filename, isVideo)
     html = ""
     
-    if ext.lower() in [".mpg", ".mpeg", ".wmv", ".avi", ".asf", ".wma", ".wav"]:
+    if ext.lower() in [".mpg", ".mpeg", ".mp3", ".wmv", ".avi", ".asf", ".wma", ".wav"]:
         html = HTMLTemplates.wmTemp
     elif ext.lower() in [".rm", ".ram"]:
         if isVideo:
@@ -107,8 +107,8 @@ def getHTMLTemplate(filename, isVideo=True):
             html = HTMLTemlpates.rmAudioTemp
     elif ext.lower() == ".swf":
         html = HTMLTemplates.flashTemp
-    elif ext.lower() == ".mp3":
-        html = HTMLTemplates.mp3Temp
+    #elif ext.lower() == ".mp3":
+    #    html = HTMLTemplates.mp3Temp
     elif ext.lower() == ".mp4":
         html = HTMLTemplates.mp4Temp
     elif ext.lower() == ".flv":
