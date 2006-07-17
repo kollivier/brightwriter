@@ -119,7 +119,8 @@ class PreferencesEditor(wxDialog):
 		self.parent.settings["GSDL"] = self.txtGSDL.GetValue()
 		self.parent.settings["CourseFolder"] = self.txtCourseFolder.GetValue()
 		self.parent.settings["DefaultPlugin"] = self.cmbDefaultPlugin.GetStringSelection()
-		self.parent.settings["PreferredConverter"] = self.converters[self.cmbConverter.GetStringSelection()]
+		if self.cmbConverter.GetStringSelection() != "":
+			self.parent.settings["PreferredConverter"] = self.converters[self.cmbConverter.GetStringSelection()]
 		language = self.parent.settings["Language"]
 		if language != self.cmbLanguage.GetStringSelection():
 			self.parent.settings["Language"] = self.cmbLanguage.GetStringSelection()
