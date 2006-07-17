@@ -1,4 +1,5 @@
 import sys, os, string
+import settings
 from wxPython.wx import *
 try:
 	import win32api
@@ -11,6 +12,28 @@ def getOpenCommandForFilename(filename):
 		return aFileType.GetOpenCommand(filename)
 
 	return ""
+	
+def openInHTMLEditor(filename):
+    htmleditor = settings.options["HTMLEditor"]
+    if htmleditor == "":
+        wxMessageDialog(self, _("To edit the page, EClass needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wxOK).ShowModal()
+    else:
+        if not os.path.exists(filename):
+            return 
+            
+        if wxPlatform == "__WXMSW__":
+            import win32api
+            editor = "\"" + htmleditor + "\""
+            if not string.find(string.lower(editor), "mozilla") == -1:
+                editor = editor + " -edit" 
+            win32api.WinExec(editor + " \"" + filename + "\"")
+                
+        else:
+            editor = htmleditor 
+            if wxPlatform == "__WXMAC__":
+                editor = "open -a '" + editor + "'"
+            path = editor + " '" + filename + "'"
+            os.system(path)
 
 def sendCommandToApplication(filename, action="open", application=""):
 	command = ""

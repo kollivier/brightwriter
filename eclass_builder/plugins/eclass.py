@@ -11,6 +11,7 @@ from xmlutils import *
 from StringIO import StringIO
 import utils
 import fileutils
+import guiutils
 import mmedia
 import gui.media_convert
 import settings
@@ -1279,45 +1280,8 @@ class EditorDialog (sc.SizedDialog):
 			self.btnOKClicked(event)		
 
 	def btnEditTextClicked(self, event):
-		if wx.Platform == '__wx.MAC__': 
-			try:
-				from OSATools import AppModels
-				dreamweaver = AppModels.AppleScriptApp("Dreamweaver MX")
-				opencommand = 'set myPath to POSIX file "' + os.path.join(settings.ProjectDir, "Text", self.selectText.filename) + '"'
-				result = dreamweaver.tellBlock(['activate',opencommand, 'open file myPath'])
-			except:
-				pass
-			return
+		guiutils.openInHTMLEditor(os.path.join(settings.ProjectDir, "Text", self.selectText.filename))
 
-		if self.mainform.settings["HTMLEditor"] == "":
-			wx.MessageDialog(self, _("To edit the page, E-Class needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wx.OK).ShowModal()
-		else:
-			if not os.path.exists(os.path.join(settings.ProjectDir, "Text", self.selectText.filename)):
-				dialog = wx.MessageDialog(self, _("The text file '%(filename)s' does not exist. Would you like EClass to create it for you?") % {"filename":self.selectText.filename}, _("File not found"), wx.YES_NO)
-				if dialog.ShowModal() == wx.ID_YES:
-					self.CreateHTMLFile(os.path.join(settings.ProjectDir, "Text", self.selectText.filename))
-				else:
-					return
-			if wx.Platform == "__wx.MSW__":
-				import win32api
-				editor = "\"" + self.mainform.settings["HTMLEditor"] + "\""
-				if not string.find(string.lower(editor), "mozilla") == -1:
-					editor = editor + " -edit" 
-				win32api.WinExec(editor + " \"" + os.path.join(settings.ProjectDir, "Text", self.selectText.filename) + "\"")
-				
-				#path = win32api.GetShortPathName(os.path.join(settings.ProjectDir, "Text", self.selectText.filename))
-				#editor = win32api.GetShortPathName(self.mainform.settings["HTMLEditor"])
-				#if not string.find(string.lower(editor), "mozilla") == -1:
-				#	editor = editor + " -edit" 
-				#print editor + " " + path
-				#os.system(editor + " " + path)
-				#os.spawnv(1, self.mainform.settings["HTMLEditor"], [os.path.split(self.mainform.settings["HTMLEditor"])[1], "\"" + os.path.join(settings.ProjectDir, "Text", self.selectText.filename) + "\""])
-			else:
-				editor = self.mainform.settings["HTMLEditor"] 
-				if wx.Platform == "__wx.MAC__":
-					editor = "open -a '" + editor + "'"
-				path = editor + " '" + os.path.join(settings.ProjectDir, "Text", self.selectText.filename) + "'"
-				os.system(path)
 
 	def CreateHTMLFile(self, filename):
 		html = """
