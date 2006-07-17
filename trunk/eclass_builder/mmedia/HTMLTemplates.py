@@ -125,7 +125,6 @@ mp3Temp = """
 	<param name="SRC" value="_filename_">
 	<param name="AUTOPLAY" value="_autostart_">
 	<embed src="_filename_" autoplay="_autostart_" width="320" height="32">
-	</embed>
 </object>
 </center>
 		"""
