@@ -2,6 +2,8 @@ from BaseTheme import *
 themename = "Default (frames)"
 import plugins
 import utils
+import fileutils
+import settings
 
 # all file links are relative to the directory specified here
 rootdir = ""
@@ -11,6 +13,10 @@ class HTMLPublisher(BaseHTMLPublisher):
 		BaseHTMLPublisher.__init__(self, parent)
 		self.themedir = os.path.join(self.appdir, "themes", themename)
 
+	def CopySupportFiles(self):
+		BaseHTMLPublisher.CopySupportFiles(self)
+		fileutils.CopyFile("navbuttons.htm", os.path.join(settings.AppDir, "web"), self.dir)
+		
 	def CreateTOC(self):
 		filename = rootdir + utils.GetFileLink(self.pub.nodes[0].content.filename)
 
