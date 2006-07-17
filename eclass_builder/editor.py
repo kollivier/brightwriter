@@ -82,6 +82,7 @@ from gui.project_props import *
 from gui.activity_monitor import *
 import gui.error_viewer
 import gui.project_find_dialog as pfdlg
+import gui.media_convert
 
 try:
 	import win32process, win32con
