@@ -395,11 +395,11 @@ class MainFrame2(wxFrame):
 		ToolsMenu.Append(ID_CONTACTS, _("Manage Contacts"))
 		
 		ToolsMenu.Append(ID_ERRORLOG, _("Error Viewer"))
+		ToolsMenu.Append(ID_ACTIVITY, _("Activity Monitor"), _("View status of background activties."))
 		ToolsMenu.AppendSeparator()
 		ToolsMenu.Append(ID_SETTINGS, _("Options"), _("Modify Program Options"))
 		if wxPlatform == "__WXMAC__":
 			wxApp_SetMacPreferencesMenuItemId(ID_SETTINGS)
-		ToolsMenu.Append(ID_ACTIVITY, _("Activity Monitor"), _("View status of background activties."))
 
 
 		HelpMenu = wxMenu()

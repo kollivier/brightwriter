@@ -4,11 +4,15 @@ import wxaddons.sized_controls as sc
 import wxaddons.persistence
 import autolist
 import utils
+import guiutils
+import settings
 
 class LinkChecker(sc.SizedDialog):
 	def __init__(self, parent):
 		sc.SizedDialog.__init__ (self, parent, -1, _("Link Checker"),wx.DefaultPosition, (600, 440), wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
+		self.selItem = None
+		
 		pane = self.GetContentsPane()
 		self.linkList = autolist.AutoSizeListCtrl(pane, -1, size=(600,400), style=wx.LC_REPORT)
 		self.linkList.InsertColumn(0, _("Link"), width=300)
@@ -49,6 +53,16 @@ class LinkChecker(sc.SizedDialog):
 
 		wx.EVT_BUTTON(self, wx.ID_OK, self.OnCheck)
 		wx.EVT_BUTTON(self, wx.ID_CANCEL, self.OnCancel)
+		self.linkList.Bind(wx.EVT_LEFT_DCLICK, self.OnDblClick)
+		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSel, self.linkList)
+		
+	def OnItemSel(self, event):
+		self.selItem = event.m_itemIndex
+	
+	def OnDblClick(self, event):
+		if self.selItem:
+			filename = settings.ProjectDir + self.linkList.GetItem(self.selItem, 1).GetText()
+			guiutils.openInHTMLEditor(filename)
 
 	def OnCheck(self, event):
 		self.btnOK.Enable(False)
@@ -84,13 +98,14 @@ class LinkChecker(sc.SizedDialog):
 			else:
 				self.links.append(link)
 			#add the link to the list and check the status
-			self.linkList.InsertStringItem(self.itemCount, link)
-			self.linkList.SetStringItem(self.itemCount, 1, "/Text/" + self.currentFile)
-			self.linkList.SetStringItem(self.itemCount, 2, _("Connecting..."))
-			import threading
-			self.mythread = threading.Thread(None, self.ConnectToLink, args=(self.itemCount, link))
-			self.mythread.start()
-			self.itemCount = self.itemCount + 1
+			if self.linkList:
+				self.linkList.InsertStringItem(self.itemCount, link)
+				self.linkList.SetStringItem(self.itemCount, 1, "/Text/" + self.currentFile)
+				self.linkList.SetStringItem(self.itemCount, 2, _("Connecting..."))
+				import threading
+				self.mythread = threading.Thread(None, self.ConnectToLink, args=(self.itemCount, link))
+				self.mythread.start()
+				self.itemCount = self.itemCount + 1
 
 	def ConnectToLink(self, item, link):
 			import urllib2
