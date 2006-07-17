@@ -171,11 +171,9 @@ class PDFPublisher:
 			node = node.pub.nodes[0]
 
 		if 1: 
-			extension = string.split(node.content.filename, ".")[-1]
-			publisher = None
-			for plugin in plugins.pluginList:
-				if extension in plugin["Extension"]:
-					publisher = eval("plugins." + plugin["Name"] + ".HTMLPublisher(self.parent, node, self.dir)")
+			plugin = plugins.GetPluginForFilename(node.content.filename)
+			if plugin:
+				publisher = plugin.HTMLPublisher(self.parent, node, self.dir)
 			if publisher: 
 				try:
 					filename = publisher.GetFilename(node.content.filename)
