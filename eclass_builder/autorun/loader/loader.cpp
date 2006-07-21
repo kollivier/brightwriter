@@ -47,7 +47,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 			ShellExecute(0, "open", "eclass.dmbk", "", "", SW_SHOWMAXIMIZED);
 		}
 		else{
-			ShellExecute(0, "open", "index.html", "", "", SW_SHOWMAXIMIZED);
+			ShellExecute(0, "open", "index.htm", "", "", SW_SHOWMAXIMIZED);
 		}
 	}
 
