@@ -17,6 +17,9 @@ def encrypt(text):
     
 def decrypt(text):
     decrypt = ""
+    if len(text) == 0:
+        return ""
+    
     # make sure we don't add the last space into the result
     chars = text.strip().split(" ")
     for x in chars:
