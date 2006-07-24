@@ -154,3 +154,22 @@ def openFolderInGUI(folder):
 	elif wxPlatform == "__WXMAC__":
 		result = os.popen("open " + string.replace(folder, " ", "\ "))
 		result.close()
+		
+def getOSProgramExt():
+	ext = "*"
+	if wxPlatform == "__WXMSW__":
+		ext = "exe"
+	elif wxPlatform == "__WXMAC__":
+		ext = "app"
+	return ext 
+	
+def getOSApplicationsDir():
+	appdir = ""
+	if wxPlatform == "__WXMSW__":
+		appdir = "C:\Program Files"
+	elif wxPlatform == "__WXMAC__":
+		appdir = "/Applications"
+	elif wxPlatform == "__WXGTK__":
+		appdir = "/usr/bin"
+	   
+	return appdir
