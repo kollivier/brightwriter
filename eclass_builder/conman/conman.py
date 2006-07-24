@@ -401,7 +401,7 @@ class ConMan (ConManData):
 			else:
 				self.keywords = ""
 
-	def SaveAsXML(self, filename, encoding="ISO-8859-1", exporting=False):
+	def SaveAsXML(self, filename, exporting=False):
 		if exporting:
 			self.exporting = True
 
