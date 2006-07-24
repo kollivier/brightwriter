@@ -15,10 +15,12 @@ import guiutils
 import mmedia
 import gui.media_convert
 import settings
+import plugins.html as html
 
 import wx
 import wxaddons.persistence
 import wxaddons.sized_controls as sc
+import gui.select_box as picker
 
 USE_MINIDOM=0
 try:
@@ -49,20 +51,17 @@ plugin_info = { "Name":"eclass",
 
 #-------------------------- DATA CLASSES ----------------------------
 
-EVT_RESULT_ID = wx.NewId()
-
-def EVT_RESULT(win, func):
-	win.Connect(-1, -1, wx.EVT_RESULT_ID, func)
-
 def CreateNewFile(name, filename):
 	try:
+		if os.path.exists(filename):
+			return False
 		file = EClassPage()
 		file.name = name
 		file.SaveAsXML(filename)
 		return True
 	except:
 		global log
-		log.write(_("Could not create new file."))
+		log.write(_("Could not create new EClass Page."))
 		return False
 		
 class EClassPage(plugins.PluginData):
@@ -282,7 +281,7 @@ class EClassPage(plugins.PluginData):
 				self.credit = ""
 		
 
-	def SaveAsXML(self, filename="", encoding="ISO-8859-1"):
+	def SaveAsXML(self, filename=""):
 		"""
 		Function: SaveAsXML(filename)
 		Last Updated: 9/24/02
@@ -514,38 +513,9 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 				html = self._CreateEClassPage(term.page, myfilename, True)
 			elif term.type == "URL":
 				myfilename = term.url
-				basename = os.path.basename(myfilename)
-				myname, myext = os.path.splitext(basename)
-				#print "myname = " + myfilename + "\nlength of myname is: " + `len(myname)` + "len of myext is: " + `len(myext)` + "\n"
-				if len(basename) > 31:
-					if self.parent.pub.settings["ShortenFilenames"] == "":
-						message = _("EClass has detected filenames containing more than 31 characters in the EClass Page '%(pagename)s. This could cause compatibility problems with older browsers and operating systems. Would you like EClass to automatically rename these files?") % {"pagename":mypage.name}
-						mydialog = wx.MessageDialog(self.parent, message, _("Rename file?"), wx.YES_NO)
-						if mydialog.ShowModal() == wx.ID_YES:
-							self.parent.pub.settings["ShortenFilenames"] = "Yes"
-						else:
-							self.parent.pub.settings["ShortenFilenames"] = "No"
-					if self.parent.pub.settings["ShortenFilenames"] == "Yes":
-						oldfilename = myfilename
-						myname = myname[:31-len(myext)]
-						myfilename = myname + myext
-						counter = 1
-						while os.path.exists(os.path.join(self.dir, "File", myfilename)):
-							if counter > 9:
-								myfilename = myname[:-2] + `counter` + myext
-							else:
-								myfilename = myname[:-1] + `counter` + myext
-							counter = counter + 1
-							#print "new filename is: " + myfilename + "\n"
-						os.rename(os.path.join(self.dir, "File", oldfilename), os.path.join(self.dir, "File", myfilename))
-						myfilename = "../File/" + myfilename
-						term.url = myfilename
-						
-						#print "new filename length is: " + `len(myfilename)` + "\n"
+			
 			termlist.append([term.name, myfilename])
-			counter = counter + 1	
-		if self.parent.pub.settings["ShortenFilenames"] == "Yes":
-			mypage.SaveAsXML()	
+			counter = counter + 1
 
 		myhtml = ""
 		if len(mypage.media.text) > 0 and os.path.exists(os.path.join(self.dir, "Text", mypage.media.text)):
@@ -741,148 +711,6 @@ class PDFPublisher(HTMLPublisher):
 
 #-------------------------- EDITOR INTERFACE ----------------------------------------
 
-class SelectBox(sc.SizedPanel):
-	"""
-	Class: eclass.SelectBox
-	Last Updated: 9/24/02
-	Description: A customized text box class to integrate file selection capabilities.
-
-	Attributes:
-	- parent: the parent window hosting the control
-	- filename: points to the file selected by the user
-	- type: file types the user is allowed to select (i.e. "Graphics", "Audio")
-	- title: label text
-	- label: textbox label
-	- textbox: the textbox to store the file selected by the user
-	- selectbtn: button the user clicks to select a file
-
-	Methods:
-	- selectbtnClicked: brings up the file selection dialog when the user clicks the selectbtn
-	- textboxChanged: updates the textbox attribute whenever the textbox changes
-	"""
-
-	def __init__(self, parent, filename, type):
-		sc.SizedPanel.__init__(self, parent, -1)
-		self.parent = parent
-		self.filename = filename
-		self.type = type
-		self.selecteddir = ""
-		#pane = sc.SizedPanel(parent, -1)
-		self.SetSizerType("horizontal")
-		self.SetSizerProp("expand", True)
-		self.SetSizerProp("proportion", 1)
-		self.SetSizerProp("border", (["all"], 0))
-		
-		icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wx.BITMAP_TYPE_GIF)
-		self.textbox = wx.TextCtrl(self, -1, filename)
-		self.textbox.SetSizerProp("expand", True)
-		self.textbox.SetSizerProp("proportion", 1)
-		self.selectbtn = wx.BitmapButton(self, -1, icnFolder)
-
-		wx.EVT_BUTTON(self.selectbtn, self.selectbtn.GetId(), self.selectbtnClicked)
-		wx.EVT_TEXT(self.textbox, self.textbox.GetId(), self.textboxChanged)
-
-	def selectbtnClicked(self, event):
-		hyperlink = False
-		if self.type == "Graphics":
-			filter = _("Image Files") + "(*.jpg,*.gif,*.bmp,*.png)|*.jpg;*.jpeg;*.gif;*.bmp;*.png"
-		elif self.type == "Video":
-			filter = _("Video Files") + "(*.avi,*.mov,*.mpg,*.asf,*.wmv,*.rm, *.ram, *.swf)|*.avi;*.mov;*.mpg;*.mpeg;*.asf;*.wmv;*.rm;*.ram;*.swf"
-		elif self.type == "Audio":
-			filter = _("Audio Files") + "(*.wav,*.aif,*.mp3,*.asf,*.wma,*.rm,*.ram)|*.wav;*.aif;*.mp3;*.asf;*.wma;*.rm;*.ram"
-		elif self.type == "Text":
-			filter = _("Document Files") + "(*.htm,*.html, *.doc, *.rtf)|*.htm;*.html;*.doc;*.rtf"
-		elif self.type == "Present":
-			filter = _("Presentation Files") + "(*.ppt,*.htm,*.html,*.swf)|*.ppt;*.htm;*.html;*.swf"
-		else:
-			hyperlink = True
-			self.type = "File"
-			filter = _("All Files") + "(*.*)|*.*"
-
-		f = wx.FileDialog(self.parent, _("Select a file"), os.path.join(settings.ProjectDir, self.type), "", filter, wx.OPEN)
-		if f.ShowModal() == wx.ID_OK:
-			self.selecteddir = f.GetDirectory()
-			dir = os.path.join(settings.ProjectDir, self.type)
-			if self.type in ["Video", "Audio"]:
-				dir = os.path.join(settings.ProjectDir, "pub", self.type)
-			
-			if string.find(f.GetPath(), dir) == -1:
-				self.CopyFile(f.GetPath(), f.GetFilename(), dir)
-									
-			if hyperlink:
-				result = False
-				if len(f.GetFilename()) > 31 and self.parent.mainform.pub.settings["ShortenFilenames"] == "":
-					message = _("This filename contains more than 31 characters. This could cause compatibility problems with older browsers and operating systems. Would you like EClass to automatically rename the file?")
-					dialog = wx.MessageDialog(self.parent, message, _("Rename File?"), wx.YES_NO)			
-					if dialog.ShowModal() == wxID_YES:
-						result = True
-				elif len(f.GetFilename()) > 31 and self.parent.mainform.pub.settings["ShortenFilenames"] == "Yes":
-					result = True
-				else:
-					result = False
-					self.filename = "../File/" + f.GetFilename()
-
-				if result:
-					self.parent.mainform.pub.settings["ShortenFilenames"] = "Yes"
-					oldfilename = f.GetFilename()
-					myname, myext = os.path.splitext(oldfilename)
-					myname = myname[:31-len(myext)]
-					myfilename = myname + myext
-					counter = 1
-					while os.path.exists(os.path.join(self.dir, "File", myfilename)):
-						if counter > 9:
-							myfilename = myname[:-2] + `counter` + myext
-						else:
-							myfilename = myname[:-1] + `counter` + myext
-						counter = counter + 1
-						#print "new filename is: " + myfilename + "\n"
-					os.rename(os.path.join(settings.ProjectDir, "File", oldfilename), os.path.join(settings.ProjectDir, "File", myfilename))
-					self.filename = "../File/" + myfilename
-			else:
-				self.filename = f.GetFilename()
-			self.textbox.SetValue(self.filename)
-		#print "This is running..."
-		f.Destroy()
-		selecteddir = ""
-
-	def CopyFile(self, path, filename, destdir, showgui=True):
-		self.parent.mainform.SetStatusText(_("Copying File %(filename)s...") % {"filename":filename})
-		error = False
-		try:
-			file = utils.openFile(path, "rb")
-			data = file.read()
-			if string.lower(os.path.splitext(filename)[1]) in [".html", ".htm"]:
-				importer = ImportFiles()
-				data = importer.ImportLinks(data, self.selecteddir, settings.ProjectDir)
-			file.close()
-		except IOError:
-			error = True
-			global log
-			message = utils.getStdErrorMessage("IOError", {"type":"read", "filename":path})
-			log.write(message)
-			if showgui:
-				wx.MessageDialog(self.parent, message, _("File Read Error"), wx.OK).ShowModal()
-				
-		if not error:
-			if not os.path.exists(destdir):
-				os.mkdir(destdir)
-			try:
-				self.parent.mainform.SetStatusText(_("Pasting %(filename)s...") % {"filename":os.path.join(destdir, filename)})
-				out = utils.openFile(os.path.join(destdir, filename), "wb")
-				out.write(data)
-				out.close()
-			except IOError:
-				message = _("EClass.Builder could not write the file '%(filename)s' to disk. Please check that '%(directory)s' exists and you have permissions to write to this folder, and that a read-only version of the file does not exist in this folder.") % {"filename":os.path.join(destdir, filename),"directory":destdir}
-				global log
-				log.write(message)
-				if showgui:
-					wx.MessageDialog(self, message, _("File Write Error."), wx.OK).ShowModal()
-		self.parent.mainform.SetStatusText("")
-
-	def textboxChanged(self, event):
-		self.filename = self.textbox.GetValue()
-		#print self.filename
-
 class EClassObjectiveEditorDialog(sc.SizedDialog):
 	"""
 	class: eclass.EClassObjectiveEditorDialog(wxDialog)
@@ -1033,17 +861,9 @@ class EditorDialog (sc.SizedDialog):
 	"""
 
 	def __init__(self, parent, item):
-		height = 20
-		if wx.Platform == "__WXMAC__":
-			height = 25
 		busy = wx.BusyCursor()
 		self.item = item
 		self.parent = parent
-		# We need to have a pointer to the main frame to get global settings
-		if isinstance(parent, wx.Frame):
-			self.mainform = parent
-		else:
-			self.mainform = parent.mainform
 		self.CurrentObj = None
 		loaded = True 
 		self.isHotword = False 
@@ -1053,13 +873,8 @@ class EditorDialog (sc.SizedDialog):
 			self.filename = item.content.filename
 			self.page = EClassPage(self)
 			if len(self.filename) > 0:
-				
-				if not os.path.exists(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))):
-					self.page.SaveAsXML(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
-
 				try:
 					self.page.LoadPage(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
-					item.content.filename = self.filename
 				except RuntimeError, e:
 					global log
 					message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
@@ -1067,20 +882,9 @@ class EditorDialog (sc.SizedDialog):
 					log.write(message)
 					del busy
 					return
-			else:
-				myfilename = os.path.join(settings.ProjectDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
-				self.filename = item.content.filename = myfilename
-				try:
-					self.page.SaveAsXML(os.path.join(settings.ProjectDir, "EClass", myfilename))
-				except IOError, e:
-					global log
-					message = _("There was an error saving the EClass page '%(page)s'. The error message returned by the system is: %(error)s") % {"page":os.path.join(self.parent.ProjectDir, "EClass", myfilename), "error":str(e)}
-					log.write(message)
-					wx.MessageDialog(self, message, _("File Write Error"), wx.OK)
 
 			self.page.name = item.content.metadata.name
 		else:
-			settings.ProjectDir = self.parent.ProjectDir
 			self.page = item.page
 			self.isHotword = True
 		
@@ -1133,7 +937,6 @@ class EditorDialog (sc.SizedDialog):
 		midPane = sc.SizedPanel(pane, -1)
 		midPane.SetSizerType("grid", {"cols": 2})
 		midPane.SetSizerProp("expand", True)
-		midPane.SetSizerProp("border", (["all"], 0))
 		midPane.GetSizer().AddGrowableCol(0)
 		midPane.GetSizer().AddGrowableCol(1)
 		
@@ -1144,10 +947,10 @@ class EditorDialog (sc.SizedDialog):
 		midleftPane.SetSizerProp("proportion", 1)
 		
 		wx.StaticText(midleftPane, -1, _("Image:")).SetSizerProps({"halign": "right", "valign":"center"})
-		self.selectImage = SelectBox(midleftPane, self.page.media.image, _("Graphics"))
+		self.selectImage = picker.SelectBox(midleftPane, self.page.media.image, _("Graphics"))
 		
 		wx.StaticText(midleftPane, -1, _("Video:")).SetSizerProps({"halign": "right", "valign":"center"})
-		self.selectVideo = SelectBox(midleftPane, self.page.media.video, _("Video"))
+		self.selectVideo = picker.SelectBox(midleftPane, self.page.media.video, _("Video"))
 		
 		sc.SizedPanel(midleftPane, -1) #spacer
 		self.chkVideoAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
@@ -1158,7 +961,7 @@ class EditorDialog (sc.SizedDialog):
 			self.chkVideoAutostart.SetValue(True)
 		
 		wx.StaticText(midleftPane, -1, _("Audio:")).SetSizerProps({"halign": "right", "valign":"center"})
-		self.selectAudio = SelectBox(midleftPane, self.page.media.audio, _("Audio"))
+		self.selectAudio = picker.SelectBox(midleftPane, self.page.media.audio, _("Audio"))
 		sc.SizedPanel(midleftPane, -1) #spacer
 		self.chkAudioAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
 		if wx.Platform == "__WXMAC__":
@@ -1171,7 +974,7 @@ class EditorDialog (sc.SizedDialog):
 		midrightPane.SetSizerProp("expand", True)
 		
 		wx.StaticText(midrightPane, -1, _("Text:")).SetSizerProps({"halign": "right", "valign":"center"})
-		self.selectText = SelectBox(midrightPane, self.page.media.text, _("Text"))
+		self.selectText = picker.SelectBox(midrightPane, self.page.media.text, _("Text"))
 		sc.SizedPanel(midrightPane, -1)
 		btnPane = sc.SizedPanel(midrightPane, -1)
 		btnPane.SetSizerType("horizontal")
@@ -1183,7 +986,7 @@ class EditorDialog (sc.SizedDialog):
 			self.btnEditText.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
 
 		wx.StaticText(midrightPane, -1, _("Presentation:")).SetSizerProps({"halign": "right", "valign":"center"})
-		self.selectPowerPoint = SelectBox(midrightPane, self.page.media.powerpoint, "Present")
+		self.selectPowerPoint = picker.SelectBox(midrightPane, self.page.media.powerpoint, "Present")
 		
 		bottomPane = sc.SizedPanel(pane, -1)
 		bottomPane.SetSizerType("grid", {"cols": 2})
@@ -1204,7 +1007,7 @@ class EditorDialog (sc.SizedDialog):
 		
 		hwBtnPane = sc.SizedPanel(bottomPane, -1)
 		hwBtnPane.SetSizerType("horizontal")
-		hwBtnPane.SetSizerProps({"border": (["all"], 0), "halign": "center"})
+		hwBtnPane.SetSizerProps({"halign": "center"})
 		
 		self.btnAddTerm = wx.Button(hwBtnPane,-1,_("Add"))
 		self.btnEditTerm = wx.Button(hwBtnPane,-1,_("Edit"))
@@ -1212,7 +1015,7 @@ class EditorDialog (sc.SizedDialog):
 
 		objBtnPane = sc.SizedPanel(bottomPane, -1)
 		objBtnPane.SetSizerType("horizontal")
-		objBtnPane.SetSizerProps({"border": (["all"], 0), "halign": "center"})
+		objBtnPane.SetSizerProps({"halign": "center"})
 		self.btnAddObjective = wx.Button(objBtnPane,-1,_("Add"))
 		self.btnEditObjective = wx.Button(objBtnPane,-1,_("Edit"))
 		self.btnRemoveObjective = wx.Button(objBtnPane,-1,_("Remove"))
@@ -1231,6 +1034,31 @@ class EditorDialog (sc.SizedDialog):
 
 		self.Fit()
 		self.SetMinSize(self.GetSize())
+		
+		self.PromptToConvertFiles()
+
+		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+		wx.EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
+		wx.EVT_BUTTON(self.btnEditText, self.btnEditText.GetId(), self.btnEditTextClicked)
+		wx.EVT_BUTTON(self.btnEditTerm, self.btnEditTerm.GetId(), self.btnEditTermClicked)
+		wx.EVT_BUTTON(self.btnEditObjective, self.btnEditObjective.GetId(), self.btnEditObjectiveClicked)
+		wx.EVT_BUTTON(self.btnRemoveTerm, self.btnRemoveTerm.GetId(), self.btnRemoveTermClicked)
+		wx.EVT_BUTTON(self.btnRemoveObjective, self.btnRemoveObjective.GetId(), self.btnRemoveObjectiveClicked)
+		wx.EVT_BUTTON(self.btnAddTerm, self.btnAddTerm.GetId(), self.btnAddTermClicked)
+		wx.EVT_BUTTON(self.btnAddObjective, self.btnAddObjective.GetId(), self.btnAddObjectiveClicked)
+		#wx.EVT_KEY_UP(self, self.checkKey)
+		wx.EVT_LISTBOX_DCLICK(self.lstTerms, self.lstTerms.GetId(), self.btnEditTermClicked)
+		wx.EVT_LISTBOX_DCLICK(self.lstObjectives, self.lstObjectives.GetId(), self.btnEditObjectiveClicked)
+		#wx.EVT_RESULT(self, self.NewHotwordLoaded)
+		picker.EVT_FILE_SELECTED(self.selectImage, self.OnFileSelected)
+		picker.EVT_FILE_SELECTED(self.selectAudio, self.OnFileSelected)
+		picker.EVT_FILE_SELECTED(self.selectVideo, self.OnFileSelected)
+		picker.EVT_FILE_SELECTED(self.selectText, self.OnFileSelected)
+		picker.EVT_FILE_SELECTED(self.selectPowerPoint, self.OnFileSelected)
+
+		del busy
+		
+	def PromptToConvertFiles(self):
 		convertFiles = []
 		audioFile = os.path.join(settings.ProjectDir, "pub", "Audio", self.page.media.audio)
 		if mmedia.canConvertFile(self.page.media.audio) and not mmedia.wasConverted(audioFile):
@@ -1250,56 +1078,33 @@ class EditorDialog (sc.SizedDialog):
 						filepath = os.path.join(settings.ProjectDir, "pub", "Audio", afile)
 					if os.path.exists(filepath):
 						mmedia.convertFile(filepath)
-
-		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
-		wx.EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
-		wx.EVT_BUTTON(self.btnEditText, self.btnEditText.GetId(), self.btnEditTextClicked)
-		wx.EVT_BUTTON(self.btnEditTerm, self.btnEditTerm.GetId(), self.btnEditTermClicked)
-		wx.EVT_BUTTON(self.btnEditObjective, self.btnEditObjective.GetId(), self.btnEditObjectiveClicked)
-		wx.EVT_BUTTON(self.btnRemoveTerm, self.btnRemoveTerm.GetId(), self.btnRemoveTermClicked)
-		wx.EVT_BUTTON(self.btnRemoveObjective, self.btnRemoveObjective.GetId(), self.btnRemoveObjectiveClicked)
-		wx.EVT_BUTTON(self.btnAddTerm, self.btnAddTerm.GetId(), self.btnAddTermClicked)
-		wx.EVT_BUTTON(self.btnAddObjective, self.btnAddObjective.GetId(), self.btnAddObjectiveClicked)
-		#wx.EVT_KEY_UP(self, self.checkKey)
-		wx.EVT_LISTBOX_DCLICK(self.lstTerms, self.lstTerms.GetId(), self.btnEditTermClicked)
-		wx.EVT_LISTBOX_DCLICK(self.lstObjectives, self.lstObjectives.GetId(), self.btnEditObjectiveClicked)
-		#wx.EVT_RESULT(self, self.NewHotwordLoaded)
-
-		del busy
-
-	#def Load(self):
-	#	self.ShowModal()
-	#	self.page.LoadHotwords()
-
-	#def NewHotwordLoaded(self, event):
-	#	print "New Hotword Loaded called on " + event.hwname
-	#	self.lstTerms.Append(event.hwname, self.page.terms[event.hwid])
+		
+	def OnFileSelected(self, event):
+		select_box = event.sender
+		type = event.sender.type
+		basename = os.path.basename(event.filename)
+		
+		subdir = type
+		if type.lower() in ["audio", "video"]:
+			subdir = os.path.join("pub", type)
+		
+		dirname = os.path.join(settings.ProjectDir, subdir)
+		if not os.path.exists(dirname):
+			dirname = os.path.join(settings.ProjectDir, "File")
+		fileutils.CopyFile(basename, os.path.dirname(event.filename), dirname)
+		filename = os.path.join(dirname, basename)
+		if settings.options["ShortenFilenames"].lower() == "yes":
+			newfile = fileutils.getShortenedFilename(filename)
+			os.rename(filename, newfile)
+			filename = newfile
+		event.sender.SetValue(os.path.basename(filename))
 
 	def checkKey(self, event):
 		if event.keyCode == wx.RETURN:
-			self.btnOKClicked(event)		
+			self.btnOKClicked(event)
 
 	def btnEditTextClicked(self, event):
-		guiutils.openInHTMLEditor(os.path.join(settings.ProjectDir, "Text", self.selectText.filename))
-
-
-	def CreateHTMLFile(self, filename):
-		html = """
-<HTML>
-<HEAD>
-</HEAD>
-<BODY>
-</BODY>
-</HTML>"""
-		try: 
-			file = utils.openFile(filename, "w")
-			file.write(html)
-			file.close()
-		except IOError: 
-			global log
-			message = _("Unable to create the file '%(filename)s'. Please make sure that this is a valid filename and try again.") % {"filename":filename}
-			log.write(message)
-			wx.MessageDialog(self, message, _("File write error"), wx.OK)
+		guiutils.openInHTMLEditor(os.path.join(settings.ProjectDir, "Text", self.selectText.GetValue()))
 
 	def btnNewFileClicked(self, event):
 		savefile = False
@@ -1317,9 +1122,9 @@ class EditorDialog (sc.SizedDialog):
 
 			if savefile:
 				try: 
-					self.CreateHTMLFile(filename)
-					self.selectText.filename = f.GetFilename()
-					self.selectText.textbox.SetValue(f.GetFilename())
+					created = html.CreateNewFile(filename)
+					if created:
+						self.selectText.SetValue(f.GetFilename())
 				except:
 					pass
 		f.Destroy()
@@ -1418,21 +1223,21 @@ class EditorDialog (sc.SizedDialog):
 			self.page.credit = self.txtCredit.GetValue()
 		else:
 			self.item.content.metadata.rights.description = self.txtCredit.GetValue()
-		self.page.media.image = self.selectImage.filename
-		self.page.media.video = self.selectVideo.filename
+		self.page.media.image = self.selectImage.GetValue()
+		self.page.media.video = self.selectVideo.GetValue()
 		if self.chkVideoAutostart.IsChecked():
 			self.page.media.videoautostart = 1
 		else:
 			self.page.media.videoautostart = 0
 
-		self.page.media.audio = self.selectAudio.filename
+		self.page.media.audio = self.selectAudio.GetValue()
 		if self.chkAudioAutostart.IsChecked():
 			self.page.media.audioautostart = 1
 		else:
 			self.page.media.audioautostart = 0		
 		#self.page.media.Introduction = self.selectIntroduction.filename
-		self.page.media.text = self.selectText.filename
-		self.page.media.powerpoint = self.selectPowerPoint.filename
+		self.page.media.text = self.selectText.GetValue()
+		self.page.media.powerpoint = self.selectPowerPoint.GetValue()
 		
 		missingfiles = []
 		filenames = []
@@ -1463,24 +1268,14 @@ class EditorDialog (sc.SizedDialog):
 
 		if isinstance(self.item, conman.conman.ConNode):
 			if len(self.filename) > 0:
-				filename = os.path.join(self.parent.ProjectDir, "EClass", os.path.basename(self.filename))
+				filename = os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))
 				try:
-					self.page.SaveAsXML(filename,self.mainform.encoding)
+					self.page.SaveAsXML(filename)
 				except IOError, e:
 					global log
 					message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
 					log.write(message)
 					wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
-					return
-			else:
-				myfilename = os.path.join(self.parent.ProjectDir, "EClass", utils.suggestFileName(self.page.name + ".ecp"))
-				self.item.content.filename = myfilename
-				try: 
-					self.page.SaveAsXML(os.path.join(self.parent.ProjectDir, "EClass", myfilename),self.mainform.encoding)
-				except IOError, e:
-					import traceback
-					print `traceback.print_exc()`
-					wx.MessageDialog(self, str(e), _("File Write Error"), wx.OK).ShowModal()
 					return
 
 			eclassPub = HTMLPublisher()
@@ -1497,7 +1292,7 @@ class EditorDialog (sc.SizedDialog):
 			
 		self.EndModal(wx.ID_OK)
 
-class NewTermDialog(wx.Dialog):
+class NewTermDialog(sc.SizedDialog):
 	"""
 	Class: eclass.NewTermDialog(wx.Dialog)
 	Last Updated: 9/24/02
@@ -1513,42 +1308,29 @@ class NewTermDialog(wx.Dialog):
 	- btnOKClicked: Creates the new term, passes control back to the claling window, and closes the dialog
 	"""
 	def __init__(self, parent):
-		wx.Dialog.__init__ (self, parent, -1, _("Create New Hotword"),
+		sc.SizedDialog.__init__ (self, parent, -1, _("Create New Hotword"),
 						 wx.DefaultPosition,
 						   wx.DefaultSize, 
-						   wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE)
+						   wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
 		self.parent = parent
-		self.lblName = wx.StaticText(self, -1, _("Name")) #wx.Point(10, 10))
-		self.lblType = wx.StaticText(self, -1, _("Type"))#,wx.Point(10,30))
-
-		choices = [_("EClass Page"), _("Link to File")]
-		self.txtName = wx.TextCtrl(self, -1, "", wx.Point(40, 10), wx.Size(160, -1))
-		self.cmbType = wx.Choice(self, -1, wx.Point(40, 30), wx.Size(160, -1), choices)
-		self.cmbType.SetSelection(1)
-		self.btnOK = wx.Button(self,wx.ID_OK,_("OK"),wx.DefaultPosition,wx.DefaultSize)
-		self.btnOK.SetDefault()
-		self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"),wx.DefaultPosition,wx.DefaultSize)
-	
-		self.mysizer = wx.BoxSizer(wx.VERTICAL)
-		self.flexsizer = wx.FlexGridSizer(0, 2, 4, 4)
-		self.flexsizer.Add(self.lblName, 0, wx.ALIGN_LEFT|wx.ALL, 4)
-		self.flexsizer.Add(self.txtName, 0, wx.ALIGN_LEFT|wx.ALL, 4)
-		self.flexsizer.Add(self.lblType, 0, wx.ALIGN_LEFT|wx.ALL, 4)
-		self.flexsizer.Add(self.cmbType, 0, wx.ALIGN_LEFT|wx.ALL, 4)
-		self.mysizer.Add(self.flexsizer, 0, wx.LEFT|wx.RIGHT, 10)
+		pane = self.GetContentsPane()
+		pane.SetSizerType("form")
 		
-		self.buttonsizer = wx.StdDialogButtonSizer()
-		self.buttonsizer.AddButton(self.btnOK)
-		self.buttonsizer.AddButton(self.btnCancel)
-		self.buttonsizer.Realize()
-		self.mysizer.Add(self.buttonsizer, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		wx.StaticText(pane, -1, _("Name"))
+		self.txtName = wx.TextCtrl(pane, -1, "", wx.Point(40, 10), wx.Size(160, -1))
+		
+		wx.StaticText(pane, -1, _("Type"))
+		choices = [_("EClass Page"), _("Link to File")]
+		self.cmbType = wx.Choice(pane, -1, wx.Point(40, 30), wx.Size(160, -1), choices)
+		self.cmbType.SetSelection(1)
+		
+		self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
 
-		self.SetAutoLayout(True)
-		self.SetSizerAndFit(self.mysizer)
-		self.Layout()
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 
-		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+		wx.EVT_BUTTON(self, wx.ID_OK, self.btnOKClicked)
 		
 	def btnOKClicked(self, event):
 		myterm = EClassTerm()
