@@ -114,19 +114,30 @@ class SearchPanel(sc.SizedPanel):
 		
 		#self.useGSDL = wxRadioBox(panel, -1, )
 		
-		self.lblpubid = wx.StaticText(self, -1, _("Publication ID"))
+		self.lblpubid = wx.StaticText(self, -1, _("Greenstone Collection ID"))
 		self.txtpubid = wx.TextCtrl(self, -1, pub.pubid)
 		self.lblpubidhelp = wx.StaticText(self, -1, _("ID must be 8 chars or less, no spaces, all letters\n and/or numbers."))
 		
 		self.LoadSettings()
+		self.updatePubIdState()
 
 		wx.EVT_CHECKBOX(self, self.chkSearch.GetId(), self.chkSearchClicked)
+		wx.EVT_RADIOBOX(self, self.whichSearch.GetId(), self.whichSearchClicked)
 		
-	def chkSearchClicked(self, event):
-		value = self.chkSearch.GetValue()
+	def whichSearchClicked(self, event):
+		self.updatePubIdState()
+		self.searchchanged = True
+		
+	def updatePubIdState(self):
+		value = (self.chkSearch.IsChecked() and self.whichSearch.GetStringSelection() == self.options[1])
 		self.lblpubid.Enable(value)
 		self.txtpubid.Enable(value)
 		self.lblpubidhelp.Enable(value)
+	
+	def chkSearchClicked(self, event):
+		value = self.chkSearch.GetValue()
+		self.whichSearch.Enable(value)
+		self.updatePubIdState()
 		self.searchchanged = True
  
 	def LoadSettings(self):
