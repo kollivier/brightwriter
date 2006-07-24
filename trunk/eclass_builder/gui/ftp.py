@@ -161,13 +161,13 @@ class FTPUpload:
 		self.parent = parent
 		self.isDialog = False
 		isPassive = False
-		if settings.options["FTPPassive"] == "yes":
+		if settings.ProjectSettings["FTPPassive"] == "yes":
 			isPassive = True
 			
-		self.ftpService = ftpService( settings.options["FTPHost"], 
-		                              settings.options["FTPUser"],
-		                              encrypt.decrypt(settings.options["FTPPassword"]),
-		                              settings.options["FTPDirectory"],
+		self.ftpService = ftpService( settings.ProjectSettings["FTPHost"], 
+		                              settings.ProjectSettings["FTPUser"],
+		                              encrypt.decrypt(settings.ProjectSettings["FTPPassword"]),
+		                              settings.ProjectSettings["FTPDirectory"],
 		                              isPassive 
 		                            )
 		self.stopupload = False
@@ -176,8 +176,8 @@ class FTPUpload:
 		self.filepercent = 0
 		self.callback = FTPEventCallback()
 
-		if settings.options["SearchEnabled"] != "":
-			self.useSearch = int(settings.options["SearchEnabled"])
+		if settings.ProjectSettings["SearchEnabled"] != "":
+			self.useSearch = int(settings.ProjectSettings["SearchEnabled"])
 
 	def StartFTP(self):
 		if self.ftpService.host == "":
@@ -368,11 +368,11 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		ftpPane.SetSizerType("form")
 		ftpPane.SetSizerProp("expand", True)
 		
-		self.txtFTPSite = self.AddFormField(ftpPane, _("FTP Site"), settings.options["FTPHost"])
-		self.txtUsername = self.AddFormField(ftpPane, _("Username"), settings.options["FTPUser"])
+		self.txtFTPSite = self.AddFormField(ftpPane, _("FTP Site"), settings.ProjectSettings["FTPHost"])
+		self.txtUsername = self.AddFormField(ftpPane, _("Username"), settings.ProjectSettings["FTPUser"])
 		# TODO: Reinstate password once we've figured out how to get/store password
-		self.txtPassword = self.AddFormField(ftpPane, _("Password"), encrypt.decrypt(settings.options["FTPPassword"]), wx.TE_PASSWORD)
-		self.txtDirectory = self.AddFormField(ftpPane, _("Directory"), settings.options["FTPDirectory"]) 
+		self.txtPassword = self.AddFormField(ftpPane, _("Password"), encrypt.decrypt(settings.ProjectSettings["FTPPassword"]), wx.TE_PASSWORD)
+		self.txtDirectory = self.AddFormField(ftpPane, _("Directory"), settings.ProjectSettings["FTPDirectory"]) 
 		
 		self.chkPassive = wx.CheckBox(pane, -1, _("Use Passive FTP"))
 		
@@ -448,11 +448,11 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 			while self.mythread.isAlive():
 				pass
 				
-			settings.options["FTPHost"] = self.txtFTPSite.GetValue()
-			settings.options["FTPUser"] = self.txtUsername.GetValue()
-			settings.options["FTPPassword"] = encrypt.encrypt(self.txtPassword.GetValue())
-			settings.options["FTPDirectory"] = self.txtDirectory.GetValue()
-			settings.options["FTPPassive"] = int(self.chkPassive.GetValue())
+			settings.ProjectSettings["FTPHost"] = self.txtFTPSite.GetValue()
+			settings.ProjectSettings["FTPUser"] = self.txtUsername.GetValue()
+			settings.ProjectSettings["FTPPassword"] = encrypt.encrypt(self.txtPassword.GetValue())
+			settings.ProjectSettings["FTPDirectory"] = self.txtDirectory.GetValue()
+			settings.ProjectSettings["FTPPassive"] = int(self.chkPassive.GetValue())
 			#self.parent.pub.settings.SaveAsXML()
 		self.EndModal(wx.ID_OK)
 
