@@ -1,180 +1,148 @@
 import string, sys, os
-from wxPython.wx import *
+import wx
+import wxaddons.sized_controls as sc
+import wxaddons.persistence
+import settings
+import encrypt
 
-class ProjectPropsDialog(wxDialog):
+class ProjectPropsDialog(sc.SizedDialog):
 	def __init__(self, parent):
 		"""
 		Dialog for setting various project properties.
 
 		"""
-		wxDialog.__init__(self, parent, -1, _("Project Settings"), wxPoint(100, 100), wxSize(400, 400))
-		self.notebook = wxNotebook(self, -1, wxPoint(10, 10), wxSize(380, 330))
+		sc.SizedDialog.__init__(self, parent, -1, _("Project Settings"), wx.Point(100, 100), wx.Size(400, 400), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		pane = self.GetContentsPane()
+		self.notebook = wx.Notebook(pane, -1)
+		self.notebook.SetSizerProps({"proportion":1, "expand":True})
 		self.parent = parent
-		self.height = 20
-		self.labelx = 10
-		self.textx = 80
 		self.searchchanged = False
-		if wxPlatform == "__WXMAC__":
-			self.height=25
 		
-		panel = self.GeneralPanel()
-		self.notebook.AddPage(panel, _("General"))
-		panel = self.SearchPanel()
-		self.notebook.AddPage(panel, _("Search"))
-		panel = self.PublishPanel()
-		self.notebook.AddPage(panel, _("Publish"))
-		panel = self.FTPPanel()
-		self.notebook.AddPage(panel, _("FTP"))
-		if wxPlatform == '__WXMAC__':
+		self.generalPanel = GeneralPanel(self.notebook, self.parent.pub)
+		self.notebook.AddPage(self.generalPanel, _("General"))
+		
+		self.searchPanel = SearchPanel(self.notebook, self.parent.pub)
+		self.notebook.AddPage(self.searchPanel, _("Search"))
+		
+		self.publishPanel = PublishPanel(self.notebook)
+		self.notebook.AddPage(self.publishPanel, _("Publish"))
+		
+		self.ftpPanel = FTPPanel(self.notebook)
+		self.notebook.AddPage(self.ftpPanel, _("FTP"))
+		if wx.Platform == '__WXMAC__':
 			self.notebook.SetSelection(0)
 
-		self.btnOK = wxButton(self,wxID_OK,_("OK"))#wxPoint(210, 350),wxSize(76, 24))
-		self.btnOK.SetDefault()
-		self.txtname.SetFocus()
-		self.txtname.SetSelection(-1,-1)
-		self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(300, 350),wxSize(76,24))
+		self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
+		
+		#self.btnOK = wx.Button(self,wxID_OK,_("OK"))#wxPoint(210, 350),wxSize(76, 24))
+		#self.btnOK.SetDefault()
+		#self.txtname.SetFocus()
+		#self.txtname.SetSelection(-1,-1)
+		#self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(300, 350),wxSize(76,24))
 
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.notesizer = wxNotebookSizer(self.notebook)
-		self.mysizer.Add(self.notesizer, 1, wxEXPAND)
+		#self.buttonSizer = wxStdDialogButtonSizer()
+		#self.buttonSizer.AddButton(self.btnOK)
+		#self.buttonSizer.AddButton(self.btnCancel)
+		#self.buttonSizer.Realize()
+		#self.mysizer.Add(self.buttonSizer, 0, wxALIGN_RIGHT)
 
-		self.buttonSizer = wxStdDialogButtonSizer()
-		self.buttonSizer.AddButton(self.btnOK)
-		self.buttonSizer.AddButton(self.btnCancel)
-		self.buttonSizer.Realize()
-		self.mysizer.Add(self.buttonSizer, 0, wxALIGN_RIGHT)
-
-		self.SetAutoLayout(True)
-		self.SetSizer(self.mysizer)
-		self.mysizer.Fit(self)
-		self.Layout()
-
-		if wxPlatform == '__WXMSW__':
-			EVT_CHAR(self.notebook, self.SkipNotebookEvent)
-		EVT_BUTTON(self, self.btnOK.GetId(), self.btnOKClicked)
+		self.Fit()
+		self.SetMinSize(self.GetSize())
+		
+		# TODO: Can this be removed?
+		if wx.Platform == '__WXMSW__':
+			wx.EVT_CHAR(self.notebook, self.SkipNotebookEvent)
+		wx.EVT_BUTTON(self, wx.ID_OK, self.btnOKClicked)
 
 	def SkipNotebookEvent(self, event):
 		event.Skip()
+		
+	def btnOKClicked(self, event):
+		self.parent.pub.name = self.generalPanel.txtname.GetValue()
+		self.parent.pub.description = self.generalPanel.txtdescription.GetValue()
+		self.parent.pub.keywords = self.generalPanel.txtkeywords.GetValue()
 
-	def GeneralPanel(self):
-		panel = wxPanel(self.notebook, -1, wxPoint(25, 25))
-		self.lblname = wxStaticText(panel, -1, _("Name"), wxPoint(self.labelx,10))
-		self.txtname = wxTextCtrl(panel, -1, self.parent.pub.name, wxPoint(self.textx, 10), wxDefaultSize) 
-		self.lbldescription = wxStaticText(panel, -1, _("Description"), wxPoint(self.labelx,self.height + 10))
-		self.txtdescription = wxTextCtrl(panel, -1, self.parent.pub.description, wxPoint(self.textx, self.height + 10), wxSize(-1, 160), wxTE_MULTILINE) 
-		self.lblkeywords = wxStaticText(panel, -1, _("Keywords"), wxPoint(self.labelx, (self.height*4) + 10))
-		self.txtkeywords = wxTextCtrl(panel, -1, self.parent.pub.keywords, wxPoint(self.textx, (self.height*4) + 10), wxDefaultSize) 
+		settings.options["SearchEnabled"] = int(self.searchPanel.chkSearch.GetValue())
+		useswishe = False
+		updatetheme = False
+		if self.searchPanel.whichSearch.GetStringSelection() == self.searchPanel.options[0]:
+			settings.options["SearchProgram"] = "Lucene"
+			useswishe = True
+		elif self.searchPanel.whichSearch.GetStringSelection() == self.self.searchPanel.options[1]:
+			settings.options["SearchProgram"] = "Greenstone"
+
+		if self.searchchanged:
+			self.parent.Update()
+		if self.publishPanel.chkFilename.GetValue() == True:
+			settings.options["ShortenFilenames"] = "Yes"
+		else:
+			settings.options["ShortenFilenames"] = "No"
+
+		settings.options["FTPHost"] = self.ftpPanel.txtFTPSite.GetValue()
+		settings.options["FTPDirectory"] = self.ftpPanel.txtDirectory.GetValue()
+		settings.options["FTPUser"] = self.ftpPanel.txtUsername.GetValue()
+		settings.options["FTPPassword"] = encrypt.encrypt(self.ftpPanel.txtPassword.GetValue())
+
+		if self.ftpPanel.chkPassiveFTP.GetValue() == True:
+			settings.options["FTPPassive"] = "Yes"
+		else:
+			settings.options["FTPPassive"] = "No"
+
+		if self.ftpPanel.chkUploadOnSave.GetValue() == True:
+			settings.options["UploadOnSave"] = "Yes"
+		else:
+			settings.options["UploadOnSave"] = "No"
+
+		settings.options["CDSaveDir"] = self.publishPanel.txtCDDir.GetValue()
+
+		self.parent.pub.pubid = self.searchPanel.txtpubid.GetValue()
+		self.parent.isDirty = True
+		self.EndModal(wx.ID_OK)
+		
+class GeneralPanel(sc.SizedPanel):
+    def __init__(self, parent, pub):
+		sc.SizedPanel.__init__(self, parent, -1)
+		self.pub = pub
+		self.SetSizerType("form")
+		self.lblname = wx.StaticText(self, -1, _("Name"))
+		self.txtname = wx.TextCtrl(self, -1, pub.name)
+		self.txtname.SetSizerProp("expand", True)
+		self.lbldescription = wx.StaticText(self, -1, _("Description"))
+		self.txtdescription = wx.TextCtrl(self, -1, pub.description, style=wx.TE_MULTILINE)
+		self.txtdescription.SetSizerProps({"expand":True, "proportion":1})
+		self.lblkeywords = wx.StaticText(self, -1, _("Keywords"))
+		self.txtkeywords = wx.TextCtrl(self, -1, pub.keywords) 
+		self.txtkeywords.SetSizerProp("expand", True)
 		self.txtname.SetFocus()
 		self.txtname.SetSelection(0, -1)
-
-		self.generalSizer = wxFlexGridSizer(0, 2, 4, 4)
-		self.generalSizer.Add(self.lblname, 0, wxALL, 4)
-		self.generalSizer.Add(self.txtname, 1, wxEXPAND|wxALL, 4)
-		self.generalSizer.Add(self.lbldescription, 0, wxALL, 4)
-		self.generalSizer.Add(self.txtdescription, 1, wxEXPAND|wxALL, 4)
-		self.generalSizer.Add(self.lblkeywords, 0, wxALL, 4)
-		self.generalSizer.Add(self.txtkeywords, 1, wxEXPAND, 4)
-		self.generalSizer.AddGrowableCol(1)
-
-		panel.SetAutoLayout(True)
-		panel.SetSizer(self.generalSizer)
-		self.generalSizer.Fit(panel)
-		panel.Layout()
-
-		return panel
-
-	def PublishPanel(self):
-		panel = wxPanel(self.notebook, -1, wxPoint(25, 25))
-		self.chkFilename = wxCheckBox(panel, -1, _("Restrict filenames to 31 characters"))
-		if self.parent.pub.settings["ShortenFilenames"] == "Yes":
-			self.chkFilename.SetValue(1)
-
-		icnFolder = wxBitmap(os.path.join(self.parent.AppDir, "icons", "Open.gif"), wxBITMAP_TYPE_GIF)
-
-		self.lblCDDir = wxStaticText(panel, -1, _("Directory to save CD files."))
-		self.btnSelectFile = wxBitmapButton(panel, -1, icnFolder, size=wxSize(20, 18))
-		self.txtCDDir = wxTextCtrl(panel, -1, "", size=wxSize(160, -1))		
-
-		#self.serverOptions = [_("EClass Web Server (Karrigell)"), _("Documancer")]
-		#self.radboxServer = wxRadioBox(panel, -1, _("Specify EClass Viewer Software"), wxDefaultPosition, wxDefaultSize, self.serverOptions)
 		
-		self.pubSizer = wxBoxSizer(wxVERTICAL)
-		self.pubSizer.Add(self.chkFilename, 0, wxALL, 4)
-		#self.pubSizer.Add(self.radboxServer, 0, wxALL, 4)
-		self.pubSizer.Add(self.lblCDDir, 0, wxALL, 4)
-
-   		self.smallsizer = wxBoxSizer(wxHORIZONTAL)
-   		self.smallsizer.Add(self.txtCDDir, 1, wxEXPAND|wxALL, 4)
-   		self.smallsizer.Add(self.btnSelectFile, 0, wxALIGN_CENTER|wxALL, 4)
-
-		self.pubSizer.Add(self.smallsizer, 0, wxEXPAND|wxALL, 4)
-
-		if self.parent.pub.settings["CDSaveDir"] != "":
-			self.txtCDDir.SetValue(self.parent.pub.settings["CDSaveDir"])
-
-		panel.SetAutoLayout(True)
-		panel.SetSizer(self.pubSizer)
-		self.pubSizer.Fit(panel)
-		panel.Layout()
-
-		EVT_BUTTON(self.btnSelectFile, self.btnSelectFile.GetId(), self.btnSelectFileClicked)
-
-		return panel
-
-	def OnThemeChanged(self, event):
-		if self.parent.pub.settings["Theme"] != self.cmbTheme.GetStringSelection():
-			self.updateTheme = True
-
-	def FTPPanel(self):
-		panel = wxPanel(self.notebook, -1, wxPoint(25, 25))
-		self.lblFTPSite = wxStaticText(panel, -1, _("FTP Site"))
-		self.txtFTPSite = wxTextCtrl(panel, -1, self.parent.pub.settings["FTPHost"])
-		self.lblUsername = wxStaticText(panel, -1, _("Username"))
-		self.txtUsername = wxTextCtrl(panel, -1, self.parent.pub.settings["FTPUser"])
-		self.lblPassword = wxStaticText(panel, -1, _("Password"))
-		self.txtPassword = wxTextCtrl(panel, -1, self.parent.ftppass, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD)
-		self.lblDirectory = wxStaticText(panel, -1, _("Directory"))
-		self.txtDirectory = wxTextCtrl(panel, -1, self.parent.pub.settings["FTPDirectory"])
-		self.chkPassiveFTP = wxCheckBox(panel, -1, _("Use Passive FTP"))
-		if self.parent.pub.settings["FTPPassive"] == "Yes":
-			self.chkPassiveFTP.SetValue(True)
-		else:
-			self.chkPassiveFTP.SetValue(False)
-		self.chkUploadOnSave = wxCheckBox(panel, -1, _("Upload Files on Save"))
-		if self.parent.pub.settings["UploadOnSave"] == "Yes":
-			self.chkUploadOnSave.SetValue(True)
-		else:
-			self.chkUploadOnSave.SetValue(False)
+class SearchPanel(sc.SizedPanel):
+	def __init__(self, parent, pub):
+		sc.SizedPanel.__init__(self, parent, -1)
+		self.chkSearch = wx.CheckBox(self, -1, _("Enable Search Function"))
 		
-		self.txtFTPSite.SetFocus()
-		self.txtFTPSite.SetSelection(0, -1)
+		self.options = [_("Use Lucene for searching (Default)"), _("Use Greenstone for searching")]
+		self.whichSearch = wx.RadioBox(self, -1, _("Search Engine"), wx.DefaultPosition, wx.DefaultSize, self.options, 1)
+		
+		#self.useGSDL = wxRadioBox(panel, -1, )
+		
+		self.lblpubid = wx.StaticText(self, -1, _("Publication ID"))
+		self.txtpubid = wx.TextCtrl(self, -1, pub.pubid)
+		self.lblpubidhelp = wx.StaticText(self, -1, _("ID must be 8 chars or less, no spaces, all letters\n and/or numbers."))
+		
+		self.LoadSettings()
 
-		self.ftpSizer = wxFlexGridSizer(0, 2, 4, 4)
-		self.ftpSizer.Add(self.lblFTPSite, 0, wxALL, 4)
-		self.ftpSizer.Add(self.txtFTPSite, 1, wxEXPAND|wxALL, 4)
-		self.ftpSizer.Add(self.lblUsername, 0, wxALL, 4)
-		self.ftpSizer.Add(self.txtUsername, 1, wxEXPAND|wxALL, 4)
-		self.ftpSizer.Add(self.lblPassword, 0, wxALL, 4)
-		self.ftpSizer.Add(self.txtPassword, 1, wxEXPAND|wxALL, 4)
-		self.ftpSizer.Add(self.lblDirectory, 0, wxALL, 4)
-		self.ftpSizer.Add(self.txtDirectory, 1, wxEXPAND|wxALL, 4)
-		self.ftpSizer.Add(self.chkPassiveFTP, 0, wxALL, 4)
-		self.ftpSizer.Add((1,1), 1, wxEXPAND|wxALL, 4)
-		self.ftpSizer.Add(self.chkUploadOnSave, 0, wxALL, 4)
-		self.ftpSizer.Add((1,1), 1, wxEXPAND|wxALL, 4)
-		self.ftpSizer.AddGrowableCol(1)
-
-		panel.SetAutoLayout(True)
-		panel.SetSizer(self.ftpSizer)
-		self.ftpSizer.Fit(self)
-		panel.Layout()
-
-		return panel
-
-	def SearchPanel(self):
-		panel = wxPanel(self.notebook, -1, wxPoint(25, 25))
-		self.chkSearch = wxCheckBox(panel, -1, _("Enable Search Function"))
-		ischecked = self.parent.pub.settings["SearchEnabled"]
+		wx.EVT_CHECKBOX(self, self.chkSearch.GetId(), self.chkSearchClicked)
+		
+	def chkSearchClicked(self, event):
+		value = self.chkSearch.GetValue()
+		self.lblpubid.Enable(value)
+		self.txtpubid.Enable(value)
+		self.lblpubidhelp.Enable(value)
+		self.searchchanged = True
+ 
+	def LoadSettings(self):
+		ischecked = settings.options["SearchEnabled"]
 		searchtool = ""
 		if not ischecked == "":
 			try:
@@ -184,102 +152,87 @@ class ProjectPropsDialog(wxDialog):
 
 			self.chkSearch.SetValue(searchbool)
 			if searchbool:
-				searchtool = self.parent.pub.settings["SearchProgram"]
+				searchtool = settings.options["SearchProgram"]
 				if searchtool == "": #since there wasn't an option selected, must be Greenstone
 					searchtool = "Greenstone"
-		
-		self.options = [_("Use Lucene for searching (Default)"), _("Use Greenstone for searching")]
-		self.whichSearch = wxRadioBox(panel, -1, _("Search Engine"), wxDefaultPosition, wxDefaultSize, self.options, 1)
+					
 		if searchtool == "Greenstone":
 			self.whichSearch.SetStringSelection(self.options[1])
 		elif searchtool == "Lucene":
 			self.whichSearch.SetStringSelection(self.options[0])
-		
-		#self.useGSDL = wxRadioBox(panel, -1, )
-		
-		self.lblpubid = wxStaticText(panel, -1, _("Publication ID"), wxPoint(self.labelx, self.height + 10))
-		self.txtpubid = wxTextCtrl(panel, -1, self.parent.pub.pubid, wxPoint(self.textx, self.height + 10), wxSize(240, self.height))
-		self.lblpubidhelp = wxStaticText(panel, -1, _("ID must be 8 chars or less, no spaces, all letters\n and/or numbers."),wxPoint(self.textx, (self.height*2) + 10))
-
-		value = self.chkSearch.GetValue()
-		self.lblpubid.Enable(value)
-		self.txtpubid.Enable(value)
-		self.lblpubidhelp.Enable(value)
 			
-		self.searchSizer = wxBoxSizer(wxVERTICAL)
-
-		self.searchSizer.Add(self.chkSearch, 0, wxALL, 4)
-		self.searchSizer.Add(self.whichSearch, 0, wxALL, 4)
-		self.searchSizer.Add(self.lblpubid, 0, wxALL|wxEXPAND, 4)
-		self.searchSizer.Add(self.txtpubid, 0, wxALL, 4)
-		self.searchSizer.Add(self.lblpubidhelp, 0, wxALL, 4)
-		panel.SetAutoLayout(True)
-		panel.SetSizer(self.searchSizer)
-		self.searchSizer.Fit(panel)
-		panel.Layout()
-
-		EVT_CHECKBOX(self, self.chkSearch.GetId(), self.chkSearchClicked)
- 
-		return panel
-
-	def chkSearchClicked(self, event):
 		value = self.chkSearch.GetValue()
 		self.lblpubid.Enable(value)
 		self.txtpubid.Enable(value)
 		self.lblpubidhelp.Enable(value)
-		self.searchchanged = True
+		
+class PublishPanel(sc.SizedPanel):
+	def __init__(self, parent):
+		sc.SizedPanel.__init__(self, parent, -1)
+		self.chkFilename = wx.CheckBox(self, -1, _("Restrict filenames to 31 characters"))
 
+		self.lblCDDir = wx.StaticText(self, -1, _("Directory to save CD files:"))
+		
+		cdpanel = sc.SizedPanel(self, -1)
+		cdpanel.SetSizerType("horizontal")
+		cdpanel.SetSizerProp("expand", True)
+		self.txtCDDir = wx.TextCtrl(cdpanel, -1, "")
+		self.txtCDDir.SetSizerProps({"expand":True, "proportion":1})
+		
+		icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wx.BITMAP_TYPE_GIF)
+		self.btnSelectFile = wx.BitmapButton(cdpanel, -1, icnFolder)
+		self.btnSelectFile.SetSizerProp("valign", "center")
+
+		self.LoadSettings()
+
+		wx.EVT_BUTTON(self.btnSelectFile, self.btnSelectFile.GetId(), self.btnSelectFileClicked)
+	
+	def LoadSettings(self):
+		if settings.options["CDSaveDir"] != "":
+			self.txtCDDir.SetValue(settings.options["CDSaveDir"])
+			
+		if settings.options["ShortenFilenames"] == "Yes":
+			self.chkFilename.SetValue(1)
+		
 	def btnSelectFileClicked(self, event):
-		dialog = wxDirDialog(self, _("Choose a folder to store CD files."), style=wxDD_NEW_DIR_BUTTON)
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.DirDialog(self, _("Choose a folder to store CD files."), style=wx.DD_NEW_DIR_BUTTON)
+		if dialog.ShowModal() == wx.ID_OK:
 			self.txtCDDir.SetValue(dialog.GetPath())
 		dialog.Destroy()
 		
-	def btnOKClicked(self, event):
-		self.parent.pub.name = self.txtname.GetValue()
-		self.parent.pub.description = self.txtdescription.GetValue()
-		self.parent.pub.keywords = self.txtkeywords.GetValue()
-
-		self.parent.pub.settings["SearchEnabled"] = int(self.chkSearch.GetValue())
-		useswishe = False
-		updatetheme = False
-		if self.whichSearch.GetStringSelection() == self.options[0]:
-			self.parent.pub.settings["SearchProgram"] = "Lucene"
-			useswishe = True
-		elif self.whichSearch.GetStringSelection() == self.options[1]:
-			self.parent.pub.settings["SearchProgram"] = "Greenstone"
-
-		#if self.radboxServer.GetStringSelection() == self.serverOptions[0]:
-		#	self.parent.pub.settings["ServerProgram"] = "Karrigell"
-		#	useswishe = True
-		#elif self.radboxServer.GetStringSelection() == self.options[1]:
-		#	self.parent.pub.settings["ServerProgram"] = "Documancer"
-
-		if self.searchchanged:
-			self.parent.Update()
-		if self.chkFilename.GetValue() == True:
-			self.parent.pub.settings["ShortenFilenames"] = "Yes"
+class FTPPanel(sc.SizedPanel):
+	def __init__(self, parent):
+		sc.SizedPanel.__init__(self, parent, -1)
+		ftppanel = sc.SizedPanel(self, -1)
+		ftppanel.SetSizerType("form")
+		ftppanel.SetSizerProp("expand", True)
+		self.lblFTPSite = wx.StaticText(ftppanel, -1, _("FTP Site"))
+		self.txtFTPSite = wx.TextCtrl(ftppanel, -1, settings.options["FTPHost"])
+		self.txtFTPSite.SetSizerProp("expand", True)
+		self.lblUsername = wx.StaticText(ftppanel, -1, _("Username"))
+		self.txtUsername = wx.TextCtrl(ftppanel, -1, settings.options["FTPUser"])
+		self.txtUsername.SetSizerProp("expand", True)
+		self.lblPassword = wx.StaticText(ftppanel, -1, _("Password"))
+		# FIXME - restore this setting once I clean up the FTP support
+		self.txtPassword = wx.TextCtrl(ftppanel, -1, encrypt.decrypt(settings.options["FTPPassword"]), style=wx.TE_PASSWORD)
+		self.txtPassword.SetSizerProp("expand", True)
+		self.lblDirectory = wx.StaticText(ftppanel, -1, _("Directory"))
+		self.txtDirectory = wx.TextCtrl(ftppanel, -1, settings.options["FTPDirectory"])
+		self.txtDirectory.SetSizerProp("expand", True)
+		
+		self.chkPassiveFTP = wx.CheckBox(self, -1, _("Use Passive FTP"))
+		self.chkUploadOnSave = wx.CheckBox(self, -1, _("Upload Files on Save"))
+		
+		self.txtFTPSite.SetFocus()
+		self.txtFTPSite.SetSelection(0, -1)
+		
+	def LoadSettings(self):
+		if settings.options["FTPPassive"] == "Yes":
+			self.chkPassiveFTP.SetValue(True)
 		else:
-			self.parent.pub.settings["ShortenFilenames"] = "No"
-
-		self.parent.pub.settings["FTPHost"] = self.txtFTPSite.GetValue()
-		self.parent.pub.settings["FTPDirectory"] = self.txtDirectory.GetValue()
-		self.parent.pub.settings["FTPUser"] = self.txtUsername.GetValue()
-		self.parent.ftppass = self.txtPassword.GetValue()
-		#self.parent.pub.settings["FTPPassword"] = `munge(self.txtPassword.GetValue(), "foobar")`
-
-		if self.chkPassiveFTP.GetValue() == True:
-			self.parent.pub.settings["FTPPassive"] = "Yes"
+			self.chkPassiveFTP.SetValue(False)
+			
+		if settings.options["UploadOnSave"] == "Yes":
+			self.chkUploadOnSave.SetValue(True)
 		else:
-			self.parent.pub.settings["FTPPassive"] = "No"
-
-		if self.chkUploadOnSave.GetValue() == True:
-			self.parent.pub.settings["UploadOnSave"] = "Yes"
-		else:
-			self.parent.pub.settings["UploadOnSave"] = "No"
-
-		self.parent.pub.settings["CDSaveDir"] = self.txtCDDir.GetValue()
-
-		self.parent.pub.pubid = self.txtpubid.GetValue()
-		self.parent.isDirty = True
-		self.EndModal(wxID_OK)
+			self.chkUploadOnSave.SetValue(False)
