@@ -7,6 +7,12 @@ from fileutils import MakeFileName2
 import utils
 import settings
 
+def GetBestSize(self):
+	height = self.GetMinSize()[1]
+	return wx.Size(180, height)
+	
+wx.TextCtrl.DoGetBestSize = GetBestSize
+
 class NewPubDialog(sc.SizedDialog):
 	def __init__(self, parent):
 		sc.SizedDialog.__init__ (self, parent, -1, _("New Project"), wx.Point(100,100), style=wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
@@ -15,7 +21,7 @@ class NewPubDialog(sc.SizedDialog):
 		pane.SetSizerType("form")
 		self.lblTitle = wx.StaticText(pane, -1, _("Name"))
 		self.lblTitle.SetSizerProp("valign", "center")
-		self.txtTitle = wx.TextCtrl(pane, -1)
+		self.txtTitle = wx.TextCtrl(pane, -1, size=(180, -1))
 		self.txtTitle.SetSizerProp("expand", True)
 		self.lblDescription = wx.StaticText(pane, -1, _("Description"))
 		self.lblDescription.SetSizerProp("valign", "center")
@@ -67,7 +73,7 @@ class NewPageDialog(sc.SizedDialog):
 
 		self.lblTitle = wx.StaticText(pane, -1, _("Name"))
 		self.lblTitle.SetSizerProp("valign", "center")
-		self.txtTitle = wx.TextCtrl(pane, -1, _("New Page"))
+		self.txtTitle = wx.TextCtrl(pane, -1, _("New Page"), size=(180, -1))
 		self.txtTitle.SetSizerProp("expand", True)
 		self.lblType = wx.StaticText(pane, -1, "Type")
 		self.lblType.SetSizerProp("valign", "center")
