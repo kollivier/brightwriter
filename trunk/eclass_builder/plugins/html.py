@@ -106,10 +106,29 @@ plugin_info = {	"Name":"html",
 
 #-------------------------- DATA CLASSES ----------------------------
 
-EVT_RESULT_ID = wxNewId()
+htmlpage = """
+	<html>
+	<head>
+	<title>New Page</title>
+	</head>
+	<body></body>
+	</html>
+"""
 
-def EVT_RESULT(win, func):
-	win.Connect(-1, -1, EVT_RESULT_ID, func)
+def CreateNewFile(name, filename):
+	try:
+		if os.path.exists(filename):
+			return False
+		file = htmlpage
+		file = file.replace("New Page", name)
+		output = open(filename, "w")
+		output.write(file)
+		output.close()
+		return True
+	except:
+		global log
+		log.write(_("Could not create new HTML file."))
+		return False
 
 #------------------------ PUBLISHER CLASSES -------------------------------------------
 #if this isn't the main script, then we're probably loading in EClass.Builder
@@ -1517,14 +1536,9 @@ if __name__ != "__main__":
 		def ShowModal(self):
 			self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
 			if not os.path.exists(self.filename):
-				html = """
-	<html>
-	<head></head>
-	<body></body>
-	</html>
-	"""
+				global htmlpage
 				file = utils.openFile(self.filename, "w")
-				file.write(html)
+				file.write(htmlpage)
 				file.close()
 
 			#until we get editing fixed...
