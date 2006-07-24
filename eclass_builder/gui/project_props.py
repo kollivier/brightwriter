@@ -33,18 +33,6 @@ class ProjectPropsDialog(sc.SizedDialog):
 			self.notebook.SetSelection(0)
 
 		self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
-		
-		#self.btnOK = wx.Button(self,wxID_OK,_("OK"))#wxPoint(210, 350),wxSize(76, 24))
-		#self.btnOK.SetDefault()
-		#self.txtname.SetFocus()
-		#self.txtname.SetSelection(-1,-1)
-		#self.btnCancel = wxButton(self,wxID_CANCEL,_("Cancel"))#,wxPoint(300, 350),wxSize(76,24))
-
-		#self.buttonSizer = wxStdDialogButtonSizer()
-		#self.buttonSizer.AddButton(self.btnOK)
-		#self.buttonSizer.AddButton(self.btnCancel)
-		#self.buttonSizer.Realize()
-		#self.mysizer.Add(self.buttonSizer, 0, wxALIGN_RIGHT)
 
 		self.Fit()
 		self.SetMinSize(self.GetSize())
@@ -62,38 +50,38 @@ class ProjectPropsDialog(sc.SizedDialog):
 		self.parent.pub.description = self.generalPanel.txtdescription.GetValue()
 		self.parent.pub.keywords = self.generalPanel.txtkeywords.GetValue()
 
-		settings.options["SearchEnabled"] = int(self.searchPanel.chkSearch.GetValue())
+		settings.ProjectSettings["SearchEnabled"] = int(self.searchPanel.chkSearch.GetValue())
 		useswishe = False
 		updatetheme = False
 		if self.searchPanel.whichSearch.GetStringSelection() == self.searchPanel.options[0]:
-			settings.options["SearchProgram"] = "Lucene"
+			settings.ProjectSettings["SearchProgram"] = "Lucene"
 			useswishe = True
 		elif self.searchPanel.whichSearch.GetStringSelection() == self.self.searchPanel.options[1]:
-			settings.options["SearchProgram"] = "Greenstone"
+			settings.ProjectSettings["SearchProgram"] = "Greenstone"
 
 		if self.searchchanged:
 			self.parent.Update()
 		if self.publishPanel.chkFilename.GetValue() == True:
-			settings.options["ShortenFilenames"] = "Yes"
+			settings.ProjectSettings["ShortenFilenames"] = "Yes"
 		else:
-			settings.options["ShortenFilenames"] = "No"
+			settings.ProjectSettings["ShortenFilenames"] = "No"
 
-		settings.options["FTPHost"] = self.ftpPanel.txtFTPSite.GetValue()
-		settings.options["FTPDirectory"] = self.ftpPanel.txtDirectory.GetValue()
-		settings.options["FTPUser"] = self.ftpPanel.txtUsername.GetValue()
-		settings.options["FTPPassword"] = encrypt.encrypt(self.ftpPanel.txtPassword.GetValue())
+		settings.ProjectSettings["FTPHost"] = self.ftpPanel.txtFTPSite.GetValue()
+		settings.ProjectSettings["FTPDirectory"] = self.ftpPanel.txtDirectory.GetValue()
+		settings.ProjectSettings["FTPUser"] = self.ftpPanel.txtUsername.GetValue()
+		settings.ProjectSettings["FTPPassword"] = encrypt.encrypt(self.ftpPanel.txtPassword.GetValue())
 
 		if self.ftpPanel.chkPassiveFTP.GetValue() == True:
-			settings.options["FTPPassive"] = "Yes"
+			settings.ProjectSettings["FTPPassive"] = "Yes"
 		else:
-			settings.options["FTPPassive"] = "No"
+			settings.ProjectSettings["FTPPassive"] = "No"
 
 		if self.ftpPanel.chkUploadOnSave.GetValue() == True:
-			settings.options["UploadOnSave"] = "Yes"
+			settings.ProjectSettings["UploadOnSave"] = "Yes"
 		else:
-			settings.options["UploadOnSave"] = "No"
+			settings.ProjectSettings["UploadOnSave"] = "No"
 
-		settings.options["CDSaveDir"] = self.publishPanel.txtCDDir.GetValue()
+		settings.ProjectSettings["CDSaveDir"] = self.publishPanel.txtCDDir.GetValue()
 
 		self.parent.pub.pubid = self.searchPanel.txtpubid.GetValue()
 		self.parent.isDirty = True
@@ -142,7 +130,7 @@ class SearchPanel(sc.SizedPanel):
 		self.searchchanged = True
  
 	def LoadSettings(self):
-		ischecked = settings.options["SearchEnabled"]
+		ischecked = settings.ProjectSettings["SearchEnabled"]
 		searchtool = ""
 		if not ischecked == "":
 			try:
@@ -152,7 +140,7 @@ class SearchPanel(sc.SizedPanel):
 
 			self.chkSearch.SetValue(searchbool)
 			if searchbool:
-				searchtool = settings.options["SearchProgram"]
+				searchtool = settings.ProjectSettings["SearchProgram"]
 				if searchtool == "": #since there wasn't an option selected, must be Greenstone
 					searchtool = "Greenstone"
 					
@@ -188,10 +176,10 @@ class PublishPanel(sc.SizedPanel):
 		wx.EVT_BUTTON(self.btnSelectFile, self.btnSelectFile.GetId(), self.btnSelectFileClicked)
 	
 	def LoadSettings(self):
-		if settings.options["CDSaveDir"] != "":
-			self.txtCDDir.SetValue(settings.options["CDSaveDir"])
+		if settings.ProjectSettings["CDSaveDir"] != "":
+			self.txtCDDir.SetValue(settings.ProjectSettings["CDSaveDir"])
 			
-		if settings.options["ShortenFilenames"] == "Yes":
+		if settings.ProjectSettings["ShortenFilenames"] == "Yes":
 			self.chkFilename.SetValue(1)
 		
 	def btnSelectFileClicked(self, event):
@@ -207,17 +195,17 @@ class FTPPanel(sc.SizedPanel):
 		ftppanel.SetSizerType("form")
 		ftppanel.SetSizerProp("expand", True)
 		self.lblFTPSite = wx.StaticText(ftppanel, -1, _("FTP Site"))
-		self.txtFTPSite = wx.TextCtrl(ftppanel, -1, settings.options["FTPHost"])
+		self.txtFTPSite = wx.TextCtrl(ftppanel, -1, settings.ProjectSettings["FTPHost"])
 		self.txtFTPSite.SetSizerProp("expand", True)
 		self.lblUsername = wx.StaticText(ftppanel, -1, _("Username"))
-		self.txtUsername = wx.TextCtrl(ftppanel, -1, settings.options["FTPUser"])
+		self.txtUsername = wx.TextCtrl(ftppanel, -1, settings.ProjectSettings["FTPUser"])
 		self.txtUsername.SetSizerProp("expand", True)
 		self.lblPassword = wx.StaticText(ftppanel, -1, _("Password"))
 		# FIXME - restore this setting once I clean up the FTP support
-		self.txtPassword = wx.TextCtrl(ftppanel, -1, encrypt.decrypt(settings.options["FTPPassword"]), style=wx.TE_PASSWORD)
+		self.txtPassword = wx.TextCtrl(ftppanel, -1, encrypt.decrypt(settings.ProjectSettings["FTPPassword"]), style=wx.TE_PASSWORD)
 		self.txtPassword.SetSizerProp("expand", True)
 		self.lblDirectory = wx.StaticText(ftppanel, -1, _("Directory"))
-		self.txtDirectory = wx.TextCtrl(ftppanel, -1, settings.options["FTPDirectory"])
+		self.txtDirectory = wx.TextCtrl(ftppanel, -1, settings.ProjectSettings["FTPDirectory"])
 		self.txtDirectory.SetSizerProp("expand", True)
 		
 		self.chkPassiveFTP = wx.CheckBox(self, -1, _("Use Passive FTP"))
@@ -227,12 +215,12 @@ class FTPPanel(sc.SizedPanel):
 		self.txtFTPSite.SetSelection(0, -1)
 		
 	def LoadSettings(self):
-		if settings.options["FTPPassive"] == "Yes":
+		if settings.ProjectSettings["FTPPassive"] == "Yes":
 			self.chkPassiveFTP.SetValue(True)
 		else:
 			self.chkPassiveFTP.SetValue(False)
 			
-		if settings.options["UploadOnSave"] == "Yes":
+		if settings.ProjectSettings["UploadOnSave"] == "Yes":
 			self.chkUploadOnSave.SetValue(True)
 		else:
 			self.chkUploadOnSave.SetValue(False)

@@ -731,7 +731,8 @@ class MainFrame2(wxFrame):
 		self.CurrentItem = None
 		self.CurrentFilename = ""
 		self.CurrentTreeItem = None
-		self.ProjectDir = ""
+		settings.ProjectDir = self.ProjectDir = ""
+		settings.ProjectSettings = {}
 		if wxPlatform == "__WXMSW__":
 			self.ie.Navigate("about:blank")
 			self.mozilla.Navigate("about:blank")
@@ -793,6 +794,7 @@ class MainFrame2(wxFrame):
 				self.wxTree.DeleteAllItems()
 				self.CurrentFilename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
 				self.CurrentItem = self.pub.NewPub(self.pub.name, "English", self.ProjectDir)
+				settings.ProjectSettings = self.pub.settings
 				self.isDirty = True
 				global eclassdirs
 				for dir in eclassdirs:
@@ -1411,6 +1413,7 @@ class MainFrame2(wxFrame):
 			self.SetFocus()
 			self.SwitchMenus(True)
 			self.settings["LastOpened"] = filename
+			settings.ProjectSettings = self.pub.settings
 			viddir = os.path.join(settings.ProjectDir, "Video")
 			auddir = os.path.join(settings.ProjectDir, "Audio")
 			
