@@ -1,4 +1,7 @@
-from wxPython.wx import *
+import wx
+import wxaddons.sized_controls as sc
+import wxaddons.persistence
+
 import string
 import os
 import locale
@@ -9,6 +12,7 @@ import plugins
 from fileutils import *
 from StringIO import StringIO
 import utils 
+import settings
 
 USE_MINIDOM=0
 try:
@@ -40,13 +44,20 @@ plugin_info = { "Name":"quiz",
 
 #-------------------------- DATA CLASSES ----------------------------
 
-EVT_RESULT_ID = wxNewId()
-
-def EVT_RESULT(win, func):
-	win.Connect(-1, -1, EVT_RESULT_ID, func)
-
 # base type that makes sure all data is converted to Unicode
 
+def CreateNewFile(name, filename):
+    try:
+        if os.path.exists(filename):
+            return False
+        quiz = QuizPage()
+        quiz.name = name
+        quiz.SaveAsXML(filename)
+        return True
+    except:
+        global log
+        log.write(_("Could not create new Quiz."))
+        return False
 
 class QuizPage(plugins.PluginData):
 	"""
@@ -634,88 +645,68 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 #------------------------------ EDITOR CLASSES ------------------------------------
 
-class EditorDialog(wxDialog):
+class EditorDialog(sc.SizedDialog):
 	def __init__(self, parent, item):
 		self.quiz = QuizPage()
 		self.item = item
 		self.parent = parent
 
-		wxDialog.__init__(self, parent, -1, _("Quiz Editor"), wxPoint(100, 100))
+		sc.SizedDialog.__init__(self, parent, -1, _("Quiz Editor"), wx.Point(100, 100),
+		                            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		pane = self.GetContentsPane()
 
-		self.lblList = wxStaticText(self, -1, _("Question List"))
-		self.lstQuestions = wxListBox(self, -1)
-		self.btnAdd = wxButton(self, -1, _("Add"))
-		self.btnEdit = wxButton(self, -1, _("Edit"))
-		self.btnRemove = wxButton(self, -1, _("Remove"))
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
-
+		wx.StaticText(pane, -1, _("Question List"))
+		self.lstQuestions = wx.ListBox(pane, -1)
+		self.lstQuestions.SetSizerProps({"expand":True, "proportion":1})
+		btnPane = sc.SizedPanel(pane, -1)
+		btnPane.SetSizerType("horizontal")
+		btnPane.SetSizerProp("halign", "center")
+		
+		self.btnAdd = wx.Button(btnPane, -1, _("Add"))
+		self.btnEdit = wx.Button(btnPane, -1, _("Edit"))
+		self.btnRemove = wx.Button(btnPane, -1, _("Remove"))
+		
 		if len(self.item.content.filename) > 0: 
 			filename = os.path.join(self.parent.ProjectDir, self.item.content.filename)
 			try:
-				if not os.path.exists(filename):
-					self.quiz.SaveAsXML(filename)
-	
 				self.quiz.LoadPage(filename)
 			except IOError, msg:
 				message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": filename})
 				global log
 				log.write(message)
-				wxMessageBox(message, _("Unable to create file."), wxICON_ERROR)
+				wx.MessageBox(message, _("Unable to create file."), wxICON_ERROR)
 				return
 
 			for item in self.quiz.items:
 				self.lstQuestions.Append(item.presentation.text, item)
-		else:
-			filename = self.item.content.metadata.name[:27] + ".quiz"
-			counter = 1
-			while os.path.exists(os.path.join(self.parent.pub.directory, "EClass", filename)):
-				filename = "EClass/" + self.item.content.metadata.name[:27] + " " + `counter` + ".quiz"
-				counter = counter + 1
 
-			self.item.content.filename = filename
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.mysizer.Add(self.lblList, 0, wxALL, 4)
-		self.mysizer.Add(self.lstQuestions, 1, wxEXPAND | wxALL, 4)
+		self.item.content.filename = filename
 
-		self.editsizer = wxBoxSizer(wxHORIZONTAL)
-		self.editsizer.Add(self.btnAdd, 1, wxALIGN_CENTER | wxALL, 4)
-		self.editsizer.Add(self.btnEdit, 1, wxALIGN_CENTER | wxALL, 4)
-		self.editsizer.Add(self.btnRemove, 1, wxALIGN_CENTER | wxALL, 4)
-		self.mysizer.Add(self.editsizer, 0, wxEXPAND | wxALIGN_CENTER | wxALL, 4)
-
-		self.btnsizer = wxStdDialogButtonSizer()
-		self.btnsizer.AddButton(self.btnOK)
-		self.btnsizer.AddButton(self.btnCancel)
-		self.btnsizer.Realize()
-		self.mysizer.Add(self.btnsizer, 0, wxEXPAND | wxALL, 4)
+		self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
 		
-		self.SetAutoLayout(true)
-		self.SetSizerAndFit(self.mysizer)
-		self.Layout()
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 
-		self.btnOK.SetDefault()
-
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
-		EVT_BUTTON(self.btnAdd, self.btnAdd.GetId(), self.btnAddClicked)
-		EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.btnEditClicked)
-		EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.btnRemoveClicked)
-		EVT_LEFT_DCLICK(self.lstQuestions, self.btnEditClicked)
+		wx.EVT_BUTTON(self, wx.ID_OK, self.btnOKClicked)
+		wx.EVT_BUTTON(self.btnAdd, self.btnAdd.GetId(), self.btnAddClicked)
+		wx.EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.btnEditClicked)
+		wx.EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.btnRemoveClicked)
+		wx.EVT_LEFT_DCLICK(self.lstQuestions, self.btnEditClicked)
 
 	def btnOKClicked(self, event):
-		filename = os.path.join(self.parent.ProjectDir, self.item.content.filename)
+		filename = os.path.join(settings.ProjectDir, self.item.content.filename)
 		try:
 			self.quiz.SaveAsXML(filename)
-			self.EndModal(wxID_OK)
+			self.EndModal(wx.ID_OK)
 		except IOError:
 			message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
 			global log
 			log.write(message)
-			wxMessageBox(message, _("Cannot Save File"), wxICON_ERROR)
+			wx.MessageBox(message, _("Cannot Save File"), wxICON_ERROR)
 
 	def btnAddClicked(self,event):
 		editor = QuestionEditor(self)
-		if editor.ShowModal() == wxID_OK:
+		if editor.ShowModal() == wx.ID_OK:
 			self.quiz.items.append(editor.question)
 			self.lstQuestions.Append(editor.question.presentation.text, editor.question)
 
@@ -730,119 +721,85 @@ class EditorDialog(wxDialog):
 		self.quiz.items.remove(myitem)
 
 
-class QuestionEditor(wxDialog):
+class QuestionEditor(sc.SizedDialog):
 	def __init__(self, parent, question=None):
-		wxDialog.__init__(self, parent, -1, _("Question Editor"), wxPoint(100, 100))
+		sc.SizedDialog.__init__(self, parent, -1, _("Question Editor"), wx.Point(100, 100),
+		                          style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		pane = self.GetContentsPane()
 
-		self.lblQuestion = wxStaticText(self, -1, _("Question:"))
-		self.txtQuestion = wxTextCtrl(self, -1, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE)
-		#self.lblAnswers = wxStaticText(self, -1, _("Answers:"))
-		self.lblCorrect = wxStaticText(self, -1, _("Correct?"))
-		#self.lblID = wxStaticText(self, -1, "Answer ID")
-		self.lblText = wxStaticText(self, -1, _("Answer Text"))
-
-		self.chkCorrect1 = wxCheckBox(self, -1, "")
-		self.txtID1 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer1 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
+		wx.StaticText(pane, -1, _("Question:"))
+		self.txtQuestion = wx.TextCtrl(pane, -1, "", style=wx.TE_MULTILINE)
+		self.txtQuestion.SetSizerProp("expand", True)
 		
-		self.chkCorrect2 = wxCheckBox(self, -1, "")
-		self.txtID2 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer2 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
+		aPane = sc.SizedPanel(pane, -1)
+		aPane.SetSizerType("form")
+		aPane.SetSizerProp("expand", True)
 
-		self.chkCorrect3 = wxCheckBox(self, -1, "")
-		self.txtID3 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer3 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
+		wx.StaticText(aPane, -1, _("Correct?"))
+		wx.StaticText(aPane, -1, _("Answer Text"))
 
-		self.chkCorrect4 = wxCheckBox(self, -1, "")
-		self.txtID4 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer4 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
-
-		self.chkCorrect5 = wxCheckBox(self, -1, "")
-		self.txtID5 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(40, -1))
-		self.txtAnswer5 = wxTextCtrl(self, -1, "", wxDefaultPosition, wxSize(240, -1)) 
-
-		self.txtID1.Show(false)
-		self.txtID2.Show(false)
-		self.txtID3.Show(false)
-		self.txtID4.Show(false)
-		self.txtID5.Show(false)
-
-		self.btnFeedback = wxButton(self, -1, _("Feedback"))
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
-
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.mysizer.Add(self.lblQuestion, 0, wxALL, 4)
-		self.mysizer.Add(self.txtQuestion, 1, wxEXPAND | wxALL, 4)
-		#self.mysizer.Add(self.lblAnswers, 0, wxALIGN_CENTER | wxALL, 4)
+		self.chkCorrect1 = wx.CheckBox(aPane, -1, "")
+		self.txtAnswer1 = wx.TextCtrl(aPane, -1, "") 
+		self.txtAnswer1.SetSizerProp("expand", True)
 		
-		self.answersizer = wxFlexGridSizer(0, 2, 4, 4)
-		self.answersizer.Add(self.lblCorrect, 0, wxALL | wxALIGN_CENTER, 4)
-		#self.answersizer.Add(self.lblID, 0, wxALL | wxALIGN_CENTER, 4)
-		self.answersizer.Add(self.lblText, 0, wxALL | wxALIGN_CENTER, 4)
+		self.chkCorrect2 = wx.CheckBox(aPane, -1, "")
+		self.txtAnswer2 = wx.TextCtrl(aPane, -1, "") 
+		self.txtAnswer2.SetSizerProp("expand", True)
 
-		self.answersizer.Add(self.chkCorrect1, 0, wxALL | wxALIGN_CENTER, 4)
-		#self.answersizer.Add(self.txtID1, 0, wxALL, 4)
-		self.answersizer.Add(self.txtAnswer1, 0, wxALL, 4)
+		self.chkCorrect3 = wx.CheckBox(aPane, -1, "")
+		self.txtAnswer3 = wx.TextCtrl(aPane, -1, "")
+		self.txtAnswer3.SetSizerProp("expand", True)
 
-		self.answersizer.Add(self.chkCorrect2, 0, wxALL | wxALIGN_CENTER, 4)
-		#self.answersizer.Add(self.txtID2, 0, wxALL, 4)
-		self.answersizer.Add(self.txtAnswer2, 0, wxALL, 4)
+		self.chkCorrect4 = wx.CheckBox(aPane, -1, "")
+		self.txtAnswer4 = wx.TextCtrl(aPane, -1, "")
+		self.txtAnswer4.SetSizerProp("expand", True)
 
-		self.answersizer.Add(self.chkCorrect3, 0, wxALL | wxALIGN_CENTER, 4)
-		#self.answersizer.Add(self.txtID3, 0, wxALL, 4)
-		self.answersizer.Add(self.txtAnswer3, 0, wxALL, 4)
+		self.chkCorrect5 = wx.CheckBox(aPane, -1, "")
+		self.txtAnswer5 = wx.TextCtrl(aPane, -1, "")
+		self.txtAnswer5.SetSizerProp("expand", True)
+		
+		# feedback
+		fPane = sc.SizedPanel(pane, -1)
+		fPane.SetSizerType("form")
+		fPane.SetSizerProps("expand", True)
+		
+		wx.StaticText(fPane, -1, _("Correct Answer Feedback"))
+		wx.StaticText(fPane, -1, _("Incorrect Answer Feedback"))
+		self.txtCorrect = wx.TextCtrl(fPane, -1, "", style=wx.TE_MULTILINE)
+		self.txtCorrect.SetSizerProp("expand", True)
+		
+		self.txtIncorrect = wx.TextCtrl(fPane, -1, "", style=wx.TE_MULTILINE)
+		self.txtIncorrect.SetSizerProp("expand", True)
 
-		self.answersizer.Add(self.chkCorrect4, 0, wxALL | wxALIGN_CENTER, 4)
-		#self.answersizer.Add(self.txtID4, 0, wxALL, 4)
-		self.answersizer.Add(self.txtAnswer4, 0, wxALL, 4)
-
-		self.answersizer.Add(self.chkCorrect5, 0, wxALL | wxALIGN_CENTER, 4)
-		#self.answersizer.Add(self.txtID5, 0, wxALL, 4)
-		self.answersizer.Add(self.txtAnswer5, 0, wxALL, 4)
-
-		self.mysizer.Add(self.answersizer, 0, wxEXPAND)
-	
-		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		self.buttonsizer.Add(self.btnFeedback, 0, wxALL, 4)
-		self.buttonsizer.Add((100, 1), 1, wxEXPAND | wxALL, 4)
-		stdbuttonsizer = wxStdDialogButtonSizer()
-		stdbuttonsizer.AddButton(self.btnOK)
-		stdbuttonsizer.AddButton(self.btnCancel)
-		stdbuttonsizer.Realize()
-		self.buttonsizer.Add(stdbuttonsizer)
-		self.mysizer.Add(self.buttonsizer, 0, wxEXPAND, 4)
-
-		self.btnOK.SetDefault()
+		self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+		
 		self.txtQuestion.SetFocus()
-		self.SetAutoLayout(true)
-		self.SetSizerAndFit(self.mysizer)
-		self.Layout()
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 
 		if not question == None:
 			self.question = question
 			self.txtQuestion.SetValue(question.presentation.text)
 			counter = 0
 			for choice in question.presentation.choices:
-				eval("self.txtID" + `(counter + 1)` + ".SetValue(u\"" + choice.id + "\")")
 				if counter < 6:
 					eval("self.txtAnswer" + `(counter + 1)` + ".SetValue(u\"" + choice.text + "\")")
 					for cond in question.conditions:
 						if cond.title == "Correct":
 							for var in cond.variables:
 								if var.value == choice.id and var.condition == "equal":
-									eval("self.chkCorrect" + `(counter + 1)` + ".SetValue(true)")
+									eval("self.chkCorrect" + `(counter + 1)` + ".SetValue(True)")
 				counter = counter + 1
+				
+			for itemfeedback in self.question.feedback:
+				if itemfeedback.id == "Correct":
+					self.txtCorrect.SetValue(itemfeedback.text)
+				elif itemfeedback.id == "Incorrect":
+					self.txtIncorrect.SetValue(itemfeedback.text)
 		else:
 			self.question = QuizItem()
 
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.SavePage)
-		EVT_BUTTON(self.btnFeedback, self.btnFeedback.GetId(), self.EditFeedback)
-
-	def EditFeedback(self, event):
-		mydialog = QuestionFeedbackDialog(self, self.question.feedback)
-		if mydialog.ShowModal() == wxID_OK:
-			self.question.feedback = mydialog.feedback
+		wx.EVT_BUTTON(self, wx.ID_OK, self.SavePage)
 
 	def SavePage(self, event):
 		self.question.presentation.text = self.txtQuestion.GetValue()
@@ -872,29 +829,24 @@ class QuestionEditor(wxDialog):
 			return False
 
 		if not correctAnswer:
-			wxMessageBox(_("Please specify one or more correct answer(s)."))
+			wx.MessageBox(_("Please specify one or more correct answer(s)."))
 			return False 
 
 		if numAnswers <= 1:
-			wxMessageBox(_("Questions must have at least 2 answers."))
+			wx.MessageBox(_("Questions must have at least 2 answers."))
 			return False
 
 		for counter in range(1, 6):
 			exec("txtAnswer = self.txtAnswer" + `counter`)
-			exec("txtID = self.txtID" + `counter`)
 			exec("chkCorrect = self.chkCorrect" + `counter`)
 
 			if not len(txtAnswer.GetValue()) == 0:
 				newchoice = QuizItemChoice()
-
-				if not len(txtID.GetValue()) == 0:
-					newchoice.id = txtID.GetValue()
-				else: 
-					newchoice.id = "A" + `counter`
+				newchoice.id = "A" + `counter`
 
 				newchoice.text = txtAnswer.GetValue()					
 
-				if chkCorrect.GetValue() == true:
+				if chkCorrect.GetValue() == True:
 					var = QuizItemVariable()
 					var.value = newchoice.id
 					correctcondition.variables.append(var)
@@ -907,64 +859,23 @@ class QuestionEditor(wxDialog):
 				self.question.presentation.choices.append(newchoice)
 
 		self.question.conditions.append(correctcondition)
-
-		self.EndModal(wxID_OK)
-
-class QuestionFeedbackDialog(wxDialog):
-	def __init__(self, parent, feedback):
-		self.feedback = feedback
-		wxDialog.__init__(self, parent, -1, _("Question Editor"), wxPoint(100, 100))
-		self.lblCorrect = wxStaticText(self, -1, _("Correct Answer Feedback"))
-		self.txtCorrect = wxTextCtrl(self, -1, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE)
-		self.lblIncorrect = wxStaticText(self, -1, _("Incorrect Answer Feedback"))
-		self.txtIncorrect = wxTextCtrl(self, -1, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE)
-
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
 		
-		self.mysizer = wxBoxSizer(wxVERTICAL)
-		self.mysizer.Add(self.lblCorrect, 0, wxALL, 4)
-		self.mysizer.Add(self.txtCorrect, 1, wxEXPAND | wxALL, 4)
-		self.mysizer.Add(self.lblIncorrect, 0, wxALL, 4)
-		self.mysizer.Add(self.txtIncorrect, 1, wxEXPAND | wxALL, 4)
-		
-		self.buttonsizer = wxStdDialogButtonSizer()
-		self.buttonsizer.AddButton(self.btnOK)
-		self.buttonsizer.AddButton(self.btnCancel)
-		self.buttonsizer.Realize()
-		self.mysizer.Add(self.buttonsizer, 0, wxEXPAND)
-
-		self.btnOK.SetDefault()
-		for itemfeedback in feedback:
-			if itemfeedback.id == "Correct":
-				self.txtCorrect.SetValue(itemfeedback.text)
-			elif itemfeedback.id == "Incorrect":
-				self.txtIncorrect.SetValue(itemfeedback.text)
-
-		self.SetAutoLayout(true)
-		self.SetSizerAndFit(self.mysizer)
-		self.Layout()
-
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.SaveFeedback)
-
-
-	def SaveFeedback(self, event):
-		self.feedback = []
+		self.question.feedback = []
 		if len(self.txtCorrect.GetValue()) > 0:
 			newfeedback = QuizItemFeedback()
 			newfeedback.id = "Correct"
 			newfeedback.view = "Candidate"
 			newfeedback.text = self.txtCorrect.GetValue()
-			self.feedback.append(newfeedback)
+			self.question.feedback.append(newfeedback)
 
 		if len(self.txtIncorrect.GetValue()) > 0:
 			newfeedback = QuizItemFeedback()
 			newfeedback.id = "Incorrect"
 			newfeedback.view = "Candidate"
 			newfeedback.text = self.txtIncorrect.GetValue()
-			self.feedback.append(newfeedback)
-		
-		self.EndModal(wxID_OK)
+			self.question.feedback.append(newfeedback)
+			
+		self.EndModal(wx.ID_OK)
 
 def Test():
 	quiz = QuizPage()
