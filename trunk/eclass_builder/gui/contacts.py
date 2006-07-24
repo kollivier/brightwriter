@@ -1,51 +1,45 @@
 import string, sys, os
-from wxPython.wx import *
+import wx
+import wxaddons.sized_controls as sc
+import wxaddons.persistence
+
 from conman import vcard
 import utils
 import fileutils
+import settings
 
-class ContactsDialog(wxDialog):
+class ContactsDialog(sc.SizedDialog):
 	def __init__(self, parent):
-		wxDialog.__init__ (self, parent, -1, _("Contact Manager"), wxPoint(100,100),wxSize(300,300), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		sc.SizedDialog.__init__ (self, parent, -1, _("Contact Manager"), 
+		                          wx.Point(100,100),wx.Size(300,300), 
+		                          wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		                          
 		self.parent = parent
-		self.lstContacts = wxListBox(self, -1)
-
-		self.btnAdd = wxButton(self, -1, _("Add"))
-		self.btnEdit = wxButton(self, -1, _("Edit"))
-		self.btnRemove = wxButton(self, -1, _("Remove"))
-
-		self.btnImport = wxButton(self, -1, _("Import"))
-		self.btnClose = wxButton(self, wxID_CANCEL, _("Close"))
-
-		EVT_BUTTON(self.btnAdd, self.btnAdd.GetId(), self.OnAdd)
-		EVT_BUTTON(self.btnImport, self.btnImport.GetId(), self.OnImport)
-		EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.OnEdit)
-		EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.OnRemove)
-
-		mysizer = wxBoxSizer(wxVERTICAL)
-		contactsizer = wxBoxSizer(wxHORIZONTAL)
-		contactsizer.Add(self.lstContacts, 1, wxEXPAND | wxALL, 4)
-
-		contactBtnSizer = wxBoxSizer(wxVERTICAL)
-		contactBtnSizer.Add(self.btnAdd)
-		contactBtnSizer.Add(self.btnEdit)
-		contactBtnSizer.Add(self.btnRemove)
-		contactsizer.Add(contactBtnSizer, 0, wxALL | wxALIGN_CENTRE, 4)
-
-		mysizer.Add(contactsizer, 1, wxEXPAND)
-
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add(self.btnImport, 0, wxALL, 4)
-		btnsizer.Add((1,1), 1, wxEXPAND)
-		btnsizer.Add(self.btnClose, 0, wxALL, 4)
+		pane = self.GetContentsPane()
 		
-		mysizer.Add(btnsizer, 0, wxEXPAND)
+		wx.StaticText(pane, -1, _("Contacts"))
+		
+		self.lstContacts = wx.ListBox(pane, -1)
+		self.lstContacts.SetSizerProps({"expand":True, "proportion":1})
 
-		self.SetSizer(mysizer)
-		self.SetAutoLayout(True)
+		btnPane = sc.SizedPanel(pane, -1)
+		btnPane.SetSizerType("horizontal")
+		btnPane.SetSizerProp("halign", "center")
+		
+		self.btnImport = wx.Button(btnPane, -1, _("Import"))
+		self.btnAdd = wx.Button(btnPane, -1, _("Add"))
+		self.btnEdit = wx.Button(btnPane, -1, _("Edit"))
+		self.btnRemove = wx.Button(btnPane, -1, _("Remove"))
+
+		wx.EVT_BUTTON(self.btnAdd, self.btnAdd.GetId(), self.OnAdd)
+		wx.EVT_BUTTON(self.btnImport, self.btnImport.GetId(), self.OnImport)
+		wx.EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.OnEdit)
+		wx.EVT_LISTBOX_DCLICK(self.lstContacts, self.lstContacts.GetId(), self.OnEdit)
+		wx.EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.OnRemove)
 
 		self.LoadContacts()
-		self.Layout()
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 
 	def LoadContacts(self):
 		self.lstContacts.Clear()
@@ -56,28 +50,33 @@ class ContactsDialog(wxDialog):
 	def OnAdd(self, event):
 		thisvcard = vcard.VCard()
 		editor = ContactEditor(self, thisvcard)
-		if editor.ShowModal() == wxID_OK:
+		if editor.ShowModal() == wx.ID_OK:
 			thisname = editor.vcard.fname.value
 			self.parent.vcardlist[thisname] = editor.vcard
 			self.lstContacts.Append(thisname, self.parent.vcardlist[thisname])
 
 	def OnImport(self, event):
-		dialog = wxFileDialog(self, _("Choose a vCard"), "", "", _("vCard Files") + " (*.vcf)|*.vcf", wxOPEN)
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.FileDialog(self, _("Choose a vCard"), "", "", 
+		                      _("vCard Files") + " (*.vcf)|*.vcf", wx.OPEN)
+		
+		if dialog.ShowModal() == wx.ID_OK:
 			filename = ""
 			try:
-				contactsdir = os.path.join(self.parent.PrefDir, "Contacts")
+				contactsdir = os.path.join(settings.PrefDir, "Contacts")
 				shutil.copy(dialog.GetPath(), contactsdir)
 				newvcard = vcard.VCard()
 				filename = os.path.join(contactsdir, dialog.GetFilename())
 				#if sys.platform == "win32":
 				#	filename = win32api.GetShortPathName(filename)
 				newvcard.parseFile(filename)
+				
+				# make a fullname entry if one doesn't exist
 				if newvcard.fname.value == "":
 					myvcard.fname.value = myvcard.name.givenName + " "
 					if myvcard.name.middleName != "":
 						myvcard.fname.value = myvcard.fname.value + myvcard.name.middleName + " "
 					myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
+				
 				self.parent.vcardlist[newvcard.fname.value] = newvcard
 				self.lstContacts.Append(newvcard.fname.value, newvcard)
 			except:
@@ -88,13 +87,13 @@ class ContactsDialog(wxDialog):
 					except:
 						pass
 				self.parent.log.write(message)
-				wxMessageBox(message)
+				wx.MessageBox(message)
 
 	def OnEdit(self, event):
 		thisvcard = self.lstContacts.GetClientData(self.lstContacts.GetSelection())
 		name = thisvcard.fname.value
 		editor = ContactEditor(self, thisvcard)
-		if editor.ShowModal() == wxID_OK:
+		if editor.ShowModal() == wx.ID_OK:
 			thisname = editor.vcard.fname.value
 			if name != thisname:
 				self.parent.vcardlist.pop(name)
@@ -103,87 +102,73 @@ class ContactsDialog(wxDialog):
 		editor.Destroy()
 
 	def OnRemove(self, event):
-		result = wxMessageDialog(self, _("This action cannot be undone. Would you like to continue?"), _("Remove Contact?"), wxYES_NO).ShowModal()
-		if result == wxID_YES:
+		result = wx.MessageDialog(self, 
+		                       _("This action cannot be undone. Would you like to continue?"), 
+		                       _("Remove Contact?"), wx.YES_NO).ShowModal()
+		if result == wx.ID_YES:
 			thisvcard = self.lstContacts.GetClientData(self.lstContacts.GetSelection())
 			try:
 				os.remove(thisvcard.filename)
 			except:
 				message = _("The contact could not be deleted. Please ensure you have the proper permissions to access the EClass.Builder data directory.")
 				self.parent.log.write(message)
-				wxMessageBox(message)
+				wx.MessageBox(message)
 				return
 
 			del self.parent.vcardlist[thisvcard.fname.value]
 			self.lstContacts.Delete(self.lstContacts.GetSelection())
 
-class ContactEditor(wxDialog):
+class ContactEditor(sc.SizedDialog):
 	def __init__(self, parent, myvcard):
-		wxDialog.__init__ (self, parent, -1, _("Contact Editor"), wxPoint(100,100),wxSize(300,300), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		sc.SizedDialog.__init__ (self, parent, -1, _("Contact Editor"), 
+		                          wx.Point(100,100), wx.Size(300,300), 
+		                          wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.myvcard = myvcard
 		self.parent = parent
-		self.lblFullName = wxStaticText(self, -1, _("Full Name"))
-		self.txtFullName = wxTextCtrl(self, -1, myvcard.fname.value)
-		self.lblFirstName = wxStaticText(self, -1, _("First"))
-		self.txtFirstName = wxTextCtrl(self, -1, myvcard.name.givenName)
-		self.lblMiddleName = wxStaticText(self, -1, _("Middle"))
-		self.txtMiddleName = wxTextCtrl(self, -1, myvcard.name.middleName)
-		self.lblLastName = wxStaticText(self, -1, _("Last"))
-		self.txtLastName = wxTextCtrl(self, -1, myvcard.name.familyName)
-		self.lblPrefix = wxStaticText(self, -1, _("Prefix"))
-		self.txtPrefix = wxTextCtrl(self, -1, myvcard.name.prefix, size=wxSize(40, -1))
-		self.lblSuffix = wxStaticText(self, -1, _("Suffix"))
-		self.txtSuffix = wxTextCtrl(self, -1, myvcard.name.suffix, size=wxSize(40, -1))
+		pane = self.GetContentsPane()
+		pane.SetSizerType("form")
+		wx.StaticText(pane, -1, _("Full Name"))
+		self.txtFullName = wx.TextCtrl(pane, -1, myvcard.fname.value)
+		
+		wx.StaticText(pane, -1, _("First"))
+		self.txtFirstName = wx.TextCtrl(pane, -1, myvcard.name.givenName)
+		
+		wx.StaticText(pane, -1, _("Middle"))
+		self.txtMiddleName = wx.TextCtrl(pane, -1, myvcard.name.middleName)
+		
+		wx.StaticText(pane, -1, _("Last"))
+		self.txtLastName = wx.TextCtrl(pane, -1, myvcard.name.familyName)
+		
+		wx.StaticText(pane, -1, _("Prefix"))
+		self.txtPrefix = wx.TextCtrl(pane, -1, myvcard.name.prefix, size=wx.Size(40, -1))
+		
+		wx.StaticText(pane, -1, _("Suffix"))
+		self.txtSuffix = wx.TextCtrl(pane, -1, myvcard.name.suffix, size=wx.Size(40, -1))
 
-		self.lblTitle = wxStaticText(self, -1, _("Title"))
-		self.txtTitle = wxTextCtrl(self, -1, myvcard.title.value)
+		wx.StaticText(pane, -1, _("Title"))
+		self.txtTitle = wx.TextCtrl(pane, -1, myvcard.title.value)
 
-		self.lblOrganization = wxStaticText(self, -1, _("Organization"))
-		self.txtOrganization = wxTextCtrl(self, -1, myvcard.organization.name)
+		wx.StaticText(pane, -1, _("Organization"))
+		self.txtOrganization = wx.TextCtrl(pane, -1, myvcard.organization.name)
 
-		self.lblEmail = wxStaticText(self, -1, _("Email"))
+		wx.StaticText(pane, -1, _("Email"))
 		email = ""
 		if len(myvcard.emails) > 0:
 			email = myvcard.emails[0].value
 
-		self.txtEmail = wxTextCtrl(self, -1, email)
+		self.txtEmail = wx.TextCtrl(pane, -1, email)
 
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
+		self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
 
-		mysizer = wxBoxSizer(wxVERTICAL)
-		prefixsizer = wxBoxSizer(wxHORIZONTAL)
-		prefixsizer.AddMany([(self.lblFullName, 0, wxALL, 4), (self.txtFullName, 1, wxALL | wxEXPAND, 4)])
-		mysizer.Add(prefixsizer)
-		propsizer = wxFlexGridSizer(2, 6, 2, 2)
-		propsizer.AddMany([
-						(self.lblFirstName, 0, wxALL, 4), (self.txtFirstName, 0, wxALL | wxEXPAND, 4),
-						(self.lblMiddleName, 0, wxALL, 4), (self.txtMiddleName, 0, wxALL, 4),
-						(self.lblLastName, 0, wxALL, 4), (self.txtLastName, 0, wxALL | wxEXPAND, 4),
-						(self.lblPrefix, 0, wxALL, 4), (self.txtPrefix, 0, wxALL, 4), 
-						(self.lblSuffix, 0, wxALL, 4), (self.txtSuffix, 0, wxALL, 4),((1,1))])
-		mysizer.Add(propsizer, 0, wxEXPAND)
-		propsizer2 = wxFlexGridSizer(2, 4, 2, 2)
-		propsizer2.AddMany([(self.lblTitle, 0, wxALL, 4), (self.txtTitle, 1, wxALL | wxEXPAND, 4), 
-						(self.lblOrganization, 0, wxALL, 4), (self.txtOrganization, 1, wxALL | wxEXPAND, 4),
-						(self.lblEmail, 0, wxALL, 4), (self.txtEmail, 1, wxALL | wxEXPAND, 4)])
-		mysizer.Add(propsizer2, 0, wxEXPAND)
-		
-		btnsizer = wxStdDialogButtonSizer()
-		btnsizer.AddButton(self.btnOK)
-		btnsizer.AddButton(self.btnCancel)
-		btnsizer.Realize()
-		mysizer.Add(btnsizer, 0, wxEXPAND | wxALL, 4)
+		self.Fit()
+		self.SetMinSize(self.GetSize())
 
-		self.SetSizerAndFit(mysizer)
-		self.SetAutoLayout(True)
-		self.Layout()
-
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.OnOK)
+		wx.EVT_BUTTON(self, wx.ID_OK, self.OnOK)
 
 	def OnOK(self, event):
 		if self.txtFullName.GetValue() == "":
-			wxMessageBox(_("You must enter a full name for this contact."))
+			wx.MessageBox(_("You must enter a full name for this contact."))
+			return
 
 		self.myvcard.fname.value = self.txtFullName.GetValue()
 		self.myvcard.name.prefix = self.txtPrefix.GetValue()
@@ -197,11 +182,14 @@ class ContactEditor(wxDialog):
 			self.myvcard.emails.append(vcard.Email())
 		self.myvcard.emails[0].value = self.txtEmail.GetValue()
 		if self.myvcard.filename == "":
-			prefdir = self.parent.parent.PrefDir
-			thisfilename = os.path.join(prefdir, "Contacts", fileutils.MakeFileName2(self.myvcard.fname.value) + ".vcf")
+			prefdir = settings.PrefDir
+			thisfilename = os.path.join(prefdir, "Contacts", 
+			                           fileutils.MakeFileName2(self.myvcard.fname.value) + ".vcf")
 			if os.path.exists(thisfilename):
-				result = wxMessageDialog(self, _("A contact with this name already exists. Overwrite existing contact file?"), _("Overwrite contact?"), wxYES_NO).ShowModal()
-				if result == wxID_YES: 
+				result = wx.MessageDialog(self, _("A contact with this name already exists. Overwrite existing contact file?"),
+				                                _("Overwrite contact?"), 
+				                                wx.YES_NO).ShowModal()
+				if result == wx.ID_YES: 
 					self.myvcard.filename = thisfilename
 				else:
 					return 
@@ -213,4 +201,4 @@ class ContactEditor(wxDialog):
 		myfile.close()
 
 		self.vcard = self.myvcard
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
