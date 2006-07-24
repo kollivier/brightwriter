@@ -2,7 +2,7 @@
 
 major = 2
 minor = 5
-release = 5
+release = 6
 #build = 14
 
 def asString():
