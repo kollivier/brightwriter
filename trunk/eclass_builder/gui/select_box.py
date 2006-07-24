@@ -44,7 +44,7 @@ class SelectBox(sc.SizedPanel):
     - textboxChanged: updates the textbox attribute whenever the textbox changes
     """
 
-    def __init__(self, parent, filename, type="File", startdir="", exts=[]):
+    def __init__(self, parent, filename, type="File", startdir="", exts=[], textsize=(-1, -1)):
         self.parent = parent
         self.type = type
         self.exts = exts
@@ -63,7 +63,7 @@ class SelectBox(sc.SizedPanel):
         self.SetSizerProp("border", (["all"], 0))
         
         icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wx.BITMAP_TYPE_GIF)
-        self.textbox = wx.TextCtrl(self, -1, filename)
+        self.textbox = wx.TextCtrl(self, -1, filename, size=textsize)
         self.textbox.SetSizerProp("expand", True)
         self.textbox.SetSizerProp("proportion", 1)
         self.selectbtn = wx.BitmapButton(self, -1, icnFolder)

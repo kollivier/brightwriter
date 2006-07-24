@@ -28,7 +28,7 @@ class PreferencesEditor(sc.SizedDialog):
 		wx.StaticText(pane, -1, _("HTML Editor"))
 		self.pickHTMLEditor = picker.SelectBox(pane, parent.settings["HTMLEditor"], 
 		                                        "Program Files", guiutils.getOSApplicationsDir(),
-		                                        [guiutils.getOSProgramExt()])
+		                                        [guiutils.getOSProgramExt()], textsize=(180, -1))
 		
 		wx.StaticText(pane, -1, _("OpenOffice Folder"))
 		self.pickOpenOffice = picker.SelectBox(pane, parent.settings["OpenOffice"], "Directory")
