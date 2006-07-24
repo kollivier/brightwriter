@@ -152,16 +152,6 @@ try:
 	import pythoncom
 except:
 	pass
-#A function to provide simple password encryption
-#not meant to deter hackers, but just to deter
-#people looking in config files.
-def munge(string, pad):
-	pad_length = len(pad)
-	s = ""
-	for i in range(len(string)):
-		c = ord(string[i]) ^ ord(pad[i % pad_length])
-		s = s + chr(c)
-	return s
 
 #----------------------------- MainFrame Class ----------------------------------------------
 
@@ -169,7 +159,6 @@ class MainFrame2(wxFrame):
 	def __init__(self, parent, ID, title):
 		busy = wxBusyCursor()
 		wxFrame.__init__(self, parent, ID, title, wxDefaultPosition, wxSize(780,580), style=wxDEFAULT_FRAME_STYLE|wxCLIP_CHILDREN|wxNO_FULL_REPAINT_ON_RESIZE)
-		self.encoding = "iso8859-1"
 		self.CurrentFilename = ""
 		self.isDirty = False
 		self.isNewCourse = False
@@ -339,8 +328,8 @@ class MainFrame2(wxFrame):
 		PasteMenu.Append(ID_PASTE_CHILD, _("Paste As Child"))
 		#self.PasteMenu = PasteMenu
 		EditMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu)
-		EditMenu.AppendSeparator()
-		EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
+		#EditMenu.AppendSeparator()
+		#EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
 
 		#create the PopUp Menu used when a user right-clicks on an item
 		self.PopMenu = wxMenu()
@@ -1100,21 +1089,12 @@ class MainFrame2(wxFrame):
 				self.CurrentFilename = f.GetPath()
 				self.isDirty = False
 			f.Destroy()
-		ftppass_file = os.path.join(self.ProjectDir, "ftppass.txt")
-		try:
-			file = utils.openFile(ftppass_file, "w")
-			file.write(munge(self.ftppass, 'foobar'))
-			file.close()
-		except:
-			message = utils.getStdErrorMessage("IOError", {"filename":ftppass_file, "type":"write"})
-			self.log.write(message)
-			wxMessageDialog(self, message, _("Could Not Save File"), wxOK).ShowModal()
 		
 		self.CreateDocumancerBook()
 		self.CreateDevHelpBook()
 
 		try:
-			self.pub.SaveAsXML(self.CurrentFilename, self.encoding)
+			self.pub.SaveAsXML(self.CurrentFilename)
 			self.isDirty = False
 		except IOError, e:
 			message = _("Could not save EClass project file. Error Message is:")
@@ -1201,12 +1181,8 @@ class MainFrame2(wxFrame):
 				dialog.txtTitle.SetValue(name)
 
 			if dialog.ShowModal() == wxID_OK:
-				plugintext = dialog.cmbType.GetStringSelection() #self.PopMenu.GetLabel(event.GetId())
-				plugin = None
-				for myplugin in plugins.pluginList:
-					if not string.find(plugintext, myplugin.plugin_info["FullName"]) == -1:
-						plugin = myplugin
-		
+				pluginName = dialog.cmbType.GetStringSelection()
+				plugin = plugins.GetPlugin(pluginName)
 				if plugin and self.CurrentItem and self.CurrentTreeItem:
 					if not isroot:
 						parent = self.CurrentTreeItem
@@ -1215,11 +1191,12 @@ class MainFrame2(wxFrame):
 						parent = None
 						newnode = self.CurrentItem
 					self.CurrentItem = newnode
-					newnode.content.metadata.name = dialog.txtTitle.GetValue() #"New Page"
+					newnode.content.metadata.name = dialog.txtTitle.GetValue()
 					newnode.content.filename = os.path.join(plugin.plugin_info["Directory"], dialog.txtFilename.GetValue())
-					myplugin = eval("plugins." + plugin.plugin_info["Name"])
-					try:		
-						if myplugin.EditorDialog(self,self.CurrentItem).ShowModal() == wxID_OK:
+					
+					try:
+						file = plugin.CreateNewFile(newnode.content.metadata.name, os.path.join(settings.ProjectDir, newnode.content.filename))
+						if file: 
 							if not isroot:
 								newitem = self.wxTree.AppendItem(self.CurrentTreeItem, self.CurrentItem.content.metadata.name, -1, -1, wxTreeItemData(self.CurrentItem))
 								if not self.wxTree.IsExpanded(self.CurrentTreeItem):
@@ -1228,9 +1205,8 @@ class MainFrame2(wxFrame):
 								self.wxTree.SelectItem(newitem)
 							else:
 								self.wxTree.SetPyData(self.CurrentTreeItem, newnode)
+							self.EditFile(None)
 							self.UpdateContents()
-							self.Update()
-							self.isDirty = True
 						else:
 							self.CurrentItem.parent.children.remove(self.CurrentItem)
 					except:
@@ -1428,11 +1404,7 @@ class MainFrame2(wxFrame):
 				self.pub.settings["SearchProgram"] = "Lucene"
 				wxMessageBox(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
 
-			self.isDirty = False
-			if os.path.exists(os.path.join(settings.ProjectDir, "ftppass.txt")):
-				file = utils.openFile(os.path.join(settings.ProjectDir, "ftppass.txt"), "r")
-				self.ftppass = munge(file.read(), 'foobar')
-				file.close()	 
+			self.isDirty = False	 
 			self.Preview()
 			self.wxTree.SelectItem(self.wxTree.GetRootItem())
 			
