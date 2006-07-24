@@ -3,6 +3,12 @@ import utils
 import guiutils
 import time
 
+def getTraceback():
+	import traceback
+	type, value, trace = sys.exc_info()
+	list = traceback.format_exception_only(type, value) + ["\n"] + traceback.format_tb(trace)
+	return string.join(list, "")
+
 class AppErrorLog(utils.LogFile):
 	def __init__(self):
 		utils.LogFile.__init__(self)
@@ -13,10 +19,7 @@ class AppErrorLog(utils.LogFile):
 		#get traceback if available
 		tb = ""
 		try:
-			import traceback
-			type, value, trace = sys.exc_info()
-			list = traceback.format_exception_only(type, value) + ["\n"] + traceback.format_tb(trace)
-			tb = string.join(list, "")
+			tb = getTraceback()
 		except:
 			pass
 
