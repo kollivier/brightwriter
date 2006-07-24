@@ -64,6 +64,21 @@ def DeleteFolder(folder):
 
 	os.rmdir(folder)
 	
+def getShortenedFilename(filename):
+    oldfilename = filename
+    dirname = os.path.dirname(oldfilename)
+    myname, myext = os.path.splitext(oldfilename)
+    myname = myname[:31-len(myext)]
+    myfilename = myname + myext
+    counter = 1
+    while os.path.exists(os.path.join(dirname, myfilename)):
+        if counter > 9:
+            myfilename = myname[:-2] + `counter` + myext
+        else:
+            myfilename = myname[:-1] + `counter` + myext
+        counter = counter + 1
+        #print "new filename is: " + myfilename + "\n"
+    return os.path.join(dirname, myfilename)
 
 def MakeFileName2(mytext):
     """
