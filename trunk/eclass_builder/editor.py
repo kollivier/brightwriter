@@ -941,7 +941,7 @@ class MainFrame2(wxFrame):
 							dialog = wxMessageDialog(self, message, _("Publication ID Not Set"), wxOK).ShowModal()
 							return
 						try:
-							cddialog.UpdateIndex(gsdl, eclassdir)
+							cddialog.UpdateIndex(eclassdir)
 						except: 
 							message = _("There was an unexpected error publishing your course. For more details, check the Error Viewer from the 'Tools->Error Viewer' menu.")
 							self.log.write(message)
