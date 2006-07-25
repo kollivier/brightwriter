@@ -2,10 +2,8 @@ import sys, copy
 import os
 import re
 import StringIO
-#import pre as re
 import string
 import types
-from wxPython.wx import *
 from htmlutils import *
 from fileutils import *
 import settings
@@ -13,6 +11,8 @@ import tempfile
 import shutil
 import utils
 import constants
+
+import wx
 
 import plugins
 
@@ -57,7 +57,7 @@ class PDFPublisher:
 		self.ThirdPartyDir = parent.ThirdPartyDir
 		self.themedir = os.path.join(self.appdir, "themes", themename)
 		#self.templates = parent.templates
-		self.cancelled = false
+		self.cancelled = False
 		self.progress = None
 		self.pdffile = ""
 		self.pdfdir = ""
@@ -73,19 +73,15 @@ class PDFPublisher:
 			except:
 				log.write(_("Could not remove directory '%(dir)s'.") % {"dir": self.tempdir})
 
-		#if wxPlatform == "__WXMSW__":
-		#	import win32api
-		#	self.pdfdir = win32api.GetShortPathName(self.pdfdir.encode(utils.getCurrentEncoding(), "replace"))
 		try:
 			if not os.path.exists(self.tempdir):
 				os.mkdir(self.tempdir)
-			if isinstance(self.parent, wxFrame):
-				self.progress = wxProgressDialog("Publishing PDF", "Publishing PDF", self.parent.wxTree.GetCount() + 1, None, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT)
-			#self.CopySupportFiles()
-			#self.CreateTOC()
+			if isinstance(self.parent, wx.Frame):
+				self.progress = wx.ProgressDialog("Publishing PDF", "Publishing PDF", 
+				                self.parent.wxTree.GetCount() + 1, None, 
+				                wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_CAN_ABORT)
 			self.counter = 1
 			self.PublishPages(self.pub.nodes[0])
-			#shutil.copytree(os.path.join(self.ProjectDir, "Graphics"), os.path.join(self.tempdir, "Graphics"))
 		except:
 			if self.progress:
 				self.progress.Destroy()
@@ -128,16 +124,16 @@ class PDFPublisher:
 				bookpath = '"' + bookpath + '"' 
 			#print 'Command is: ' + htmldoc + ' --datadir %s --batch %s' % (datadir, bookpath)
 			command = htmldoc + " --datadir %s --batch %s" % (datadir, bookpath)
-			result = wxExecute(command, wxEXEC_SYNC)
+			result = wx.Execute(command, wx.EXEC_SYNC)
 			if result == -1:
 				message = _("Could not execute command '%(command)s'.") % {"command": command}
 				log.write(message)
-				wxMessageBox(message)
+				wx.MessageBox(message)
 		except:
 			message = _("Could not publish PDF File.")
 			log.write(message)
-			if isinstance(self.parent, wxFrame):
-				wxMessageBox(message  + constants.errorInfoMsg)
+			if isinstance(self.parent, wx.Frame):
+				wx.MessageBox(message  + constants.errorInfoMsg)
 			self.cancelled = True
 	
 		if self.progress:
@@ -159,12 +155,13 @@ class PDFPublisher:
 		if self.progress:
 			keepgoing = self.progress.Update(self.counter, _("Updating ") + node.content.metadata.name)
 		if not keepgoing:
-			result = wxMessageDialog(self.parent, _("Are you sure you want to cancel publishing this EClass?"), _("Cancel Publishing?"), wxYES_NO).ShowModal()
-			if result == wxID_NO:
-				self.cancelled = false
+			result = wx.MessageDialog(self.parent, _("Are you sure you want to cancel publishing this EClass?"), 
+			                             _("Cancel Publishing?"), wx.YES_NO).ShowModal()
+			if result == wx.ID_NO:
+				self.cancelled = False
 				self.progress.Resume()
 			else:
-				self.cancelled = true
+				self.cancelled = True
 				return
 		self.counter = self.counter + 1
 		if string.find(node.content.filename, "imsmanifest.xml") != -1:
