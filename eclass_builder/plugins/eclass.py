@@ -1,7 +1,5 @@
-#from wxPython.wx import *
 import string
 import os
-#import conman.conman as conman
 import conman
 import locale
 import re
