@@ -3,6 +3,7 @@ import string, sys, os
 import conman
 import fileutils
 import utils
+import settings
 
 class ThemeManager(wxDialog):
 	def __init__(self, parent):
@@ -12,23 +13,27 @@ class ThemeManager(wxDialog):
 
 		self.lstThemeList = wxListBox(self, -1, choices=self.parent.themes.GetPublicThemeNames())
 		self.lstThemeList.SetSelection(0)
-		self.AppDir = parent.AppDir
-		self.ProjectDir = os.path.join(self.parent.AppDir, "themes", "ThemePreview")
+
+		self.oldProjectDir = settings.ProjectDir 
+		settings.ProjectDir = os.path.join(settings.AppDir, "themes", "ThemePreview")
+		self.themeTempDir = os.path.join(os.path.dirname(os.tmpnam()), "EClassPreview")
+		if not os.path.exists(self.themeTempDir):
+			os.makedirs(self.themeTempDir)
 		#if wxPlatform == "__WXMSW__":
 		#	self.ProjectDir = win32api.GetShortPathName(self.ProjectDir)
 		#self.templates = parent.templates
 		self.lblPreview = wxStaticText(self, -1, _("Theme Preview"))
 		self.pub = conman.ConMan()
-		self.pub.LoadFromXML(os.path.join(self.ProjectDir, "imsmanifest.xml"))
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.oldtheme = self.parent.pub.settings["Theme"]
+		self.pub.LoadFromXML(os.path.join(settings.ProjectDir, "imsmanifest.xml"))
+		self.btnOK = wxButton(self, wxID_OK, _("Close"))
+		self.oldtheme = settings.ProjectSettings["Theme"]
 		
 		import wxbrowser
 		self.browser = wxbrowser.wxBrowser(self, -1)
 
-		icnNewTheme = wxBitmap(os.path.join(self.parent.AppDir, "icons", "plus16.gif"), wxBITMAP_TYPE_GIF)
-		icnCopyTheme = wxBitmap(os.path.join(self.parent.AppDir, "icons", "copy16.gif"), wxBITMAP_TYPE_GIF)
-		icnDeleteTheme = wxBitmap(os.path.join(self.parent.AppDir, "icons", "minus16.gif"), wxBITMAP_TYPE_GIF)
+		icnNewTheme = wxBitmap(os.path.join(settings.AppDir, "icons", "plus16.gif"), wxBITMAP_TYPE_GIF)
+		icnCopyTheme = wxBitmap(os.path.join(settings.AppDir, "icons", "copy16.gif"), wxBITMAP_TYPE_GIF)
+		icnDeleteTheme = wxBitmap(os.path.join(settings.AppDir, "icons", "minus16.gif"), wxBITMAP_TYPE_GIF)
 
 		self.btnNewTheme = wxBitmapButton(self, -1, icnNewTheme)
 		self.btnCopyTheme = wxBitmapButton(self, -1, icnCopyTheme)
@@ -80,14 +85,27 @@ class ThemeManager(wxDialog):
 		EVT_BUTTON(self, self.btnExportTheme.GetId(), self.ExportTheme)
 		EVT_BUTTON(self, self.btnImportTheme.GetId(), self.ImportTheme)
 		EVT_LISTBOX(self, self.lstThemeList.GetId(), self.OnThemeChanged)
-
+		EVT_CLOSE(self, self.OnClose)
+		EVT_BUTTON(self, wxID_OK, self.OnOKClicked)
+	
+	def OnOKClicked(self, event):
+		self.Cleanup()
+		event.Skip()
+		
+	def Cleanup(self):
+		settings.ProjectDir = self.oldProjectDir
+		
+	def OnClose(self, event):
+		self.Cleanup()
+		event.Skip()
+	
 	def OnThemeChanged(self, event):
 		themename = self.lstThemeList.GetStringSelection()
 		self.currentTheme = self.parent.themes.FindTheme(themename)
-		publisher = self.currentTheme.HTMLPublisher(self)
+		publisher = self.currentTheme.HTMLPublisher(self, dir=self.themeTempDir)
 		result = publisher.Publish()
 		if result:
-			self.browser.LoadPage(os.path.join(self.ProjectDir, "index.htm"))
+			self.browser.LoadPage(os.path.join(self.themeTempDir, "index.htm"))
 
 	def OnSetTheme(self, event):
 		self.UpdateTheme()
@@ -104,7 +122,7 @@ class ThemeManager(wxDialog):
 		if not mytheme == "":
 			theme = self.parent.themes.FindTheme(mytheme)
 			self.parent.currentTheme = theme
-			self.parent.pub.settings["Theme"] = mytheme
+			settings.ProjectSettings["Theme"] = mytheme
 		else:
 			self.parent.currentTheme = self.parent.themes.FindTheme("Default (frames)")
 			
@@ -118,13 +136,13 @@ class ThemeManager(wxDialog):
 	def OnNewTheme(self, event):
 		dialog = wxTextEntryDialog(self, _("Please type a name for your new theme"), _("New Theme"), _("New Theme"))
 		if dialog.ShowModal() == wxID_OK:
-			themedir = os.path.join(self.parent.AppDir, "themes")
+			themedir = os.path.join(settings.AppDir, "themes")
 			filename = string.replace(fileutils.MakeFileName2(dialog.GetValue()) + ".py", "-", "_")
 			foldername = utils.createSafeFilename(dialog.GetValue())
 			try:
 				os.mkdir(os.path.join(themedir, foldername))
 			except:
-				message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(self.parent.AppDir, "themes")}
+				message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(settings.AppDir, "themes")}
 				self.parent.log.write(message)
 				wxMessageBox(message)
 				return 
@@ -134,11 +152,12 @@ class ThemeManager(wxDialog):
 			data = """
 from BaseTheme import *
 themename = "%s"
+import settings
 
 class HTMLPublisher(BaseHTMLPublisher):
 	def __init__(self, parent):
 		BaseHTMLPublisher.__init__(self, parent)
-		self.themedir = os.path.join(self.appdir, "themes", themename)
+		self.themedir = os.path.join(settings.AppDir, "themes", themename)
 """ % (string.replace(dialog.GetValue(), "\"", "\\\""))
 
 
@@ -163,7 +182,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			return 
 		dialog = wxMessageDialog(self, _("Are you sure you want to delete the theme '%(theme)s'? This action cannot be undone.") % {"theme":self.lstThemeList.GetStringSelection()}, _("Confirm Delete"), wxYES_NO)
 		if dialog.ShowModal() == wxID_YES:
-			themedir = os.path.join(self.parent.AppDir, "themes")
+			themedir = os.path.join(settings.AppDir, "themes")
 			themefile = os.path.join(themedir, filename)
 			if os.path.exists(themefile):
 				os.remove(themefile)
@@ -184,7 +203,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 	def OnCopyTheme(self, event):
 		dialog = wxTextEntryDialog(self, _("Please type a name for your new theme"), _("New Theme"), "")
 		if dialog.ShowModal() == wxID_OK:  
-			themedir = os.path.join(self.parent.AppDir, "themes")
+			themedir = os.path.join(settings.AppDir, "themes")
 			filename = string.replace(fileutils.MakeFileName2(dialog.GetValue()) + ".py", " ", "_")
 			otherfilename = string.replace(fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
 			otherfilename = string.replace(otherfilename, "(", "")
@@ -193,7 +212,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			try:
 				os.mkdir(os.path.join(themedir, foldername))
 			except:
-				message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(self.parent.AppDir, "themes")}
+				message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(settings.AppDir, "themes")}
 				self.parent.log.write(message)
 				wxMessageBox(message)
 				return 
@@ -227,7 +246,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			filename = dialog.GetPath()
 			themezip = zipfile.ZipFile(filename, "w")
 			themepyfile = string.replace(themename + ".py", " ", "_")
-			themezip.write(os.path.join(self.parent.AppDir, "themes", themepyfile), themepyfile)
+			themezip.write(os.path.join(settings.AppDir, "themes", themepyfile), themepyfile)
 			themefolder = utils.createSafeFilename(self.lstThemeList.GetStringSelection())
 			self.AddDirToZip(themefolder, themezip)
 			themezip.close()
@@ -235,10 +254,10 @@ class HTMLPublisher(BaseHTMLPublisher):
 		dialog.Destroy()
 
 	def AddDirToZip(self, dir, zip):
-		for item in os.listdir(os.path.join(self.AppDir, "themes", dir)):
-			if os.path.isfile(os.path.join(self.AppDir, "themes", dir, item)):
-				zip.write(os.path.join(self.AppDir, "themes", dir, item), os.path.join(dir, item))
-			elif os.path.isdir(os.path.join(self.AppDir, "themes", dir, item)):
+		for item in os.listdir(os.path.join(settings.AppDir, "themes", dir)):
+			if os.path.isfile(os.path.join(settings.AppDir, "themes", dir, item)):
+				zip.write(os.path.join(settings.AppDir, "themes", dir, item), os.path.join(dir, item))
+			elif os.path.isdir(os.path.join(settings.AppDir, "themes", dir, item)):
 				self.AddDirToZip(os.path.join(dir, item), zip)
 
 	def ImportTheme(self, event=None):
@@ -250,10 +269,10 @@ class HTMLPublisher(BaseHTMLPublisher):
 			files = themezip.infolist()
 			for file in files:
 				data = themezip.read(file.filename)
-				if not os.path.exists(os.path.join(self.AppDir, "themes", os.path.dirname(file.filename))):
-					os.mkdir(os.path.join(self.AppDir, "themes", os.path.dirname(file.filename)))
+				if not os.path.exists(os.path.join(settings.AppDir, "themes", os.path.dirname(file.filename))):
+					os.mkdir(os.path.join(settings.AppDir, "themes", os.path.dirname(file.filename)))
 
-				file = utils.openFile(os.path.join(self.AppDir, "themes", file.filename), "wb")
+				file = utils.openFile(os.path.join(settings.AppDir, "themes", file.filename), "wb")
 				file.write(data)
 				file.close()
 				self.ReloadThemes()

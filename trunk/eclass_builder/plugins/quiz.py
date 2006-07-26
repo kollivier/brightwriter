@@ -473,7 +473,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 	def GetData(self):
 		self.quiz = QuizPage()
-		self.quiz.LoadPage(os.path.join(self.dir, self.node.content.filename))
+		self.quiz.LoadPage(os.path.join(settings.ProjectDir, self.node.content.filename))
 
 		self.data['content'] = self._ItemsAsHTML()
 		#self.data['credit'] = ""
@@ -483,11 +483,11 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			if not os.path.exists(os.path.join(self.dir, "Graphics", "Quiz")):
 				os.mkdir(os.path.join(self.dir, "Graphics", "Quiz"))
 			
-			CopyFiles(os.path.join(self.parent.AppDir, "plugins", "Quiz", "Files", "Graphics"), os.path.join(self.dir, "Graphics", "Quiz"), 1)
+			CopyFiles(os.path.join(settings.AppDir, "plugins", "Quiz", "Files", "Graphics"), os.path.join(self.dir, "Graphics", "Quiz"), 1)
 
 		except: 
 			global log
-			message = _("Could not copy Quiz files from %(directory)s to your EClass. Please check that you have enough hard disk space to write this file and that you have permission to write to the directory.") % {"directory":os.path.join(self.parent.AppDir, "plugins", "Quiz", "Files")}
+			message = _("Could not copy Quiz files from %(directory)s to your EClass. Please check that you have enough hard disk space to write this file and that you have permission to write to the directory.") % {"directory":os.path.join(settings.AppDir, "plugins", "Quiz", "Files")}
 			log.write(message)
 			raise IOError, message
 			return ""	
@@ -667,7 +667,7 @@ class EditorDialog(sc.SizedDialog):
 		self.btnRemove = wx.Button(btnPane, -1, _("Remove"))
 		
 		if len(self.item.content.filename) > 0: 
-			filename = os.path.join(self.parent.ProjectDir, self.item.content.filename)
+			filename = os.path.join(settings.ProjectDir, self.item.content.filename)
 			try:
 				self.quiz.LoadPage(filename)
 			except IOError, msg:
@@ -679,8 +679,6 @@ class EditorDialog(sc.SizedDialog):
 
 			for item in self.quiz.items:
 				self.lstQuestions.Append(item.presentation.text, item)
-
-		self.item.content.filename = filename
 
 		self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
 		
@@ -761,7 +759,7 @@ class QuestionEditor(sc.SizedDialog):
 		# feedback
 		fPane = sc.SizedPanel(pane, -1)
 		fPane.SetSizerType("form")
-		fPane.SetSizerProps("expand", True)
+		fPane.SetSizerProp("expand", True)
 		
 		wx.StaticText(fPane, -1, _("Correct Answer Feedback"))
 		wx.StaticText(fPane, -1, _("Incorrect Answer Feedback"))

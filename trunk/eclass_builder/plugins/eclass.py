@@ -490,9 +490,9 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		return filename
 
 	def GetData(self):
-		filename = os.path.join(self.dir, self.node.content.filename)
+		filename = os.path.join(settings.ProjectDir, self.node.content.filename)
 		if not os.path.exists(filename):
-			filename = os.path.join(self.dir, "EClass", self.node.content.filename)
+			filename = os.path.join(settings.ProjectDir, "EClass", self.node.content.filename)
 		self.mypage = EClassPage()
 		self.mypage.LoadPage(filename)
 		
@@ -1091,7 +1091,7 @@ class EditorDialog (sc.SizedDialog):
 			dirname = os.path.join(settings.ProjectDir, "File")
 		fileutils.CopyFile(basename, os.path.dirname(event.filename), dirname)
 		filename = os.path.join(dirname, basename)
-		if settings.options["ShortenFilenames"].lower() == "yes":
+		if settings.AppSettings["ShortenFilenames"].lower() == "yes":
 			newfile = fileutils.getShortenedFilename(filename)
 			os.rename(filename, newfile)
 			filename = newfile
@@ -1212,7 +1212,7 @@ class EditorDialog (sc.SizedDialog):
 		
 			author.entity.fname.value = self.txtAuthor.GetValue()
 			if author.entity.filename == "":
-				afilename = os.path.join(self.parent.PrefDir, "Contacts", fileutils.MakeFileName2(author.entity.fname.value) + ".vcf")
+				afilename = os.path.join(settings.PrefDir, "Contacts", fileutils.MakeFileName2(author.entity.fname.value) + ".vcf")
 				author.entity.filename = afilename
 			
 			author.entity.saveAsFile()

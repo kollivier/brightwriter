@@ -2,6 +2,7 @@ import string, sys, os
 import wx
 import wxaddons.sized_controls as sc
 import wxaddons.persistence
+import settings
 
 class OpenPubDialog(sc.SizedDialog):
 	def __init__(self, parent):
@@ -13,7 +14,7 @@ class OpenPubDialog(sc.SizedDialog):
 		self.lblSelect = wx.StaticText(pane, -1, _("Select a publication:"))
 		self.cmbpubs = wx.ListBox(pane, -1)
 		self.cmbpubs.SetSizerProps({"expand": True, "proportion": 1})
-		self.coursedir = parent.settings["CourseFolder"]
+		self.coursedir = settings.AppSettings["CourseFolder"]
 
 		btnPane = sc.SizedPanel(pane, -1)
 		btnPane.SetSizerType("horizontal")

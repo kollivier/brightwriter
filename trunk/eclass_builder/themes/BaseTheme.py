@@ -10,6 +10,8 @@ import fileutils
 from htmlutils import *
 import plugins
 import utils
+import settings
+import constants
 
 isPublic = True
 from StringIO import StringIO
@@ -37,13 +39,21 @@ class BaseHTMLPublisher:
 	- PublishPages: Publishes each node in the ConMan project to HTML 
 	"""
 
-	def __init__(self, parent=None):
+	def __init__(self, parent=None, dir=""):
 		self.parent = parent
 		self.pub = parent.pub
-		self.dir = parent.ProjectDir
+		self.dir = dir
+		# be backwards compatible
+		if self.dir == "":
+			self.dir = settings.ProjectDir
+		
+		for subdir in constants.eclassdirs:
+			fulldir = os.path.join(self.dir, subdir)
+			if not os.path.exists(fulldir):
+				os.makedirs(fulldir)
+		
 		self.counter = 1
-		self.appdir = parent.AppDir
-		self.themedir = os.path.join(self.appdir, "themes", themename)
+		self.themedir = os.path.join(settings.AppDir, "themes", themename)
 		self.cancelled = false
 
 	def Publish(self):
@@ -55,7 +65,7 @@ class BaseHTMLPublisher:
 			#files.DeleteFiles(os.path.join(self.dir, "pub", "*.*"))
 
 			if isinstance(self.parent, wxFrame):
-				self.progress = wxProgressDialog(_("Updating EClass"), _("Preparing to update EClass..."), self.parent.wxTree.GetCount() + 1, None, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT)
+				self.progress = wxProgressDialog(_("Updating EClass"), _("Preparing to update EClass..."), self.parent.projectTree.GetCount() + 1, None, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT)
 			self.CopySupportFiles()
 			self.CreateTOC()
 			self.counter = 1
@@ -121,7 +131,7 @@ class BaseHTMLPublisher:
 					nodeType = "../Graphics/menu/win/chapter.gif"
 				else:
 					nodeType = "../Graphics/menu/win/page.gif"
-				self.counter = self.counter + 1							   
+				self.counter = self.counter + 1
 			
 				if len(root.children) > 0:
 					text = text + """level%sNode = insFld(%s, gFld("%s", "%s"))\n""" % (level + 1, nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)

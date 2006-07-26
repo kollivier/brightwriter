@@ -6,6 +6,8 @@ import select_box as picker
 import settings
 import gui.contacts
 
+import conman
+import conman.vcard as vcard
 import fileutils
 import utils
 import plugins

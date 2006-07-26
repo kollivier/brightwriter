@@ -123,6 +123,8 @@ class wxBrowser:
 	def SetPage(self, text):
 		if self.engine == "ie":
 			self.browser.LoadString(text)
+		elif self.engine == "webkit":
+			self.browser.SetPageSource(text)
 		else:
 			self.browser.SetPage(text)
 

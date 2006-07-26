@@ -14,7 +14,7 @@ def getOpenCommandForFilename(filename):
 	return ""
 	
 def openInHTMLEditor(filename):
-    htmleditor = settings.options["HTMLEditor"]
+    htmleditor = settings.AppSettings["HTMLEditor"]
     if htmleditor == "":
         wxMessageDialog(self, _("To edit the page, EClass needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wxOK).ShowModal()
     else:

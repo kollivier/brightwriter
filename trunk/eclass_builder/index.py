@@ -155,7 +155,7 @@ class Index:
         else:                   
             try:
                 myconverter = converter.DocConverter(self.parent)
-                thefilename, returnDataFormat = myconverter.ConvertFile(filename, "unicodeTxt", settings.options["PreferredConverter"])
+                thefilename, returnDataFormat = myconverter.ConvertFile(filename, "unicodeTxt", settings.AppSettings["PreferredConverter"])
                 if thefilename == "":
                     return ""
                 myfile = open(thefilename, "rb")

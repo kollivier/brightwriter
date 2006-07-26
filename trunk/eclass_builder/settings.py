@@ -1,10 +1,11 @@
 AppDir = ""
 ThirdPartyDir = ""
 ProjectDir = ""
+Project = None
+AppSettings = {}
 ProjectSettings = {}
 PrefDir = ""
 plugins = []
-options = {}
 utf8_html = True
 encoding = "iso-8859-1"
 	

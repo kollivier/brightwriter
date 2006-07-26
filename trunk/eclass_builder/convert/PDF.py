@@ -53,9 +53,8 @@ class PDFPublisher:
 		#	self.dir = string.replace(self.dir, " ", "\\ ")
 		Title = self.pub.nodes[0].content.metadata.name
 		self.counter = 1
-		self.appdir = parent.AppDir
-		self.ThirdPartyDir = parent.ThirdPartyDir
-		self.themedir = os.path.join(self.appdir, "themes", themename)
+
+		self.themedir = os.path.join(settings.AppDir, "themes", themename)
 		#self.templates = parent.templates
 		self.cancelled = False
 		self.progress = None
@@ -78,7 +77,7 @@ class PDFPublisher:
 				os.mkdir(self.tempdir)
 			if isinstance(self.parent, wx.Frame):
 				self.progress = wx.ProgressDialog("Publishing PDF", "Publishing PDF", 
-				                self.parent.wxTree.GetCount() + 1, None, 
+				                self.parent.projectTree.GetCount() + 1, None, 
 				                wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_CAN_ABORT)
 			self.counter = 1
 			self.PublishPages(self.pub.nodes[0])
@@ -111,9 +110,9 @@ class PDFPublisher:
 			return False
 		
 		if sys.platform == "win32":
-			htmldoc = os.path.join(self.ThirdPartyDir, "htmldoc", "htmldoc.exe")
+			htmldoc = os.path.join(settings.ThirdPartyDir, "htmldoc", "htmldoc.exe")
 		else:
-			htmldoc = os.path.join(self.ThirdPartyDir, "htmldoc", "bin", "htmldoc")
+			htmldoc = os.path.join(settings.ThirdPartyDir, "htmldoc", "bin", "htmldoc")
 
 		try:
 			datadir = os.path.dirname(htmldoc)
@@ -122,6 +121,10 @@ class PDFPublisher:
 				htmldoc = '"' + htmldoc + '"'
 				datadir = '"' + datadir + '"'
 				bookpath = '"' + bookpath + '"' 
+			else:
+				bookpath = bookpath.replace(" ", "\\ ")
+				datadir = datadir.replace(" ", "\\ ")
+				
 			#print 'Command is: ' + htmldoc + ' --datadir %s --batch %s' % (datadir, bookpath)
 			command = htmldoc + " --datadir %s --batch %s" % (datadir, bookpath)
 			result = wx.Execute(command, wx.EXEC_SYNC)
@@ -176,7 +179,7 @@ class PDFPublisher:
 					filename = publisher.GetFilename(node.content.filename)
 					publisher.data['name'] = TextToHTMLChar(node.content.metadata.name)
 					publisher.GetData()
-					templatefile = os.path.join(self.parent.AppDir, "convert", "PDF.tpl")
+					templatefile = os.path.join(settings.AppDir, "convert", "PDF.tpl")
 					publisher.data['charset'] = publisher.GetConverterEncoding()
 			
 					myhtml = publisher.ApplyTemplate(templatefile, publisher.data)
@@ -192,7 +195,7 @@ class PDFPublisher:
 						myfile.close()
 						self.files.append(os.path.join(self.tempdir, filename))
 				except:
-					message = _("Could not publish page '%(page)s'") % {"filename": os.path.join(self.tempdir, filename)}
+					message = _("Could not publish page '%(page)s'") % {"page": os.path.join(self.tempdir, filename)}
 					global log
 					log.write(message)
         	
