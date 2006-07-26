@@ -196,7 +196,6 @@ class ConMan (ConManData):
 			for i in range(0, len(toc.attributes)):
 				attr = toc.attributes.item(i)
 				if attr.name == "identifier" and string.find(attr.value, self.namespace) != -1:
-					print 'attr.value = ' + `attr.value`
 					self.orgid = string.replace(attr.value, self.namespace, "")
 					self.orgid = string.replace(self.orgid, "-", "")
 
