@@ -45,6 +45,7 @@ if __name__ == "__main__":
         eclass = os.path.join(eclass, "imsmanifest.xml")
         if not os.path.exists(eclass):
             print "Could not find EClass at %s. Exiting" % sys.argv[1]
+            sys.exit(1)
     
     # publish to the 
     EClassPublisher(eclass, os.path.dirname(eclass))
