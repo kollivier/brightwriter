@@ -81,7 +81,7 @@ class UpdateIndexDialog(sc.SizedDialog):
 			self.EndModal(wx.ID_OK) 
 
 	def UpdateIndex(self, eclassdir):
-		gsdl = settings.options["GSDL"]
+		gsdl = settings.AppSettings["GSDL"]
 		eclassdir = os.path.join(gsdl, "collect", self.parent.pub.pubid) 
 		self.processfinished = False
 		gsdl_supportdir = os.path.join(settings.AppDir, "greenstone")

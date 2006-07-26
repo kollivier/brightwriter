@@ -1,13 +1,14 @@
 from BaseTheme import *
 themename = "Default (no frames)"
 import utils
+import settings
 
 rootdir = "../"
 
 class HTMLPublisher(BaseHTMLPublisher):
-	def __init__(self, parent):
-		BaseHTMLPublisher.__init__(self, parent)
-		self.themedir = os.path.join(self.appdir, "themes", themename)
+	def __init__(self, parent=None, dir=""):
+		BaseHTMLPublisher.__init__(self, parent, dir)
+		self.themedir = os.path.join(settings.AppDir, "themes", themename)
 
 	def CreateTOC(self):
 		filename = rootdir + utils.GetFileLink(self.pub.nodes[0].content.filename)

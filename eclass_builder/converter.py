@@ -31,7 +31,7 @@ class DocConverter:
 		try:
 			global hasOOo
 			#check for OOo first, we can only do this once EClass settings are loaded
-			if settings.options["OpenOffice"] != "" and os.path.exists(settings.options["OpenOffice"]):
+			if settings.AppSettings["OpenOffice"] != "" and os.path.exists(settings.AppSettings["OpenOffice"]):
 				hasOOo = True
 			ext = string.lower(os.path.splitext(filename)[1][1:])
 			#print "ext = " + ext
@@ -282,7 +282,7 @@ if hasOOo:
     		self.url = "uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext"
     		
     	def ConvertFile(self, filename, outformat="html"):
-			oodir = settings.options["OpenOffice"]
+			oodir = settings.AppSettings["OpenOffice"]
 			if oodir != "":
 				oldcwd = os.getcwd()
 				os.chdir(settings.AppDir)

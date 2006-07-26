@@ -52,11 +52,11 @@ class NewPubDialog(sc.SizedDialog):
 		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 	
 	def btnOKClicked(self, event):
-		settings.ProjectDir = self.parent.ProjectDir = self.parent.pub.directory = os.path.join(self.parent.settings["CourseFolder"], utils.createSafeFilename(self.txtTitle.GetValue()))
+		settings.ProjectDir = self.parent.pub.directory = os.path.join(settings.AppSettings["CourseFolder"], utils.createSafeFilename(self.txtTitle.GetValue()))
 		#print self.parent.ProjectDir
 
-		if not os.path.exists(self.parent.ProjectDir):
-			os.mkdir(self.parent.ProjectDir)
+		if not os.path.exists(settings.ProjectDir):
+			os.mkdir(settings.ProjectDir)
 			self.parent.pub.name = self.txtTitle.GetValue()
 			self.parent.pub.description = self.txtDescription.GetValue()
 			self.parent.pub.keywords = self.txtKeywords.GetValue()
@@ -90,11 +90,11 @@ class NewPageDialog(sc.SizedDialog):
 		for plugin in plugins.pluginList:
 			if plugin.plugin_info["CanCreateNew"]:
 				self.cmbType.Append(plugin.plugin_info["FullName"])
-			if self.parent.settings["DefaultPlugin"] != "" and plugin.plugin_info["FullName"] == self.parent.settings["DefaultPlugin"]:
+			if plugin.plugin_info["FullName"] == settings.AppSettings["DefaultPlugin"]:
 				extension = "." + plugin.plugin_info["Extension"][0]
 		
-		if self.parent.settings["DefaultPlugin"] != "":
-			self.cmbType.SetStringSelection(self.parent.settings["DefaultPlugin"])
+		if settings.AppSettings["DefaultPlugin"] != "":
+			self.cmbType.SetStringSelection(settings.AppSettings["DefaultPlugin"])
 		else:
 			self.cmbType.SetStringSelection("EClass Page")
 		self.txtFilename.SetValue(self.txtTitle.GetValue())

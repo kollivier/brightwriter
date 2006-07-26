@@ -163,7 +163,7 @@ class BaseHTMLPublisher:
 		filename = self.GetFilename(node.content.filename)
 		self.GetLinks()
 		self.GetData()
-		templatefile = os.path.join(self.parent.AppDir, "themes", self.parent.currentTheme.themename, "default.tpl")
+		templatefile = os.path.join(settings.AppDir, "themes", self.parent.currentTheme.themename, "default.tpl")
 		self.data['charset'] = self.GetConverterEncoding()
 
 		myhtml = self.ApplyTemplate(templatefile, self.data)
@@ -240,3 +240,5 @@ class BaseHTMLPublisher:
 		elif ext == ".tal": #SimpleTAL support
 			pass #for now.... =)
 		return html
+		
+

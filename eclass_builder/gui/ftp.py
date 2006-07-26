@@ -425,7 +425,6 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		
 	def OnUploadCanceled(self):
 		self.btnOK.SetLabel(_("Upload"))
-		self.filesUploaded = 0
 		self.stopupload = False
 		if self.closewindow == True:
 			self.EndModal(wxID_OK)
@@ -471,6 +470,8 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		if self.btnOK.GetLabel() == _("Stop"):
 			self.stopupload = True
 			self.closewindow = False
+			if self.ftpService:
+				self.ftpService.stop()
 			return
 
 		self.btnOK.SetLabel(_("Stop"))
@@ -492,7 +493,7 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		#self.btnOK.Enable(False)
 		#self.btnCancel.SetLabel(_("Cancel"))
 		if self.makefilelist:
-			self.GenerateFileList(self.parent.ProjectDir)
+			self.GenerateFileList(settings.ProjectDir)
 			self.makefilelist = False
 		self.LoadFileList()
 		self.txtTotalProg.SetLabel(_("Total Progress: "))

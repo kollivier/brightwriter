@@ -203,3 +203,11 @@ def escapeFilename(filename):
         result = result.replace("(", "\\(")
         result = result.replace(")", "\\)")
     return result
+    
+def getPlatformName():
+    if sys.platform.startswith("win"):
+        return "win32"
+    elif sys.platform.startswith("darwin"):
+        return "mac"
+    else:
+        return "linux"

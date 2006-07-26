@@ -66,34 +66,34 @@ class PreferencesEditor(sc.SizedDialog):
 		self.LoadSettings()
 
 	def LoadSettings(self):
-		if settings.options["Language"] != "":
-			self.cmbLanguage.SetStringSelection(settings.options["Language"])
+		if settings.AppSettings["Language"] != "":
+			self.cmbLanguage.SetStringSelection(settings.AppSettings["Language"])
 
-		if settings.options["DefaultPlugin"] != "":
-			self.cmbDefaultPlugin.SetStringSelection(settings.options["DefaultPlugin"])
+		if settings.AppSettings["DefaultPlugin"] != "":
+			self.cmbDefaultPlugin.SetStringSelection(settings.AppSettings["DefaultPlugin"])
 
 		defaultConv = ""
-		if settings.options["PreferredConverter"] != "":
+		if settings.AppSettings["PreferredConverter"] != "":
 			for item in self.converters.items():
-				if item[1] == settings.options["PreferredConverter"]:
+				if item[1] == settings.AppSettings["PreferredConverter"]:
 					defaultConv = item[0]
 
 		if defaultConv != "":
 			self.cmbConverter.SetStringSelection(defaultConv)
 
 	def btnOKClicked(self, event):
-		settings.options["HTMLEditor"] = self.pickHTMLEditor.GetValue()
-		settings.options["OpenOffice"] = self.pickOpenOffice.GetValue()
+		settings.AppSettings["HTMLEditor"] = self.pickHTMLEditor.GetValue()
+		settings.AppSettings["OpenOffice"] = self.pickOpenOffice.GetValue()
 
-		settings.options["GSDL"] = self.pickGSDL.GetValue()
-		settings.options["CourseFolder"] = self.pickCourseFolder.GetValue()
-		settings.options["DefaultPlugin"] = self.cmbDefaultPlugin.GetStringSelection()
+		settings.AppSettings["GSDL"] = self.pickGSDL.GetValue()
+		settings.AppSettings["CourseFolder"] = self.pickCourseFolder.GetValue()
+		settings.AppSettings["DefaultPlugin"] = self.cmbDefaultPlugin.GetStringSelection()
 		
 		if self.cmbConverter.GetStringSelection() != "":
-			settings.options["PreferredConverter"] = self.converters[self.cmbConverter.GetStringSelection()]
+			settings.AppSettings["PreferredConverter"] = self.converters[self.cmbConverter.GetStringSelection()]
 		
-		language = settings.options["Language"]
+		language = settings.AppSettings["Language"]
 		if language != self.cmbLanguage.GetStringSelection():
-			settings.options["Language"] = self.cmbLanguage.GetStringSelection()
+			settings.AppSettings["Language"] = self.cmbLanguage.GetStringSelection()
 			wx.MessageDialog(self, _("You will need to restart EClass.Builder for changes to take effect."), _("Restart required."), wxOK).ShowModal()
 		self.EndModal(wx.ID_OK)

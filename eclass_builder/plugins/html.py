@@ -140,7 +140,7 @@ if __name__ != "__main__":
 			return "pub/" + os.path.basename(self.GetFilename(filename))
 
 		def GetData(self):
-			filename = os.path.join(self.dir, string.replace(self.node.content.filename, "/", os.sep))
+			filename = os.path.join(settings.ProjectDir, string.replace(self.node.content.filename, "/", os.sep))
 			if os.path.exists(filename):
 				myfile = None
 				myfile = utils.openFile(filename, 'r')
@@ -154,7 +154,7 @@ if __name__ != "__main__":
 				myhtml = ""
 
 			try: 
-				importer = HTMLImporter("", os.path.join(self.dir, "Text"), self.dir, myhtml)
+				importer = HTMLImporter("", os.path.join(settings.ProjectDir, "Text"), self.dir, myhtml)
 				myhtml2 = importer.CopyAndReplaceLinks()
 				myhtml = myhtml2
 			except:
@@ -1543,8 +1543,8 @@ if __name__ != "__main__":
 
 			#until we get editing fixed...
 			use_builtin = False
-			if settings.options["HTMLEditor"] != "":
-				started_app = guiutils.sendCommandToApplication(self.filename, "edit", settings.options["HTMLEditor"])
+			if settings.AppSettings["HTMLEditor"] != "":
+				started_app = guiutils.sendCommandToApplication(self.filename, "edit", settings.AppSettings["HTMLEditor"])
 				if not started_app:
 					wxMessageBox(_("The HTML editing application could not be started. Please check to ensure the program exists and that you have permissions to run it. The built-in HTML editor will be used instead."))
 					use_builtin = True
