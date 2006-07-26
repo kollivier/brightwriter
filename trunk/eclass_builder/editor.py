@@ -61,6 +61,7 @@ import mmedia
 # In the future, I'd like to not do things this way so that we can
 # examine the code to find module dependencies.
 import wx.lib.mixins.listctrl
+import wx.lib.newevent
 import taskrunner
 
 from gui.theme_manager import *
