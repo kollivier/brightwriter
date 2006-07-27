@@ -437,6 +437,10 @@ class MainFrame2(sc.SizedFrame):
 		
 		self.SetMinSize(self.GetSizer().GetMinSize())
 
+		if sys.platform.startswith("win"):
+			# this nasty hack is needed because on Windows, the controls won't
+			# properly layout until the frame is resized. 
+			self.SetSize((self.GetSize()[0]+1, self.GetSize()[1]+1))
 		self.Show()
 		
 		self.activityMonitor = ActivityMonitor(self)
@@ -462,9 +466,6 @@ class MainFrame2(sc.SizedFrame):
 				self.OnOpen(None)
 			if result == 2:
 				self.OnHelp(None)
-				
-		e = wx.SizeEvent(self.GetSize())
-		self.ProcessEvent(e)
 				
 	def OnActivityMonitor(self, evt):
 		self.activityMonitor.Show()
