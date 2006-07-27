@@ -463,6 +463,8 @@ class MainFrame2(sc.SizedFrame):
 			if result == 2:
 				self.OnHelp(None)
 				
+		e = wx.SizeEvent(self.GetSize())
+		self.ProcessEvent(e)
 				
 	def OnActivityMonitor(self, evt):
 		self.activityMonitor.Show()
