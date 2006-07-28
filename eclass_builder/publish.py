@@ -33,6 +33,7 @@ class EClassPublisher:
         
         themeList = themes.ThemeList(os.path.join(rootdir, "themes"))
         self.currentTheme = themeList.FindTheme(theme)
+        settings.ProjectDir = os.path.dirname(eclass)
         publisher = self.currentTheme.HTMLPublisher(self, dir=pubdir)
         publisher.Publish()
     

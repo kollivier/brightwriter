@@ -516,21 +516,19 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 			counter = counter + 1
 
 		myhtml = ""
-		if len(mypage.media.text) > 0 and os.path.exists(os.path.join(self.dir, "Text", mypage.media.text)):
+		sourcefile = os.path.join(settings.ProjectDir, "Text", mypage.media.text)
+		if len(mypage.media.text) > 0 and os.path.exists(sourcefile):
 			myfile = None
 			convert = False
 			if string.find(os.path.splitext(string.lower(mypage.media.text))[1], "htm") != -1:
-				myhtml = GetBody(utils.openFile(os.path.join(self.dir, "Text", mypage.media.text), 'rb'))
+				myhtml = GetBody(utils.openFile(sourcefile, 'rb'))
 			else: 
 				#It might be a Word/RTF document, try to convert...
 				convert = True
-				myfilename = os.path.join(self.dir, "Text", mypage.media.text)
 				
-				myhtml = self._ConvertFile(myfilename)
+				myhtml = self._ConvertFile(sourcefile)
 				if myhtml == "":
 					return ""
-
-				myhtml = ImportFiles().ImportLinks(myhtml, os.path.join(os.path.dirname(thefilename)), self.dir)
 
 		else:
 			myhtml = ""
@@ -552,7 +550,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 		try: 
 			importer = ImportFiles()
-			myhtml2 = importer.ImportLinks(myhtml, os.path.join(self.dir, "Text"), self.dir)
+			myhtml2 = importer.ImportLinks(myhtml, os.path.dirname(sourcefile), self.dir)
 			myhtml = myhtml2
 		except:
 			pass

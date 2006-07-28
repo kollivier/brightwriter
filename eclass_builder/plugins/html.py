@@ -140,7 +140,7 @@ if __name__ != "__main__":
 			return "pub/" + os.path.basename(self.GetFilename(filename))
 
 		def GetData(self):
-			filename = os.path.join(settings.ProjectDir, string.replace(self.node.content.filename, "/", os.sep))
+			filename = os.path.join(settings.ProjectDir, self.node.content.filename)
 			if os.path.exists(filename):
 				myfile = None
 				myfile = utils.openFile(filename, 'r')
