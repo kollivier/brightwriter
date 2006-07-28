@@ -1,6 +1,7 @@
 import string, sys, os
 from wxPython.wx import *
 import wxbrowser
+import settings
 
 class EClassAboutDialog(wxDialog):
 	def __init__(self, parent):
