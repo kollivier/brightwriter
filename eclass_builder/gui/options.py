@@ -26,7 +26,7 @@ class PreferencesEditor(sc.SizedDialog):
 		pane.SetSizerType("form")
 		
 		wx.StaticText(pane, -1, _("HTML Editor"))
-		self.pickHTMLEditor = picker.SelectBox(pane, parent.settings["HTMLEditor"], 
+		self.pickHTMLEditor = picker.SelectBox(pane, settings.AppSettings["HTMLEditor"], 
 		                                        "Program Files", guiutils.getOSApplicationsDir(),
 		                                        [guiutils.getOSProgramExt()], textsize=(180, -1))
 		
