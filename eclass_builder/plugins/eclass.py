@@ -117,16 +117,12 @@ class EClassPage(plugins.PluginData):
 		"""
 		self.filename = filename
 		self.directory = os.path.split(filename)[0]
-		try:
-			if USE_MINIDOM:
-				doc = minidom.parse(open(filename.encode(utils.getCurrentEncoding())))
-			else:	
-				doc = FromXmlFile(filename)
-			self.LoadDoc(doc)
-		except:
-			global log
-			log.write(_("Could not load EClass Page %(filename)s.") % {"filename":filename})
-			raise RuntimeError, `sys.exc_value.args`
+		if USE_MINIDOM:
+			doc = minidom.parse(open(filename.encode(utils.getCurrentEncoding())))
+		else:	
+			doc = FromXmlFile(filename)
+		
+		self.LoadDoc(doc)
 		return ""
 
 	def LoadDoc(self, doc):
