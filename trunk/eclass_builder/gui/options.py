@@ -31,13 +31,13 @@ class PreferencesEditor(sc.SizedDialog):
 		                                        [guiutils.getOSProgramExt()], textsize=(180, -1))
 		
 		wx.StaticText(pane, -1, _("OpenOffice Folder"))
-		self.pickOpenOffice = picker.SelectBox(pane, parent.settings["OpenOffice"], "Directory")
+		self.pickOpenOffice = picker.SelectBox(pane, settings.AppSettings["OpenOffice"], "Directory")
 		
 		wx.StaticText(pane, -1, _("Course Folder"))
-		self.pickCourseFolder = picker.SelectBox(pane, parent.settings["CourseFolder"], "Directory")
+		self.pickCourseFolder = picker.SelectBox(pane, settings.AppSettings["CourseFolder"], "Directory")
 		
 		wx.StaticText(pane, -1, _("Greenstone Directory"))
-		self.pickGSDL = picker.SelectBox(pane, parent.settings["GSDL"], "Directory")
+		self.pickGSDL = picker.SelectBox(pane, settings.AppSettings["GSDL"], "Directory")
 		
 		wx.StaticText(pane, -1, _("Language"))
 		self.languages = ["English", "Francais", "Espanol"]
