@@ -1,111 +1,116 @@
-from wxPython.wx import *
 import string, sys, os
+
+import wx
+import wxaddons.sized_controls as sc
+import wxaddons.persistence
+import wxaddons.HtmlBrowser as browser
+import wxbrowser
+
 import conman
 import fileutils
 import utils
 import settings
 
-class ThemeManager(wxDialog):
+class ThemeManager(sc.SizedDialog):
 	def __init__(self, parent):
-		wxDialog.__init__ (self, parent, -1, _("Theme Manager"),wxDefaultPosition, wxSize(760, 540), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		sc.SizedDialog.__init__ (self, parent, -1, _("Theme Manager"),
+		                      size=wx.Size(760, 540), 
+		                      style=wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		
+		pane = self.GetContentsPane()
+		
 		self.parent = parent
-		self.lblThemeList = wxStaticText(self, -1, _("Installed Themes"))
+		
+		previewPane = sc.SizedPanel(pane, -1)
+		previewPane.SetSizerType("form")
+		previewPane.GetSizer().AddGrowableRow(1)
+		previewPane.SetSizerProps({"expand":True, "proportion":1, "align":"center"})
+		wx.StaticText(previewPane, -1, _("Installed Themes"))
+		wx.StaticText(previewPane, -1, _("Theme Preview"))
 
-		self.lstThemeList = wxListBox(self, -1, choices=self.parent.themes.GetPublicThemeNames())
+		self.lstThemeList = wx.ListBox(previewPane, -1, choices=self.parent.themes.GetPublicThemeNames())
+		self.lstThemeList.SetSizerProps({"expand":True, "proportion":1})
 		self.lstThemeList.SetSelection(0)
-
-		self.oldProjectDir = settings.ProjectDir 
-		settings.ProjectDir = os.path.join(settings.AppDir, "themes", "ThemePreview")
-		self.themeTempDir = os.path.join(os.path.dirname(os.tmpnam()), "EClassPreview")
-		if not os.path.exists(self.themeTempDir):
-			os.makedirs(self.themeTempDir)
-		#if wxPlatform == "__WXMSW__":
-		#	self.ProjectDir = win32api.GetShortPathName(self.ProjectDir)
-		#self.templates = parent.templates
-		self.lblPreview = wxStaticText(self, -1, _("Theme Preview"))
-		self.pub = conman.ConMan()
-		self.pub.LoadFromXML(os.path.join(settings.ProjectDir, "imsmanifest.xml"))
-		self.btnOK = wxButton(self, wxID_OK, _("Close"))
-		self.oldtheme = settings.ProjectSettings["Theme"]
 		
-		import wxbrowser
-		self.browser = wxbrowser.wxBrowser(self, -1)
-
-		icnNewTheme = wxBitmap(os.path.join(settings.AppDir, "icons", "plus16.gif"), wxBITMAP_TYPE_GIF)
-		icnCopyTheme = wxBitmap(os.path.join(settings.AppDir, "icons", "copy16.gif"), wxBITMAP_TYPE_GIF)
-		icnDeleteTheme = wxBitmap(os.path.join(settings.AppDir, "icons", "minus16.gif"), wxBITMAP_TYPE_GIF)
-
-		self.btnNewTheme = wxBitmapButton(self, -1, icnNewTheme)
-		self.btnCopyTheme = wxBitmapButton(self, -1, icnCopyTheme)
-		self.btnDeleteTheme = wxBitmapButton(self, -1, icnDeleteTheme)
-
-		self.btnSetTheme = wxButton(self, -1, _("Use this theme"))
-		self.btnExportTheme = wxButton(self, -1, _("Export theme"))
-		self.btnImportTheme = wxButton(self, -1, _("Import theme"))
-		#self.btnEditTheme = wxButton(self, -1, "Edit Theme")
-
-		themesizer = wxBoxSizer(wxHORIZONTAL)
-		themesizer.AddMany([(self.btnNewTheme, 0, wxALL | wxALIGN_CENTER, 5), #(self.btnEditTheme, 0, wxALL | wxALIGN_CENTER, 5), 
-				  (self.btnCopyTheme, 0, wxALL | wxALIGN_CENTER, 5), (self.btnDeleteTheme, 0, wxALL | wxALIGN_CENTER, 5)])
-
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		mainsizer = wxFlexGridSizer(2, 2, 4, 4)
-		mainsizer.AddMany([(self.lblThemeList, 0, wxALL, 4), (self.lblPreview, 0, wxALL, 4), (self.lstThemeList, 1, wxEXPAND | wxALL, 4), (self.browser.browser, 1, wxEXPAND | wxALL, 4)])
-		mainsizer.Add(themesizer, 0, wxALL | wxALIGN_CENTER, 4)
-		#mainsizer.Add(self.btnOK, 0, wxALL | wxALIGN_RIGHT, 4)
-		mainsizer.AddGrowableCol(1)
-		mainsizer.AddGrowableRow(1)
+		#if sys.platform.startswith("darwin"):
+		#	self.browser = browser.wxHtmlBrowser(previewPane, -1)
+		#	print "name:" + self.browser.name
 		
-		self.buttonsizer = wxBoxSizer(wxHORIZONTAL)
-		#self.buttonsizer.Add(themesizer, 0, wxALL | wxALIGN_LEFT, 4)
-		self.buttonsizer.Add(self.btnSetTheme, 0, wxALL | wxALIGN_CENTER, 4)
-		self.buttonsizer.Add(self.btnExportTheme, 0, wxALL | wxALIGN_CENTER, 4)
-		self.buttonsizer.Add(self.btnImportTheme, 0, wxALL | wxALIGN_CENTER, 4)
-		#self.buttonsizer.Add(self.btnEditTheme, 0, wxALL | wxALIGN_CENTER, 4)
-		self.buttonsizer.Add((1, 1), 1, wxEXPAND)
-		self.buttonsizer.Add(self.btnOK, 0, wxALL, 4)
-		#self.buttonsizer.Add(self.btnCancel, 0, wxALL,4)
-		mainsizer.Add(self.buttonsizer, 1, wxALL | wxEXPAND, 4)
-		self.sizer.Add(mainsizer, 1, wxEXPAND | wxALL, 4)
-		self.SetAutoLayout(True)
-		self.SetSizer(self.sizer)
 		
+		if sys.platform.startswith("darwin"):
+			self.browser = wxbrowser.wxBrowser(self, -1)
+			previewPane.GetSizer().Add(self.browser.browser, 1, wx.ALL|wx.EXPAND, self.browser.browser.GetDefaultBorder())
+			pos = self.browser.browser.GetPosition()
+		else:
+			self.browser = wxbrowser.wxBrowser(previewPane, -1)
+			self.browser.browser.SetSizerProps({"expand":True, "proportion":1})
+		
+		#import wxbrowser
+		#self.browser = wxbrowser.wxBrowser(previewPane, -1)
+		#self.browser.browser.SetSizerProps({"expand":True, "proportion":1})
+
+		icnNewTheme = wx.Bitmap(os.path.join(settings.AppDir, "icons", "plus16.gif"), wx.BITMAP_TYPE_GIF)
+		icnCopyTheme = wx.Bitmap(os.path.join(settings.AppDir, "icons", "copy16.gif"), wx.BITMAP_TYPE_GIF)
+		icnDeleteTheme = wx.Bitmap(os.path.join(settings.AppDir, "icons", "minus16.gif"), wx.BITMAP_TYPE_GIF)
+
+		themeListBtnPane = sc.SizedPanel(previewPane, -1)
+		themeListBtnPane.SetSizerType("horizontal")
+		themeListBtnPane.SetSizerProp("align", "center")
+		self.btnNewTheme = wx.BitmapButton(themeListBtnPane, -1, icnNewTheme)
+		self.btnCopyTheme = wx.BitmapButton(themeListBtnPane, -1, icnCopyTheme)
+		self.btnDeleteTheme = wx.BitmapButton(themeListBtnPane, -1, icnDeleteTheme)
+
+		wx.StaticLine(pane, -1)
+		themeBtnPane = sc.SizedPanel(pane, -1)
+		themeBtnPane.SetSizerType("horizontal")
+		themeBtnPane.SetSizerProp("expand", True)
+		self.btnSetTheme = wx.Button(themeBtnPane, -1, _("Use this theme"))
+		self.btnExportTheme = wx.Button(themeBtnPane, -1, _("Export theme"))
+		self.btnImportTheme = wx.Button(themeBtnPane, -1, _("Import theme"))
+
+		# spacer
+		spacer = sc.SizedPanel(themeBtnPane, -1)
+		spacer.SetSizerProps({"expand":True, "proportion":1})
+		self.btnOK = wx.Button(themeBtnPane, wx.ID_OK, _("Close"))
+		self.btnOK.SetSizerProp("align", "center")
+		
+		# load data
 		if self.parent.currentTheme and self.parent.currentTheme.themename in self.parent.themes.GetPublicThemeNames():
 			self.lstThemeList.SetStringSelection(self.parent.currentTheme.themename)
 		else:
 			self.lstThemeList.SetStringSelection("Default (frames)")
 
-		self.OnThemeChanged(None)
-		self.Layout()
+		self.themeTempDir = os.path.join(os.path.dirname(os.tmpnam()), "EClassPreview")
+		if not os.path.exists(self.themeTempDir):
+			os.makedirs(self.themeTempDir)
 
-		EVT_BUTTON(self, self.btnNewTheme.GetId(), self.OnNewTheme)
-		EVT_BUTTON(self, self.btnCopyTheme.GetId(), self.OnCopyTheme)
-		EVT_BUTTON(self, self.btnDeleteTheme.GetId(), self.OnDeleteTheme)
-		EVT_BUTTON(self, self.btnSetTheme.GetId(), self.OnSetTheme)
-		EVT_BUTTON(self, self.btnExportTheme.GetId(), self.ExportTheme)
-		EVT_BUTTON(self, self.btnImportTheme.GetId(), self.ImportTheme)
-		EVT_LISTBOX(self, self.lstThemeList.GetId(), self.OnThemeChanged)
-		EVT_CLOSE(self, self.OnClose)
-		EVT_BUTTON(self, wxID_OK, self.OnOKClicked)
-	
-	def OnOKClicked(self, event):
-		self.Cleanup()
-		event.Skip()
+		self.themeDir = os.path.join(settings.AppDir, "themes", "ThemePreview")
+		self.pub = conman.ConMan()
+		self.pub.LoadFromXML(os.path.join(self.themeDir, "imsmanifest.xml"))
 		
-	def Cleanup(self):
-		settings.ProjectDir = self.oldProjectDir
-		
-	def OnClose(self, event):
-		self.Cleanup()
-		event.Skip()
+		self.SetMinSize(self.GetSizer().GetMinSize())
+
+		self.OnThemeChanged(None)
+
+		wx.EVT_BUTTON(self, self.btnNewTheme.GetId(), self.OnNewTheme)
+		wx.EVT_BUTTON(self, self.btnCopyTheme.GetId(), self.OnCopyTheme)
+		wx.EVT_BUTTON(self, self.btnDeleteTheme.GetId(), self.OnDeleteTheme)
+		wx.EVT_BUTTON(self, self.btnSetTheme.GetId(), self.OnSetTheme)
+		wx.EVT_BUTTON(self, self.btnExportTheme.GetId(), self.ExportTheme)
+		wx.EVT_BUTTON(self, self.btnImportTheme.GetId(), self.ImportTheme)
+		wx.EVT_LISTBOX(self, self.lstThemeList.GetId(), self.OnThemeChanged)
 	
 	def OnThemeChanged(self, event):
 		themename = self.lstThemeList.GetStringSelection()
+		# load the theme preview
+		self.oldProjectDir = settings.ProjectDir 
+		settings.ProjectDir = self.themeDir
 		self.currentTheme = self.parent.themes.FindTheme(themename)
 		publisher = self.currentTheme.HTMLPublisher(self, dir=self.themeTempDir)
 		result = publisher.Publish()
 		if result:
 			self.browser.LoadPage(os.path.join(self.themeTempDir, "index.htm"))
+		settings.ProjectDir = self.oldProjectDir
 
 	def OnSetTheme(self, event):
 		self.UpdateTheme()
@@ -123,19 +128,16 @@ class ThemeManager(wxDialog):
 			theme = self.parent.themes.FindTheme(mytheme)
 			self.parent.currentTheme = theme
 			settings.ProjectSettings["Theme"] = mytheme
-		else:
-			self.parent.currentTheme = self.parent.themes.FindTheme("Default (frames)")
-			
-		#exec("mytheme = themes." + mythememodule)
 
-		publisher = self.parent.currentTheme.HTMLPublisher(self.parent)
-		result = publisher.Publish()
-		self.parent.Preview()
-		self.updateTheme = False
+			publisher = self.parent.currentTheme.HTMLPublisher(self.parent)
+			result = publisher.Publish()
+			self.parent.Preview()
+			self.updateTheme = False
 
 	def OnNewTheme(self, event):
-		dialog = wxTextEntryDialog(self, _("Please type a name for your new theme"), _("New Theme"), _("New Theme"))
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.TextEntryDialog(self, _("Please type a name for your new theme"), 
+		                            _("New Theme"), _("New Theme"))
+		if dialog.ShowModal() == wx.ID_OK:
 			themedir = os.path.join(settings.AppDir, "themes")
 			filename = string.replace(fileutils.MakeFileName2(dialog.GetValue()) + ".py", "-", "_")
 			foldername = utils.createSafeFilename(dialog.GetValue())
@@ -144,7 +146,7 @@ class ThemeManager(wxDialog):
 			except:
 				message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(settings.AppDir, "themes")}
 				self.parent.log.write(message)
-				wxMessageBox(message)
+				wx.MessageBox(message)
 				return 
 			myfile = utils.openFile(os.path.join(themedir, filename), "w")
 
@@ -166,26 +168,24 @@ class HTMLPublisher(BaseHTMLPublisher):
 
 			#copy support files from Default (no frames)
 			fileutils.CopyFiles(os.path.join(themedir, "Default (no frames)"), os.path.join(themedir, foldername), 1)
-			#self.lstThemeList.Append(dialog.GetValue())
 			self.parent.themes.LoadThemes()
 			self.ReloadThemes()
-			#modulename = string.replace(filename, ".py", "")
-			#exec("import themes." + modulename)
-			#self.parent.themes.append([dialog.GetValue(), modulename])
 		dialog.Destroy()
 
 	def OnDeleteTheme(self, event):
 		filename = string.replace(fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
 		modulename = string.replace(filename, ".py", "")
 		if self.parent.currentTheme == [self.lstThemeList.GetStringSelection(), modulename]:
-			wxMessageBox(_("Cannot delete theme because it is currently in use for this EClass. To delete this theme, please change your EClass theme."))
+			wx.MessageBox(_("Cannot delete theme because it is currently in use for this EClass. To delete this theme, please change your EClass theme."))
 			return 
-		dialog = wxMessageDialog(self, _("Are you sure you want to delete the theme '%(theme)s'? This action cannot be undone.") % {"theme":self.lstThemeList.GetStringSelection()}, _("Confirm Delete"), wxYES_NO)
-		if dialog.ShowModal() == wxID_YES:
+		dialog = wx.MessageDialog(self, _("Are you sure you want to delete the theme '%(theme)s'? This action cannot be undone.") % {"theme":self.lstThemeList.GetStringSelection()}, 
+		                              _("Confirm Delete"), wx.YES_NO)
+		if dialog.ShowModal() == wx.ID_YES:
 			themedir = os.path.join(settings.AppDir, "themes")
 			themefile = os.path.join(themedir, filename)
 			if os.path.exists(themefile):
 				os.remove(themefile)
+			# remove the .pyc file if it exists
 			if os.path.exists(themefile + "c"):
 				os.remove(themefile + "c")
 			foldername = os.path.join(themedir, self.lstThemeList.GetStringSelection())
@@ -195,14 +195,12 @@ class HTMLPublisher(BaseHTMLPublisher):
 			self.parent.themes.LoadThemes()
 			self.ReloadThemes()
 
-			#self.parent.themes.remove([self.lstThemeList.GetStringSelection(), modulename])
-			#self.lstThemeList.Delete(self.lstThemeList.GetSelection())
-
 		dialog.Destroy()
 
 	def OnCopyTheme(self, event):
-		dialog = wxTextEntryDialog(self, _("Please type a name for your new theme"), _("New Theme"), "")
-		if dialog.ShowModal() == wxID_OK:  
+		dialog = wx.TextEntryDialog(self, _("Please type a name for your new theme"), 
+		                                  _("New Theme"), "")
+		if dialog.ShowModal() == wx.ID_OK:  
 			themedir = os.path.join(settings.AppDir, "themes")
 			filename = string.replace(fileutils.MakeFileName2(dialog.GetValue()) + ".py", " ", "_")
 			otherfilename = string.replace(fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
@@ -214,7 +212,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			except:
 				message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(settings.AppDir, "themes")}
 				self.parent.log.write(message)
-				wxMessageBox(message)
+				wx.MessageBox(message)
 				return 
 
 			copyfile = utils.openFile(os.path.join(themedir, otherfilename), "r")
@@ -232,17 +230,14 @@ class HTMLPublisher(BaseHTMLPublisher):
 			fileutils.CopyFiles(os.path.join(themedir, self.lstThemeList.GetStringSelection()), os.path.join(themedir, foldername), 1)
 			self.parent.themes.LoadThemes()
 			self.ReloadThemes()
-			#self.lstThemeList.Append(dialog.GetValue())
-			#modulename = string.replace(filename, ".py", "")
-			#exec("import themes." + modulename)
-			#self.parent.themes.append([dialog.GetValue(), modulename])
+
 		dialog.Destroy()
 
 	def ExportTheme(self, event=None):
 		import zipfile
 		themename = fileutils.MakeFileName2(self.lstThemeList.GetStringSelection())
-		dialog = wxFileDialog(self, _("Export Theme File"), "", themename + ".theme", _("Theme Files") + " (*.theme)|*.theme", wxSAVE|wxOVERWRITE_PROMPT) 
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.FileDialog(self, _("Export Theme File"), "", themename + ".theme", _("Theme Files") + " (*.theme)|*.theme", wxSAVE|wxOVERWRITE_PROMPT) 
+		if dialog.ShowModal() == wx.ID_OK:
 			filename = dialog.GetPath()
 			themezip = zipfile.ZipFile(filename, "w")
 			themepyfile = string.replace(themename + ".py", " ", "_")
@@ -250,7 +245,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 			themefolder = utils.createSafeFilename(self.lstThemeList.GetStringSelection())
 			self.AddDirToZip(themefolder, themezip)
 			themezip.close()
-			wxMessageBox(_("Theme successfully exported."))
+			wx.MessageBox(_("Theme successfully exported."))
 		dialog.Destroy()
 
 	def AddDirToZip(self, dir, zip):
@@ -262,8 +257,9 @@ class HTMLPublisher(BaseHTMLPublisher):
 
 	def ImportTheme(self, event=None):
 		import zipfile
-		dialog = wxFileDialog(self, _("Select Theme to Import"), "", "", _("Theme Files") + " (*.theme)|*.theme", wxOPEN) 
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.FileDialog(self, _("Select Theme to Import"), "", "",
+		              _("Theme Files") + " (*.theme)|*.theme", wx.OPEN) 
+		if dialog.ShowModal() == wx.ID_OK:
 			filename = dialog.GetPath()
 			themezip = zipfile.ZipFile(filename, "r")
 			files = themezip.infolist()
@@ -276,7 +272,4 @@ class HTMLPublisher(BaseHTMLPublisher):
 				file.write(data)
 				file.close()
 				self.ReloadThemes()
-			wxMessageBox(_("Theme imported successfully."))
-
-	def CreateDirs(self, filelist):
-		pass
+			wx.MessageBox(_("Theme imported successfully."))
