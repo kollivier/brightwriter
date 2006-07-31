@@ -873,7 +873,7 @@ class MainFrame2(sc.SizedFrame):
 				print 'dir: %s' % dir
 				if os.path.isfile(mypath) and string.find(file, "imsmanifest.xml") == -1 and file[0] != ".":
 					print "mypath %s, file %s" % (mypath, os.path.join(dir, file))
-					myzip.write(mypath, os.path.join(dir, file))
+					myzip.write(str(mypath), str(os.path.join(dir, file)))
 				elif os.path.isdir(mypath):
 					self._DirToZipFile(os.path.join(dir, file), myzip)
 		
