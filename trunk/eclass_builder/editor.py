@@ -294,8 +294,8 @@ class MainFrame2(sc.SizedFrame):
 		PasteMenu.Append(ID_PASTE_CHILD, _("Paste As Child"))
 		EditMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu)
 		
-		EditMenu.AppendSeparator()
-		EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
+		#EditMenu.AppendSeparator()
+		#EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
 
 		#create the PopUp Menu used when a user right-clicks on an item
 		self.PopMenu = wx.Menu()
@@ -449,7 +449,7 @@ class MainFrame2(sc.SizedFrame):
 		self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
 		self.errorViewer.LoadState("ErrorLogViewer")
 		
-		if wxPlatform == '__WXMSW__':
+		if wx.Platform == '__WXMSW__':
 			EVT_CHAR(self.previewbook, self.SkipNotebookEvent)
 
 		if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
