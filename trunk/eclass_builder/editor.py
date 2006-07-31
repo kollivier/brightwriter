@@ -840,11 +840,12 @@ class MainFrame2(sc.SizedFrame):
 		deffilename = fileutils.MakeFileName2(self.pub.name) + ".zip"
 		dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.SAVE)
 		if dialog.ShowModal() == wx.ID_OK: 
-			oldtheme = self.currentTheme
+			imsdir = os.path.dirname(os.path.join(os.tempnam(), "IMSPackage"))
 			imstheme = self.themes.FindTheme("IMS Package")
 			self.currentTheme = imstheme
-			publisher = imstheme.HTMLPublisher(self)
-			publisher.Publish() 
+			publisher = imstheme.HTMLPublisher(self, imsdir)
+			publisher.Publish()
+			fileutils.CopyFiles(os.path.join(settings.ProjectDir, "File"), os.path.join(imsdir, "File"), 1)
 
 			handle, zipname = tempfile.mkstemp()
 			os.close(handle)
@@ -862,10 +863,6 @@ class MainFrame2(sc.SizedFrame):
 			myzip.close()
 			os.rename(zipname, dialog.GetPath())
 
-			self.currentTheme = oldtheme
-			publisher = self.currentTheme.HTMLPublisher(self)
-			publisher.Publish()
-
 		wx.MessageBox("Finished exporting!")
 		
 	def _DirToZipFile(self, dir, myzip):
@@ -873,7 +870,9 @@ class MainFrame2(sc.SizedFrame):
 		if not os.path.basename(dir) in ["installers", "cgi-bin"]:
 			for file in os.listdir(mydir):
 				mypath = os.path.join(mydir, file)
-				if os.path.isfile(mypath) and string.find(file, "imsmanifest.xml") == -1:
+				print 'dir: %s' % dir
+				if os.path.isfile(mypath) and string.find(file, "imsmanifest.xml") == -1 and file[0] != ".":
+					print "mypath %s, file %s" % (mypath, os.path.join(dir, file))
 					myzip.write(mypath, os.path.join(dir, file))
 				elif os.path.isdir(mypath):
 					self._DirToZipFile(os.path.join(dir, file), myzip)
