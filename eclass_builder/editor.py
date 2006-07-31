@@ -359,7 +359,7 @@ class MainFrame2(sc.SizedFrame):
 					-1 ,
 					style=wx.TR_HAS_BUTTONS | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER)
 
-		self.projectTree.SetImageList(self.treeimages)
+		#self.projectTree.SetImageList(self.treeimages)
 		droptarget = wxTreeDropTarget(self, self.projectTree)
 		self.projectTree.SetDropTarget(droptarget)
 
