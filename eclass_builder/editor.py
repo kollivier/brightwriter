@@ -441,6 +441,10 @@ class MainFrame2(sc.SizedFrame):
 			# this nasty hack is needed because on Windows, the controls won't
 			# properly layout until the frame is resized. 
 			self.SetSize((self.GetSize()[0]+1, self.GetSize()[1]+1))
+			
+		if sys.platform.startswith("darwin"):
+			self.FileMenu.FindItemById(ID_PUBLISH_PDF).Enable(False)
+			self.toolbar.EnableTool(ID_PUBLISH_PDF, False)
 		self.Show()
 		
 		self.activityMonitor = ActivityMonitor(self)
@@ -666,14 +670,15 @@ class MainFrame2(sc.SizedFrame):
 		self.FileMenu.FindItemById(ID_CLOSE).Enable(value)
 		self.FileMenu.FindItemById(ID_PREVIEW).Enable(value)
 		self.FileMenu.FindItemById(ID_REFRESH_THEME).Enable(value)
-		self.FileMenu.FindItemById(ID_PUBLISH_MENU).Enable(value)	
+		self.FileMenu.FindItemById(ID_PUBLISH_MENU).Enable(value)
 		self.FileMenu.FindItemById(ID_PROPS).Enable(value)
 
 		self.toolbar.EnableTool(ID_SAVE, value)
 		self.toolbar.EnableTool(ID_PREVIEW, value)
 		self.toolbar.EnableTool(ID_PUBLISH, value)
 		self.toolbar.EnableTool(ID_PUBLISH_CD, value)
-		self.toolbar.EnableTool(ID_PUBLISH_PDF, value)
+		if not sys.platform.startswith("darwin"):
+			self.toolbar.EnableTool(ID_PUBLISH_PDF, value)
 		self.toolbar.EnableTool(ID_TREE_ADD_ECLASS, value)
 		self.toolbar.EnableTool(ID_TREE_EDIT, value)
 		self.toolbar.EnableTool(ID_EDIT_ITEM, value)
