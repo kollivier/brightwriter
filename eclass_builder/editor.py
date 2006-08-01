@@ -842,7 +842,6 @@ class MainFrame2(sc.SizedFrame):
 		if dialog.ShowModal() == wx.ID_OK: 
 			imsdir = os.path.dirname(os.path.join(os.tempnam(), "IMSPackage"))
 			imstheme = self.themes.FindTheme("IMS Package")
-			self.currentTheme = imstheme
 			publisher = imstheme.HTMLPublisher(self, imsdir)
 			publisher.Publish()
 			fileutils.CopyFiles(os.path.join(settings.ProjectDir, "File"), os.path.join(imsdir, "File"), 1)
