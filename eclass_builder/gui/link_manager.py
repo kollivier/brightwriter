@@ -112,7 +112,21 @@ class LinkChecker(sc.SizedDialog):
 			if not self.isChecking:
 				return
 			try:
-				urllib2.urlopen(link)
-				self.linkList.SetStringItem(item, 2, _("OK"))
-			except:
-				self.linkList.SetStringItem(item, 2, _("Broken"))
+				request = urllib2.Request(link)
+				opener = urllib2.build_opener()
+				# some providers, such as Wikipedia, will block requests
+				# when a user agent isn't specified, or if it's a defualt
+				# user agent for automated bots. So we need to specify our
+				# own user agent to keep from being blocked.
+				request.add_header('User-Agent','EClass Link Checker/1.0 +http://www.eclass.net/') 
+				opener.open(request)
+				wx.CallAfter(self.linkList.SetStringItem, item, 2, _("OK"))
+			except urllib2.URLError, e:
+				print "link is: " + link
+				if hasattr(e, 'reason'):
+					print 'We failed to reach a server.'
+					print 'Reason: ', e.reason
+				elif hasattr(e, 'code'):
+					print 'The server couldn\'t fulfill the request.'
+					print 'Error code: ', e.code
+				wx.CallAfter(self.linkList.SetStringItem, item, 2, _("Broken"))
