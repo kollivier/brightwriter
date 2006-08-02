@@ -1,5 +1,6 @@
 import string, os, sys
 from wxPython.wx import *
+import version
 
 class StartupDialog(wxDialog):
 	def __init__(self, parent):
@@ -19,7 +20,7 @@ class StartupDialog(wxDialog):
 		self.lblWelcome.SetFont(myfont)
 		self.lblWelcome.SetForegroundColour(wxNamedColour("blue"))
 
-		self.lblVersion = wxStaticText(self, -1, "Version " + self.parent.version)
+		self.lblVersion = wxStaticText(self, -1, "Version " + version.asString())
 
 		self.chkShowThisDialog = wxCheckBox(self, -1, _("Don't show this dialog on startup."))
 		self.btnNew = wxButton(self, -1, _("New Project"))
