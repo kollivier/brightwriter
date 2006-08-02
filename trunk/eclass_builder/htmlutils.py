@@ -4,323 +4,55 @@ import re
 import fileutils
 from HTMLParser import HTMLParser
 from xmlutils import *
+import analyzer
+import urllib
+import settings
+import cStringIO
 
 def TextToHTMLChar(mytext):
     
-    return TextToXMLChar(mytext)    
+    return TextToXMLChar(mytext)
     
-# Misc utils
+def copyDependentFilesAndUpdateLinks(oldfile, filename):
+    myanalyzer = analyzer.ContentAnalyzer()
+    myanalyzer.analyzeFile(filename)
+    htmldir = os.path.dirname(oldfile)
+    html = utils.openFile(filename, "r").read()
+    encoding = GetEncoding(html)
+    if encoding == None:
+        encoding = utils.getCurrentEncoding()
+        
+    html = utils.makeUnicode(html, encoding)
+    
+    for link in myanalyzer.fileLinks:
+        sourcefile = urllib.unquote(link)
+        if sourcefile.find("file://") == 0:
+            sourcefile = urllib.urlretrieve(link)[0]
+            
+        if not os.path.exists(sourcefile):
+            sourcefile = htmldir + "/" + sourcefile
+        
+        if os.path.exists(sourcefile):
+            sourcedir = os.path.dirname(sourcefile)
+            htmlname = os.path.basename(filename)
+            depName = os.path.basename(link)
+            destLink = u"../File/" + htmlname + "_files/" + depName
+            destdir = os.path.join(settings.ProjectDir, os.path.dirname(destLink[3:].replace("/", os.sep)))
+            if not os.path.exists(destdir):
+                os.makedirs(destdir)
+            result = fileutils.CopyFile(depName, sourcedir, destdir)
+            if result:
+                html = html.replace(link, urllib.quote(destLink))
+            else:
+                print "unable to copy file: " + sourcefile
+        else:
+            print "cannot find source file: " + sourcefile
+                
+    output = utils.openFile(filename, "w")
+    output.write(html.encode(encoding))
+    output.close()
 
-# I'd LIKE to do things this way, but there's some problem that's causing 
-# files to have non-standard HTML in them that I can't seem to figure out.
-# even OpenOffice has created HTML files that choke the parser...
-class HTMLImporter:
-	def __init__(self, filename="", sourcedir="", ProjectDir="", data=""):
-		self.sourcedir = sourcedir
-		self.ProjectDir = ProjectDir
-		self.dependentFiles = []
-		self.title = ""
-		self.metadata = {}
-		self.encoding = ""
-		self.data = data
-		try:
-			if filename != "":
-				myfile = open(filename, "r")
-				self.data = myfile.read()
-				myfile.close()
 
-			parser = LinkParser()
-			parser.feed(self.data)
-			parser.close()
-
-			self.title = parser.title
-			self.metadata = parser.metadata
-			self.encoding = parser.encoding
-			self.dependentFiles = parser.replaceLinks
-
-		except:
-			import traceback
-			print traceback.print_exc()
-			pass
-
-	def GetDocInfo(self):
-		return (self.title, self.encoding, self.metadata, self.dependentFiles)
-
-	def CopyAndReplaceLinks(self):
-		formatdict = {"Graphics":".jpg;.jpeg;.gif;.bmp;.png", "Video":".avi;.mov;.mpg;.mpeg;.asf;.wmv;.rm;", "Audio":".wav;.aif;.mp3;.asf;.wma;.rm;"}
-		for mylink in self.dependentFiles[:]:
-			import urllib
-			link = mylink
-			link = string.replace(link, '"', '') #remove any surrounding quotes
-			link = urllib.unquote(link)
-
-			if string.find(string.lower(link), "file://") == -1:
-				#link is relative to path
-				if not os.sep == "/":
-					link = string.replace(link, "/", os.sep)
-			
-				#TODO: Re-evaluate this logic... Why did I do it this way?
-				checklink = os.path.join(self.ProjectDir, "Text", link)
-			
-				if os.path.isfile(checklink):
-					break
-
-				link = os.path.join(self.sourcedir, link)
-			
-			index = 0
-			index = string.rfind(link, os.sep)
-			if index == -1:
-				index = string.rfind(link, "/")
-
-			filename = link[index+1:]
-			filedir = link[:index]
-			#print filename
-			subdir = ""
-			for key in formatdict.keys():
-				formatlist = string.splitfields(formatdict[key], ";")
-				for format in formatlist:
-					if not string.find(filename, format) == -1:
-						subdir = key
-						break
-			if subdir == "":
-				subdir = "File"
-			destdir = os.path.join(self.ProjectDir,subdir)
-			#print destdir
-			result = 0
-			if string.find(string.lower(link), "file://") != -1:
-				try:
-					mytuple = urllib.urlretrieve(link, os.path.join(destdir, filename))
-					if mytuple[0] == os.path.join(destdir, filename):
-						result = 1
-					else: 
-						result = 0
-				except:
-					pass
-			else:
-				result = fileutils.CopyFile(filename, filedir, destdir)
-			
-			if result:
-				newlink = "../" + subdir + "/" + filename
-				self.data = string.replace(self.data, mylink, newlink)
-				self.dependentFiles.remove(mylink)
-				self.dependentFiles.append(newlink)
-			else:
-				print "Couldn't copy file from html document: " + filename
-		return self.data
-
-class ImportFiles:
-	def __init__(self, filename=""):
-		self.sourcedir = ""
-		self.ProjectDir = ""
-		self.dependentFiles = []
-		self.filename = ""
-
-	def ImportLinks(self, myhtml, mysourcedir, myProjectDir):
-		"""
-		Detects any relative links (including hyperlinks and images) and copies the linked file into the EClass project folder.
-		"""
-		self.sourcedir = mysourcedir
-		#print "self.sourcedir = " + self.sourcedir
-		self.ProjectDir = myProjectDir
-		imagelinks = re.compile("src\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
-		myhtml = imagelinks.sub(self.CopyLink,myhtml)
-		weblinks = re.compile("href\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
-		myhtml = weblinks.sub(self.CopyLink, myhtml)
-		return myhtml
-
-	def CopyLinks(self, match):
-		link = match.group(1)
-		if not string.find(string.lower(link), "http://") == -1 or not string.find(string.lower(link), "ftp://") == -1 or not string.find(string.lower(link), "mailto:") == -1 or not string.find(string.lower(link), "javascript:") == -1:
-			return match.group()
-		else:
-			formatdict = {"Graphics":".jpg;.jpeg;.gif;.bmp;.png", "Video":".avi;.mov;.mpg;.mpeg;.asf;.wmv;.rm;", "Audio":".wav;.aif;.mp3;.asf;.wma;.rm;"}
-			import urllib
-			#originallink = link
-			link = string.replace(link, '"', '') #remove any surrounding quotes
-			link = urllib.unquote(link)
-
-			#print "Link = " + link
-			if string.find(string.lower(link), "file://") == -1:
-				#link is relative to path
-				if not os.sep == "/":
-					link = string.replace(link, "/", os.sep)
-			
-				checklink = os.path.join(self.ProjectDir, "Text", link)
-			
-				if os.path.isfile(checklink):
-					return match.group()
-
-				link = os.path.join(self.sourcedir, link)
-			
-			index = 0
-			index = string.rfind(link, os.sep)
-			#if index == -1 and sys.platform[:6] == "darwin":
-			#	index = string.rfind(link, ":")
-			if index == -1:
-				index = string.rfind(link, "/")
-
-			filename = link[index+1:]
-			filedir = link[:index]
-			#print filename
-			subdir = ""
-			for key in formatdict.keys():
-				formatlist = string.splitfields(formatdict[key], ";")
-				for format in formatlist:
-					if not string.find(filename, format) == -1:
-						subdir = key
-						break
-			if subdir == "":
-				subdir = "File"
-			destdir = os.path.join(self.ProjectDir,subdir)
-			#print destdir
-			result = 0
-			if string.find(string.lower(link), "file://") != -1:
-				if os.name == "posix" and sys.platform[:6] == "darwin":
-					result = 0
-				else:
-					try:
-						mytuple = urllib.urlretrieve(link, os.path.join(destdir, filename))
-						if mytuple[0] == os.path.join(destdir, filename):
-							result = 1
-						else: 
-							result = 0
-					except:
-						pass
-			else:
-				result = fileutils.CopyFile(filename, filedir, destdir)
-			
-			if result:
-				type = string.split(match.group(), "=")[0]
-				endlink =  type + "=\"../" + subdir + "/" + filename + "\""
-				#print "file copied. New link is: " + endlink
-				return endlink
-			else:
-				print "Couldn't copy file from html document: " + filename
-				return match.group() #couldn't copy file so don't change the link
-	
-	def CopyLink(self, match):
-		link = match.group(1)
-		if not string.find(string.lower(link), "http://") == -1 or not string.find(string.lower(link), "ftp://") == -1 or not string.find(string.lower(link), "mailto:") == -1 or not string.find(string.lower(link), "javascript:") == -1:
-			return match.group()
-		else:
-			formatdict = {"Graphics":".jpg;.jpeg;.gif;.bmp;.png", "Video":".avi;.mov;.mpg;.mpeg;.asf;.wmv;.rm;", "Audio":".wav;.aif;.mp3;.asf;.wma;.rm;"}
-			import urllib
-			#originallink = link
-			link = string.replace(link, '"', '') #remove any surrounding quotes
-			link = urllib.unquote(link)
-
-			#print "Link = " + link
-			if not string.find(string.lower(link), "file://") == -1:
-				pass
-				#absolute link
-				#link = string.replace(link, "file://", "")
-				#if not os.path.isfile(link) and sys.platform[:6] == "darwin":
-				#	link = string.replace(link, "/", ":") 
-			else:
-				#link is relative to path
-				if not os.sep == "/":
-					link = string.replace(link, "/", os.sep)
-			
-				checklink = os.path.join(self.ProjectDir, "Text", link)
-			
-				if os.path.isfile(checklink):
-					return match.group()
-
-				link = os.path.join(self.sourcedir, link)
-			
-			index = 0
-			index = string.rfind(link, os.sep)
-			#if index == -1 and sys.platform[:6] == "darwin":
-			#	index = string.rfind(link, ":")
-			if index == -1:
-				index = string.rfind(link, "/")
-
-			filename = link[index+1:]
-			filedir = link[:index]
-			#print filename
-			subdir = ""
-			for key in formatdict.keys():
-				formatlist = string.splitfields(formatdict[key], ";")
-				for format in formatlist:
-					if not string.find(filename, format) == -1:
-						subdir = key
-						break
-			if subdir == "":
-				subdir = "File"
-			destdir = os.path.join(self.ProjectDir,subdir)
-			#print destdir
-			result = 0
-			if string.find(string.lower(link), "file://") != -1:
-				#try:
-				if os.name == "posix" and sys.platform[:6] == "darwin":
-					#not yet supported
-					#import urlparse
-					#print "path = " + link
-					#import mac
-					#print mac.getbootvol()
-					#filedir = string.replace(filedir, "file://", "")
-					#if filedir[0] == "/":
-					#	filedir = filedir[1:] + ":" + filename
-					#filedir = string.replace(filedir, "/", ":")
-					#myurl = urlparse.urlparse(link)
-					#f os.path.isfile(filedir):
-					#	print "file exists = " + filedir + ", destdir = " + destdir
-					#else:
-					#	print "file doesn't exist = " + filedir
-					#print "path = " + myurl[0] + " " + myurl[1]
-					#result = files.CopyFile(filename, filedir, destdir)
-					result = 0
-				else:
-					try:
-						mytuple = urllib.urlretrieve(link, os.path.join(destdir, filename))
-						if mytuple[0] == os.path.join(destdir, filename):
-							result = 1
-						else: 
-							result = 0
-					except:
-						pass
-			else:
-				result = fileutils.CopyFile(filename, filedir, destdir)
-			
-			if result:
-				type = string.split(match.group(), "=")[0]
-				endlink =  type + "=\"../" + subdir + "/" + filename + "\""
-				#print "file copied. New link is: " + endlink
-				return endlink
-			else:
-				print "Couldn't copy file from html document: " + filename
-				return match.group() #couldn't copy file so don't change the link
-
-	def GetDependentFiles(self, myhtml):
-		imagelinks = re.compile("src\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
-		imagelinks.sub(self.FindDependencies,myhtml)
-		weblinks = re.compile("href\\s*=\\s*\"([^\"]*)\"", re.IGNORECASE|re.DOTALL)
-		weblinks.sub(self.FindDependencies, myhtml)
-		return self.dependentFiles
-
-	def FindDependencies(self, match):
-		link = match.group(1)
-		if not string.find(string.lower(link), "http://") == -1 or not string.find(string.lower(link), "ftp://") == -1 or not string.find(string.lower(link), "mailto:") == -1 or not string.find(string.lower(link), "javascript:") == -1:
-			#print "Exiting..."
-			return 
-		else:
-			formatdict = {"Graphics":".jpg;.jpeg;.gif;.bmp;.png", "Video":".avi;.mov;.mpg;.mpeg;.asf;.wmv;.rm;", "Audio":".wav;.aif;.mp3;.asf;.wma;.rm;"}
-			import urllib
-			#originallink = link
-			link = string.replace(link, '"', '') #remove any surrounding quotes
-			link = urllib.unquote(link)
-
-			#print "Link = " + link
-			if not string.find(string.lower(link), "file://") == -1:
-				pass
-				#absolute link
-				#link = string.replace(link, "file://", "")
-				#if not os.path.isfile(link) and sys.platform[:6] == "darwin":
-				#	link = string.replace(link, "/", ":") 
-			else:
-				#link is relative to path
-				self.dependentFiles.append(link)
-				
 def GetEncoding(myhtml):
 	"""Checks for document HTML encoding and returns it if found."""
 	import re
@@ -409,48 +141,3 @@ def GetBody(myhtml):
 	    
 	return utils.makeUnicode(text, encoding)
 
-#in case one day we can switch to this...
-class LinkParser(HTMLParser):
-    def __init__(self):
-        self.text = ""
-        HTMLParser.__init__(self)
-        self.title = ""
-        self.currentTag = ""
-        self.encoding = ""
-        self.metadata = {}
-        self.replaceLinks = []
-
-    def handle_starttag(self, tag, attrs):
-        tagname = string.lower(tag)
-        if tagname in ["a", "img"]:
-            link = ""
-            newlink = ""
-            for attr in attrs:
-                attrname = string.lower(attr[0])
-                if attrname == "href" or attrname == "src":
-                    link = attr[1]
-                    ignore_link_types = ["http://", "ftp://", "mailto:", "javascript:"]
-                    for type in ignore_link_types:
-                        link = "" #forget about it, just leave it be
-                    if link != "":
-                        self.replaceLinks.append(link)
-
-        if tagname == "meta":
-            for attr in attrs:
-                attrname = string.lower(attr[0])
-                if attrname == "charset":
-                    self.encoding = attr[1]
-                else:
-                    self.metadata[attrname] = attr[1]
-
-    def handle_endtag(self, tag):
-        tagname = string.lower(tag)
-        if tagname == self.currentTag:
-            self.currentTag = ""
-
-	def handle_comment(self, data):
-		pass 
-
-    def handle_data(self, data):
-        if self.currentTag == "title":
-            self.title = data

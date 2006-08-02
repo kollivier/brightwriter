@@ -153,16 +153,7 @@ if __name__ != "__main__":
 			else:
 				myhtml = ""
 
-			try: 
-				importer = HTMLImporter("", os.path.join(settings.ProjectDir, "Text"), self.dir, myhtml)
-				myhtml2 = importer.CopyAndReplaceLinks()
-				myhtml = myhtml2
-			except:
-				global log
-				log.write(_("Could not import linked files for '%(filename)s.") % {"filename": filename})
-
 			self.data['content'] = myhtml
-			#self.data['credit'] = ""
 
 #-------------------------- EDITOR INTERFACE ----------------------------------------
 

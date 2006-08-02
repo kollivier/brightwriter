@@ -55,6 +55,7 @@ import fileutils
 import guiutils
 import constants
 import mmedia
+import analyzer
 
 # Import the gui dialogs. They used to be embedded in editor.py
 # so we will just import their contents for now to avoid conflicts.
@@ -1014,14 +1015,13 @@ class MainFrame2(sc.SizedFrame):
 		                          _("Upload Dependent Files?"), wx.YES_NO)
 
 		if dialog.ShowModal() == wx.ID_YES:
-			import htmlutils as importer
 			for file in files[:]:
 				if os.path.splitext(file)[1] == ".htm" or os.path.splitext(file)[1] == ".html":
-					myimporter = importer.HTMLImporter(os.path.join(settings.ProjectDir, file))
-					#html = open(os.path.join(settings.ProjectDir, file), "r").read()
-					depFiles = myimporter.GetDocInfo()[3]
-					for dep in depFiles:
-						depFile = string.replace(dep, "../", "")
+					linkFinder = analyzer.ContentAnalyzer() 
+					linkFinder.AnalyzeFile(os.path.join(settings.ProjectDir, file))
+					for dep in linkFinder.fileLinks:
+						depFile = dep.replace("file://", "")
+						depFile = depFile.replace("../", "")
 						if os.path.exists(os.path.join(settings.ProjectDir, depFile)) and not depFile in files:
 							files.append(depFile)
 				

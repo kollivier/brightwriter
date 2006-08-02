@@ -11,6 +11,7 @@ import conman.vcard as vcard
 import fileutils
 import utils
 import plugins
+import htmlutils
 
 class PagePropertiesDialog (sc.SizedDialog):
 	"""
@@ -233,6 +234,8 @@ class PagePropertiesDialog (sc.SizedDialog):
 				
 			if copyfile:
 				fileutils.CopyFile(basename, dir, destdir)
+				if os.path.splitext(basename)[1] in [".htm", ".html"]:
+					htmlutils.copyDependentFilesAndUpdateLinks(filename, os.path.join(destdir, basename))
 			self.filename = os.path.join(plugin.plugin_info["Directory"], basename)
 		
 		self.txtExistingFile.SetValue(self.filename)
