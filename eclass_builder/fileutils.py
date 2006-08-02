@@ -6,6 +6,32 @@
 import sys
 import os
 import utils
+import settings
+import constants
+
+def getPubDir():
+    return os.path.join(settings.ProjectDir, "pub")
+
+def getGraphicsDir():
+    return os.path.join(settings.ProjectDir, "Graphics")
+    
+def getAudioDir():
+    return os.path.join(getPubDir(), "Audio")
+    
+def getVideoDir():
+    return os.path.join(getPubDir(), "Video")
+    
+def getTextDir():
+    return os.path.join(settings.ProjectDir, "Text")
+    
+def getPresentDir():
+    return os.path.join(settings.ProjectDir, "Present")
+    
+def getFileDir():
+    return os.path.join(settings.ProjectDir, "File")
+    
+def getContactsDir():
+    return os.path.join(settings.PrefDir, "Contacts")
 
 def CopyFiles(indir, outdir, recurse=0):
 	if not os.path.exists(outdir):

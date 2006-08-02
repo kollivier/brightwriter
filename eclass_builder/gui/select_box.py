@@ -4,21 +4,14 @@ import wx
 import wx.lib.newevent as newevent
 import wxaddons.sized_controls as sc
 import settings
-
-# common file filters for supported multimedia formats
-image_exts = ["jpg", "jpeg", "gif", "bmp", "png"]
-video_exts = ["avi", "mov" , "mpg", "asf", "wmv", "rm", "ram", "swf"]
-audio_exts = ["wav", "aif", "mp3", "asf", "wma", "rm" , "ram"]
-doc_exts   = ["htm", "html", "doc", "rtf"]
-pres_exts  = ["ppt", "htm", "html", "swf", "pdf"]
-
+import constants 
 
 filters =   {
-            "Graphics"  : ( _("Image Files"), image_exts ),
-            "Video"     : ( _("Video Files"), video_exts ),
-            "Audio"     : ( _("Audio Files"), audio_exts ),
-            "Text"      : ( _("Document Files"), doc_exts ),
-            "Present"   : ( _("Presentation Files"), pres_exts ),
+            "Graphics"  : ( _("Image Files"), constants.image_exts ),
+            "Video"     : ( _("Video Files"), constants.video_exts ),
+            "Audio"     : ( _("Audio Files"), constants.audio_exts ),
+            "Text"      : ( _("Document Files"), constants.doc_exts ),
+            "Present"   : ( _("Presentation Files"), constants.pres_exts ),
             "File"      : ( _("All Files"), ["*"] ),
             }
             

@@ -540,16 +540,6 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		#try:
 		bjtext = utils.makeUnicode(objtext)
 		myhtml = self._AddMedia(mypage) + objtext + utils.makeUnicode(myhtml)
-			
-		#except UnicodeError:
-		#	raise
-
-		try: 
-			importer = ImportFiles()
-			myhtml2 = importer.ImportLinks(myhtml, os.path.dirname(sourcefile), self.dir)
-			myhtml = myhtml2
-		except:
-			pass
 
 		if not ishotword:
 			self.data['content'] = myhtml
@@ -1089,6 +1079,9 @@ class EditorDialog (sc.SizedDialog):
 			newfile = fileutils.getShortenedFilename(filename)
 			os.rename(filename, newfile)
 			filename = newfile
+		if type.lower() == "text":
+			copyDependentFilesAndUpdateLinks(event.filename, filename)
+			
 		event.sender.SetValue(os.path.basename(filename))
 
 	def checkKey(self, event):
