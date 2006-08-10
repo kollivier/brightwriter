@@ -59,7 +59,8 @@ class ThemeManager(sc.SizedDialog):
 		self.btnCopyTheme = wx.BitmapButton(themeListBtnPane, -1, icnCopyTheme)
 		self.btnDeleteTheme = wx.BitmapButton(themeListBtnPane, -1, icnDeleteTheme)
 
-		wx.StaticLine(pane, -1)
+		line = wx.StaticLine(pane, -1)
+		line.SetSizerProp("expand", True)
 		themeBtnPane = sc.SizedPanel(pane, -1)
 		themeBtnPane.SetSizerType("horizontal")
 		themeBtnPane.SetSizerProp("expand", True)
