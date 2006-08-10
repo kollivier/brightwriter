@@ -6,7 +6,6 @@ import string, os, StringIO, formatter, locale, glob
 import PyLucene
 import converter
 from HTMLParser import HTMLParser, HTMLParseError
-from wxPython.wx import *
 import locale
 import settings
 import utils
@@ -19,10 +18,11 @@ import errors
 indexLog = errors.appErrorLog #utils.LogFile("indexing_log.txt")
 
 class SearchEngine:
-	def __init__(self, parent, indexdir, folder):
+	def __init__(self, parent, indexdir, folder, callback = None):
 		self.parent = parent
 		
 		self.index = index.Index(self.parent, indexdir, folder)
+		self.callback = callback
 		self.folder = folder
 		self.keepgoing = True
 		self.filecount = 0
@@ -33,8 +33,6 @@ class SearchEngine:
 		for (dir, subdirs, files) in os.walk(os.path.join(settings.ProjectDir, "File"),False):
 			self.numFiles = self.numFiles + len(files)
 
-		#self.dialog = dialogs.ProgressMonitor(_("Updating Index..."), self.numFiles, _("Preparing to update Index...") + "                             ")
-
 	def IndexDoc(self, node):
 		if not self.keepgoing:
 			return
@@ -43,11 +41,9 @@ class SearchEngine:
 		print self.statustext
 		filename = node.content.filename
 		self.publisher = plugins.GetPluginForFilename(filename).HTMLPublisher()
-		if self.dialog:
-			wxYield()
-			self.keepgoing = self.dialog.Update(self.filecount, self.statustext)
-			#self.dialog.sendUpdate(self.filecount, self.statustext)
-			#self.cancel = wxCallAfter(self.dialog.Update, self.filecount, statustext)
+		if self.callback:
+			self.callback.fileProgress(self.filecount, self.statustext)
+
 		self.filecount = self.filecount + 1
 		metadata = {}
 		metadata["title"] = node.content.metadata.name
@@ -89,15 +85,13 @@ class SearchEngine:
 				
 				self.statustext = _("Indexing File: \n") + filename
 				print self.statustext
-				if self.dialog:
-					wxYield()
-					self.keepgoing = self.dialog.Update(self.filecount, self.statustext)
-				#	self.cancel = wxCallAfter(self.dialog.Update, self.filecount, statustext)
+				if self.callback:
+					self.callback.fileProgress(self.filecount, self.statustext)
+
 				self.filecount = self.filecount + 1
 				self.index.updateFile(filename, metadata)
 
-	def IndexFiles(self, rootnode, dialog=None):
-		self.dialog = dialog
+	def IndexFiles(self, rootnode):
 
 		#this will index the root node and all child nodes
 		try:
