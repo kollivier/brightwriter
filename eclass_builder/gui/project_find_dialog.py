@@ -8,6 +8,7 @@ import wxaddons.persistence
 import wxaddons.sized_controls as sc
 import errors
 import settings
+import autolist
 
 import index
 
@@ -28,10 +29,13 @@ class ProjectFindDialog(sc.SizedDialog):
         self.searchBox = wx.TextCtrl(searchpane, -1)
         wx.StaticText(searchpane, -1, _("in") + " ")
         self.searchContext = wx.Choice(searchpane, -1, choices=["contents"])
+        self.searchContext.SetSelection(0)
+        
         self.searchBtn = wx.Button(searchpane, -1, _("Search"))
+        self.searchBtn.SetDefault()
         
         # list containing search results
-        self.listCtrl = wx.ListCtrl(pane, -1, style=wx.LC_REPORT)
+        self.listCtrl = autolist.AutoSizeListCtrl(pane, -1, style=wx.LC_REPORT)
         self.listCtrl.SetSizerProp("expand", "true")
         self.listCtrl.SetSizerProp("proportion", 2)
         
@@ -51,6 +55,8 @@ class ProjectFindDialog(sc.SizedDialog):
     def OnSearch(self, evt):
         searcher = index.Index(self, os.path.join(settings.ProjectDir, "index.lucene"), settings.ProjectDir)
         results = searcher.search("contents", self.searchBox.GetValue())
+        self.itemCount = 0
+        
         self.listCtrl.DeleteAllItems()
         for result in results:
             self.listCtrl.InsertStringItem(self.itemCount, result['title'])
