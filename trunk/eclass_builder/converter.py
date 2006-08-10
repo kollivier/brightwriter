@@ -2,12 +2,12 @@ import getopt,sys, os, string
 import cStringIO, tempfile, glob, time
 import settings
 import process
-import extprocess
+import subprocess
+import utils
 
 hasOOo = False
 hasMSOffice = False
 wordApp = None
-from wxPython.wx import *
 
 try: 
 	import win32api
@@ -19,24 +19,25 @@ try:
 	hasMSOffice = True
 except:
 	hasMSOffice = False
+	
+docFormats = ["doc", "rtf", "ppt", "xls", "txt"]
 
 class DocConverter:
 	def __init__(self, parent):
 		self.parent = parent
 		self.infile = ""
 		self.outformat = "html"
-		self.ThirdPartyDir = settings.ThirdPartyDir
 
 	def ConvertFile(self, filename, outformat="html", mode="command_line"):
 		try:
 			global hasOOo
 			#check for OOo first, we can only do this once EClass settings are loaded
-			if settings.AppSettings["OpenOffice"] != "" and os.path.exists(settings.AppSettings["OpenOffice"]):
+			if "OpenOffice" in settings.AppSettings.keys() and os.path.exists(settings.AppSettings["OpenOffice"]):
 				hasOOo = True
 			ext = string.lower(os.path.splitext(filename)[1][1:])
 			#print "ext = " + ext
 			converter = None
-			if ext in ["doc", "rtf", "ppt", "xls", "txt"]:
+			if ext in docFormats:
 				if hasMSOffice and mode == "ms_office":
 					converter = WordDocConverter(self.parent)
 				elif hasOOo and mode == "open_office":
@@ -49,13 +50,13 @@ class DocConverter:
 				converter = PDFConverter(self.parent)
     
 			if converter: 
-				converter.ThirdPartyDir = self.ThirdPartyDir
 				return converter.ConvertFile(filename, outformat)
 			else:
 				return "", ""
 		except:
 			import traceback
 			print traceback.print_exc()
+			return "", ""
 
 class PDFConverter:
 	def __init__(self, parent):
@@ -94,7 +95,6 @@ class PDFConverter:
 					print "Conversion process appears frozen. Stopping process."
 					myproc.kill()
 					return ("", "")
-				wxSafeYield()
 				time.sleep(0.1)
 				seconds = seconds + 0.1
 			print "File took %f seconds to convert." % (seconds)
@@ -192,10 +192,11 @@ class CommandLineDocConverter:
 
 	def ConvertFile(self, filename, outformat="html"):
 		#we ignore outformat for command line tools and just use HTML
+		print "Converting %s" % filename 
 		import tempfile
 		handle, htmlfile = tempfile.mkstemp()
 		os.close(handle)
-		thirdpartydir = self.ThirdPartyDir
+		thirdpartydir = settings.ThirdPartyDir
 		ext = string.lower(os.path.splitext(filename)[1])
 		path = ""
 		command = ""
@@ -208,47 +209,58 @@ class CommandLineDocConverter:
 			thirdpartydir = win32api.GetShortPathName(thirdpartydir)
 			filename = win32api.GetShortPathName(filename)
 			exe = win32api.GetShortPathName(exe)
+			
+		#filename = utils.escapeFilename(filename)
 
 		if ext == ".doc":
-			path = os.path.join(thirdpartydir, "wv", "bin")
+			path = os.path.join(thirdpartydir, "wv")
 			command = "wvWare"
-			args= "--config " + os.path.join("..", "share", "wv", "wvHtml.xml") + " " + filename
+			#args = ["--config " + os.path.join("..", "share", "wv", "wvHtml.xml")]
+			args = [filename]
 			#outformat = "txt"
 		elif ext == ".rtf":
-			path = os.path.join(thirdpartydir, "unrtf", "bin")
+			path = os.path.join(thirdpartydir, "unrtf")
 			command = "unrtf" 
-			args = filename
+			args = [filename]
 		elif ext == ".xls":
-			path = os.path.join(thirdpartydir, "xlHtml")
+			path = os.path.join(thirdpartydir, "xlhtml")
 			command = "xlhtml" 
 			# -te is important, otherwise if a person has 30,000 blank
 			# cells they'll end up in the converted document, making a
 			# 30MB HTML page!
-			args = "-te " + filename
+			args = ["-te", filename]
 		elif ext == ".ppt":
-			path = os.path.join(thirdpartydir, "xlHtml")
+			path = os.path.join(thirdpartydir, "xlhtml")
 			command = "ppthtml" 
-			args = filename
+			args = [filename]
 		else:
 			print "Cannot convert file because of unknown extension: " + filename
+			
+		if os.path.exists( os.path.join(path, "bin") ):
+			path = os.path.join(path, "bin")
+			
+		if not sys.platform.startswith("win"):
+			command = "./" + command
 
 		try:
 			oldcwd = os.getcwd()
 			os.chdir(path)
 			#Let's check for hung programs
 			seconds = 0.0
-			mycommand = [exe, os.path.join(settings.AppDir, "process.py"), 
-						command, args, ">", win32api.GetShortPathName(htmlfile)]
-			myproc = extprocess.ExtProcess(mycommand)
+ 
+			if sys.platform.startswith("win"):
+				htmlfile = win32api.GetShortPathName(htmlfile)
 			
-			while myproc.isAlive():
-				if seconds > 120: #the process has probably hung
-					print "Conversion process appears frozen. Stopping process."
-					myproc.kill()
-					return ("", "")
-				wxSafeYield()
-				time.sleep(0.1)
-				seconds = seconds + 0.1
+			exe = exe.encode( utils.getCurrentEncoding() )
+			commmand = command.encode( utils.getCurrentEncoding() )
+			htmlfile = htmlfile.encode( utils.getCurrentEncoding() )
+			
+			mycommand = [command] + args + [">"] + [htmlfile]
+			retcode = subprocess.call( mycommand )
+			
+			if retcode != 0:
+				sys.stderr.write('ERROR: command "%s" failed.\n' % command)
+
 			print "File took %f seconds to convert." % (seconds)
 			#some utilities assume their own path for extracted images
 			self._CleanupTempFiles(path)
