@@ -9,6 +9,19 @@ import utils
 import settings
 import constants
 
+
+def getNumFiles(dirname, recurse=True):
+    numFiles = 0
+    for filename in os.listdir(dirname):
+        fullname = os.path.join(dirname, filename)
+        if os.path.isfile(fullname):
+            numFiles += 1
+        elif recurse and os.path.isdir(fullname):
+            numFiles += getNumFiles(fullname)
+            
+    return numFiles
+            
+
 def getPubDir():
     return os.path.join(settings.ProjectDir, "pub")
 
@@ -33,12 +46,16 @@ def getFileDir():
 def getContactsDir():
     return os.path.join(settings.PrefDir, "Contacts")
 
-def CopyFiles(indir, outdir, recurse=0):
+def CopyFiles(indir, outdir, recurse=0, callback=None):
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	for item in os.listdir(indir):
+		
 		if os.path.isfile(os.path.join(indir, item)):
+			if callback:
+				callback.fileChanged(item)
 			CopyFile(item, indir, outdir)
+			
 		elif os.path.isdir(os.path.join(indir, item)) and recurse:
 			if not item.upper() == "CVS":
 				myoutdir = os.path.join(outdir, item)
@@ -49,7 +66,7 @@ def CopyFiles(indir, outdir, recurse=0):
 						print "Could not make directory: " + myoutdir
 			
 				if os.path.isdir(myoutdir):
-					CopyFiles(os.path.join(indir,item) ,myoutdir, 1)
+					CopyFiles(os.path.join(indir,item) ,myoutdir, 1, callback)
 
 def CopyFile(filename, indir, outdir): 
 	try: 
