@@ -13,6 +13,16 @@ def TextToHTMLChar(mytext):
     
     return TextToXMLChar(mytext)
     
+def GetFullPathForURL(url, basedir):
+    path = urllib.unquote(url)
+    if path.find("file://") == 0:
+        path = urllib.urlretrieve(url)[0]
+            
+    if not os.path.exists(path):
+        path = basedir + "/" + path
+    
+    return path
+    
 def copyDependentFilesAndUpdateLinks(oldfile, filename):
     myanalyzer = analyzer.ContentAnalyzer()
     myanalyzer.analyzeFile(filename)
@@ -25,12 +35,7 @@ def copyDependentFilesAndUpdateLinks(oldfile, filename):
     html = utils.makeUnicode(html, encoding)
     
     for link in myanalyzer.fileLinks:
-        sourcefile = urllib.unquote(link)
-        if sourcefile.find("file://") == 0:
-            sourcefile = urllib.urlretrieve(link)[0]
-            
-        if not os.path.exists(sourcefile):
-            sourcefile = htmldir + "/" + sourcefile
+        sourcefile = GetFullPathForURL(link, htmldir)
         
         if os.path.exists(sourcefile):
             sourcedir = os.path.dirname(sourcefile)
