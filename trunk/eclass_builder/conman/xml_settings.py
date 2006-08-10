@@ -45,6 +45,9 @@ class XMLSettings:
 		for key in self.settings.keys():
 			text = text + key + "=" + str(self.settings[key]) + "\n"
 		return text
+		
+	def keys(self):
+		return self.settings.keys()
 
 	def Add(self, key, value):
 		self.settings[key] = value
