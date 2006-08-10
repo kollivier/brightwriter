@@ -20,6 +20,7 @@ lang_dict = {
 import wx
 import wxaddons.persistence
 import wxaddons.sized_controls as sc
+import time
 
 hasmozilla = True
 try:
@@ -149,6 +150,20 @@ try:
 except:
 	pass
 
+class GUIIndexingCallback:
+    def __init__(self, parent):
+        self.parent = parent
+        
+    def fileProgress(self, totalFiles, statustext):
+        wx.CallAfter(self.parent.OnIndexFileChanged, totalFiles, statustext)
+        
+class GUIFileCopyCallback:
+    def __init__(self, parent):
+        self.parent = parent
+        
+    def fileChanged(self, filename):
+        wx.CallAfter(self.parent.OnFileChanged, filename)
+        
 #----------------------------- MainFrame Class ----------------------------------------------
 
 class MainFrame2(sc.SizedFrame): 
@@ -295,8 +310,8 @@ class MainFrame2(sc.SizedFrame):
 		PasteMenu.Append(ID_PASTE_CHILD, _("Paste As Child"))
 		EditMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu)
 		
-		#EditMenu.AppendSeparator()
-		#EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
+		EditMenu.AppendSeparator()
+		EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
 
 		#create the PopUp Menu used when a user right-clicks on an item
 		self.PopMenu = wx.Menu()
@@ -882,6 +897,11 @@ class MainFrame2(sc.SizedFrame):
 				elif os.path.isdir(mypath):
 					self._DirToZipFile(os.path.join(dir, file), myzip)
 		
+
+	def OnIndexFileChanged(self, progress, statusText):
+		if self.engine:
+			self.engine.keepgoing = self.dialog.Update(progress, statusText)
+
 	def UpdateTextIndex(self):
 		searchEnabled = 0
 		print "in index method"
@@ -889,14 +909,31 @@ class MainFrame2(sc.SizedFrame):
 			searchEnabled = settings.ProjectSettings["SearchEnabled"]
 		if int(searchEnabled) == 1:
 			if settings.ProjectSettings["SearchProgram"] == "Lucene" and hasLucene:
-				engine = indexer.SearchEngine(self, os.path.join(settings.ProjectDir, "index.lucene"), settings.ProjectDir)
-				maxfiles = engine.numFiles - 1
+				callback = GUIIndexingCallback(self)
+				self.engine = indexer.SearchEngine(self, os.path.join(settings.ProjectDir, "index.lucene"), settings.ProjectDir, callback)
+				maxfiles = self.engine.numFiles - 1
 				#import threading
-				dialog = wx.ProgressDialog(_("Updating Index"), _("Preparing to update Index...") + "							 ", maxfiles, style=wx.PD_CAN_ABORT | wx.PD_APP_MODAL) 
-				engine.IndexFiles(self.pub.nodes[0], dialog)
+				self.dialog = wx.ProgressDialog(_("Updating Index"), _("Preparing to update Index...") + "							 ", maxfiles, style=wx.PD_CAN_ABORT | wx.PD_APP_MODAL) 
+				self.dialog.SetFocus()
+				import threading
+				
+				class IndexThread(PyLucene.PythonThread):
+					def __init__(self, pub, engine):
+						PyLucene.PythonThread.__init__(self)
+						self.pub = pub
+						self.engine = engine
+						
+					def run(self):
+						self.engine.IndexFiles(self.pub.nodes[0])
+						
+				self.mythread = IndexThread(self.pub, self.engine)
+				self.mythread.start()
+				while self.mythread.isAlive():
+					wx.MilliSleep(250)
+					wx.Yield()
 
-				dialog.Destroy()
-				dialog = None
+				self.dialog.Destroy()
+				self.dialog = None
 
 			elif settings.ProjectSettings["SearchProgram"] == "Greenstone":
 				gsdl = settings.AppSettings["GSDL"]
@@ -925,6 +962,9 @@ class MainFrame2(sc.SizedFrame):
 					dialog.Destroy()
 
 	def PublishToCD(self,event):
+		#import gui.publish_wizard
+		#wiz = gui.publish_wizard.PublishWizard(self)
+		#wiz.Run()
 		folder = settings.ProjectDir
 		if settings.ProjectSettings["CDSaveDir"] == "":
 			result = wx.MessageDialog(self, _("You need to specify a directory in which to store the CD files for burning.\nWould you like to do so now?"), _("Specify CD Save Directory?"), wx.YES_NO).ShowModal()
@@ -951,6 +991,10 @@ class MainFrame2(sc.SizedFrame):
 		
 		guiutils.openFolderInGUI(folder)
 
+	def OnFileChanged(self, filename):
+		self.filesCopied += 1
+		self.keepCopying = self.dialog.Update(self.filesCopied, "Copying: " + filename)
+
 	def CopyCDFiles(self):
 		try:
 			#cleanup after old EClass versions
@@ -963,8 +1007,20 @@ class MainFrame2(sc.SizedFrame):
 				pubdir = settings.ProjectSettings["CDSaveDir"]
 
 			if pubdir != settings.ProjectDir:
-				fileutils.CopyFiles(settings.ProjectDir, pubdir, 1)
+				callback = GUIFileCopyCallback(self)
+				maxfiles = fileutils.getNumFiles(settings.ProjectDir)
+				self.filesCopied = 0
+				self.dialog = wx.ProgressDialog(_("Copying CD Files"), _("Preparing to copy CD files...") + "							 ", maxfiles, style=wx.PD_APP_MODAL)
 
+				import threading
+				self.mythread = threading.Thread(None, fileutils.CopyFiles, args=(settings.ProjectDir, pubdir, 1, callback))
+				self.mythread.start()
+				while self.mythread.isAlive():
+					wx.MilliSleep(250)
+					wx.Yield()
+
+				self.dialog.Destroy()
+				self.dialog = None
 			# copy the server program
 			if settings.ProjectSettings["SearchProgram"] != "Greenstone":
 				fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
@@ -999,6 +1055,14 @@ class MainFrame2(sc.SizedFrame):
 			self.CreateDocumancerBook()
 			self.CreateDevHelpBook()
 			utils.CreateJoustJavascript(self.pub)
+			index_config_file = os.path.join(settings.ProjectDir, "index_settings.cfg")
+			# if an index settings file doesn't exist, create one with some common defaults
+			if not os.path.exists(index_config_file):
+				import ConfigParser
+				config = ConfigParser.ConfigParser()
+				config.add_section("Settings")
+				config.set("Settings", "IgnoreFileTypes", "ecp,quiz,gif,jpg,png,bmp,swf,avi,mov,wmv,rm,wav,mp3")
+				config.write(utils.openFile(index_config_file, "w"))
 
 		except:
 			message = _("There was an unexpected error publishing your course. For more details, check the Error Viewer from the 'Tools->Error Viewer' menu.")
