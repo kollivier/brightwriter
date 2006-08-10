@@ -10,10 +10,12 @@ import locale
 import settings
 import utils
 import stat
-
+import ConfigParser
 import errors
 
 indexLog = utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
+
+textFormats = ["htm", "html", "doc", "rtf", "ppt", "xls", "txt", "pdf"]
 
 class Index:
     def __init__(self, parent, indexdir, rootFolder=""):
@@ -23,13 +25,26 @@ class Index:
         self.reader = None
         self.files = []
         self.keepgoing = True
+        self.ignoreTypes = []
+        
+        
+        if not os.path.exists(self.indexdir):
+            os.makedirs(self.indexdir)
+        
+        config = ConfigParser.ConfigParser()
+        config.read([os.path.join(settings.ProjectDir, "index_settings.cfg")])
+        if config.has_option("Settings", "IgnoreFileTypes"):
+            ignoreTypes = config.get("Settings", "IgnoreFileTypes")
+            if ignoreTypes != "":
+                self.ignoreTypes = ignoreTypes.replace(" ", "").lower().split(",")
         
     def indexExists(self):
         return os.path.isfile(os.path.join(self.indexdir, "segments"))
         
     def addFile(self, filename, metadata):
         # first, check to see if we're in the index.
-        if 1:
+        ext = os.path.splitext(filename)[1][1:]
+        if not ext.lower() in self.ignoreTypes:
             print "Adding file: " + filename
             doc = PyLucene.Document()
             doc.add(PyLucene.Field("url", filename, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
@@ -39,17 +54,19 @@ class Index:
             # get document text
             mytext = ""
             fullpath = os.path.join(self.folder, filename)
-            try: 
-                #unfortunately, sometimes conversion is hit or miss. Worst case, index the doc with
-                #no text.
-                mytext = self.GetTextFromFile(fullpath)
-            except:
-                import traceback
-                indexLog.write(`traceback.print_exc()`)#pass
-                
-            if mytext == "":
-                print "No text indexed for file: " + filename
-                indexLog.write("No text indexed for file: " + filename)
+
+            if ext.lower() in textFormats:
+                try: 
+                    #unfortunately, sometimes conversion is hit or miss. Worst case, index the doc with
+                    #no text.
+                    mytext = self.GetTextFromFile(fullpath)
+                except:
+                    import traceback
+                    indexLog.write(`traceback.print_exc()`)#pass
+                    
+                if mytext == "":
+                    print "No text indexed for file: " + filename
+                    indexLog.write("No text indexed for file: " + filename)
             try:
                 props = os.stat(fullpath)
                 doc.add(PyLucene.Field("last_modified", `props[stat.ST_MTIME]`, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
@@ -135,6 +152,22 @@ class Index:
                     results.append(self.getDocMetadata(hits.doc(fileNum)))
 
         return results
+        
+    def getIndexInfo(self):
+        info = {}
+        if self.indexExists:
+            reader = PyLucene.IndexReader.open(self.indexdir)
+            info["NumDocs"] = reader.numDocs()
+            termList = []
+            terms = reader.terms()
+            moreTerms = True
+            while moreTerms:
+                termList.append(terms.term())
+                moreTerms = terms.next()
+            
+            info["Terms"] = termList
+            
+        return info
 
     def GetTextFromFile(self, filename=""):
         """
@@ -150,12 +183,16 @@ class Index:
         myconverter = None
 
         returnDataFormat = "html"
-        if ext in ["htm", "html"]:
+        if ext in ["htm", "html", "txt"]:
             data = open(filename, "rb").read()
         else:                   
             try:
+                prefConverter = ""
+                if "PreferredConverter" in settings.AppSettings.keys():
+                    prefConverter = settings.AppSettings["PreferredConverter"]
+                    
                 myconverter = converter.DocConverter(self.parent)
-                thefilename, returnDataFormat = myconverter.ConvertFile(filename, "unicodeTxt", settings.AppSettings["PreferredConverter"])
+                thefilename, returnDataFormat = myconverter.ConvertFile(filename, "unicodeTxt", prefConverter)
                 if thefilename == "":
                     return ""
                 myfile = open(thefilename, "rb")
@@ -171,7 +208,6 @@ class Index:
                     os.remove(thefilename)
                 return "", ""
 
-        print "returnDataFormat is: " + returnDataFormat
         if returnDataFormat == "html":
             convert = TextConverter()
             convert.feed(data)
