@@ -27,6 +27,8 @@ class ProjectFindDialog(sc.SizedDialog):
         
         wx.StaticText(searchpane, -1, _("Find") + " ")
         self.searchBox = wx.TextCtrl(searchpane, -1)
+        self.searchBox.SetFocus()
+        
         wx.StaticText(searchpane, -1, _("in") + " ")
         self.searchContext = wx.Choice(searchpane, -1, choices=["contents"])
         self.searchContext.SetSelection(0)
