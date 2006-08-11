@@ -30,15 +30,13 @@ class SearchEngine:
 		#get a tally of all the files being indexed
 		self.numFiles = self.parent.pub.GetNodeCount()
 				
-		for (dir, subdirs, files) in os.walk(os.path.join(settings.ProjectDir, "File"),False):
-			self.numFiles = self.numFiles + len(files)
+		self.numFiles += fileutils.getNumFiles( self.folder )
 
 	def IndexDoc(self, node):
 		if not self.keepgoing:
 			return
 
 		self.statustext = _("Indexing page ") + node.content.metadata.name
-		print self.statustext
 		filename = node.content.filename
 		self.publisher = plugins.GetPluginForFilename(filename).HTMLPublisher()
 		if self.callback:
@@ -68,12 +66,15 @@ class SearchEngine:
 			metadata["organization"] = author.entity.fname.value
 			
 		self.index.updateFile(filename, metadata)
+		
+		for child in node.children:
+			self.IndexDoc(child)
 
-	def IndexFolder(self, dir):
-		for afile in glob.glob(os.path.join(dir, "*")):
+	def IndexFolder(self, dirname):
+		for afile in os.listdir(dirname):
 			if not self.keepgoing:
 				return 
-			fullname = os.path.join(dir, afile)
+			fullname = os.path.join(dirname, afile)
 			if os.path.isdir(fullname):
 				self.IndexFolder(fullname)
 			elif os.path.isfile(fullname):
@@ -84,7 +85,6 @@ class SearchEngine:
 				metadata["url"] = unicode(filename)
 				
 				self.statustext = _("Indexing File: \n") + filename
-				print self.statustext
 				if self.callback:
 					self.callback.fileProgress(self.filecount, self.statustext)
 
