@@ -45,7 +45,6 @@ class Index:
         # first, check to see if we're in the index.
         ext = os.path.splitext(filename)[1][1:]
         if not ext.lower() in self.ignoreTypes:
-            print "Adding file: " + filename
             doc = PyLucene.Document()
             doc.add(PyLucene.Field("url", filename, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
             for field in metadata:

@@ -192,7 +192,6 @@ class CommandLineDocConverter:
 
 	def ConvertFile(self, filename, outformat="html"):
 		#we ignore outformat for command line tools and just use HTML
-		print "Converting %s" % filename 
 		import tempfile
 		handle, htmlfile = tempfile.mkstemp()
 		os.close(handle)
@@ -200,11 +199,9 @@ class CommandLineDocConverter:
 		ext = string.lower(os.path.splitext(filename)[1])
 		path = ""
 		command = ""
+		html = ""
 		outformat = "html"
-		exe = os.path.join(settings.AppDir, "python.exe")
-		if not os.path.exists(exe):
-			exe = sys.executable
-		#exe.replace("editor.exe", "python.exe")
+
 		if os.name == "nt":
 			thirdpartydir = win32api.GetShortPathName(thirdpartydir)
 			filename = win32api.GetShortPathName(filename)
@@ -260,18 +257,21 @@ class CommandLineDocConverter:
 			
 			if retcode != 0:
 				sys.stderr.write('ERROR: command "%s" failed.\n' % command)
+			else:
+				print "File took %f seconds to convert." % (seconds)
+				html = utils.openFile(htmlfile, "r").read()
 
-			print "File took %f seconds to convert." % (seconds)
 			#some utilities assume their own path for extracted images
 			self._CleanupTempFiles(path)
 			os.chdir(oldcwd)
+			
 		except:
 			import traceback
 			if traceback.print_exc() != None:
 				print traceback.print_exc()
 			print "Unable to convert document: " + filename #if we can't convert, oh well ;-)
 
-		return htmlfile, outformat
+		return html, outformat
 
 	def _CleanupTempFiles(self, path):
 		for ext in ["png", "jpg", "jpeg", "wmf", "gif", "$$$", "emf"]:
