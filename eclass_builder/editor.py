@@ -163,6 +163,10 @@ class GUIFileCopyCallback:
         
     def fileChanged(self, filename):
         wx.CallAfter(self.parent.OnFileChanged, filename)
+        # TODO: Fix this very nasty hack. What we really need is a threaded
+        # system which fires an event when finished.
+        if wx.Platform == "__WXMAC__":
+            wx.Yield()
         
 #----------------------------- MainFrame Class ----------------------------------------------
 
@@ -1008,16 +1012,11 @@ class MainFrame2(sc.SizedFrame):
 
 			if pubdir != settings.ProjectDir:
 				callback = GUIFileCopyCallback(self)
-				maxfiles = fileutils.getNumFiles(settings.ProjectDir)
+				maxfiles = fileutils.getNumFiles(settings.ProjectDir) + 1
 				self.filesCopied = 0
 				self.dialog = wx.ProgressDialog(_("Copying CD Files"), _("Preparing to copy CD files...") + "							 ", maxfiles, style=wx.PD_APP_MODAL)
 
-				import threading
-				self.mythread = threading.Thread(None, fileutils.CopyFiles, args=(settings.ProjectDir, pubdir, 1, callback))
-				self.mythread.start()
-				while self.mythread.isAlive():
-					wx.MilliSleep(250)
-					wx.Yield()
+				fileutils.CopyFiles(settings.ProjectDir, pubdir, 1, callback)
 
 				self.dialog.Destroy()
 				self.dialog = None
