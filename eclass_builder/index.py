@@ -181,8 +181,11 @@ class Index:
         ext = string.lower(os.path.splitext(filename)[1][1:])
         myconverter = None
 
-        returnDataFormat = "html"
-        if ext in ["htm", "html", "txt"]:
+        returnDataFormat = "text"
+        if ext in ["htm", "html"]:
+            returnDataFormat = "html"
+            
+        if ext in ["htm", "html", "txt", "h", "cpp", "cxx", "py", "php", "pl", "rb"]:
             data = open(filename, "rb").read()
         else:                   
             try:
