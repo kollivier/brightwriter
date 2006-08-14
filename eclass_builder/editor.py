@@ -22,6 +22,8 @@ import wxaddons.persistence
 import wxaddons.sized_controls as sc
 import time
 
+wx.SystemOptions.SetOptionInt("mac.textcontrol-use-mlte", 1)
+
 hasmozilla = True
 try:
 	from wxPython.mozilla import *
@@ -1590,8 +1592,6 @@ class MainFrame2(sc.SizedFrame):
 
 	def MoveItemUp(self, event):
 		item = self.CurrentItem
-		previtem = self.CurrentItem.back()
-		nextitem = self.CurrentItem.next()
 		parent = self.CurrentItem.parent
 		index = parent.children.index(self.CurrentItem)
 		if index > 0:
@@ -1611,14 +1611,10 @@ class MainFrame2(sc.SizedFrame):
 			self.projectTree.Refresh()
 			self.projectTree.SelectItem(self.CurrentTreeItem)
 			self.Update()
-			self.Update(previtem)
-			self.Update(nextitem)
 				
 	def MoveItemDown(self, event):
 		item = self.CurrentItem
 		parent = self.CurrentItem.parent
-		previtem = self.CurrentItem.back()
-		nextitem = self.CurrentItem.next()
 		index = parent.children.index(self.CurrentItem)
 		if index + 1 < len(parent.children):
 			parent.children.remove(self.CurrentItem)
@@ -1638,12 +1634,6 @@ class MainFrame2(sc.SizedFrame):
 			self.projectTree.Refresh()
 			self.projectTree.SelectItem(self.CurrentTreeItem)
 			self.Update()
-			self.Update(previtem)
-			self.Update(nextitem)
-
-			self.dirtyNodes.append(self.CurrentItem)
-			self.dirtyNodes.append(previtem)
-			self.dirtyNodes.append(nextitem)
 
 	def CheckSave(self):
 		msg = wx.MessageDialog(self, _("Would you like to save the current project before continuing?"),
