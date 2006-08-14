@@ -1,0 +1,26 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: EClass.Library 0.5\n"
+"POT-Creation-Date: 2006-06-19 09:10+PDT\n"
+"PO-Revision-Date: 2006-06-16 14:26-0800\n"
+"Last-Translator: Kevin Ollivier <kevino@tulane.edu>\n"
+"Language-Team: Payson Center <kevino@tulane.edu>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: library/gui/MainFrame.py:17
+msgid "Contents"
+msgstr ""
+
+#: library/gui/MainFrame.py:18
+msgid "Last Updated"
+msgstr ""
+
+#: library/gui/MainFrame.py:19
+msgid "Index Status"
+msgstr ""
