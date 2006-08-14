@@ -1,6 +1,6 @@
 import sys, string, os
 import utils
-import guiutils
+import settings
 import time
 
 def getTraceback():
@@ -12,7 +12,13 @@ def getTraceback():
 class AppErrorLog(utils.LogFile):
 	def __init__(self):
 		utils.LogFile.__init__(self)
-		self.filename = os.path.join(guiutils.getAppDataDir(), "errors.txt")
+		logdir = settings.AppDir
+		try:
+			import guiutils
+			logdir = guiutils.getAppDataDir()
+		except:
+			pass
+		self.filename = os.path.join(logdir, "errors.txt")
 		self.separator = u"|"
 
 	def write(self, message):
