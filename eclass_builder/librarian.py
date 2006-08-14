@@ -3,7 +3,7 @@ import ConfigParser
 
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
-	rootdir = os.path.dirname(rootdir)
+    rootdir = os.path.dirname(rootdir)
 
 # do this first because other modules may rely on _()
 localedir = os.path.join(rootdir, 'locale')
@@ -33,7 +33,10 @@ def walker(indexer, dirname, names):
             indexer.updateFile(fullpath, {})
 
 if len(sys.argv) <= 2:
-    print "Usage: %s <operation> <value>" % os.path.basename(__file__)
+    progname = os.path.basename(sys.executable)
+    if progname.find("librarian") == -1:
+        progname = os.path.basename(__file__)
+    print "Usage: %s <operation> <value>" % progname
 
 command = sys.argv[1].lower().strip()
 if command == "add":
