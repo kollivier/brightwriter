@@ -768,7 +768,6 @@ class EClassHyperlinkEditorDialog(sc.SizedDialog):
 						   wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
 		self.parent = parent
-		self.mainform = parent.mainform
 		self.term = term
 		
 		pane = self.GetContentsPane()
@@ -787,7 +786,7 @@ class EClassHyperlinkEditorDialog(sc.SizedDialog):
 		#spacer.SetSizerProp("expand", "true")
 		
 		wx.StaticText(pane, -1, _("Link Address")).SetSizerProp("valign", "center")
-		self.selectFile = SelectBox(pane, term.url, _("Link"))
+		self.selectFile = picker.SelectBox(pane, term.url, _("File"))
 		
 		self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
 		self.btnOK.SetDefault()
