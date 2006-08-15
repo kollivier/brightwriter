@@ -1,4 +1,14 @@
 #!/bin/sh
 
-~/cx_Freeze-3.0.2/FreezePython --incldue-modules = encodings --install-dir deliver ../librarian.py
+# This part is needed for cx_Freeze 3.0.3 to work
+# can be removed when cx_Freeze has a better method for importing
+# all encodings.
+prefix=`python2.4 -c "import sys; print sys.prefix"`
+echo "import encodings" > encodings_import.py
+for line in `ls $prefix/lib/python2.4/encodings/*.py`; do
+    encoding=`basename ${line/.py}`
+    echo "import encodings.$encoding" >> encodings_import.py
+done
+
+~/cx_Freeze-3.0.2/FreezePython --install-dir --include-modules=encodings_import.py deliver ../librarian.py
 cp -r ../locale deliver
