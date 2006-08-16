@@ -80,7 +80,7 @@ elif command == "index":
 elif command == "search":
     name = sys.argv[2].strip()
     term = sys.argv[3].strip()
-    folder = config.get(name, "directory")
+    folder = config.get(name, "index_directory")
     if not folder == "":
         print "searching for term: %s" % term
         lucenedir = os.path.join(folder, "index.lucene")
