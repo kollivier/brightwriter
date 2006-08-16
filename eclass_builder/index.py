@@ -15,8 +15,8 @@ import errors
 
 indexLog = utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
 
-textFormats = ["htm", "html", "doc", "rtf", "ppt", "xls", "txt", "pdf"]
-
+docFormats = ["htm", "html", "doc", "rtf", "ppt", "xls", "txt", "pdf"]
+textFormats = ["htm", "html", "txt", "h", "c", "cpp", "cxx", "py", "php", "pl", "rb"]
 class Index:
     def __init__(self, parent, indexdir, rootFolder=""):
         self.parent = parent
@@ -41,12 +41,22 @@ class Index:
     def indexExists(self):
         return os.path.isfile(os.path.join(self.indexdir, "segments"))
         
+    def getRelativePath(self, filename):
+        retval = filename.replace(self.folder, "")
+        if retval[0] == os.sep or retval[0] == "/":
+            retval = retval[1:]
+            
+        return retval
+        
+    def getAbsolutePath(self, filename):
+        return os.path.join(self.folder, filename)
+        
     def addFile(self, filename, metadata):
         # first, check to see if we're in the index.
         ext = os.path.splitext(filename)[1][1:]
         if not ext.lower() in self.ignoreTypes:
             doc = PyLucene.Document()
-            doc.add(PyLucene.Field("url", filename, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
+            doc.add(PyLucene.Field("url", self.getRelativePath(filename), PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
             for field in metadata:
                 doc.add(PyLucene.Field(field, metadata[field], PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
             
@@ -54,7 +64,7 @@ class Index:
             mytext = ""
             fullpath = os.path.join(self.folder, filename)
 
-            if ext.lower() in textFormats:
+            if ext.lower() in docFormats:
                 try: 
                     #unfortunately, sometimes conversion is hit or miss. Worst case, index the doc with
                     #no text.
@@ -73,7 +83,7 @@ class Index:
             except:
                 import traceback
                 print `traceback.print_exc()`
-            doc.add(PyLucene.Field("contents", mytext, PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED))
+            doc.add(PyLucene.Field("contents", mytext, PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED, PyLucene.Field.TermVector.WITH_POSITIONS))
             newIndex = not self.indexExists()
             store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
             writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), newIndex)
@@ -86,12 +96,12 @@ class Index:
         if self.indexExists():
             searcher = PyLucene.IndexSearcher(self.indexdir)
             analyzer = PyLucene.StandardAnalyzer()
-            query = PyLucene.QueryParser("url", analyzer).parse(filename)
+            query = PyLucene.TermQuery(PyLucene.Term("url", '"%s"' % filename))
             hits = searcher.search(query)
             if hits.length() > 0:
                 result = (hits.id(0), hits.doc(0))
             searcher.close()
-            
+                
         return result
         
     def getDocMetadata(self, doc):
@@ -185,7 +195,7 @@ class Index:
         if ext in ["htm", "html"]:
             returnDataFormat = "html"
             
-        if ext in ["htm", "html", "txt", "h", "cpp", "cxx", "py", "php", "pl", "rb"]:
+        if ext in textFormats:
             data = open(filename, "rb").read()
         else:                   
             try:
