@@ -64,7 +64,7 @@ class Index:
             mytext = ""
             fullpath = os.path.join(self.folder, filename)
 
-            if ext.lower() in docFormats:
+            if ext.lower() in docFormats + textFormats:
                 try: 
                     #unfortunately, sometimes conversion is hit or miss. Worst case, index the doc with
                     #no text.
@@ -83,7 +83,7 @@ class Index:
             except:
                 import traceback
                 print `traceback.print_exc()`
-            doc.add(PyLucene.Field("contents", mytext, PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED, PyLucene.Field.TermVector.WITH_POSITIONS))
+            doc.add(PyLucene.Field("contents", mytext, PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED))
             newIndex = not self.indexExists()
             store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
             writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), newIndex)
