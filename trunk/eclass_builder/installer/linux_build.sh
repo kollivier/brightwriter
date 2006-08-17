@@ -11,6 +11,6 @@ for line in `ls $prefix/lib/python2.4/encodings/*.py`; do
 done
 
 ~/cx_Freeze-3.0.3/FreezePython  --include-modules=encodings_import --install-dir librarian-linux ../librarian.py
-cp -r ../locale librarian-cgi-linux
+cp -r ../locale librarian-linux
 mkdir -p deliver
-tar czvf librarian-linux.tar.gz librarian-linux
+tar czvf deliver/librarian-linux.tar.gz librarian-linux
