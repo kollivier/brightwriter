@@ -1,6 +1,7 @@
 import sys, os
 import ConfigParser
 import encodings
+import string
 
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
@@ -17,14 +18,12 @@ lang_dict = {
 			}
 			
 import index
+import index_manager
 import utils
 import settings
 
 settings.AppDir = rootdir
 settings.ThirdPartyDir = os.path.join(rootdir, "3rdparty", utils.getPlatformName()) 
-
-config = ConfigParser.ConfigParser()
-config.read(["indexes.cfg"])
 
 def walker(indexer, dirname, names):
     for name in names:
@@ -40,53 +39,36 @@ if len(sys.argv) <= 2:
     print "Usage: %s <operation> <value>" % progname
     sys.exit(1)
 
+manager = index_manager.IndexManager()    
 command = sys.argv[1].lower().strip()
 if command == "add":
     name = sys.argv[2].strip()
     folder = sys.argv[3].strip()
-    if not config.has_section(name):
-        config.add_section(name)
-        config.set(name, "content_directory", folder)
-        indexdir = os.path.join(settings.AppDir, "indexes")
-        if not os.path.exists(indexdir):
-            os.makedirs(indexdir)
-            
-        thisindexdir = os.path.join(indexdir, utils.createSafeFilename(name))
-        if not os.path.exists(thisindexdir):
-            os.makedirs(thisindexdir)
-        config.set(name, "index_directory", thisindexdir)
-        config.write(open("indexes.cfg", "w"))
+    try:
+        manager.addIndex(name, folder)
+    except index_manager.IndexExistsError, text:
+        print text
         
-    else:
-        print "Collection with name %s already exists. Please enter another name." % name
-    
 elif command == "index":
     name = sys.argv[2].strip()
-    folder = config.get(name, "content_directory")
-    indexdir = config.get(name, "index_directory")
-    
-    if not folder == "":
-        lucenedir = os.path.join(indexdir, "index.lucene")
-    
+    indexer = manager.getIndex(name)
+        
+    if indexer: 
+        folder = manager.getIndexProp(name, "content_directory")
         currentdir = os.getcwd()
         os.chdir(folder)
-        indexer = index.Index(None, lucenedir, folder)
         os.path.walk(folder, walker, indexer)
     
         os.chdir(currentdir)
-    else:
-        print "Cannot read information on collection %s from indexes.cfg. Cannot continue." % name
 
 elif command == "search":
     name = sys.argv[2].strip()
     term = sys.argv[3].strip()
-    folder = config.get(name, "index_directory")
-    if not folder == "":
+    indexer = manager.getIndex(name)
+
+    if indexer:
         print "searching for term: %s" % term
-        lucenedir = os.path.join(folder, "index.lucene")
-        searcher = index.Index(None, lucenedir, folder)
-        results = searcher.search("contents", term)
-        print results.split("\n")
-    
-    else:
-        print "No folder specified for collection %s. Cannot continue." % name
+        results = indexer.search("contents", term)
+        print "Search returned %d results." % len(results)
+        for result in results:
+            print result["url"]
