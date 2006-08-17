@@ -10,5 +10,7 @@ for line in `ls $prefix/lib/python2.4/encodings/*.py`; do
     echo "import encodings.$encoding" >> ../encodings_import.py
 done
 
-~/cx_Freeze-3.0.3/FreezePython  --include-modules=encodings_import --install-dir deliver ../librarian.py
-cp -r ../locale deliver
+~/cx_Freeze-3.0.3/FreezePython  --include-modules=encodings_import --install-dir librarian-linux ../librarian.py
+cp -r ../locale librarian-cgi-linux
+mkdir -p deliver
+tar czvf librarian-linux.tar.gz librarian-linux
