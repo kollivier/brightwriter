@@ -1,7 +1,6 @@
 import getopt,sys, os, string
 import cStringIO, tempfile, glob, time
 import settings
-import process
 import subprocess
 import utils
 
