@@ -21,7 +21,7 @@ class SearchEngine:
 	def __init__(self, parent, indexdir, folder, callback = None):
 		self.parent = parent
 		
-		self.index = index.Index(self.parent, indexdir, folder)
+		self.index = index.Index(indexdir, folder)
 		self.callback = callback
 		self.folder = folder
 		self.keepgoing = True

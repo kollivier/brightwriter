@@ -18,8 +18,7 @@ indexLog = utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
 docFormats = ["htm", "html", "doc", "rtf", "ppt", "xls", "txt", "pdf"]
 textFormats = ["htm", "html", "txt", "h", "c", "cpp", "cxx", "py", "php", "pl", "rb"]
 class Index:
-    def __init__(self, parent, indexdir, rootFolder=""):
-        self.parent = parent
+    def __init__(self, indexdir, rootFolder=""):
         self.indexdir = indexdir
         self.folder = rootFolder
         self.reader = None
@@ -203,7 +202,7 @@ class Index:
                 if "PreferredConverter" in settings.AppSettings.keys():
                     prefConverter = settings.AppSettings["PreferredConverter"]
                     
-                myconverter = converter.DocConverter(self.parent)
+                myconverter = converter.DocConverter()
                 thefilename, returnDataFormat = myconverter.ConvertFile(filename, "unicodeTxt", prefConverter)
                 if thefilename == "":
                     return ""
@@ -303,3 +302,42 @@ class TextConverter(HTMLParser):
             self.subheading_text = self.subheading_text + " " + data
         else:
             self.text = self.text + " " + data
+            
+
+
+import unittest
+
+class IndexingTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        tempdir = tempfile.mkdtemp()
+        rootdir = os.path.abspath(os.path.dirname(sys.path[0]))
+        self.testdir = os.path.join(rootdir, "testFiles", "libraryTest")
+        self.index = Index(tempdir, self.testdir)
+        
+    def testHtml(self):
+        filename = os.path.join(self.testdir, "html_test", "test.html")
+        self.index.updateFile(filename)
+        results = self.index.search("contents", "HTML")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], ["html_test/test.html"])
+        
+    def testText(self):
+        filename = os.path.join(self.testdir, "text_test", "test.txt")
+        self.index.updateFile(filename)
+        results = self.index.search("contents", "Text")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], ["text_test/test.txt"])
+
+    def testJapanese(self):
+        filename = os.path.join(self.testdir, "japanese_test", "test.html")
+        self.index.updateFile(filename)
+        results = self.index.search("contents", "HTML")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], ["html_test/test.html"])
+        
+def getTestSuite():
+    return unittest.makeSuite(IndexingTests)
+
+if __name__ == '__main__':
+    unittest.main()
