@@ -12,5 +12,8 @@ done
 
 ~/cx_Freeze-3.0.3/FreezePython  --include-modules=encodings_import --install-dir librarian-linux ../librarian.py
 cp -r ../locale librarian-linux
+cp -r ../library/pages librarian-linux
+cp -r ../library/templates = librarian-linux
+
 mkdir -p deliver
 tar czvf deliver/librarian-linux.tar.gz librarian-linux
