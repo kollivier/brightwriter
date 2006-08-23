@@ -50,13 +50,16 @@ class IndexManager:
             indexdir = self.getIndexProp(name, "index_directory")
     
             lucenedir = os.path.join(indexdir, "index.lucene")
-            indexer = index.Index(None, lucenedir, folder)
+            indexer = index.Index(lucenedir, folder)
             return indexer
         else:
             raise IndexNotFoundError(name)
     
     def getIndexProp(self, name, prop):
-        return self.indexes.get(name, prop)
+        if self.indexes.has_option(name, prop):
+            return self.indexes.get(name, prop)
+        else:
+            return ""
     
     def setIndexProp(self, name, prop, value):
         self.indexes.set(name, prop, value)
