@@ -22,8 +22,7 @@ except:
 docFormats = ["doc", "rtf", "ppt", "xls", "txt"]
 
 class DocConverter:
-	def __init__(self, parent):
-		self.parent = parent
+	def __init__(self):
 		self.infile = ""
 		self.outformat = "html"
 
@@ -38,15 +37,15 @@ class DocConverter:
 			converter = None
 			if ext in docFormats:
 				if hasMSOffice and mode == "ms_office":
-					converter = WordDocConverter(self.parent)
+					converter = WordDocConverter()
 				elif hasOOo and mode == "open_office":
-					converter = OOoDocConverter(self.parent)
+					converter = OOoDocConverter()
 				else:
 					#OpenOffice likes to crash when it can't read a doc. ;-/
-					converter = CommandLineDocConverter(self.parent)
+					converter = CommandLineDocConverter()
     
 			elif ext == "pdf":
-				converter = PDFConverter(self.parent)
+				converter = PDFConverter()
     
 			if converter: 
 				return converter.ConvertFile(filename, outformat)
@@ -58,8 +57,7 @@ class DocConverter:
 			return "", ""
 
 class PDFConverter:
-	def __init__(self, parent):
-		self.parent = parent
+	def __init__(self):
 		self.infile = ""
 		self.outformat = "html"
 
@@ -103,8 +101,7 @@ class PDFConverter:
 		return htmlfile, "html"
 			
 class WordDocConverter:
-	def __init__(self, parent):
-		self.parent = parent
+	def __init__(self):
 		self.infile = ""
 		self.outformat = "html"
 		self.outfilters = {"html": 8,
@@ -184,8 +181,7 @@ class WordDocConverter:
 			return "", ""
 
 class CommandLineDocConverter:
-	def __init__(self, parent):
-		self.parent = parent
+	def __init__(self):
 		self.infile = ""
 		self.outformat = "html"
 
@@ -279,8 +275,7 @@ class CommandLineDocConverter:
 		
 if hasOOo:
     class OOoDocConverter:
-    	def __init__(self, parent):
-    		self.parent = parent
+    	def __init__(self):
     		self.infile = ""
     		self.outformat = "html"
     		self.outfilters = {"html": "HTML (StarWriter)",
