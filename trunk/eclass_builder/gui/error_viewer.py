@@ -16,13 +16,11 @@ class ErrorLogViewer(sc.SizedDialog):
 		sc.SizedDialog.__init__(self, parent, -1, _("Error log viewer"), wx.DefaultPosition, wx.Size(420, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		pane = self.GetContentsPane()
 		self.listCtrl = autolist.AutoSizeListCtrl(pane, -1, style=wx.LC_REPORT)
-		self.listCtrl.SetSizerProp("expand", "true")
-		self.listCtrl.SetSizerProp("proportion", 1)
+		self.listCtrl.SetSizerProps(expand=True, proportion=1) 
 		
 		self.lblDetails = wx.StaticText(pane, -1, _("Error Details"))
 		self.details = wx.TextCtrl(pane, -1, style=wx.TE_MULTILINE)
-		self.details.SetSizerProp("expand", "true")
-		self.details.SetSizerProp("proportion", 1)
+		self.details.SetSizerProps(expand=True, proportion=1)
 		
 		self.itemCount = 0
 		self.selItem = None
@@ -33,12 +31,11 @@ class ErrorLogViewer(sc.SizedDialog):
 
 		btnpane = sc.SizedPanel(pane, -1)
 		btnpane.SetSizerType("horizontal")
-		btnpane.SetSizerProp("expand", "true")
-
+		btnpane.SetSizerProps(expand=True) 
+		
 		self.saveBtn = wx.Button(btnpane, wx.ID_SAVE)
 		spacer = sc.SizedPanel(btnpane, -1)
-		spacer.SetSizerProp("expand", "true")
-		spacer.SetSizerProp("proportion", 1)
+		spacer.SetSizerProps(expand=True, proportion=1)
 
 		self.clearBtn = wx.Button(btnpane, -1, _("Clear"))
 
