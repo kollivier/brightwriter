@@ -24,14 +24,26 @@ class IndexManager:
         self.indexes = ConfigParser.ConfigParser()
         self.indexFile = "indexes.cfg"
         self.indexes.read(self.indexFile)
-        self.indexesDir = settings.AppDir
+        self.indexesDir = os.path.join(settings.AppDir, "indexes")
+        
+        # Automatically load any projects in the indexes dir, if they have 
+        # a contents directory.
+        
+        for item in os.listdir(self.indexesDir):
+            fullpath = os.path.join(self.indexesDir, item)
+            contentDir = os.path.join(fullpath, "contents")
+            if os.path.isdir(contentsdir):
+                try:
+                    self.addIndex(item, contentDir)
+                except:
+                    pass
         
     def addIndex(self, name, contentDir):
         if not self.indexes.has_section(name):
             self.indexes.add_section(name)
             self.indexes.set(name, "content_directory", contentDir)
             
-            indexdir = os.path.join(self.indexesDir, "indexes")
+            indexdir = self.indexesDir
             if not os.path.exists(indexdir):
                 os.makedirs(indexdir)
             

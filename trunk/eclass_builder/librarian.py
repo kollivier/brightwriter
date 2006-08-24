@@ -20,6 +20,7 @@ lang_dict = {
 import index
 import index_manager
 import utils
+import urllib
 import settings
 import PyMeld
 
@@ -86,17 +87,28 @@ if isCGI:
     
     form = cgi.FieldStorage()
     
-    collection = form["collection"]
+    collection = ""
+    page = ""
+    language = "en"
+    
+    if form.has_key("collection"):
+        collection = form["collection"]
+    
+    if form.has_key("page"):
+        page = form["page"]
+        
+    if form.has_key("language"):
+        language = form["language"]
     
     if form.has_key("query"):
         query = form["query"]
         field = form["field"]
-        page = form["results_page"]
+        results_pageno = form["results_pageno"]
         
         indexer = manager.getIndex(collection)
         results = indexer.search(field, query)
         
-        page_start = (page - 1) * 30
+        page_start = (results_pageno - 1) * 30
         page_results = results[page_start:page_start+29]
         for result in page_results:
             url = result["url"]
@@ -106,8 +118,13 @@ if isCGI:
                 
             content += """<a class="hit_link" href="%s">%s</a>""" % (url, title)
             
-    else:
+    elif page == "search":
         content = getContentsPage("search")
+        
+    else:
+        content = getContentsPage("index")
+        for section in self.indexes.sections():
+            content += """<p><a href="librarian?collection=%s&page=search&language=%s">%s</a></p>""" % (urllib.urlquote(section), section, language)
         
     meld = None
     
