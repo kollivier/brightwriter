@@ -39,7 +39,7 @@ def walker(indexer, dirname, names):
             indexer.updateFile(fullpath, {})
 
 
-def getTemplateMeld(self, template, language="en"):
+def getTemplateMeld(template, language="en"):
     template_file = os.path.join("templates", template, language, "template.html")
     if not os.path.exists(template_file):
         template_file = os.path.join("library", template_file)
@@ -53,8 +53,8 @@ def getTemplateMeld(self, template, language="en"):
         
     return meld
    
-def getContentPage(self, page, language="en"):
-    contents_file = os.path.join("pages", template, language, "%s.html" % page)
+def getContentPage(page, language="en"):
+    contents_file = os.path.join("pages", language, "%s.html" % page)
     if not os.path.exists(contents_file):
         contents_file = os.path.join("library", contents_file)
         
@@ -116,15 +116,15 @@ if isCGI:
             if result.has_key("title"):
                 title = result["title"]
                 
-            content += """<a class="hit_link" href="%s">%s</a>""" % (url, title)
+            content += """<a class="hit_link" href="%s">%s</a>""" % (urllib.quote(url), title)
             
     elif page == "search":
-        content = getContentsPage("search")
+        content = getContentPage("search")
         
     else:
-        content = getContentsPage("index")
+        content = getContentPage("index")
         for section in manager.getIndexList():
-            content += """<p><a href="librarian?collection=%s&page=search&language=%s">%s</a></p>""" % (urllib.urlquote(section), section, language)
+            content += """<p><a href="librarian?collection=%s&page=search&language=%s">%s</a></p>""" % (urllib.quote(section), language,  section)
         
     meld = None
     
@@ -133,7 +133,7 @@ if isCGI:
         template = "simple"
     
     meld = getTemplateMeld(template)
-    meld.contents._content = contents
+    meld.page_contents._content = content
     
     print "Content-Type: text/html"
     print ""
