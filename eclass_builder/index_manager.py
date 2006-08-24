@@ -32,7 +32,7 @@ class IndexManager:
         for item in os.listdir(self.indexesDir):
             fullpath = os.path.join(self.indexesDir, item)
             contentDir = os.path.join(fullpath, "contents")
-            if os.path.isdir(contentsdir):
+            if os.path.isdir(contentDir):
                 try:
                     self.addIndex(item, contentDir)
                 except:
@@ -67,6 +67,9 @@ class IndexManager:
         else:
             raise IndexNotFoundError(name)
     
+    def getIndexList(self):
+        return self.indexes.sections()
+        
     def getIndexProp(self, name, prop):
         if self.indexes.has_option(name, prop):
             return self.indexes.get(name, prop)

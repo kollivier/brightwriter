@@ -123,7 +123,7 @@ if isCGI:
         
     else:
         content = getContentsPage("index")
-        for section in self.indexes.sections():
+        for section in manager.getIndexList():
             content += """<p><a href="librarian?collection=%s&page=search&language=%s">%s</a></p>""" % (urllib.urlquote(section), section, language)
         
     meld = None
@@ -172,5 +172,11 @@ else:
             print "Search returned %d results." % len(results)
             for result in results:
                 print result["url"]
+                
+    elif command == "list":
+        print "Available collections:"
+        for collection in manager.getIndexList():
+            print "-\t%s" % collection
+            
                 
  
