@@ -28,6 +28,8 @@ class IndexManager:
         
         # Automatically load any projects in the indexes dir, if they have 
         # a contents directory.
+        if not os.path.exists(self.indexesDir):
+            os.makedirs(self.indexesDir)
         
         for item in os.listdir(self.indexesDir):
             fullpath = os.path.join(self.indexesDir, item)
