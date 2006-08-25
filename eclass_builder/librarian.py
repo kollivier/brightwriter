@@ -80,6 +80,9 @@ else:
 manager = index_manager.IndexManager()    
 
 if isCGI:
+    appname = "librarian"
+    if not sys.platform.startswith("win"):
+        appname = "librarian-cgi"
     import cgi
     import cgitb; cgitb.enable()
     
@@ -103,7 +106,9 @@ if isCGI:
     if form.has_key("query"):
         query = form["query"]
         field = form["field"]
-        results_pageno = form["results_pageno"]
+        results_pageno = 0
+        if form.has_key("results_pageno"):
+            results_pageno = form["results_pageno"]
         
         indexer = manager.getIndex(collection)
         results = indexer.search(field, query)
@@ -124,7 +129,7 @@ if isCGI:
     else:
         content = getContentPage("index")
         for section in manager.getIndexList():
-            content += """<p><a href="librarian?collection=%s&page=search&language=%s">%s</a></p>""" % (urllib.quote(section), language,  section)
+            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a></p>""" % (appname, urllib.quote(section), language,  section)
         
     meld = None
     
