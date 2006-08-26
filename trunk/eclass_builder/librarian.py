@@ -139,6 +139,8 @@ if isCGI:
     
     meld = getTemplateMeld(template)
     meld.page_contents._content = content
+    if hasattr(meld, "collection"):
+        meld.collection.value = collection
     
     print "Content-Type: text/html"
     print ""
