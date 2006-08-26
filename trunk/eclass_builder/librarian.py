@@ -162,7 +162,7 @@ if isCGI:
     else:
         content = getContentPage("index")
         for section in manager.getIndexList():
-            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=info&language=%s">Info</a>)</p>""" % (appname, urllib.quote(section), language,  section)
+            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=info&language=%s">Info</a>)</p>""" % (appname, urllib.quote(section), language,  section, appname, urllib.quote(section), language)
         
     meld = None
     
