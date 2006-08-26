@@ -128,6 +128,7 @@ if isCGI:
             if result.has_key("title"):
                 title = result["title"]
                 
+            url = "indexes/%s/contents/%s" % (collection, url)
             content += """<a class="hit_link" href="%s">%s</a><br/>\n""" % (urllib.quote(url), title)
             
     elif page == "search":
