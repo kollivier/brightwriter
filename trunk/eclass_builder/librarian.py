@@ -140,8 +140,8 @@ if isCGI:
         contentsdir = manager.getIndexProp(collection, "contents_dir")
         if form.has_key("item"):
             item = form["item"]
-            fullpath = os.path.exists(contentsdir, item)
-            if fullpath:
+            fullpath = os.path.join(contentsdir, item)
+            if os.path.exists(fullpath):
                 type = mimetypes.guess_type(item)[0]
                 props = os.stat(fullpath)
                 print "Content-Type: %s" % (type)
@@ -162,7 +162,7 @@ if isCGI:
     else:
         content = getContentPage("index")
         for section in manager.getIndexList():
-            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=info&language=%s">Info</a>)</p>""" % (appname, urllib.quote(section), language,  section, appname, urllib.quote(section), language)
+            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=indexinfo&language=%s">Info</a>)</p>""" % (appname, urllib.quote(section), language,  section, appname, urllib.quote(section), language)
         
     meld = None
     
