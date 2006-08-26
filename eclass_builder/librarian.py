@@ -139,7 +139,7 @@ if isCGI:
     elif page == "viewitem":
         contentsdir = manager.getIndexProp(collection, "contents_dir")
         if form.has_key("item"):
-            item = form["item"]
+            item = form["item"].value
             fullpath = os.path.join(contentsdir, item)
             if os.path.exists(fullpath):
                 type = mimetypes.guess_type(item)[0]
