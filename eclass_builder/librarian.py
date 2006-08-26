@@ -115,13 +115,20 @@ if isCGI:
         
         page_start = (results_pageno - 1) * 30
         page_results = results[page_start:page_start+29]
+        
+        content += "<b>Search returned %d results." % (len(results))
+        if len(results) > 0:
+            content += "Showing results %d through %d." % (page_start+1, page_start+30)
+            
+        content += "</b>\n"
+
         for result in page_results:
-            url = result["url"].value
-            title = result["url"].value
+            url = result["url"]
+            title = result["url"]
             if result.has_key("title"):
-                title = result["title"].value
+                title = result["title"]
                 
-            content += """<a class="hit_link" href="%s">%s</a>""" % (urllib.quote(url), title)
+            content += """<a class="hit_link" href="%s">%s</a>\n""" % (urllib.quote(url), title)
             
     elif page == "search":
         content = getContentPage("search")
@@ -141,6 +148,8 @@ if isCGI:
     meld.page_contents._content = content
     if hasattr(meld, "collection"):
         meld.collection.value = collection
+        
+    
     
     print "Content-Type: text/html"
     print ""
