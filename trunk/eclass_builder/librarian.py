@@ -1,5 +1,7 @@
 import sys, os
 import ConfigParser
+import mimetypes
+import stat
 import encodings
 import string
 
@@ -128,12 +130,29 @@ if isCGI:
             if result.has_key("title"):
                 title = result["title"]
                 
-            url = "indexes/%s/contents/%s" % (collection, url)
-            content += """<a class="hit_link" href="%s">%s</a><br/>\n""" % (urllib.quote(url), title)
+            content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % (appname, urllib.quote(collection), urllib.quote(url), title)
             
     elif page == "search":
         content = getContentPage("search")
         
+
+    elif page == "viewitem":
+        contentsdir = manager.getIndexProp(collection, "contents_dir")
+        if form.has_key("item"):
+            item = form["item"]
+            fullpath = os.path.exists(contentsdir, item)
+            if fullpath:
+                type = mimetypes.guess_type(item)[0]
+                props = os.stat(fullpath)
+                print "Content-Type: %s" % (type)
+                print "Content-Length: %d" % (props[stat.ST_SIZE])
+                print ""
+                print utils.openFile(fullpath, "rb").read()
+                return 
+                
+        content += "Could not locate the file %s." % item 
+                
+
     else:
         content = getContentPage("index")
         for section in manager.getIndexList():
