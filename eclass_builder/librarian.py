@@ -95,20 +95,20 @@ if isCGI:
     language = "en"
     
     if form.has_key("collection"):
-        collection = form["collection"]
+        collection = form["collection"].value
     
     if form.has_key("page"):
-        page = form["page"]
+        page = form["page"].value
         
     if form.has_key("language"):
-        language = form["language"]
+        language = form["language"].value
     
     if form.has_key("query"):
-        query = form["query"]
-        field = form["field"]
+        query = form["query"].value
+        field = form["field"].value
         results_pageno = 0
         if form.has_key("results_pageno"):
-            results_pageno = form["results_pageno"]
+            results_pageno = form["results_pageno"].value
         
         indexer = manager.getIndex(collection)
         results = indexer.search(field, query)
@@ -116,10 +116,10 @@ if isCGI:
         page_start = (results_pageno - 1) * 30
         page_results = results[page_start:page_start+29]
         for result in page_results:
-            url = result["url"]
-            title = result["url"]
+            url = result["url"].value
+            title = result["url"].value
             if result.has_key("title"):
-                title = result["title"]
+                title = result["title"].value
                 
             content += """<a class="hit_link" href="%s">%s</a>""" % (urllib.quote(url), title)
             
