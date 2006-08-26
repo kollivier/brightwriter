@@ -150,7 +150,7 @@ if isCGI:
                 print utils.openFile(fullpath, "rb").read()
                 sys.exit(0)
                 
-        content += "Could not locate the file %s." % item 
+            content += "Could not locate the file %s." % fullpath
                 
     elif page == "indexinfo":
         indexer = manager.getIndex(collection)
