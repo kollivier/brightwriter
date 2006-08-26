@@ -137,7 +137,7 @@ if isCGI:
         
 
     elif page == "viewitem":
-        contentsdir = manager.getIndexProp(collection, "content_dir")
+        contentsdir = manager.getIndexProp(collection, "content_directory")
         if form.has_key("item"):
             item = form["item"].value
             fullpath = os.path.join(contentsdir, item)
