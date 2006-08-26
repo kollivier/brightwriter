@@ -166,6 +166,7 @@ class Index:
         if self.indexExists:
             reader = PyLucene.IndexReader.open(self.indexdir)
             info["NumDocs"] = reader.numDocs()
+            info["MetadataFields"] = reader.getFieldNames(PyLucene.IndexReader.FieldOption.ALL)
             termList = []
             terms = reader.terms()
             moreTerms = True
