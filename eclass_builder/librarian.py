@@ -106,7 +106,7 @@ if isCGI:
     if form.has_key("query"):
         query = form["query"].value
         field = form["field"].value
-        results_pageno = 0
+        results_pageno = 1
         if form.has_key("results_pageno"):
             results_pageno = form["results_pageno"].value
         
@@ -116,11 +116,11 @@ if isCGI:
         page_start = (results_pageno - 1) * 30
         page_results = results[page_start:page_start+29]
         
-        content += "<b>Search returned %d results." % (len(results))
+        content += "<b>Search for \"%s\" returned %d results." % (query, len(results))
         if len(results) > 0:
             content += "Showing results %d through %d." % (page_start+1, page_start+30)
             
-        content += "</b>\n"
+        content += "</b><br/><br/>\n"
 
         for result in page_results:
             url = result["url"]
@@ -128,7 +128,7 @@ if isCGI:
             if result.has_key("title"):
                 title = result["title"]
                 
-            content += """<a class="hit_link" href="%s">%s</a>\n""" % (urllib.quote(url), title)
+            content += """<a class="hit_link" href="%s">%s</a><br/>\n""" % (urllib.quote(url), title)
             
     elif page == "search":
         content = getContentPage("search")
@@ -149,7 +149,9 @@ if isCGI:
     if hasattr(meld, "collection"):
         meld.collection.value = collection
         
-    
+    if hasattr(meld, "collectionname"):
+        meld.collectionname.value = collection
+        
     
     print "Content-Type: text/html"
     print ""
