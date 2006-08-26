@@ -15,8 +15,12 @@ cp -r ../locale librarian-linux
 cp -r ../library/pages librarian-linux
 cp -r ../library/templates = librarian-linux
 
-echo "#!/bin/sh\n\nexport LD_LIBRARY_PATH=.\nexec ./librarian" > librarian-linux/librarian-cgi
-chmod +x librarian-linux/librarian-cgi
+cgibin=librarian-linux/librarian-cgi
+echo "#!/bin/sh" > $cgibin
+echo "" >> $cgibin
+echo "export LD_LIBRARY_PATH=." >> $cgibin
+echo "exec ./librarian" >> $cgibin
+chmod +x $cgibin
 
 mkdir -p deliver
 tar czvf deliver/librarian-linux.tar.gz librarian-linux
