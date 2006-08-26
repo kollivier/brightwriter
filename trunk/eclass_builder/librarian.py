@@ -148,15 +148,21 @@ if isCGI:
                 print "Content-Length: %d" % (props[stat.ST_SIZE])
                 print ""
                 print utils.openFile(fullpath, "rb").read()
-                return 
+                sys.exit(0)
                 
         content += "Could not locate the file %s." % item 
                 
+    elif page == "indexinfo":
+        indexer = manager.getIndex(collection)
+        info = indexer.getIndexInfo()
+        content += "<b>Index Name:</b> %s<br/>\n" % (collection)
+        content += "<b>Number of Documents:</b> %s<br/>\n" % (info["NumDocs"])
+        content += "<b>Metadata Fields:</b> %s<br/>\n" % (info["MetadataFields"])
 
     else:
         content = getContentPage("index")
         for section in manager.getIndexList():
-            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a></p>""" % (appname, urllib.quote(section), language,  section)
+            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=info&language=%s">Info</a>)</p>""" % (appname, urllib.quote(section), language,  section)
         
     meld = None
     
@@ -166,6 +172,7 @@ if isCGI:
     
     meld = getTemplateMeld(template)
     meld.page_contents._content = content
+    
     if hasattr(meld, "collection"):
         meld.collection.value = collection
         
@@ -216,5 +223,13 @@ else:
         for collection in manager.getIndexList():
             print "-\t%s" % collection
             
+    elif command == "info": 
+        name = sys.argv[2].strip()
+        indexer = manager.getIndex(name)
+        info = indexer.getIndexInfo()
+        print "Index Name: %s" % (name)
+        print "Number of Documents: %s" % (info["NumDocs"])
+        print "Metadata Fields: %s" % (info["MetadataFields"])
+   
                 
  
