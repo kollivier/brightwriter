@@ -732,7 +732,7 @@ class MainFrame2(sc.SizedFrame):
 		self.CurrentFilename = ""
 		self.CurrentTreeItem = None
 		settings.ProjectDir = ""
-		settings.ProjectSettings = {}
+		settings.ProjectSettings = conman.xml_settings.XMLSettings()
 		if sys.platform.startswith("win"):
 			self.ie.Navigate("about:blank")
 			self.mozilla.Navigate("about:blank")
@@ -792,7 +792,8 @@ class MainFrame2(sc.SizedFrame):
 				self.projectTree.DeleteAllItems()
 				self.CurrentFilename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
 				self.CurrentItem = self.pub.NewPub(self.pub.name, "English", settings.ProjectDir)
-				settings.ProjectSettings = settings.ProjectSettings
+				# TODO: We should store the project as a global rather than its settings
+				settings.ProjectSettings = self.pub.settings
 				self.isDirty = True
 				
 				global eclassdirs
