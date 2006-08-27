@@ -4,8 +4,9 @@ import sys, urllib2, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
 
 rootdir = os.path.abspath(sys.path[0])
+# os.path.dirname will chop the last dir if the path is to a directory
 if not os.path.isdir(rootdir):
-	rootdir = os.path.dirname(rootdir)
+    rootdir = os.path.dirname(rootdir)
 
 # do this first because other modules may rely on _()
 localedir = os.path.join(rootdir, 'locale')
@@ -225,9 +226,11 @@ class MainFrame2(sc.SizedFrame):
 		if not os.path.exists(contactsdir):
 			os.mkdir(contactsdir)
 		
-		self.LoadLanguage()		
+		self.LoadLanguage()
 		self.LoadVCards()
 		self.SetDefaultDirs()
+		if not os.path.exists(settings.AppSettings["CourseFolder"]):
+			os.makedirs(settings.AppSettings["CourseFolder"])
 
 		self.statusBar = self.CreateStatusBar()
 
