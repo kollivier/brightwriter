@@ -1,4 +1,5 @@
 import sys, os
+import string
 import ConfigParser
 import mimetypes
 import stat
@@ -157,7 +158,7 @@ if isCGI:
         info = indexer.getIndexInfo()
         content += "<b>Index Name:</b> %s<br/>\n" % (collection)
         content += "<b>Number of Documents:</b> %s<br/>\n" % (info["NumDocs"])
-        content += "<b>Metadata Fields:</b> %s<br/>\n" % (info["MetadataFields"])
+        content += "<b>Metadata Fields:</b> %s<br/>\n" % ( string.join(info["MetadataFields"], ", ") )
 
     else:
         content = getContentPage("index")
