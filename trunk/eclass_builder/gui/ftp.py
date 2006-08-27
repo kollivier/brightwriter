@@ -370,7 +370,6 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		
 		self.txtFTPSite = self.AddFormField(ftpPane, _("FTP Site"), settings.ProjectSettings["FTPHost"])
 		self.txtUsername = self.AddFormField(ftpPane, _("Username"), settings.ProjectSettings["FTPUser"])
-		# TODO: Reinstate password once we've figured out how to get/store password
 		self.txtPassword = self.AddFormField(ftpPane, _("Password"), encrypt.decrypt(settings.ProjectSettings["FTPPassword"]), wx.TE_PASSWORD)
 		self.txtDirectory = self.AddFormField(ftpPane, _("Directory"), settings.ProjectSettings["FTPDirectory"]) 
 		
