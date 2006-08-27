@@ -97,7 +97,6 @@ def getOldAppDataDir():
 		key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
 		prefdir = ""
 		#Win98 doesn't have a Local AppData folder
-		#TODO: replace all this code with wxStandardPaths!
 		try:
 			prefdir = wreg.QueryValueEx(key,'Local AppData')[0]
 		except:
