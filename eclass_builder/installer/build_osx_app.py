@@ -32,6 +32,7 @@ setup(
     						glob.glob(rootdir + 'mmedia') +
     						glob.glob(rootdir + 'plugins') +
     						glob.glob(rootdir + 'themes') +
+    						glob.glob(rootdir + 'web') + 
     						[rootdir + "bookfile.book.in"]
     						)
     			],
