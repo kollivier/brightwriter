@@ -5,6 +5,7 @@ import mimetypes
 import stat
 import encodings
 import string
+import shutil
 
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
@@ -25,6 +26,7 @@ import index_manager
 import utils
 import urllib
 import settings
+import library.metadata
 import PyMeld
 
 # We can run this script in either command line, or CGI, mode
@@ -35,12 +37,31 @@ settings.AppDir = rootdir
 settings.ThirdPartyDir = os.path.join(rootdir, "3rdparty", utils.getPlatformName()) 
 
 def walker(indexer, dirname, names):
+    metadata = {}
+    metadata_filename = os.path.join(dirname, "metadata.xml")
+    if os.path.exists(metadata_filename):
+        metadata = library.metadata.readGSMetadata(metadata_filename)
+        
     for name in names:
         fullpath = os.path.join(dirname, name)
         if os.path.isfile(fullpath):
             print "updating index for %s" % (fullpath)
-            indexer.updateFile(fullpath, {})
+            
+            file_metadata = {}
+            metafilename = fullpath.replace(indexer.folder + os.sep, "")
+            print "metafilename is %s" % metafilename
+            
+            if metafilename in metadata:
+                file_metadata = metadata[metafilename].metadata
+            
+            indexer.updateFile(fullpath, file_metadata)
 
+def getHTMLFieldList(indexer):
+    htmlfields = """<option value="contents" selected>All Text</option>\n"""
+    for field in indexer.getFieldNames():
+        htmlfields += """<option value="%s" selected>%s</option>\n""" % (field, field)
+        
+    return htmlfields
 
 def getTemplateMeld(template, language="en"):
     template_file = os.path.join("templates", template, language, "template.html")
@@ -163,7 +184,7 @@ if isCGI:
     else:
         content = getContentPage("index")
         for section in manager.getIndexList():
-            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=indexinfo&language=%s">Info</a>)</p>""" % (appname, urllib.quote(section), language,  section, appname, urllib.quote(section), language)
+            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=indexinfo&language=%s">Info</a>)</p>\n""" % (appname, urllib.quote(section), language,  section, appname, urllib.quote(section), language)
         
     meld = None
     
@@ -180,7 +201,11 @@ if isCGI:
     if hasattr(meld, "collectionname"):
         meld.collectionname.value = collection
         
-    
+    if hasattr(meld, "field"):
+        indexer = manager.getIndex(name)
+        htmlfields = getHTMLFields(indexer)
+        meld.field._content = htmlfields
+        
     print "Content-Type: text/html"
     print ""
     print str(meld)
@@ -198,7 +223,7 @@ else:
     elif command == "index":
         name = sys.argv[2].strip()
         indexer = manager.getIndex(name)
-            
+        
         if indexer: 
             folder = manager.getIndexProp(name, "content_directory")
             currentdir = os.getcwd()
@@ -231,6 +256,18 @@ else:
         print "Index Name: %s" % (name)
         print "Number of Documents: %s" % (info["NumDocs"])
         print "Metadata Fields: %s" % (info["MetadataFields"])
+        
+    elif command == "export":
+        name = sys.argv[2].strip()
+        folder = manager.getIndexProp(name, "content_directory")
+        indexdir = manager.getIndexProp(name, "index_directory")
+        content_dir = os.path.join(indexdir, "contents")
+        if os.path.exists(content_dir):
+            shutil.rmtree(content_dir)
+            
+        print "Please wait, copying files..."
+        
+        shutil.copytree(folder, content_dir)
    
                 
  
