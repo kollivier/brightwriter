@@ -203,7 +203,7 @@ if isCGI:
         
     if hasattr(meld, "field"):
         indexer = manager.getIndex(collection)
-        htmlfields = getHTMLFields(indexer)
+        htmlfields = getHTMLFieldList(indexer)
         meld.field._content = htmlfields
         
     print "Content-Type: text/html"
