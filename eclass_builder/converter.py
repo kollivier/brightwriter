@@ -200,8 +200,7 @@ class CommandLineDocConverter:
 		if os.name == "nt":
 			thirdpartydir = win32api.GetShortPathName(thirdpartydir)
 			filename = win32api.GetShortPathName(filename)
-			exe = win32api.GetShortPathName(exe)
-			
+
 		#filename = utils.escapeFilename(filename)
 
 		if ext == ".doc":
@@ -243,7 +242,6 @@ class CommandLineDocConverter:
 			if sys.platform.startswith("win"):
 				htmlfile = win32api.GetShortPathName(htmlfile)
 			
-			exe = exe.encode( utils.getCurrentEncoding() )
 			commmand = command.encode( utils.getCurrentEncoding() )
 			htmlfile = htmlfile.encode( utils.getCurrentEncoding() )
 			
