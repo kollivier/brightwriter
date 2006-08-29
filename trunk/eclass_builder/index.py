@@ -2,7 +2,7 @@
 # indexer.py - controls the indexing and searching
 # of Lucene indexes
 #####################################
-import string, os, StringIO, formatter, locale, glob
+import sys, string, os, StringIO, formatter, locale, glob
 import PyLucene
 import converter
 from HTMLParser import HTMLParser, HTMLParseError
@@ -12,6 +12,8 @@ import utils
 import stat
 import ConfigParser
 import errors
+import types
+import shutil
 
 indexLog = utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
 
@@ -57,7 +59,11 @@ class Index:
             doc = PyLucene.Document()
             doc.add(PyLucene.Field("url", self.getRelativePath(filename), PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
             for field in metadata:
-                doc.add(PyLucene.Field(field, metadata[field], PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
+                values = metadata[field]
+                if not type(values) in [types.ListType, types.TupleType]:
+                    values = [values]
+                for value in values:
+                    doc.add(PyLucene.Field(field, value, PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
             
             # get document text
             mytext = ""
@@ -95,7 +101,8 @@ class Index:
         if self.indexExists():
             searcher = PyLucene.IndexSearcher(self.indexdir)
             analyzer = PyLucene.StandardAnalyzer()
-            query = PyLucene.TermQuery(PyLucene.Term("url", '"%s"' % filename))
+            filename = filename.replace(self.folder + os.sep, "")
+            query = PyLucene.TermQuery(PyLucene.Term("url", filename))
             hits = searcher.search(query)
             if hits.length() > 0:
                 result = (hits.id(0), hits.doc(0))
@@ -116,7 +123,7 @@ class Index:
         
         return (None, None)
     
-    def updateFile(self, filename, metadata):
+    def updateFile(self, filename, metadata={}):
         myfilename, filedata = self.getFileInfo(filename)
         needsUpdate = True #always true if file doesn't exist
         if filedata and filedata.has_key('filesize'):
@@ -156,7 +163,7 @@ class Index:
             query = PyLucene.QueryParser(field, analyzer).parse(search_term)
             hits = searcher.search(query)
             if hits.length() > 0:
-                for fileNum in range(0, hits.length()-1):
+                for fileNum in range(0, hits.length()):
                     results.append(self.getDocMetadata(hits.doc(fileNum)))
 
         return results
@@ -311,31 +318,43 @@ import unittest
 class IndexingTests(unittest.TestCase):
     def setUp(self):
         import tempfile
-        tempdir = tempfile.mkdtemp()
-        rootdir = os.path.abspath(os.path.dirname(sys.path[0]))
+        self.tempdir = tempfile.mkdtemp()
+        rootdir = os.path.abspath(sys.path[0])
+        if not os.path.isdir(rootdir):
+            rootdir = os.path.dirname(rootdir)
         self.testdir = os.path.join(rootdir, "testFiles", "libraryTest")
-        self.index = Index(tempdir, self.testdir)
+        self.index = Index(self.tempdir, self.testdir)
         
     def testHtml(self):
         filename = os.path.join(self.testdir, "html_test", "test.html")
         self.index.updateFile(filename)
-        results = self.index.search("contents", "HTML")
+        results = self.index.search("contents", "Test")
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["url"], ["html_test/test.html"])
+        self.assertEqual(results[0]["url"], "html_test/test.html")
         
     def testText(self):
         filename = os.path.join(self.testdir, "text_test", "test.txt")
         self.index.updateFile(filename)
         results = self.index.search("contents", "Text")
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["url"], ["text_test/test.txt"])
-
-    def testJapanese(self):
-        filename = os.path.join(self.testdir, "japanese_test", "test.html")
-        self.index.updateFile(filename)
-        results = self.index.search("contents", "HTML")
+        self.assertEqual(results[0]["url"], "text_test/test.txt")
+        
+    def testSingeFieldValue(self):
+        filename = os.path.join(self.testdir, "html_test", "test.html")
+        self.index.updateFile(filename, metadata={"Subject": "document"} )
+        results = self.index.search("Subject", "document")
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["url"], ["html_test/test.html"])
+        self.assertEqual(results[0]["url"], "html_test/test.html")
+
+    def testMultipleFieldValues(self):
+        filename = os.path.join(self.testdir, "html_test", "test.html")
+        self.index.updateFile(filename, metadata={"Subject": ["Test", "HTML", "document"]} )
+        results = self.index.search("Subject", "document")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], "html_test/test.html")
+        
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
         
 def getTestSuite():
     return unittest.makeSuite(IndexingTests)
