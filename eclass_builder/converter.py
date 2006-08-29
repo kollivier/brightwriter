@@ -45,7 +45,7 @@ class DocConverter:
 					converter = CommandLineDocConverter()
     
 			elif ext == "pdf":
-				converter = PDFConverter()
+				converter = CommandLineDocConverter()
     
 			if converter: 
 				return converter.ConvertFile(filename, outformat)
@@ -224,6 +224,10 @@ class CommandLineDocConverter:
 			path = os.path.join(thirdpartydir, "xlhtml")
 			command = "ppthtml" 
 			args = [filename]
+		elif ext == ".pdf":
+			path = os.path.join(thirdpartydir, "pdftohtml")
+			command = "pdftohtml"
+			args = ["-noframes", "-stdout", filename]
 		else:
 			print "Cannot convert file because of unknown extension: " + filename
 			
@@ -236,23 +240,31 @@ class CommandLineDocConverter:
 		try:
 			oldcwd = os.getcwd()
 			os.chdir(path)
+			print "working directory is %s" % path
 			#Let's check for hung programs
 			seconds = 0.0
+			
+			if not os.path.exists(filename):
+				print "File '%s' doesn't exist!" % filename
  
 			if sys.platform.startswith("win"):
 				htmlfile = win32api.GetShortPathName(htmlfile)
-			
-			commmand = command.encode( utils.getCurrentEncoding() )
+
+			command = command.encode( utils.getCurrentEncoding() )
 			htmlfile = htmlfile.encode( utils.getCurrentEncoding() )
 			
-			mycommand = [command] + args + [">"] + [htmlfile]
-			retcode = subprocess.call( mycommand )
+			mycommand = [command] + args
+			print "Running command: '%s'" % string.join(mycommand, " ")
+			myprocess = subprocess.Popen( mycommand, stdout=subprocess.PIPE)
 			
-			if retcode != 0:
-				sys.stderr.write('ERROR: command "%s" failed.\n' % command)
-			else:
-				print "File took %f seconds to convert." % (seconds)
-				html = utils.openFile(htmlfile, "r").read()
+			import time
+			while myprocess.poll():
+				time.sleep(0.01)
+			
+			html = myprocess.stdout.read()
+			output = utils.openFile(htmlfile, "wb")
+			output.write(html) 
+			output.close()
 
 			#some utilities assume their own path for extracted images
 			self._CleanupTempFiles(path)
@@ -264,7 +276,7 @@ class CommandLineDocConverter:
 				print traceback.print_exc()
 			print "Unable to convert document: " + filename #if we can't convert, oh well ;-)
 
-		return html, outformat
+		return htmlfile, outformat
 
 	def _CleanupTempFiles(self, path):
 		for ext in ["png", "jpg", "jpeg", "wmf", "gif", "$$$", "emf"]:
