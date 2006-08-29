@@ -58,7 +58,7 @@ def walker(indexer, dirname, names):
 
 def getHTMLFieldList(indexer):
     htmlfields = """<option value="contents" selected>All Text</option>\n"""
-    for field in indexer.getFieldNames():
+    for field in indexer.getIndexInfo()["MetadataFields"]:
         htmlfields += """<option value="%s" selected>%s</option>\n""" % (field, field)
         
     return htmlfields
