@@ -49,7 +49,6 @@ def walker(indexer, dirname, names):
             
             file_metadata = {}
             metafilename = fullpath.replace(indexer.folder + os.sep, "")
-            print "metafilename is %s" % metafilename
             
             if metafilename in metadata:
                 file_metadata = metadata[metafilename].metadata
@@ -59,7 +58,7 @@ def walker(indexer, dirname, names):
 def getHTMLFieldList(indexer):
     htmlfields = """<option value="contents" selected>All Text</option>\n"""
     for field in indexer.getIndexInfo()["MetadataFields"]:
-        htmlfields += """<option value="%s" selected>%s</option>\n""" % (field, field)
+        htmlfields += """<option value="%s">%s</option>\n""" % (field, field)
         
     return htmlfields
 
@@ -136,7 +135,10 @@ if isCGI:
         
         indexer = manager.getIndex(collection)
         results = indexer.search(field, query)
-        
+        numpages = results / 30
+        if results % 30 > 0:
+            numpages += 1
+            
         page_start = (results_pageno - 1) * 30
         page_results = results[page_start:page_start+29]
         
@@ -153,6 +155,10 @@ if isCGI:
                 title = result["title"]
                 
             content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % (appname, urllib.quote(collection), urllib.quote(url), title)
+        
+        for pageno in range(1, numpages):
+            content += """<a href="%s?collection=%s&query=%s&results_pageno=%d&language=%s>%d</a> """ % (appname, 
+                            urllib.qote(collection), urllib.quote(query), pageno, language)
             
     elif page == "search":
         content = getContentPage("search")
