@@ -202,7 +202,7 @@ if isCGI:
         meld.collectionname.value = collection
         
     if hasattr(meld, "field"):
-        indexer = manager.getIndex(name)
+        indexer = manager.getIndex(collection)
         htmlfields = getHTMLFields(indexer)
         meld.field._content = htmlfields
         
