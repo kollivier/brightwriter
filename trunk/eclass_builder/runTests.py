@@ -1,10 +1,30 @@
-import sys
+import os, sys
+
+rootdir = os.path.abspath(sys.path[0])
+if not os.path.isdir(rootdir):
+    rootdir = os.path.dirname(rootdir)
+
+# do this first because other modules may rely on _()
+localedir = os.path.join(rootdir, 'locale')
+import gettext
+gettext.install('library', localedir)
+lang_dict = {
+			"en": gettext.translation('library', localedir, languages=['en']), 
+			"es": gettext.translation('library', localedir, languages=['es']),
+			"fr": gettext.translation('library', localedir, languages=['fr'])
+			}
+			
+
 import unittest
 import encrypt
 import analyzer
+import index
+import library.metadata
 
 alltests = unittest.TestSuite(( encrypt.getTestSuite(), 
-                                analyzer.getTestSuite(),  
+                                analyzer.getTestSuite(),
+                                index.getTestSuite(),
+                                library.metadata.getTestSuite(),
                               ))
 
 results = unittest.TestResult()
