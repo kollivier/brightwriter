@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE GreenstoneDirectoryMetadata SYSTEM "http://greenstone.org/dtd/GreenstoneDirectoryMetadata/1.0/GreenstoneDirectoryMetadata.dtd">
+<GreenstoneDirectoryMetadata>
+    <FileSet>
+        <FileName>CDCZimbabweReport\[3\]\.pdf</FileName>
+        <Description>
+            <Metadata mode="accumulate" name="dc.Typedoc">Case Study </Metadata>
+            <Metadata mode="accumulate" name="dc.Format">PDF</Metadata>
+            <Metadata mode="accumulate" name="dc.Agency">CDC/GAP</Metadata>
+            <Metadata mode="accumulate" name="dc.Author">Greet Peersman</Metadata>
+            <Metadata mode="accumulate" name="dc.Author">Godfrey Sikipa</Metadata>
+            <Metadata mode="accumulate" name="dc.Year">2002</Metadata>
+            <Metadata mode="accumulate" name="dc.Country">Zimbabwe</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Zimbabwe</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">National response to HIV/AIDS</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Case Study</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Collaboration</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Case study methods</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Preventing Mother-to-Child HIV Transmission (PMTCT)</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Treatment and Care</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Surveillance</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Infrastructure</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Capacity building</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Laboratory support</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Information systems</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Training</Metadata>
+            <Metadata mode="accumulate" name="dc.Keywords">Lessons learned</Metadata>
+            <Metadata mode="accumulate" name="dc.Title">Strengthening the National Response to HIV/AIDS, The Role of CDC Global AIDS Program in Zimbabwe: A Case Study</Metadata>
+            <Metadata mode="accumulate" name="dc.Subject">Capacity Building</Metadata>
+            <Metadata mode="accumulate" name="dc.Subject">Data Use</Metadata>
+            <Metadata mode="accumulate" name="dc.Subject">Context</Metadata>
+        </Description>
+    </FileSet>
+</GreenstoneDirectoryMetadata>
