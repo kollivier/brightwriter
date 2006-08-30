@@ -156,11 +156,12 @@ if isCGI:
                 
             content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % (appname, urllib.quote(collection), urllib.quote(url), title)
         
-        print "<p>Result Pages: "
+        content += "<p>Result Pages: "
         for pageno in range(1, numpages):
             content += """<a href="%s?collection=%s&query=%s&results_pageno=%d&language=%s">%d</a> """ % (appname, 
                             urllib.quote(collection), urllib.quote(query), pageno, language, pageno)
-        print "</p>"
+        content += "</p>"
+        
     elif page == "search":
         content = getContentPage("search")
         
