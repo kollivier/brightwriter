@@ -158,7 +158,7 @@ if isCGI:
         
         for pageno in range(1, numpages):
             content += """<a href="%s?collection=%s&query=%s&results_pageno=%d&language=%s>%d</a> """ % (appname, 
-                            urllib.quote(collection), urllib.quote(query), pageno, language)
+                            urllib.quote(collection), urllib.quote(query), pageno, language, pageno)
             
     elif page == "search":
         content = getContentPage("search")
