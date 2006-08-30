@@ -131,7 +131,7 @@ if isCGI:
         field = form["field"].value
         results_pageno = 1
         if form.has_key("results_pageno"):
-            results_pageno = form["results_pageno"].value
+            results_pageno = int(form["results_pageno"].value)
         
         indexer = manager.getIndex(collection)
         results = indexer.search(field, query)
@@ -156,11 +156,12 @@ if isCGI:
                 
             content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % (appname, urllib.quote(collection), urllib.quote(url), title)
         
-        content += "<p>Result Pages: "
-        for pageno in range(1, numpages+1):
-            content += """<a href="%s?collection=%s&field=%s&query=%s&results_pageno=%d&language=%s">%d</a> """ % (appname, 
+        if numpages > 1:
+            content += "<p>Result Pages: "
+            for pageno in range(1, numpages+1):
+                content += """<a href="%s?collection=%s&field=%s&query=%s&results_pageno=%d&language=%s">%d</a> """ % (appname, 
                             urllib.quote(collection), urllib.quote(field), urllib.quote(query), pageno, language, pageno)
-        content += "</p>"
+            content += "</p>"
         
     elif page == "search":
         content = getContentPage("search")
