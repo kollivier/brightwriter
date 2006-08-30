@@ -74,7 +74,7 @@ def getTemplateMeld(template, collection="", language="en"):
         if os.path.exists(fullpath):
             template_file = fullpath
     
-    if not os.path.exists(template_file) and not os.path.isabs(template_file):
+    if not os.path.exists(template_file):
         template_file = os.path.join("library", template_file)
         
     meld = None
@@ -86,7 +86,7 @@ def getTemplateMeld(template, collection="", language="en"):
         
     return meld
    
-def getContentPage(page, language="en"):
+def getContentPage(page, collection="", language="en"):
     contents_file = os.path.join("pages", language, "%s.html" % page)
     
     # local pages take precedence over system ones
