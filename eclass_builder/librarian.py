@@ -136,7 +136,7 @@ if isCGI:
         indexer = manager.getIndex(collection)
         results = indexer.search(field, query)
         numpages = len(results) / 30
-        if results % 30 > 0:
+        if len(results) % 30 > 0:
             numpages += 1
             
         page_start = (results_pageno - 1) * 30
