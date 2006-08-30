@@ -157,9 +157,9 @@ if isCGI:
             content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % (appname, urllib.quote(collection), urllib.quote(url), title)
         
         content += "<p>Result Pages: "
-        for pageno in range(1, numpages):
-            content += """<a href="%s?collection=%s&query=%s&results_pageno=%d&language=%s">%d</a> """ % (appname, 
-                            urllib.quote(collection), urllib.quote(query), pageno, language, pageno)
+        for pageno in range(1, numpages+1):
+            content += """<a href="%s?collection=%s&field=%s&query=%s&results_pageno=%d&language=%s">%d</a> """ % (appname, 
+                            urllib.quote(collection), urllib.quote(field), urllib.quote(query), pageno, language, pageno)
         content += "</p>"
         
     elif page == "search":
