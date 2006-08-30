@@ -140,11 +140,14 @@ if isCGI:
             numpages += 1
             
         page_start = (results_pageno - 1) * 30
+        page_end = page_start + 30
+        if page_end > len(results):
+            page_end = len(results)
         page_results = results[page_start:page_start+29]
         
-        content += "<b>Search for \"%s\" returned %d results." % (query, len(results))
+        content += "<b>Search for \"%s\" returned %d results. " % (query, len(results))
         if len(results) > 0:
-            content += "Showing results %d through %d." % (page_start+1, page_start+30)
+            content += "Showing results %d through %d." % (page_start+1, page_end)
             
         content += "</b><br/><br/>\n"
 
