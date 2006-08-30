@@ -55,50 +55,6 @@ class DocConverter:
 			import traceback
 			print traceback.print_exc()
 			return "", ""
-
-class PDFConverter:
-	def __init__(self):
-		self.infile = ""
-		self.outformat = "html"
-
-	def ConvertFile(self, filename, outformat="html"):
-		import tempfile
-		handle, htmlfile = tempfile.mkstemp(".html")
-		os.close(handle)
-		thirdpartydir = settings.ThirdPartyDir
-		pdfconvert = "pdftohtml"
-		exe = os.path.join(settings.AppDir, "python.exe")
-		if not os.path.exists(exe):
-			exe = sys.executable
-		#exe.replace("editor.exe", "python.exe")
-		if os.name == "nt":
-			pdfconvert = pdfconvert + ".exe"
-			exe = win32api.GetShortPathName(exe)
-			filename = win32api.GetShortPathName(filename)
-			# don't alter htmlfile, tempfile uses the short path name
-			# anyways and if we do this ourselves, HTML will become HTM
-			# which will confuse pdftohtml.
-			#htmlfile = win32api.GetShortPathName(htmlfile)
-
-		path = os.path.join(thirdpartydir, pdfconvert)
-		try:
-			seconds = 0.0
-			mycommand = [exe, os.path.join(settings.AppDir, "process.py"), 
-						 path, "-noframes", filename, htmlfile]
-			myproc = extprocess.ExtProcess(mycommand)
-			
-			while myproc.isAlive():
-				if seconds > 120: #the process has probably hung
-					print "Conversion process appears frozen. Stopping process."
-					myproc.kill()
-					return ("", "")
-				time.sleep(0.1)
-				seconds = seconds + 0.1
-			print "File took %f seconds to convert." % (seconds)
-			os.chdir(oldcwd)
-		except:
-			pass
-		return htmlfile, "html"
 			
 class WordDocConverter:
 	def __init__(self):
