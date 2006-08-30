@@ -135,7 +135,7 @@ if isCGI:
         
         indexer = manager.getIndex(collection)
         results = indexer.search(field, query)
-        numpages = results / 30
+        numpages = len(results) / 30
         if results % 30 > 0:
             numpages += 1
             
