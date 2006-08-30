@@ -62,9 +62,19 @@ def getHTMLFieldList(indexer):
         
     return htmlfields
 
-def getTemplateMeld(template, language="en"):
-    template_file = os.path.join("templates", template, language, "template.html")
-    if not os.path.exists(template_file):
+def getTemplateMeld(template, collection="", language="en"):
+    template_file = os.path.join("templates", template, language, "template.html")    
+    
+    # local templates take precedence over system ones
+    if collection != "":
+        global manager
+        indexdir = manager.getIndexProp(collection, "index_directory")
+        
+        fullpath = os.path.join(indexdir, template_file)
+        if os.path.exists(fullpath):
+            template_file = fullpath
+    
+    if not os.path.exists(template_file) and not os.path.isabs(template_file):
         template_file = os.path.join("library", template_file)
         
     meld = None
@@ -78,6 +88,16 @@ def getTemplateMeld(template, language="en"):
    
 def getContentPage(page, language="en"):
     contents_file = os.path.join("pages", language, "%s.html" % page)
+    
+    # local pages take precedence over system ones
+    if collection != "":
+        global manager
+        indexdir = manager.getIndexProp(collection, "index_directory")
+        
+        fullpath = os.path.join(indexdir, contents_file)
+        if os.path.exists(fullpath):
+            contents_file = fullpath    
+    
     if not os.path.exists(contents_file):
         contents_file = os.path.join("library", contents_file)
         
@@ -167,7 +187,7 @@ if isCGI:
             content += "</p>"
         
     elif page == "search":
-        content = getContentPage("search")
+        content = getContentPage("search", collection)
         
 
     elif page == "viewitem":
@@ -195,7 +215,7 @@ if isCGI:
         content += "<b>Metadata Fields:</b> %s<br/>\n" % ( string.join(info["MetadataFields"], ", ") )
 
     else:
-        content = getContentPage("index")
+        content = getContentPage("index", collection)
         for section in manager.getIndexList():
             content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=indexinfo&language=%s">Info</a>)</p>\n""" % (appname, urllib.quote(section), language,  section, appname, urllib.quote(section), language)
         
@@ -205,7 +225,7 @@ if isCGI:
     if template == "":
         template = "simple"
     
-    meld = getTemplateMeld(template)
+    meld = getTemplateMeld(template, collection)
     meld.page_contents._content = content
     
     if hasattr(meld, "collection"):
