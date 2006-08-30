@@ -180,7 +180,7 @@ if isCGI:
                 props = os.stat(fullpath)
                 print "Content-Type: %s" % (type)
                 print "Content-Length: %d" % (props[stat.ST_SIZE])
-                print "Content-Disposition: attachment; filename = \"%s\"" % os.path.basename(fullpath)
+                print "Content-Disposition: inline; filename = \"%s\"" % os.path.basename(fullpath)
                 print ""
                 print utils.openFile(fullpath, "rb").read()
                 sys.exit(0)
