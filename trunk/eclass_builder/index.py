@@ -113,7 +113,10 @@ class Index:
     def getDocMetadata(self, doc):
         metadata = {}
         for field in doc.fields():
-            metadata[field.name()] = field.stringValue()
+            if not field.name() in metadata:
+                metadata[field.name()] = [field.stringValue()]
+            else:
+                metadata[field.name()].append(field.stringValue())
         return metadata
     
     def getFileInfo(self, filename):
@@ -184,6 +187,19 @@ class Index:
             info["Terms"] = termList
             
         return info
+        
+    def getUniqueFieldValues(self, field, sort="A-Z"):
+        sort = sort.replace("-", " TO ")
+        results = self.search(field, "%s:%s" % (field, sort) )
+        
+        result_list = []
+        for result in results:
+            for subject in result["Subject"]:
+                if not subject.strip() in result_list:
+                    result_list.append(subject.strip())
+                
+        result_list.sort()
+        return result_list
 
     def GetTextFromFile(self, filename=""):
         """
