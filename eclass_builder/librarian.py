@@ -180,13 +180,13 @@ if isCGI:
             if result.has_key("Title"):
                 title = result["Title"]
                 
-            content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % \
+            content += """<p><a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a></p>\n""" % \
                         (appname, urllib.quote(collection), urllib.quote(url), title)
         
         if numpages > 1:
             content += "<p>Result Pages: "
             for pageno in range(1, numpages+1):
-                content += """<p><a href="%s?collection=%s&field=%s&query=%s&results_pageno=%d&language=%s">%d</a> </p>""" % (appname, 
+                content += """<a href="%s?collection=%s&field=%s&query=%s&results_pageno=%d&language=%s">%d</a> """ % (appname, 
                             urllib.quote(collection), urllib.quote(field), urllib.quote(query), pageno, language, pageno)
             content += "</p>"
         
