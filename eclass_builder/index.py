@@ -196,9 +196,9 @@ class Index:
         
         result_list = []
         for result in results:
-            if not type(result["Subject"]) in [types.ListType, types.TupleType]:
-                result["Subject"] = [result["Subject"]]
-            for subject in result["Subject"]:
+            if not type(result[field]) in [types.ListType, types.TupleType]:
+                result[field] = [result[field]]
+            for subject in result[field]:
                 if not subject.strip() in result_list:
                     result_list.append(subject.strip())
                 
