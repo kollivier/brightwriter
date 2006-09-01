@@ -172,13 +172,13 @@ if isCGI:
         content += "</b><br/><br/>\n"
 
         for result in page_results:
-            url = result["url"][0]
-            title = result["url"][0]
+            url = result["url"]
+            title = result["url"]
             if result.has_key("title"):
-                title = result["title"][0]
+                title = result["title"]
                 
             if result.has_key("Title"):
-                title = result["Title"][0]
+                title = result["Title"]
                 
             content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % \
                         (appname, urllib.quote(collection), urllib.quote(url), title)

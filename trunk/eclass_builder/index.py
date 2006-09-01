@@ -114,8 +114,10 @@ class Index:
         metadata = {}
         for field in doc.fields():
             if not field.name() in metadata:
-                metadata[field.name()] = [field.stringValue()]
+                metadata[field.name()] = field.stringValue()
             else:
+                if isinstance(metadata[field.name()], types.StringTypes):
+                    metadata[field.name()] = [metadata[field.name()]]
                 metadata[field.name()].append(field.stringValue())
         return metadata
     
