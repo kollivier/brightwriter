@@ -192,10 +192,12 @@ class Index:
         
     def getUniqueFieldValues(self, field, sort="A-Z"):
         sort = sort.replace("-", " TO ")
-        results = self.search(field, "%s:%s" % (field, sort) )
+        results = self.search(field, "%s:[%s]" % (field, sort) )
         
         result_list = []
         for result in results:
+            if not type(result["Subject"]) in [types.ListType, types.TupleType]:
+                result["Subject"] = [result["Subject"]]
             for subject in result["Subject"]:
                 if not subject.strip() in result_list:
                     result_list.append(subject.strip())
