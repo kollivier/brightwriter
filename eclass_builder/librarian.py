@@ -172,22 +172,43 @@ if isCGI:
         content += "</b><br/><br/>\n"
 
         for result in page_results:
-            url = result["url"]
-            title = result["url"]
+            url = result["url"][0]
+            title = result["url"][0]
             if result.has_key("title"):
-                title = result["title"]
+                title = result["title"][0]
                 
-            content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % (appname, urllib.quote(collection), urllib.quote(url), title)
+            if result.has_key("Title"):
+                title = result["Title"][0]
+                
+            content += """<a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a><br/>\n""" % \
+                        (appname, urllib.quote(collection), urllib.quote(url), title)
         
         if numpages > 1:
             content += "<p>Result Pages: "
             for pageno in range(1, numpages+1):
-                content += """<a href="%s?collection=%s&field=%s&query=%s&results_pageno=%d&language=%s">%d</a> """ % (appname, 
+                content += """<p><a href="%s?collection=%s&field=%s&query=%s&results_pageno=%d&language=%s">%d</a> </p>""" % (appname, 
                             urllib.quote(collection), urllib.quote(field), urllib.quote(query), pageno, language, pageno)
             content += "</p>"
         
     elif page == "search":
         content = getContentPage("search", collection)
+        
+    elif page == "browse":
+        field = ""
+        sort = "A-Z"
+        
+        if form.has_key("field"):
+            field = form["field"].value
+            
+        if form.has_key("sort"):
+            sort = form["sort"].value
+        
+        indexer = manager.getIndex(collection)
+        results = indexer.getUniqueFieldValues(field, sort)
+        
+        for result in results:                
+            content += """<a class="hit_link" href="%s?collection=%s&page=search&field=%s&query=%s&language=%s">%s</a><br/>\n""" % \
+                            (appname, urllib.quote(collection), urllib.quote(field), urllib.quote(result), urllib.quote(language), result)
         
 
     elif page == "viewitem":
@@ -213,6 +234,11 @@ if isCGI:
         content += "<b>Index Name:</b> %s<br/>\n" % (collection)
         content += "<b>Number of Documents:</b> %s<br/>\n" % (info["NumDocs"])
         content += "<b>Metadata Fields:</b> %s<br/>\n" % ( string.join(info["MetadataFields"], ", ") )
+        
+    elif page != "":
+        content = getContentPage(page, collection)
+        if content == "":
+            content = """<h3><font color="red">Unable to find page %s.</font></h3>""" % page
 
     else:
         content = getContentPage("index", collection)
@@ -264,6 +290,16 @@ else:
             os.path.walk(folder, walker, indexer)
         
             os.chdir(currentdir)
+            
+    elif command == "browse":
+        name = sys.argv[2].strip()
+        field = sys.argv[3].strip()
+        
+        indexer = manager.getIndex(name)
+        result_list = indexer.getUniqueFieldValues(field)
+        
+        for result in result_list:
+            print result
     
     elif command == "search":
         name = sys.argv[2].strip()
