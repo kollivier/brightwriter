@@ -63,7 +63,7 @@ class Index:
                 if not type(values) in [types.ListType, types.TupleType]:
                     values = [values]
                 for value in values:
-                    doc.add(PyLucene.Field(field, value, PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
+                    doc.add(PyLucene.Field(field.lower(), value, PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
             
             # get document text
             mytext = ""
@@ -165,7 +165,7 @@ class Index:
         if self.indexExists():
             searcher = PyLucene.IndexSearcher(self.indexdir)
             analyzer = PyLucene.StandardAnalyzer()
-            query = PyLucene.QueryParser(field, analyzer).parse(search_term)
+            query = PyLucene.QueryParser(field.lower(), analyzer).parse(search_term)
             hits = searcher.search(query)
             if hits.length() > 0:
                 for fileNum in range(0, hits.length()):
