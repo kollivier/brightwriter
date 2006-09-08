@@ -143,7 +143,7 @@ if isCGI:
         sort = form["sort"].value
     
     if form.has_key("sortby"):
-        sortBy = form["sortby"].value
+        sortBy = form["sortby"].value.lower()
     
     if form.has_key("collection"):
         collection = form["collection"].value
@@ -191,9 +191,6 @@ if isCGI:
             title = result["url"]
             if result.has_key("title"):
                 title = result["title"]
-                
-            if result.has_key("Title"):
-                title = result["Title"]
                 
             content += """<p><a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a></p>\n""" % \
                         (appname, urllib.quote(collection), urllib.quote(url), title)
