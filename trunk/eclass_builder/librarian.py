@@ -137,6 +137,14 @@ if isCGI:
     page = ""
     language = "en"
     
+    sort = "0-Z"
+    sortBy = ""
+    if form.has_key("sort"):
+        sort = form["sort"].value
+    
+    if form.has_key("sortby"):
+        sortBy = form["sortby"].value
+    
     if form.has_key("collection"):
         collection = form["collection"].value
     
@@ -149,12 +157,19 @@ if isCGI:
     if form.has_key("query"):
         query = form["query"].value
         field = form["field"].value
+        
+        if query == "":
+            query = "%s:[%s]" % (field, sort.replace("-", " TO ") )
+        
         results_pageno = 1
         if form.has_key("results_pageno"):
             results_pageno = int(form["results_pageno"].value)
         
         indexer = manager.getIndex(collection)
         results = indexer.search(field, query)
+        if sortBy != "":
+            results.sort( lambda x, y: cmp(x[sortBy], y[sortBy]) )
+            
         numpages = len(results) / 30
         if len(results) % 30 > 0:
             numpages += 1
@@ -195,19 +210,16 @@ if isCGI:
         
     elif page == "browse":
         field = ""
-        sort = "A-Z"
+        sort = "0-Z"
         
         if form.has_key("field"):
             field = form["field"].value
-            
-        if form.has_key("sort"):
-            sort = form["sort"].value
         
         indexer = manager.getIndex(collection)
         results = indexer.getUniqueFieldValues(field, sort)
         
         for result in results:                
-            content += """<a class="hit_link" href="%s?collection=%s&page=search&field=%s&query=%s&language=%s">%s</a><br/>\n""" % \
+            content += """<p><a class="hit_link" href="%s?collection=%s&page=search&field=%s&query=%s&language=%s">%s</a></p>\n""" % \
                             (appname, urllib.quote(collection), urllib.quote(field), urllib.quote(result), urllib.quote(language), result)
         
 
