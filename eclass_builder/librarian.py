@@ -156,7 +156,7 @@ if isCGI:
     
     if form.has_key("query"):
         query = form["query"].value
-        field = form["field"].value
+        field = form["field"].value.lower()
         
         if query == "":
             query = "%s:[%s]" % (field, sort.replace("-", " TO ") )
@@ -213,7 +213,7 @@ if isCGI:
         sort = "0-Z"
         
         if form.has_key("field"):
-            field = form["field"].value
+            field = form["field"].value.lower()
         
         indexer = manager.getIndex(collection)
         results = indexer.getUniqueFieldValues(field, sort)
