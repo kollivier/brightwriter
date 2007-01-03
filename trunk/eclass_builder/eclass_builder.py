@@ -3,6 +3,7 @@ import wx
 
 class MyApp(wx.App):
 	def OnInit(self):
+		wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
 		self.SetAppName("EClass.Builder")
 		import editor
 		self.frame = editor.MainFrame2(None, -1, "EClass.Builder")
