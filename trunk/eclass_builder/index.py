@@ -19,6 +19,22 @@ indexLog = utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
 
 docFormats = ["htm", "html", "doc", "rtf", "ppt", "xls", "txt", "pdf"]
 textFormats = ["htm", "html", "txt", "h", "c", "cpp", "cxx", "py", "php", "pl", "rb"]
+
+class IndexingCallback:
+    def __init__(self, index):
+        self.index = index
+        self.numFiles = 0
+        
+    def indexingStarted(self, numFiles):
+        self.numFiles = numFiles
+        print "Indexing files in %s" % (self.index, `self.numFiles`)
+        
+    def fileIndexingStarted(self, filename):
+        print "%s: Indexing %s" % (self.index, filename)
+        
+    def indexingComplete(self):
+        print "Finished indexing %s" % (self.index)
+
 class Index:
     def __init__(self, indexdir, rootFolder=""):
         self.indexdir = indexdir
@@ -49,6 +65,25 @@ class Index:
             
         return retval
         
+    def indexLibrary(self, callback=None):
+        pass
+        
+    def reindexLibrary(self, callback=None):
+        files = self.getFilesInIndex()
+        if callback:
+            callback.indexingStarted(len(files))
+        
+        for afile in files:
+            metadata = self.getFileInfo(afile)[1]
+            if metadata:
+                if callback:
+                    callback.fileIndexingStarted(afile)
+                
+                self.updateFile(self.getAbsolutePath(afile), metadata, force=True)
+        
+        if callback:
+            callback.indexingComplete()
+    
     def getAbsolutePath(self, filename):
         return os.path.join(self.folder, filename)
         
@@ -57,7 +92,7 @@ class Index:
         ext = os.path.splitext(filename)[1][1:]
         if not ext.lower() in self.ignoreTypes:
             doc = PyLucene.Document()
-            doc.add(PyLucene.Field("url", self.getRelativePath(filename), PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
+            doc.add(PyLucene.Field("url", self.getRelativePath(filename), PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
             for field in metadata:
                 values = metadata[field]
                 if not type(values) in [types.ListType, types.TupleType]:
@@ -128,10 +163,10 @@ class Index:
         
         return (None, None)
     
-    def updateFile(self, filename, metadata={}):
+    def updateFile(self, filename, metadata={}, force=False):
         myfilename, filedata = self.getFileInfo(filename)
         needsUpdate = True #always true if file doesn't exist
-        if filedata and filedata.has_key('filesize'):
+        if not force and filedata and filedata.has_key('filesize'):
             needsUpdate = False # file exists, use metadata to determine update.
             try:
                 fullpath=os.path.join(self.folder, filename)
@@ -166,6 +201,7 @@ class Index:
             searcher = PyLucene.IndexSearcher(self.indexdir)
             analyzer = PyLucene.StandardAnalyzer()
             query = PyLucene.QueryParser(field.lower(), analyzer).parse(search_term)
+            
             hits = searcher.search(query)
             if hits.length() > 0:
                 for fileNum in range(0, hits.length()):
@@ -173,6 +209,17 @@ class Index:
 
         return results
         
+    def getFilesInIndex(self):
+        files = {}
+        if self.indexExists():
+            reader = PyLucene.IndexReader.open(self.indexdir)
+            numDocs = reader.numDocs()
+            for i in range(0, numDocs-1):
+                doc = reader.document(i)
+                files[doc.get("url")] = ""
+                
+        return files
+            
     def getIndexInfo(self):
         info = {}
         if self.indexExists:
