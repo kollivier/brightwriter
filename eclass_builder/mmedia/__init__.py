@@ -6,6 +6,16 @@ import settings
 
 convertable_formats = ["wav", "wma"] # ["mpg", "mpeg", "mp4", "avi", "wav", "wmv", "wma", "asf", "mov"]
 
+media_players = {
+                    "QuickTime Player": ["http://www.apple.com/quicktime/", ["mov", "mp4", "avi", "mpg", "mpeg", "wav", "mp3"] ],
+                    "Windows Media Player (Windows only)" : ["http://www.microsoft.com/windows/windowsmedia/player/10/default.aspx", ["wmv", "wma", "asf", "avi", "wav", "mp3", "mpg", "mpeg"] ],
+                    "Real Player" : ["http://www.real.com/", ["rm", "ram", "mp4", "mp3", "mpeg", "mpg", "wav", "avi"] ],
+                    "Flash Player" : ["http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash&promoid=BIOW", ["swf"] ],
+                    "Acrobat Reader" : ["http://www.adobe.com/products/acrobat/readstep2.html", ["pdf"] ],
+                }
+
+
+
 def splitExt(filename):
     myfilename = string.lower(filename)
     base, ext = os.path.splitext(myfilename)
