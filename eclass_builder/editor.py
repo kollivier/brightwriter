@@ -19,6 +19,7 @@ lang_dict = {
 			}
 
 import wx
+import wxaddons
 import wxaddons.persistence
 import wxaddons.sized_controls as sc
 import time
@@ -183,7 +184,6 @@ class MainFrame2(sc.SizedFrame):
 		if wx.Platform == "__WXMAC__":
 			wx.SetDefaultPyEncoding("utf-8")
 		
-		self.CurrentFilename = ""
 		self.isDirty = False
 		self.isNewCourse = False
 		self.CurrentItem = None #current node
@@ -279,6 +279,7 @@ class MainFrame2(sc.SizedFrame):
 
 		if not sys.platform.startswith("darwin"):
 			self.toolbar.SetToolBitmapSize(wx.Size(16,16))
+
 		self.toolbar.Realize()
 
 		# File menu
@@ -462,15 +463,15 @@ class MainFrame2(sc.SizedFrame):
 		
 		self.SetMinSize(self.GetSizer().GetMinSize())
 
-		if sys.platform.startswith("win"):
-			# this nasty hack is needed because on Windows, the controls won't
-			# properly layout until the frame is resized. 
-			self.SetSize((self.GetSize()[0]+1, self.GetSize()[1]+1))
+		#if sys.platform.startswith("win"):
+		# this nasty hack is needed because on Windows, the controls won't
+		# properly layout until the frame is resized. 
+		# It appears it is now needed on Mac, too.
+		self.SetSize((self.GetSize()[0]+1, self.GetSize()[1]+1))
 			
 		if sys.platform.startswith("darwin"):
 			self.FileMenu.FindItemById(ID_PUBLISH_PDF).Enable(False)
 			self.toolbar.EnableTool(ID_PUBLISH_PDF, False)
-		self.Show()
 		
 		self.activityMonitor = ActivityMonitor(self)
 		self.activityMonitor.LoadState("ActivityMonitor")
@@ -711,6 +712,7 @@ class MainFrame2(sc.SizedFrame):
 
 		self.menuBar.EnableTop(self.menuBar.FindMenu(_("Page")), value)
 		self.menuBar.EnableTop(self.menuBar.FindMenu(_("Edit")), value)
+		# TODO: Only disable items that require a course to be open
 		self.menuBar.EnableTop(self.menuBar.FindMenu(_("Tools")), value)
 		if sys.platform.startswith("darwin"):
 			#still needed?
@@ -729,7 +731,6 @@ class MainFrame2(sc.SizedFrame):
 		self.pub = None
 		self.projectTree.DeleteAllItems()
 		self.CurrentItem = None
-		self.CurrentFilename = ""
 		self.CurrentTreeItem = None
 		settings.ProjectDir = ""
 		settings.ProjectSettings = conman.xml_settings.XMLSettings()
@@ -771,7 +772,7 @@ class MainFrame2(sc.SizedFrame):
 		"""
 		Routine to create a new project. 
 		"""
-		if self.CurrentFilename != "":
+		if self.pub:
 			answer = self.CheckSave()
 			if answer == wx.ID_YES:
 				self.SaveProject(event)
@@ -789,30 +790,13 @@ class MainFrame2(sc.SizedFrame):
 			result = NewPubDialog(self).ShowModal()
 			if result == wx.ID_OK:
 				self.isNewCourse = True
-				self.projectTree.DeleteAllItems()
-				self.CurrentFilename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
-				self.CurrentItem = self.pub.NewPub(self.pub.name, "English", settings.ProjectDir)
-				# TODO: We should store the project as a global rather than its settings
-				settings.ProjectSettings = self.pub.settings
-				self.isDirty = True
-				
-				global eclassdirs
-				for dir in eclassdirs:
-					if not os.path.exists(os.path.join(settings.ProjectDir, dir)):
-						os.mkdir(os.path.join(settings.ProjectDir, dir))
-
-				self.BindTowxTree(self.pub.nodes[0])
-				self.CurrentTreeItem = self.projectTree.GetRootItem()
-				
-				self.currentTheme = self.themes.FindTheme("Default (frames)")
+				self.LoadEClass(self.pub.filename)
 				self.AddNewEClassPage(None, self.pub.name, True)
 
 				self.SaveProject(event)	 
 				publisher = self.currentTheme.HTMLPublisher(self)
 				publisher.CopySupportFiles()
 				publisher.CreateTOC()
-				self.projectTree.SetItemText(self.CurrentTreeItem, self.CurrentItem.content.metadata.name)
-				self.Preview()
 				self.SwitchMenus(True)
 	
 	def TimeToQuit(self, event):
@@ -1116,14 +1100,15 @@ class MainFrame2(sc.SizedFrame):
 		"""
 		Runs when the user selects the Save option from the File menu
 		"""
-		if self.CurrentFilename == "":
+		filename = self.pub.filename
+		if filename == "":
 			defaultdir = ""
 			if settings.AppSettings["CourseFolder"] != "" and os.path.exists(settings.AppSettings["CourseFolder"]):
 				defaultdir = settings.AppSettings["CourseFolder"]
 			
 			f = wx.FileDialog(self, _("Select a file"), defaultdir, "", "XML Files (*.xml)|*.xml", wx.SAVE)
 			if f.ShowModal() == wx.ID_OK:
-				self.CurrentFilename = f.GetPath()
+				filename = f.GetPath()
 				self.isDirty = False
 			f.Destroy()
 		
@@ -1131,7 +1116,7 @@ class MainFrame2(sc.SizedFrame):
 		self.CreateDevHelpBook()
 
 		try:
-			self.pub.SaveAsXML(self.CurrentFilename)
+			self.pub.SaveAsXML(filename)
 			self.isDirty = False
 		except IOError, e:
 			message = _("Could not save EClass project file. Error Message is:")
@@ -1402,31 +1387,36 @@ class MainFrame2(sc.SizedFrame):
 	def LoadEClass(self, filename):
 		busy = wx.BusyCursor()
 		if not os.path.exists(filename):
-			wx.MessageBox(result, _("Could not find EClass file:") + filename)
+			wx.MessageBox(_("Could not find EClass file: %s") % filename)
 			return
-		
-		settings.ProjectDir = os.path.dirname(filename)
-		self.projectTree.DeleteAllItems()
-		self.CurrentFilename = filename
+
 		self.pub = conman.ConMan()
-		result = self.pub.LoadFromXML(self.CurrentFilename)
+		result = self.pub.LoadFromXML(filename)
+		
 		if result != "":
 			wx.MessageDialog(self, result, _("Error loading XML file."))
+		
 		else:
-			self.pub.directory = settings.ProjectDir
+			self.pub.directory = settings.ProjectDir = os.path.dirname(filename)
+			# TODO: We should store the project as a global rather than its settings
 			settings.ProjectSettings = self.pub.settings
 			global eclassdirs
 			for dir in eclassdirs:
 				subdir = os.path.join(self.pub.directory, dir)
 				if not os.path.exists(subdir):
 					os.mkdir(subdir)
+			
 			pylucenedir = os.path.join(self.pub.directory, "index.pylucene")
 			if os.path.exists(pylucenedir):
 				os.rename(pylucenedir, os.path.join(self.pub.directory, "index.lucene"))
 
-			self.BindTowxTree(self.pub.nodes[0])
-			self.CurrentItem = self.pub.nodes[0]
-			self.CurrentTreeItem = self.projectTree.GetRootItem()
+			if self.pub.nodes[0]:
+				self.BindTowxTree(self.pub.nodes[0])
+				self.CurrentItem = self.pub.nodes[0]
+				self.CurrentTreeItem = self.projectTree.GetRootItem()
+				self.projectTree.SelectItem(self.projectTree.GetRootItem())
+				self.Preview()
+			
 			mytheme = settings.ProjectSettings["Theme"]
 			self.currentTheme = self.themes.FindTheme(mytheme)
 			if not self.currentTheme:
@@ -1436,9 +1426,7 @@ class MainFrame2(sc.SizedFrame):
 				settings.ProjectSettings["SearchProgram"] = "Lucene"
 				wx.MessageBox(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
 
-			self.isDirty = False	 
-			self.Preview()
-			self.projectTree.SelectItem(self.projectTree.GetRootItem())
+			self.isDirty = False
 			
 			self.SetFocus()
 			self.SwitchMenus(True)
