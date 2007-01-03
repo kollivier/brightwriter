@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: EClass.Builder 2.5\n"
-"POT-Creation-Date: 2006-08-14 13:40+PDT\n"
+"POT-Creation-Date: 2007-01-02 16:25+PST\n"
 "PO-Revision-Date: 2004-03-16 14:26-0800\n"
 "Last-Translator: Kevin Ollivier <kevino@tulane.edu>\n"
 "Language-Team: Payson Center <kevino@tulane.edu>\n"
@@ -9,552 +9,552 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: editor.py:218
+#: editor.py:219
 msgid "Error moving preferences."
 msgstr ""
 
-#: editor.py:261 editor.py:283
+#: editor.py:264 editor.py:287
 msgid "Create a New Project"
 msgstr ""
 
-#: editor.py:261 editor.py:283 plugins/eclass.py:962 plugins/html.py:171
+#: editor.py:264 editor.py:287 plugins/eclass.py:962 plugins/html.py:171
 msgid "New"
 msgstr ""
 
-#: editor.py:262 editor.py:284
+#: editor.py:265 editor.py:288
 msgid "Open an Existing Project"
 msgstr ""
 
-#: editor.py:262 editor.py:284 plugins/html.py:172
+#: editor.py:265 editor.py:288 plugins/html.py:172
 msgid "Open"
 msgstr ""
 
-#: editor.py:263
+#: editor.py:266
 msgid "Save Current Project"
 msgstr ""
 
-#: editor.py:263 editor.py:285 plugins/html.py:173 plugins/html.py:267
+#: editor.py:266 editor.py:289 plugins/html.py:173 plugins/html.py:267
 msgid "Save"
 msgstr ""
 
-#: editor.py:265
+#: editor.py:268
 msgid "Adds a New EClass Page"
 msgstr ""
 
-#: editor.py:265 gui/new.py:69 gui/new.py:76 gui/new.py:85
+#: editor.py:268 gui/new.py:69 gui/new.py:76 gui/new.py:85
 msgid "New Page"
 msgstr ""
 
-#: editor.py:266
+#: editor.py:269
 msgid "Edits the Currently Selected Eclass Page"
 msgstr ""
 
-#: editor.py:266 editor.py:338
+#: editor.py:269 editor.py:342
 msgid "Edit Page"
 msgstr ""
 
-#: editor.py:267
+#: editor.py:270
 msgid "View and Edit Page Properties"
 msgstr ""
 
-#: editor.py:267 editor.py:344 gui/page_properties.py:23
+#: editor.py:270 editor.py:348 gui/page_properties.py:23
 msgid "Page Properties"
 msgstr ""
 
-#: editor.py:268
+#: editor.py:271
 msgid "Delete Currently Selected Page"
 msgstr ""
 
-#: editor.py:268
+#: editor.py:271
 msgid "Delete Page"
 msgstr ""
 
-#: editor.py:270
+#: editor.py:273
 msgid "Preview EClass"
 msgstr ""
 
-#: editor.py:270
+#: editor.py:273
 msgid "Preview EClass in Browser"
 msgstr ""
 
-#: editor.py:271
+#: editor.py:274
 msgid "Publish to CD-ROM"
 msgstr ""
 
-#: editor.py:272 gui/ftp.py:349
+#: editor.py:275 gui/ftp.py:349
 msgid "Publish to web site"
 msgstr ""
 
-#: editor.py:273
+#: editor.py:276
 msgid "Publish to PDF"
 msgstr ""
 
-#: editor.py:275
+#: editor.py:278
 msgid "View Help"
 msgstr ""
 
-#: editor.py:275
+#: editor.py:278
 msgid "View Help File"
 msgstr ""
 
-#: editor.py:285
+#: editor.py:289
 msgid "Save the Current Project"
 msgstr ""
 
-#: editor.py:286
+#: editor.py:290
 msgid "Close the Current Project"
 msgstr ""
 
-#: editor.py:286 gui/theme_manager.py:74 plugins/__init__.py:126
+#: editor.py:290 gui/theme_manager.py:74 plugins/__init__.py:126
 #: plugins/eclass.py:506
 msgid "Close"
 msgstr ""
 
-#: editor.py:290
+#: editor.py:294
 msgid "Preview EClass in web browser"
 msgstr ""
 
-#: editor.py:290
+#: editor.py:294
 msgid "Web Browser"
 msgstr ""
 
-#: editor.py:291
+#: editor.py:295
 msgid "Preview"
 msgstr ""
 
-#: editor.py:293
+#: editor.py:297
 msgid "Refresh Theme"
 msgstr ""
 
-#: editor.py:297
+#: editor.py:301
 msgid "Publish EClass to a web server"
 msgstr ""
 
-#: editor.py:297
+#: editor.py:301
 msgid "To web site"
 msgstr ""
 
-#: editor.py:298
+#: editor.py:302
 msgid "Publish EClass to a CD-ROM"
 msgstr ""
 
-#: editor.py:298
+#: editor.py:302
 msgid "To CD-ROM"
 msgstr ""
 
-#: editor.py:299
+#: editor.py:303
 msgid "To PDF"
 msgstr ""
 
-#: editor.py:300
+#: editor.py:304
 msgid "IMS Package"
 msgstr ""
 
-#: editor.py:301 gui/project_props.py:28
+#: editor.py:305 gui/project_props.py:28
 msgid "Publish"
 msgstr ""
 
-#: editor.py:304
+#: editor.py:308
 msgid "View and edit project settings"
 msgstr ""
 
-#: editor.py:304 gui/project_props.py:14
+#: editor.py:308 gui/project_props.py:14
 msgid "Project Settings"
 msgstr ""
 
-#: editor.py:306
+#: editor.py:310
 msgid "Exit this Application"
 msgstr ""
 
-#: editor.py:306 plugins/html.py:174
+#: editor.py:310 plugins/html.py:174
 msgid "Exit"
 msgstr ""
 
-#: editor.py:311 editor.py:329 plugins/html.py:179 plugins/html.py:269
+#: editor.py:315 editor.py:333 plugins/html.py:179 plugins/html.py:269
 msgid "Cut"
 msgstr ""
 
-#: editor.py:312 editor.py:330 plugins/html.py:180 plugins/html.py:270
+#: editor.py:316 editor.py:334 plugins/html.py:180 plugins/html.py:270
 msgid "Copy"
 msgstr ""
 
-#: editor.py:315
+#: editor.py:319
 msgid "Paste After"
 msgstr ""
 
-#: editor.py:316 editor.py:334
+#: editor.py:320 editor.py:338
 msgid "Paste As Child"
 msgstr ""
 
-#: editor.py:317 editor.py:335 plugins/html.py:181 plugins/html.py:271
+#: editor.py:321 editor.py:339 plugins/html.py:181 plugins/html.py:271
 msgid "Paste"
 msgstr ""
 
-#: editor.py:320
+#: editor.py:324
 msgid "Find in Project"
 msgstr ""
 
-#: editor.py:324
+#: editor.py:328
 msgid "Add New"
 msgstr ""
 
-#: editor.py:325
+#: editor.py:329
 msgid "Remove Page"
 msgstr ""
 
-#: editor.py:325
+#: editor.py:329
 msgid "Remove the current page"
 msgstr ""
 
-#: editor.py:327
+#: editor.py:331
 msgid "Import file..."
 msgstr ""
 
-#: editor.py:333
+#: editor.py:337
 msgid "Paste Below"
 msgstr ""
 
-#: editor.py:338
+#: editor.py:342
 msgid "Edit the currently selected page"
 msgstr ""
 
-#: editor.py:339
+#: editor.py:343
 msgid "Move Page Up"
 msgstr ""
 
-#: editor.py:339
+#: editor.py:343
 msgid "Move the selected page higher in the tree"
 msgstr ""
 
-#: editor.py:340
+#: editor.py:344
 msgid "Move Page Down"
 msgstr ""
 
-#: editor.py:340
+#: editor.py:344
 msgid "Move the selected page lower in the tree"
 msgstr ""
 
-#: editor.py:342
+#: editor.py:346
 msgid "Upload Page"
 msgstr ""
 
-#: editor.py:342
+#: editor.py:346
 msgid "Upload Page to FTP Server"
 msgstr ""
 
-#: editor.py:344
+#: editor.py:348
 msgid "Edit Page Properties"
 msgstr ""
 
-#: editor.py:347
+#: editor.py:351
 msgid "Change Theme"
 msgstr ""
 
-#: editor.py:348
+#: editor.py:352
 msgid "Check Links"
 msgstr ""
 
-#: editor.py:349
+#: editor.py:353
 msgid "Manage Contacts"
 msgstr ""
 
-#: editor.py:350
+#: editor.py:354
 msgid "Error Viewer"
 msgstr ""
 
-#: editor.py:351
+#: editor.py:355
 msgid "View status of background activties."
 msgstr ""
 
-#: editor.py:351 gui/activity_monitor.py:25
+#: editor.py:355 gui/activity_monitor.py:25
 msgid "Activity Monitor"
 msgstr ""
 
-#: editor.py:353
+#: editor.py:357
 msgid "Modify Program Options"
 msgstr ""
 
-#: editor.py:353 gui/options.py:22
+#: editor.py:357 gui/options.py:22
 msgid "Options"
 msgstr ""
 
-#: editor.py:358
+#: editor.py:362
 msgid "About Eclass"
 msgstr ""
 
-#: editor.py:358
+#: editor.py:362
 msgid "About Eclass.Builder"
 msgstr ""
 
-#: editor.py:359
+#: editor.py:363
 msgid "EClass.Builder Help"
 msgstr ""
 
-#: editor.py:359 editor.py:368
+#: editor.py:363 editor.py:372
 msgid "Help"
 msgstr ""
 
-#: editor.py:360
+#: editor.py:364
 msgid "Provide Feedback"
 msgstr ""
 
-#: editor.py:360
+#: editor.py:364
 msgid "Submit feature requests or bugs"
 msgstr ""
 
-#: editor.py:364 gui/ftp.py:381 plugins/eclass.py:789 plugins/html.py:222
+#: editor.py:368 gui/ftp.py:380 plugins/eclass.py:789 plugins/html.py:222
 msgid "File"
 msgstr ""
 
-#: editor.py:365 editor.py:710 gui/contacts.py:31 gui/page_properties.py:131
+#: editor.py:369 editor.py:714 gui/contacts.py:31 gui/page_properties.py:131
 #: plugins/eclass.py:965 plugins/eclass.py:994 plugins/eclass.py:1001
 #: plugins/html.py:223 plugins/quiz.py:666
 msgid "Edit"
 msgstr ""
 
-#: editor.py:366 editor.py:709 editor.py:1466 editor.py:1484 editor.py:1514
-#: editor.py:1532 gui/link_manager.py:19 gui/project_find_dialog.py:46
+#: editor.py:370 editor.py:713 editor.py:1458 editor.py:1476 editor.py:1506
+#: editor.py:1524 gui/link_manager.py:19 gui/project_find_dialog.py:41
 msgid "Page"
 msgstr ""
 
-#: editor.py:367 editor.py:711
+#: editor.py:371 editor.py:716
 msgid "Tools"
 msgstr ""
 
-#: editor.py:401
+#: editor.py:405
 msgid "HTML Preview"
 msgstr ""
 
-#: editor.py:539
+#: editor.py:543
 msgid ""
 "EClass could not load the following vCards from your Contacts folder: %"
 "(badCards)s. You may want to try deleting these cards and re-creating or re-"
 "importing them."
 msgstr ""
 
-#: editor.py:782
+#: editor.py:786
 msgid "Course Folder not specified"
 msgstr ""
 
-#: editor.py:782
+#: editor.py:786
 msgid ""
 "You need to specify a folder to store your course packages. To do so, select "
 "Options->Preferences from the main menu."
 msgstr ""
 
-#: editor.py:853
+#: editor.py:841
 msgid "There was an error publishing to PDF."
 msgstr ""
 
-#: editor.py:857
+#: editor.py:845
 msgid "Preview PDF?"
 msgstr ""
 
-#: editor.py:857
+#: editor.py:845
 msgid ""
 "Publishing complete. A PDF version of your EClass can be found at %(pdffile)"
 "s. Would you like to preview it now?"
 msgstr ""
 
-#: editor.py:861
+#: editor.py:849
 msgid "Publishing Complete."
 msgstr ""
 
-#: editor.py:861
+#: editor.py:849
 msgid ""
 "Publishing complete. A PDF version of your EClass can be found at %(pdffile)"
 "s."
 msgstr ""
 
-#: editor.py:868
+#: editor.py:856
 msgid "Export IMS Content Package"
 msgstr ""
 
-#: editor.py:868
+#: editor.py:856
 msgid "IMS Content Package Files"
 msgstr ""
 
-#: editor.py:922
+#: editor.py:910
 msgid "Preparing to update Index..."
 msgstr ""
 
-#: editor.py:922
+#: editor.py:910
 msgid "Updating Index"
 msgstr ""
 
-#: editor.py:952
+#: editor.py:940
 msgid ""
 "You must enter a publication ID to enable the search function. You can "
 "specify a publication ID by selecting 'File->Project Settings' from the menu."
 msgstr ""
 
-#: editor.py:953
+#: editor.py:941
 msgid "Publication ID Not Set"
 msgstr ""
 
-#: editor.py:959 editor.py:1069
+#: editor.py:947 editor.py:1057
 msgid ""
 "There was an unexpected error publishing your course. For more details, "
 "check the Error Viewer from the 'Tools->Error Viewer' menu."
 msgstr ""
 
-#: editor.py:961 editor.py:1071
+#: editor.py:949 editor.py:1059
 msgid "Could Not Publish EClass"
 msgstr ""
 
-#: editor.py:965
+#: editor.py:953
 msgid ""
 "Sorry, building a Greenstone CD from EClass is not yet supported on this "
 "platform."
 msgstr ""
 
-#: editor.py:966
+#: editor.py:954
 msgid "Cannot build Greenstone collection."
 msgstr ""
 
-#: editor.py:976
+#: editor.py:964
 msgid "Specify CD Save Directory?"
 msgstr ""
 
-#: editor.py:976
+#: editor.py:964
 msgid ""
 "You need to specify a directory in which to store the CD files for burning.\n"
 "Would you like to do so now?"
 msgstr ""
 
-#: editor.py:978 gui/project_props.py:197
+#: editor.py:966 gui/project_props.py:197
 msgid "Choose a folder to store CD files."
 msgstr ""
 
-#: editor.py:990
+#: editor.py:978
 msgid ""
 "A window will now appear with all files that must be published to CD-ROM. "
 "Start your CD-Recording program and copy all files in this window to that "
 "program, and your CD will be ready for burning."
 msgstr ""
 
-#: editor.py:991
+#: editor.py:979
 msgid "Export to CD Finished"
 msgstr ""
 
-#: editor.py:1019
+#: editor.py:1007
 msgid "Copying CD Files"
 msgstr ""
 
-#: editor.py:1019
+#: editor.py:1007
 msgid "Preparing to copy CD files..."
 msgstr ""
 
-#: editor.py:1041
+#: editor.py:1029
 msgid ""
 "Unable to copy CD support files to your publication directory. For more "
 "details, check the Error Viewer from the 'Tools->Error Viewer' menu."
 msgstr ""
 
-#: editor.py:1043
+#: editor.py:1031
 msgid "Could Not Copy CD Files"
 msgstr ""
 
-#: editor.py:1079
+#: editor.py:1067
 msgid "Would you like to upload files associated with these pages?"
 msgstr ""
 
-#: editor.py:1080
+#: editor.py:1068
 msgid "Upload Dependent Files?"
 msgstr ""
 
-#: editor.py:1094 gui/ftp.py:433
+#: editor.py:1082 gui/ftp.py:432
 msgid "Uploading files..."
 msgstr ""
 
-#: editor.py:1105
+#: editor.py:1093
 msgid "Unknown error uploading file(s)."
 msgstr ""
 
-#: editor.py:1120 gui/select_box.py:94 plugins/html.py:955
+#: editor.py:1109 gui/select_box.py:94 plugins/html.py:955
 #: plugins/html.py:1070
 msgid "Select a file"
 msgstr ""
 
-#: editor.py:1133
+#: editor.py:1122
 msgid "Could not save EClass project file. Error Message is:"
 msgstr ""
 
-#: editor.py:1135 editor.py:1158 editor.py:1318
+#: editor.py:1124 editor.py:1147 editor.py:1307
 msgid "Could Not Save File"
 msgstr ""
 
-#: editor.py:1171
+#: editor.py:1160
 msgid ""
 "Are you sure you want to delete this page? Deleting this page also deletes "
 "any sub-pages or terms assigned to this page."
 msgstr ""
 
-#: editor.py:1172
+#: editor.py:1161
 msgid "Delete Page?"
 msgstr ""
 
-#: editor.py:1289
+#: editor.py:1278
 msgid "Error updating page."
 msgstr ""
 
-#: editor.py:1309
+#: editor.py:1298
 msgid "Updating table of contents..."
 msgstr ""
 
-#: editor.py:1335
+#: editor.py:1324
 msgid "Please select a course"
 msgstr ""
 
-#: editor.py:1351
+#: editor.py:1340
 msgid "The folder you selected does not seem to contain an EClass Project."
 msgstr ""
 
-#: editor.py:1352
+#: editor.py:1341
 msgid "Not a Valid EClass Project"
 msgstr ""
 
-#: editor.py:1370
+#: editor.py:1359
 msgid "There was an unknown error when attempting to start the page editor."
 msgstr ""
 
-#: editor.py:1401
-msgid "Could not find EClass file:"
+#: editor.py:1390
+msgid "Could not find EClass file: %s"
 msgstr ""
 
-#: editor.py:1410
+#: editor.py:1397
 msgid "Error loading XML file."
 msgstr ""
 
-#: editor.py:1433
+#: editor.py:1427
 msgid ""
 "The SWISH-E search program is no longer supported. This project has been "
 "updated to use the Lucene search engine instead. Run the Publish to CD "
 "function to update the index."
 msgstr ""
 
-#: editor.py:1447
+#: editor.py:1439
 msgid ""
 "Due to new security restrictions in some media players, video and audio "
 "files need to be moved underneath of the 'pub' directory. EClass will now do "
 "this automatically and update your pages. Sorry for any inconvenience!"
 msgstr ""
 
-#: editor.py:1447
+#: editor.py:1439
 msgid "Moving media files"
 msgstr ""
 
-#: editor.py:1554
+#: editor.py:1546
 msgid ""
 "The page %(filename)s cannot be previewed inside EClass. Double-click on the "
 "file to view or edit it."
 msgstr ""
 
-#: editor.py:1639
+#: editor.py:1631
 msgid "Would you like to save the current project before continuing?"
 msgstr ""
 
-#: editor.py:1640
+#: editor.py:1632
 msgid "Save Project?"
 msgstr ""
 
@@ -683,23 +683,23 @@ msgstr ""
 msgid "Error log viewer"
 msgstr ""
 
-#: gui/error_viewer.py:22
+#: gui/error_viewer.py:21
 msgid "Error Details"
 msgstr ""
 
-#: gui/error_viewer.py:29
+#: gui/error_viewer.py:27
 msgid "Time"
 msgstr ""
 
-#: gui/error_viewer.py:30
+#: gui/error_viewer.py:28
 msgid "Error Message"
 msgstr ""
 
-#: gui/error_viewer.py:43
+#: gui/error_viewer.py:40
 msgid "Clear"
 msgstr ""
 
-#: gui/error_viewer.py:66
+#: gui/error_viewer.py:63
 msgid "Save Log File"
 msgstr ""
 
@@ -770,65 +770,65 @@ msgstr ""
 msgid "Username"
 msgstr ""
 
-#: gui/ftp.py:374 gui/project_props.py:214
+#: gui/ftp.py:373 gui/project_props.py:214
 msgid "Password"
 msgstr ""
 
-#: gui/ftp.py:375 gui/project_props.py:218
+#: gui/ftp.py:374 gui/project_props.py:218
 msgid "Directory"
 msgstr ""
 
-#: gui/ftp.py:377 gui/project_props.py:222
+#: gui/ftp.py:376 gui/project_props.py:222
 msgid "Use Passive FTP"
 msgstr ""
 
-#: gui/ftp.py:382 gui/link_manager.py:20
+#: gui/ftp.py:381 gui/link_manager.py:20
 msgid "Status"
 msgstr ""
 
-#: gui/ftp.py:391 gui/ftp.py:413 gui/ftp.py:427 gui/ftp.py:439
+#: gui/ftp.py:390 gui/ftp.py:412 gui/ftp.py:426 gui/ftp.py:438
 msgid "Upload"
 msgstr ""
 
-#: gui/ftp.py:408
+#: gui/ftp.py:407
 msgid "Created Directory: "
 msgstr ""
 
-#: gui/ftp.py:411
+#: gui/ftp.py:410
 msgid "Finished uploading."
 msgstr ""
 
-#: gui/ftp.py:424
+#: gui/ftp.py:423
 msgid "Uploading..."
 msgstr ""
 
-#: gui/ftp.py:434
+#: gui/ftp.py:433
 msgid "%(percent)s%% uploaded..."
 msgstr ""
 
-#: gui/ftp.py:446
+#: gui/ftp.py:445
 msgid "Shutting down FTP connection, please wait."
 msgstr ""
 
-#: gui/ftp.py:459
+#: gui/ftp.py:458
 msgid ""
 "The FTP server has failed to respond for over 1 minute, and so the "
 "connection is being disconnected. Please click Upload to try again."
 msgstr ""
 
-#: gui/ftp.py:466
+#: gui/ftp.py:465
 msgid "Queued"
 msgstr ""
 
-#: gui/ftp.py:470 gui/ftp.py:477
+#: gui/ftp.py:469 gui/ftp.py:476
 msgid "Stop"
 msgstr ""
 
-#: gui/ftp.py:499
+#: gui/ftp.py:498
 msgid "Total Progress: "
 msgstr ""
 
-#: gui/ftp.py:523
+#: gui/ftp.py:522
 msgid "Socket Error: "
 msgstr ""
 
@@ -1065,20 +1065,12 @@ msgstr ""
 msgid "Find In Project"
 msgstr ""
 
-#: gui/project_find_dialog.py:28 plugins/html.py:186
-msgid "Find"
-msgstr ""
-
-#: gui/project_find_dialog.py:32
-msgid "in"
-msgstr ""
-
-#: gui/project_find_dialog.py:36 gui/project_props.py:25
-msgid "Search"
-msgstr ""
-
-#: gui/project_find_dialog.py:47
+#: gui/project_find_dialog.py:42
 msgid "Filename"
+msgstr ""
+
+#: gui/project_props.py:25
+msgid "Search"
 msgstr ""
 
 #: gui/project_props.py:31
@@ -1512,6 +1504,10 @@ msgstr ""
 
 #: plugins/html.py:184
 msgid "Select None"
+msgstr ""
+
+#: plugins/html.py:186
+msgid "Find"
 msgstr ""
 
 #: plugins/html.py:188 plugins/html.py:190
