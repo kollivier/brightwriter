@@ -20,21 +20,16 @@ class ProjectFindDialog(sc.SizedDialog):
         pane = self.GetContentsPane()
         self.itemCount = 0
         
-        searchpane = sc.SizedPanel(pane, -1)
-        searchpane.SetSizerType("horizontal")
-        #searchpane.SetSizerProp("expand", "true")
-        #searchpane.SetSizerProp("proportion", 0)
-        
-        wx.StaticText(searchpane, -1, _("Find") + " ")
-        self.searchBox = wx.TextCtrl(searchpane, -1)
+        self.searchBox = wx.SearchCtrl(pane, -1, style=wx.TE_PROCESS_ENTER)
+        self.searchBox.SetSizerProp("expand", "true") #, proportion=0)
         self.searchBox.SetFocus()
         
-        wx.StaticText(searchpane, -1, _("in") + " ")
-        self.searchContext = wx.Choice(searchpane, -1, choices=["contents"])
-        self.searchContext.SetSelection(0)
+        #wx.StaticText(searchpane, -1, _("in") + " ")
+        #self.searchContext = wx.Choice(searchpane, -1, choices=["contents"])
+        #self.searchContext.SetSelection(0)
         
-        self.searchBtn = wx.Button(searchpane, -1, _("Search"))
-        self.searchBtn.SetDefault()
+        #self.searchBtn = wx.Button(searchpane, -1, _("Search"))
+        #self.searchBtn.SetDefault()
         
         # list containing search results
         self.listCtrl = autolist.AutoSizeListCtrl(pane, -1, style=wx.LC_REPORT)
@@ -50,9 +45,13 @@ class ProjectFindDialog(sc.SizedDialog):
 
         #EVT_LEFT_DCLICK(self, self.listCtrl.GetId(), self.OnDblClick)
         wx.EVT_LIST_ITEM_SELECTED(self, self.listCtrl.GetId(), self.OnSelection)
-        wx.EVT_BUTTON(self.searchBtn, self.searchBtn.GetId(), self.OnSearch)
+        wx.EVT_TEXT(self.searchBox, self.searchBox.GetId(), self.OnSearch)
 
         #wx.EVT_ACTIVATE(self, self.OnActivate)
+        
+    def MakeSearchMenu(self):
+        menuItems = ["contents"]
+        
 
     def OnSearch(self, evt):
         searcher = index.Index(os.path.join(settings.ProjectDir, "index.lucene"), settings.ProjectDir)
@@ -62,7 +61,7 @@ class ProjectFindDialog(sc.SizedDialog):
         self.listCtrl.DeleteAllItems()
         for result in results:
             self.listCtrl.InsertStringItem(self.itemCount, result['title'])
-            self.listCtrl.SetStringItem(self.itemCount, 1, result['url'])
+            self.listCtrl.SetStringItem(self.itemCount, 1, result['url'][0])
             self.itemCount += 1
             
         
