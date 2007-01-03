@@ -6,6 +6,11 @@ import utils
 import shutil
 import settings
 
+# constants
+
+INDEX_DIR = "index_directory"
+CONTENT_DIR = "content_directory"
+
 # Custom error classes
 class IndexExistsError(Exception):
     def __init__(self, indexName):
@@ -43,7 +48,7 @@ class IndexManager:
     def addIndex(self, name, contentDir):
         if not self.indexes.has_section(name):
             self.indexes.add_section(name)
-            self.indexes.set(name, "content_directory", contentDir)
+            self.indexes.set(name, CONTENT_DIR, contentDir)
             
             indexdir = self.indexesDir
             if not os.path.exists(indexdir):
@@ -52,16 +57,19 @@ class IndexManager:
             thisindexdir = os.path.join(indexdir, utils.createSafeFilename(name))
             if not os.path.exists(thisindexdir):
                 os.makedirs(thisindexdir)
-            self.setIndexProp(name, "index_directory", thisindexdir)
+            self.setIndexProp(name, INDEX_DIR, thisindexdir)
             self.saveChanges()
         
         else:
             raise IndexExistsError(name)
             
+    def getIndexes(self):
+        return self.indexes.sections()
+            
     def getIndex(self, name):
         if self.indexes.has_section(name):
-            folder = self.getIndexProp(name, "content_directory")
-            indexdir = self.getIndexProp(name, "index_directory")
+            folder = self.getIndexProp(name, CONTENT_DIR)
+            indexdir = self.getIndexProp(name, INDEX_DIR)
     
             lucenedir = os.path.join(indexdir, "index.lucene")
             indexer = index.Index(lucenedir, folder)
@@ -86,7 +94,7 @@ class IndexManager:
         
     def removeIndex(self, name, deleteIndexFiles=True):
         if self.indexes.has_section(name):
-            indexdir = self.getIndexProp(name, "index_directory")
+            indexdir = self.getIndexProp(name, INDEX_DIR)
             if deleteIndexFiles:
                 shutil.rmtree(indexdir)
             self.indexes.remove_section(name)
