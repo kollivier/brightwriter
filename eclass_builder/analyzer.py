@@ -1,12 +1,17 @@
 import sys, os, string, re
 import unittest
 import urlparse
+import htmlutils
+import stat
 
 link_re = """href\s*?=(.*?)\s?>"""
 media_re = """src\s*?=(.*?)\s?/?>"""
 object_media_re = """<param name="?src|filename"? value=(.*?)\s?/?>"""
 
 ignored_protocols = ["javascript", "mailto", "gopher"]
+
+# how many bytes before we decide to warn about the file
+MEDIA_THRESHOLD=50000000
 
 
 def findAllMatches(re_string, text, start=0):
@@ -51,6 +56,17 @@ class ContentAnalyzer:
         self.__GetLinksFromText()
         self.__ParseLinks()
         
+    def reportLargeMediaFiles(self):
+        largeFiles = []
+        for media in self.mediaFiles:
+            mediapath = htmlutils.GetFullPathFromURL( media, os.path.dirname(self.filename) )
+            if os.path.exists(mediapath):
+                media_size = os.stat(mediapath)[stat.ST_SIZE]
+                if media_size > MEDIA_THRESHOLD:
+                    largeFiles.append( ( mediapath, media_size ) )
+        
+        return largeFiles
+    
     def __GetLinksFromText(self):
         matches = findAllMatches(link_re, self.contents)
         for match in matches:
