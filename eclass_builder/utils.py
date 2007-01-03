@@ -202,6 +202,8 @@ def escapeFilename(filename):
         result = filename.replace(" ", "\\ ")
         result = result.replace("(", "\\(")
         result = result.replace(")", "\\)")
+        result = result.replace("[", "\\[")
+        result = result.replace("]", "\\]")
     return result
     
 def getPlatformName():
