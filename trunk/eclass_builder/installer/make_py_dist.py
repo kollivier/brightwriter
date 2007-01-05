@@ -4,7 +4,7 @@
 import sys, os, string, shutil, glob, modulefinder, re
 import wxversion
 flavor = "ansi"
-wx_version = "2.6"
+wx_version = "2.8"
 if len(sys.argv) > 1:
     if sys.argv[1] == "--unicode":
         flavor = "unicode"
