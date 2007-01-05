@@ -86,7 +86,7 @@ Section "Program Files" SecCopyUI
   File /r "..\themes\IMS Package"
 
   SetOutPath "$INSTDIR\3rdparty\win32"
-  File "C:\Python23\w9xpopen.exe"
+  File "C:\Python24\w9xpopen.exe"
   File "..\3rdparty\win32\pdftohtml.exe"
   File /r "..\3rdparty\win32\Karrigell"
   File /r "..\3rdparty\win32\xlHtml"
