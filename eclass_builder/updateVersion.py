@@ -34,8 +34,8 @@ myfile = open(os.path.join("installer", "eclass-builder.nsi"), "r")
 data = myfile.read()
 myfile.close()
 
-myterm = re.compile("(\!define MUI_VERSION \").*(\")",re.IGNORECASE|re.MULTILINE)
-data = myterm.sub("\\1" + version_str + "\\2", data)
+myterm = re.compile('define MUI_VERSION "[^"]*"',re.IGNORECASE|re.MULTILINE)
+data = myterm.sub("define MUI_VERSION \"" + version_str + "\"", data)
 
 myfile = myfile = open(os.path.join("installer", "eclass-builder.nsi"), "w")
 myfile.write(data)
@@ -48,8 +48,8 @@ for file in aboutfiles:
     data = myfile.read()
     myfile.close()
 
-    myterm = re.compile("(<strong>EClass.Builder )(.*)(<br>)",re.IGNORECASE|re.MULTILINE)
-    data = myterm.sub("\\1" + version_str + "\\3", data)
+    myterm = re.compile("<strong>EClass.Builder .*<br>",re.IGNORECASE|re.MULTILINE)
+    data = myterm.sub("<strong>EClass.Builder " + version_str + "<br>", data)
 
     myfile = myfile = open(file, "w")
     myfile.write(data)
