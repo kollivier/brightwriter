@@ -34,7 +34,7 @@ myfile = open(os.path.join("installer", "eclass-builder.nsi"), "r")
 data = myfile.read()
 myfile.close()
 
-myterm = re.compile("(!define MUI_VERSION \").*(\")",re.IGNORECASE|re.MULTILINE)
+myterm = re.compile("(\!define MUI_VERSION \").*(\")",re.IGNORECASE|re.MULTILINE)
 data = myterm.sub("\\1" + version_str + "\\2", data)
 
 myfile = myfile = open(os.path.join("installer", "eclass-builder.nsi"), "w")
