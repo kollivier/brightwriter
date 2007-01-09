@@ -1,4 +1,4 @@
-call "%VS8COMNTOOLS%vsvars32.bat"
+call "%VS71COMNTOOLS%vsvars32.bat"
 REM Python24 gives an "invalid group reference" error
 C:\Python24\python ..\updateVersion.py %1
 C:\Python24\python make_py_dist.py --unicode
