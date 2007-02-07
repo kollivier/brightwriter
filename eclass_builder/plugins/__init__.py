@@ -222,7 +222,7 @@ class BaseHTMLPublisher:
 	def ApplyTemplate(self, template="default.tpl", data={}):
 		if template == "default.tpl":
 			#get the template file from the current theme
-			template = os.path.join(self.parent.AppDir,	 "themes", self.parent.currentTheme.themename, template)
+			template = os.path.join(settings.AppDir, "themes", self.parent.currentTheme.themename, template)
 		temp = utils.openFile(template, "r")
 		html = temp.read()
 		temp.close()
