@@ -6,6 +6,7 @@ import stat
 import encodings
 import string
 import shutil
+from user import home
 
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
@@ -34,26 +35,11 @@ import PyMeld
 isCGI = False
 
 settings.AppDir = rootdir
+settings.PrefDir = os.path.join(home, ".librarian")
+if not os.path.exists(settings.PrefDir):
+    os.makedirs(settings.PrefDir)
+    
 settings.ThirdPartyDir = os.path.join(rootdir, "3rdparty", utils.getPlatformName()) 
-
-def walker(indexer, dirname, names):
-    metadata = {}
-    metadata_filename = os.path.join(dirname, "metadata.xml")
-    if os.path.exists(metadata_filename):
-        metadata = library.metadata.readGSMetadata(metadata_filename)
-        
-    for name in names:
-        fullpath = os.path.join(dirname, name)
-        if os.path.isfile(fullpath):
-            print "updating index for %s" % (fullpath)
-            
-            file_metadata = {}
-            metafilename = fullpath.replace(indexer.folder + os.sep, "")
-            
-            if metafilename in metadata:
-                file_metadata = metadata[metafilename].metadata
-            
-            indexer.updateFile(fullpath, file_metadata)
 
 def getHTMLFieldList(indexer):
     htmlfields = """<option value="contents" selected>All Text</option>\n"""
@@ -120,7 +106,7 @@ if len(sys.argv) > 1:
 else:
     isCGI = True
     
-manager = index_manager.IndexManager()    
+manager = index_manager.IndexManager("indexes.cfg")    
 
 if isCGI:
     appname = "librarian"
@@ -293,12 +279,8 @@ else:
         indexer = manager.getIndex(name)
         
         if indexer: 
-            folder = manager.getIndexProp(name, "content_directory")
-            currentdir = os.getcwd()
-            os.chdir(folder)
-            os.path.walk(folder, walker, indexer)
-        
-            os.chdir(currentdir)
+            callback = index.IndexingCallback(name)
+            indexer.indexLibrary(callback)
             
     elif command == "browse":
         name = sys.argv[2].strip()
@@ -309,6 +291,11 @@ else:
         
         for result in result_list:
             print result
+    
+    elif command == "export":
+        name = sys.argv[2].strip()
+        
+        manager.exportIndex(name)
     
     elif command == "search":
         name = sys.argv[2].strip()
