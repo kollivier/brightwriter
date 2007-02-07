@@ -52,11 +52,12 @@ class SelectBox(sc.SizedPanel):
         sc.SizedPanel.__init__(self, parent, -1)
         self.SetSizerType("horizontal")
         self.SetSizerProp("expand", True)
-        self.SetSizerProp("proportion", 1)
         self.SetSizerProp("border", (["all"], 0))
         
         icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wx.BITMAP_TYPE_GIF)
         self.textbox = wx.TextCtrl(self, -1, filename, size=textsize)
+        if wx.Platform == "__WXMAC__":
+            self.textbox.MacCheckSpelling(False)
         self.textbox.SetSizerProp("expand", True)
         self.textbox.SetSizerProp("proportion", 1)
         self.selectbtn = wx.BitmapButton(self, -1, icnFolder)
