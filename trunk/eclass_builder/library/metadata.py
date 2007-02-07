@@ -4,6 +4,14 @@ import utils
 
 metadata_ns = ["dc", "dls"]
 
+
+class ExtendedMetadata:
+    def __init__(self, filename):
+        self.filename = filename
+        
+    def LoadData(self):
+        pass
+
 class FileMetadata:
     def __init__(self):
         self.metadata = {}
@@ -43,7 +51,7 @@ def readGSMetadata(filename):
             # for some reason
             filename = getNodeValue(filetags[0]).replace("\\\\", "/")
             filename = filename.replace("\\", "")
-            print "filename = %s" % filename
+            #print "filename = %s" % filename
             
             file_metadata = FileMetadata()
             metadata_fields = afile.getElementsByTagName("Metadata")
