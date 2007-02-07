@@ -855,7 +855,10 @@ class MainFrame2(sc.SizedFrame):
 		deffilename = fileutils.MakeFileName2(self.pub.name) + ".zip"
 		dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.SAVE)
 		if dialog.ShowModal() == wx.ID_OK: 
-			imsdir = os.path.dirname(os.path.join(os.tempnam(), "IMSPackage"))
+			tempdir = tempfile.mkdtemp()
+			imsdir = os.path.dirname(os.path.join(tempdir, "IMSPackage"))
+			if not os.path.exists(imsdir):
+				os.makedirs(imsdir)
 			imstheme = self.themes.FindTheme("IMS Package")
 			publisher = imstheme.HTMLPublisher(self, imsdir)
 			publisher.Publish()
@@ -864,10 +867,19 @@ class MainFrame2(sc.SizedFrame):
 			handle, zipname = tempfile.mkstemp()
 			os.close(handle)
 			if os.path.exists(dialog.GetPath()):
+				result = wx.MessageBox(_("The file %s already exists in this directory. Do you want to overwrite this file?") % dialog.GetFilename(), 
+							_("Overwrite file?"), wx.YES_NO | wx.CANCEL | wx.ICON_WARNING)
+			    
+				if not result == wx.ID_YES:
+					return
+			        
 				os.remove(dialog.GetPath())
 		
 			myzip = zipfile.ZipFile(zipname, "w")
-			self._DirToZipFile("", myzip)
+			import utils.zip
+			utils.zip.dirToZipFile("", myzip, settings.ProjectDir, excludeFiles=["imsmanifest.xml"], 
+			                excludeDirs=["installers", "cgi-bin"], ignoreHidden=True)
+			
 			handle, imsfile = tempfile.mkstemp()
 			os.close(handle)
 			oldfile = self.pub.filename
@@ -877,20 +889,7 @@ class MainFrame2(sc.SizedFrame):
 			myzip.close()
 			os.rename(zipname, dialog.GetPath())
 
-		wx.MessageBox("Finished exporting!")
-		
-	def _DirToZipFile(self, dir, myzip):
-		mydir = os.path.join(settings.ProjectDir, dir)
-		if not os.path.basename(dir) in ["installers", "cgi-bin"]:
-			for file in os.listdir(mydir):
-				mypath = os.path.join(mydir, file)
-				print 'dir: %s' % dir
-				if os.path.isfile(mypath) and string.find(file, "imsmanifest.xml") == -1 and file[0] != ".":
-					print "mypath %s, file %s" % (mypath, os.path.join(dir, file))
-					myzip.write(str(mypath), str(os.path.join(dir, file)))
-				elif os.path.isdir(mypath):
-					self._DirToZipFile(os.path.join(dir, file), myzip)
-		
+		wx.MessageBox("Finished exporting!")		
 
 	def OnIndexFileChanged(self, progress, statusText):
 		if self.engine:
