@@ -12,45 +12,114 @@ import gui.autolist as autolist
 import library.gui.constants as constants
 import library.globals as globals
 import New
-import Settings
+import settings
+import LibSettings
 import Props
+import Metadata
 import errors
+import PyLucene
 
+# because a dict randomly re-orders the keys so menus are not sequential
+menus = [
+        _("&File"),
+        _("&Edit"),
+        _("&Library"),
+        _("&Window"),
+        _("&Help"),
+        ]
+        
 menuItems = {
         _("&File"):
         [
             (wx.ID_NEW, _("&New Library"), _("Create a new library")),
             (constants.ID_DEL_LIBRARY, _("&Delete Library"), _("Deletes a library from your collection.")),
         ],
+        _("&Edit"):
+        [
+            (wx.ID_CUT, _("Cut\tCTRL+X"), _("Cut items")),
+            (wx.ID_COPY, _("Copy\tCTRL+C"), _("Copy items")),
+            (wx.ID_PASTE, _("Paste\tCTRL+V"), _("Paste Items")),
+            (-1, "-", "-"),
+            (wx.ID_SELECTALL, _("Select All\tCTRL+A"), _("Select all items")),
+        ],
         _("&Library"):
         [
             (constants.ID_ADD_FILES, _("Add File(s)"), 
                         _("Add file(s) to current library.")),
-            (constants.ID_ADD_FILES, _("Add Folder(s)"), 
+            (constants.ID_ADD_FOLDERS, _("Add Folder(s)"), 
                         _("Add folder(s) to current library.")),
-            (constants.ID_REINDEX, _("&Reindex\tCTRL+R"),
-                        _("Reindex files in current library.")),
+            (constants.ID_INDEX, _("&Index\tCTRL+R"),
+                        _("Index files in contents folder.")),
+            (constants.ID_UPDATE_INDEX, _("&Update Index\tCTRL+U"),
+                        _("Update index for files in current library.")),
             (-1, "-", "-"),
             (constants.ID_LIB_SETTINGS, _("&Settings"),
                         _("View and set options for current library."))
         ],
-        _("&Window"): 
+        _("&Window"):
         [
-            (constants.ID_ERROR_LOG, _("Error Log"), _("View any program errors.")),
+            (constants.ID_PROPS, _("Property Editor"), _("Edit item properties")),
+            (constants.ID_METADATA_EDITOR, _("Field Editor"), _("Edit fields in property list.")),
+            (constants.ID_ERROR_LOG, _("Error Log"), _("View any program errors")),
         ],
-        _("&Help"): [],
+        _("&Help"):
+        [],
 
 }
 
 errorLog = None
 
+class FrameStatusBarIndexingCallback(index.IndexingCallback):
+    def __init__(self, index, parent=None):
+        self.index = index
+        self.parent = parent
+        
+        self.numFiles = 0
+        
+    def indexingStarted(self, numFiles):
+        wx.CallAfter(self.parent.updateLibraryStatus, self.index, enabled=False)
+    
+        self.numFiles = numFiles
+        message = _("Indexing files in %s") % (self.index)
+        if self.parent:
+            wx.CallAfter(self.parent.GetStatusBar().SetStatusText, message)
+        print message
+        
+    def fileIndexingStarted(self, filename):
+        message = _("%(index)s: Indexing %(file)s") % {"index":self.index, "file":filename}
+        if self.parent:
+            wx.CallAfter(self.parent.GetStatusBar().SetStatusText, message)
+        print message
+        
+    def indexingComplete(self):
+        message = _("Finished indexing %s") % (self.index)
+        if self.parent:
+            wx.CallAfter(self.parent.GetStatusBar().SetStatusText, message)
+        print message
+        
+        wx.CallAfter(self.parent.updateLibraryStatus, self.index, enabled=True)
+            
+
+class ContentsList(autolist.AutoSizeListCtrl):
+    def __init__(self, *args, **kwargs):
+        autolist.AutoSizeListCtrl.__init__(self, *args, **kwargs)
+        self.files = []
+        
+    def OnGetItemText(self, itemNum, col):
+        if len(self.files) >= itemNum:
+            return self.files[itemNum]
+        
+
 class MainFrame(sc.SizedFrame):
     def __init__(self, *args, **kwargs):
         sc.SizedFrame.__init__(self, *args, **kwargs)
-        self.indexManager = index_manager.IndexManager()
-        self.files = {}
+        self.indexManager = index_manager.IndexManager(os.path.join(settings.PrefDir, "indexes.cfg"))
+        self.files = []
+        self.busyLibraries = []
         self.createMenu()
+        self.sortAscending = False
         
+        self.threads = []
         pane = self.GetContentsPane()
         
         searchPane = sc.SizedPanel(pane, -1)
@@ -71,21 +140,49 @@ class MainFrame(sc.SizedFrame):
         
         self.Bind(wx.EVT_LISTBOX, self.OnIndexSelected, self.indexList)
         
-        self.contentsList = autolist.AutoSizeListCtrl(self.splitter, -1, style = wx.LC_REPORT)
+        self.listPane = sc.SizedPanel(self.splitter, -1)
+        self.statusPane = sc.SizedPanel(self.listPane, -1)
+        self.statusText = wx.StaticText(self.statusPane, -1)
+        self.statusPane.Hide()
+        self.contentsList = ContentsList(self.listPane, -1, style = wx.LC_REPORT | wx.LC_VIRTUAL )
+        self.contentsList.SetSizerProps(expand=True, proportion=1)
         self.contentsList.InsertColumn(0, _("Filename"))
         
-        self.splitter.SplitVertically(self.indexPane, self.contentsList, 150)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.contentsList)
+        self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick, self.contentsList)
+        
+        self.splitter.SplitVertically(self.indexPane, self.listPane, 150)
         
         self.CreateStatusBar()
         
         globals.errorLog = errors.AppErrorLog()
         
+        self.propsFrame = Props.PropsMiniFrame(self, -1, _("Properties"), style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX)
+        self.propsFrame.LoadState("LibraryPropsFrame")
+        #self.propsFrame.Show()
+        
+        self.metadataFrame = Metadata.MetadataMiniFrame(self, -1, _("Field Editor"), style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX)
+        self.metadataFrame.LoadState("LibraryMetadataFrame")
+        #self.metadataFrame.Show()
+        
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         
         self.LoadState("LibraryMainFrame")
         
-        #self.props = PropsMiniFrame(self, -1, _("Properties"), wx.Point(self.GetPosition().x, 0), style=wx.CAPTION|wx.CLOSE_BOX|wx.RESIZE_BORDER)
-        #self.props.Show()
+    def OnColClick(self, event):
+        self.sortAscending = not self.sortAscending
+        self.contentsList.SortItems(self.itemSorter)
+
+    def itemSorter(self, key1, key2):
+        cmpVal = cmp(key1,key2)
+        print "cmpVal = %d" % cmpVal
+        if cmpVal == 0:
+            cmpVal = 1
+            
+        if not self.sortAscending:
+            cmpVal = -cmpVal
+        
+        return cmpVal
     
     def SaveState(self, id):
         sc.SizedFrame.SaveState(self, id)
@@ -102,31 +199,43 @@ class MainFrame(sc.SizedFrame):
         if config:
             config.SetPath(id)
             libName = config.Read("LastLibrary")
-            if libName != "":
+            if libName != "" and libName in self.indexManager.getIndexes():
                 self.indexList.SetStringSelection(libName)
                 self.loadLibraryFiles(libName)
     
     def menuEventHandler(self, event):
         id = event.GetId()
-        libName = self.indexList.GetStringSelection()
         
         if id == wx.ID_NEW:
             self.createNewLibrary()
         
-        if id == constants.ID_DEL_LIBRARY:
+        elif id == constants.ID_DEL_LIBRARY:
             self.removeIndex(libName)
         
-        if id == constants.ID_REINDEX:
+        elif id == constants.ID_INDEX:
             if not libName == "":
-                self.reindexLibrary(libName)
+                self.indexLibrary(libName)
+                
+        elif id == constants.ID_UPDATE_INDEX:
+            if not libName == "":
+                self.updateLibrary(libName)
         
-        if id == constants.ID_LIB_SETTINGS:
+        elif id == constants.ID_LIB_SETTINGS:
             if not libName == "":
                 self.showSettingsDialog(libName)
                 
-        if id == constants.ID_ADD_FILES:
+        elif id == constants.ID_ADD_FILES:
             if not libName == "":
                 self.addFiles(libName)
+                
+        elif id == constants.ID_PROPS:
+            self.propsFrame.Show()
+            
+        elif id == constants.ID_METADATA_EDITOR:
+            self.metadataFrame.Show()
+                
+        else:
+            event.Skip()
     
     def createNewLibrary(self):
         dialog = New.NewLibraryDialog(self, -1, _("New Library"),
@@ -135,36 +244,91 @@ class MainFrame(sc.SizedFrame):
             name = dialog.GetName()
             contentDir = dialog.GetContentsDir()
             self.indexManager.addIndex(name, contentDir)
-            self.indexList.Append(name)
+            newItem = self.indexList.Append(name)
+            self.indexList.SetSelection(newItem)
+            self.selectLibrary(name)
             
+    def updateLibraryStatus(self, index, enabled=True):
+        if enabled:
+            if index in self.busyLibraries:
+                self.busyLibraries.remove(index)
+            if self.indexList.GetStringSelection() == index:
+                self.contentsList.Enable()
+                self.loadLibraryFiles(index)
+                
+        else:
+            if index not in self.busyLibraries:
+                self.busyLibraries.append(index)
+            if self.indexList.GetStringSelection() == index:
+                self.contentsList.Enable(False)
+                self.statusPane.SetBackgroundColour(wx.RED)
+                self.statusText.SetLabel(_("Library %(library)s is currently being indexed..."))                
+
+    def refreshMetadataPropsForSelectedFiles(self):
+        indexName = self.indexList.GetStringSelection()
+        metadata = {}
+        if indexName != "":
+            thisindex = self.indexManager.getIndex(indexName)
+            selItem = self.contentsList.GetFirstSelected()
+            counter = 0
+            while selItem != -1:
+                filename = self.contentsList.GetItemText(selItem)
+                props = self.getFileProps(filename)
+
+                for prop in props:
+                    if counter == 0 and not metadata.has_key(prop):
+                        metadata[prop] = props[prop]
+                    elif counter > 0:
+                        if metadata.has_key(prop) and not props[prop] == metadata[prop]:
+                            del metadata[prop]
+                counter += 1
+        
+                selItem = self.contentsList.GetNextItem(selItem, wx.LIST_NEXT_BELOW, wx.LIST_STATE_SELECTED)
+            
+            fields = self.getIndexInfo()["MetadataFields"]
+            self.propsFrame.props.loadProps(metadata, fields)
+
+
+    def updateMetadataForSelectedFiles(self, field, value):
+        indexName = self.indexList.GetStringSelection()
+        if indexName != "":
+            thisindex = self.indexManager.getIndex(indexName)
+            selItem = self.contentsList.GetFirstSelected()
+            while selItem != -1:
+                filename = self.contentsList.GetItemText(selItem)
+                thisindex.updateFileMetadata(filename, {field:value})
+                selItem = self.contentsList.GetNextItem(selItem, wx.LIST_NEXT_BELOW, wx.LIST_STATE_SELECTED)
+
     def addFiles(self, libName):
         dialog = wx.FileDialog(self, _("Choose files to add"), 
                                 style=wx.FD_MULTIPLE|wx.FD_FILE_MUST_EXIST|wx.FD_OPEN)
         if dialog.ShowModal() == wx.ID_OK:
             dirname = dialog.GetDirectory()
             contentdir = self.indexManager.getIndexProp(libName, index_manager.CONTENT_DIR)
-            if not dirname.find(contentdir):
+            if dirname.find(contentdir) != -1:
                 result = wx.MessageBox(_("The files you selected are located outside of your contents folder. If you want to add these files, they must be copied to your contents folder. Would you like to do this now?"),
                             _("Copy files to contents dir?"), wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION)
-                if result == wx.ID_YES:
-                    try:
-                        for afile in dialog.GetFilenames():
-                            destfile = os.path.join(contentdir, afile)
-                            copy = True
-                            # TODO: make an "apply to all" dialog here
-                            if os.path.exists(destfile):
-                                result = wx.MessageBox(_("The file %(filename)s already exists. Do you want to overwrite it?") % destfile,
-                                    _("Overwrite file?"), wx.YES_NO | wx.ICON_WARNING)
-                                if result != wx.ID_YES:
-                                    copy = False
-                                    
-                            if copy:
-                                shutil.copyfile(os.path.join(dirname, afile), destfile)
-                                
-                        dirname = contentdir
-                    except:
-                        globals.errorLog.write("MainFrame.addFiles: Unable to copy files")
-                        wx.MessageBox(_("Unable to copy files."), _("Unable to copy files"))
+                if not result == wx.YES:
+                    return
+                    
+            try:
+                for afile in dialog.GetFilenames():
+                    destfile = os.path.join(contentdir, afile)
+                    copy = True
+                    # TODO: make an "apply to all" dialog here
+                    if os.path.exists(destfile):
+                        result = wx.MessageBox(_("The file %(filename)s already exists. Do you want to overwrite it?") % destfile,
+                            _("Overwrite file?"), wx.YES_NO | wx.ICON_WARNING)
+                        if result != wx.ID_YES:
+                            copy = False
+                            
+                    if copy:
+                        shutil.copyfile(os.path.join(dirname, afile), destfile)
+                        
+                dirname = contentdir
+            except:
+                globals.errorLog.write("MainFrame.addFiles: Unable to copy files")
+                wx.MessageBox(_("Unable to copy files."), _("Unable to copy files"))
                 
                 index = self.indexManager.getIndex(libName)
                 for afile in dialog.GetFilenames():
@@ -176,19 +340,23 @@ class MainFrame(sc.SizedFrame):
     def removeIndex(self, libName):
         result = wx.MessageBox(_("This will delete this library from your collection, along with its index files. Are you sure you want to do this? (Your imported files and folders will not be deleted.)"),
                             _("Confirm Library Delete"), wx.YES_NO | wx.CANCEL | wx.ICON_QUESTION)
-        if result == wx.ID_YES:
+        if result == wx.YES:
             self.indexManager.removeIndex(libName, deleteIndexFiles=True)
             self.indexManager.saveChanges()
             index = self.indexList.FindString(libName)
             if index > -1:
                 self.indexList.Delete(index)
-                self.indexList.SetSelection(0)
-                self.loadLibraryFiles(self.indexList.GetStringSelection())
+                if self.indexList.GetCount() > 0:
+                    self.indexList.SetSelection(0)
+                    self.loadLibraryFiles(self.indexList.GetStringSelection())
+                else:
+                    self.contentsList.DeleteAllItems()
+                    
     
     def showSettingsDialog(self, libName):
         indexDir = self.indexManager.getIndexProp(libName, index_manager.INDEX_DIR)
         contentsDir = self.indexManager.getIndexProp(libName, index_manager.CONTENT_DIR)
-        dialog = Settings.LibSettingsDialog(self, -1,
+        dialog = LibSettings.LibSettingsDialog(self, -1,
                     _("%(libname)s Library Settings") % {"libname": libName},
                     style=wx.DEFAULT_DIALOG_STYLE | wx.DIALOG_MODAL | wx.RESIZE_BORDER,
                     indexDir=indexDir, contentsDir=contentsDir)
@@ -199,38 +367,81 @@ class MainFrame(sc.SizedFrame):
             self.indexManager.saveChanges()
         dialog.Destroy()
     
-    def reindexLibrary(self, libName):
-        
-        class MainFrameIndexingCallback(index.IndexingCallback):
-            def __init__(self, thisindex, parent):
-                index.IndexingCallback.__init__(self, thisindex)
-                self.parent = parent
-            
-            def indexingStarted(self, numFiles):
-                self.numFiles = numFiles
-                self.parent.GetStatusBar().SetStatusText(_("Started indexing..."))
-            
-            def fileIndexingStarted(self, filename):
-                self.numFiles = self.numFiles - 1
-                self.parent.GetStatusBar().SetStatusText(_("Indexing %(filename)s...") % {"filename": filename})
-            
-            def indexingComplete(self):
-                self.parent.GetStatusBar().SetStatusText(_("Indexing complete."))
-        
+    def indexLibrary(self, libName):
         thisindex = self.indexManager.getIndex(libName)
-        callback = MainFrameIndexingCallback(thisindex, self)
+        #self.indexManager.removeIndex(libName, deleteIndexFiles=True)
+        #callback = index.IndexingCallback(libName) #FrameStatusBarIndexingCallback(thisindex, self)
+
+        class IndexThread(PyLucene.PythonThread):
+            def __init__(self, index, libName, frame):
+                PyLucene.PythonThread.__init__(self)
+                self.index = index
+                self.libName = libName
+                self.frame = frame
+                self.callback = None
+                
+            def run(self):
+                self.callback = FrameStatusBarIndexingCallback(self.libName, self.frame)
+                self.index.indexLibrary(self.callback)
+                
+        self.indexthread = IndexThread(thisindex, libName, self)
+        self.indexthread.start()
         
-        thisindex.reindexLibrary(callback)
+    def updateLibrary(self, libName):
+        thisindex = self.indexManager.getIndex(libName)
+        #callback = index.IndexingCallback(libName) #FrameStatusBarIndexingCallback(thisindex, self)
+
+        class IndexThread(PyLucene.PythonThread):
+            def __init__(self, index, libName, frame):
+                PyLucene.PythonThread.__init__(self)
+                self.index = index
+                self.libName = libName
+                self.frame = frame
+                self.callback = None
+                
+            def run(self):
+                self.callback = FrameStatusBarIndexingCallback(self.libName, self.frame)
+                self.index.updateLibrary(self.callback)
+                
+        self.indexthread = IndexThread(thisindex, libName, self)
+        self.indexthread.start()
+        
+    def selectLibrary(self, libName):
+        if libName not in self.busyLibraries:
+            self.statusPane.Hide()
+            self.contentsList.Enable(True)
+            self.loadLibraryFiles(libName)
+        else:
+            self.contentsList.Enable(False)
+            self.statusText.SetLabel(_("Library %(library)s is currently being indexed...") % libname) 
+            self.statusPane.Show()   
     
     def OnIndexSelected(self, evt):
-        self.loadLibraryFiles(evt.GetString())
+        self.selectLibrary(evt.GetString())
+            
+    def OnItemSelected(self, evt):
+        self.refreshMetadataPropsForSelectedFiles()     
     
     def OnSearchText(self, evt):
         self.queryLibrary(evt.GetString())
     
     def OnClose(self, evt):
+        self.propsFrame.SaveState("LibraryPropsFrame")
+        self.metadataFrame.SaveState("LibraryMetadataFrame")
         self.SaveState("LibraryMainFrame")
         evt.Skip()
+        
+    def getIndexInfo(self):
+        libName = self.indexList.GetStringSelection()
+        index = self.indexManager.getIndex(libName)
+        if index:
+            return index.getIndexInfo()
+
+    def getFileProps(self, filename):
+        libName = self.indexList.GetStringSelection()
+        index = self.indexManager.getIndex(libName)
+        if index:
+            return index.getFileInfo(filename)[1]
     
     def queryLibrary(self, query):
         libName = self.indexList.GetStringSelection()
@@ -240,25 +451,65 @@ class MainFrame(sc.SizedFrame):
         
         query = query
         index = self.indexManager.getIndex(libName)
-        hits = index.search("url", query)
+        files = index.getFilesInIndex()
+        #hits = index.search("url", query)
         self.contentsList.DeleteAllItems()
-        for hit in hits:
-            listIndex = self.contentsList.InsertStringItem(sys.maxint, hit["url"][0])
+        self.contentsList.files = []
+        self.contentsList.SetScrollPos(wx.VERTICAL, 0)
+        
+        for afile in files:
+            if afile.find(query) != -1:
+                self.contentsList.files.append(afile)
+        
+        self.contentsList.files.sort()
+        numFiles = len(self.contentsList.files)
+        self.contentsList.SetItemCount(numFiles)
+        self.SetStatusText(_("%(results)d results for query '%(query)s'" % {"results":numFiles, "query":query}))
     
     def loadLibraryFiles(self, libName):
         self.contentsList.DeleteAllItems()
+        self.contentsList.files = []
+        self.contentsList.SetScrollPos(wx.VERTICAL, 0)
         index = self.indexManager.getIndex(libName)
-        files = index.getFilesInIndex()
-        for afile in files:
-            listIndex = self.contentsList.InsertStringItem(sys.maxint, afile)
-            #self.contentsList.SetStringItem(listIndex, 1, files[afile])
+        try:
+            files = index.getFilesInIndex()
+            self.contentsList.Freeze()
+            for afile in files:
+                self.contentsList.files.append(afile)
+                #listIndex = self.contentsList.InsertStringItem(sys.maxint, afile)
+                #self.contentsList.SetItemData(listIndex, afile)
+                #self.contentsList.SetStringItem(listIndex, 1, files[afile])
+            self.contentsList.files.sort()
+            numFiles = len(self.contentsList.files)
+            self.contentsList.SetItemCount(numFiles)
+            self.SetStatusText(_("%(numberFiles)d files in library." % {"numberFiles":numFiles}))
+            self.contentsList.Thaw()
+            
+            
+            #self.contentsList.SortItems(self.itemSorter)
+        except PyLucene.JavaError:
+            self.fixCorruptIndex(libName)
+        
+    def fixCorruptIndex(self, libName):
+        message = _("The \"%(library)s\" library index appears to be corrupted and cannot be opened. Would you like to try re-creating the index?") % {"library": libName}
+        result = wx.MessageBox(message, _("Fix corrupted index?"), wx.YES_NO | wx.ICON_ERROR)
+        
+        if result == wx.YES:
+            index_dir = self.indexManager.getIndexProp(libName, index_manager.INDEX_DIR)
+            shutil.rmtree(index_dir)
+            if not os.path.exists(index_dir):
+                os.makedirs(index_dir)
+            self.indexLibrary(libName)
     
     def createMenu(self):
         global menuItems
         
         menubar = wx.MenuBar()
         
-        for menu in menuItems:
+        for menu in menus:
+            #if menu == _("&Window") and wx.Platform == "__WXMAC__":
+            #    break 
+            
             newMenu = wx.Menu()
             
             for item in menuItems[menu]:
