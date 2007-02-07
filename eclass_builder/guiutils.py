@@ -1,5 +1,6 @@
 import sys, os, string
 import settings
+import utils
 from wxPython.wx import *
 try:
 	import win32api
@@ -32,7 +33,7 @@ def openInHTMLEditor(filename):
             editor = htmleditor 
             if wxPlatform == "__WXMAC__":
                 editor = "open -a '" + editor + "'"
-            path = editor + " '" + filename + "'"
+            path = editor + " \"" + filename + "\""
             os.system(path)
 
 def sendCommandToApplication(filename, action="open", application=""):
