@@ -3,6 +3,8 @@ import HTMLTemplates
 import tasks
 import utils
 import settings
+import shutil
+import flvreader
 
 convertable_formats = ["wav", "wma"] # ["mpg", "mpeg", "mp4", "avi", "wav", "wmv", "wma", "asf", "mov"]
 
@@ -53,7 +55,7 @@ def convertFile(filename, format=""):
         
     command = findFFMpeg()
     if command != "":
-        args = ["-y", "-f", format, "-i", filename, basename + "." + format]
+        args = ["-y", "-i", filename, basename + "." + format]
         tasks.addTask(command, args)
 
 def getMediaMimeType(filename, isVideo=True):
@@ -73,7 +75,7 @@ def getMediaMimeType(filename, isVideo=True):
         mimetype = "application/vnd.rn-realmedia"
     elif ext == ".mov":
         mimetype = "video/quicktime"
-    elif ext in [".swf", ".mp3"]:
+    elif ext in [".swf", ".mp3", ".flv"]:
         mimetype = "application/x-shockwave-flash"
     elif ext == ".wma":
         mimetype = "audio/x-ms-asf" 
@@ -86,6 +88,11 @@ def getMediaMimeType(filename, isVideo=True):
 
     return mimetype
     
+def getDependencies(filename):
+    base, ext = splitExt(filename)
+    if ext == ".flv":
+        return [os.path.join(settings.ThirdPartyDir, "flash", "flvplayer.swf")]
+    
 def wasConverted(filename):
     base, ext = os.path.splitext(filename)
     if os.path.exists(base + ".mp4"):
@@ -95,7 +102,7 @@ def wasConverted(filename):
     
     return False
     
-def getHTMLTemplate(filename, isVideo=True):
+def getHTMLTemplate(filename, url, isVideo=True, autoStart=False):
     
     base, ext = os.path.splitext(filename)
     # check if we have a streaming version of the same file first, 
@@ -108,7 +115,7 @@ def getHTMLTemplate(filename, isVideo=True):
     mimetype = getMediaMimeType(filename, isVideo)
     html = ""
     
-    if ext.lower() in [".mpg", ".mpeg", ".mp3", ".wmv", ".avi", ".asf", ".wma", ".wav"]:
+    if ext.lower() in [".mpg", ".mpeg", ".wmv", ".avi", ".asf", ".wma", ".wav"]:
         html = HTMLTemplates.wmTemp
     elif ext.lower() in [".rm", ".ram"]:
         if isVideo:
@@ -117,14 +124,23 @@ def getHTMLTemplate(filename, isVideo=True):
             html = HTMLTemlpates.rmAudioTemp
     elif ext.lower() == ".swf":
         html = HTMLTemplates.flashTemp
-    #elif ext.lower() == ".mp3":
-    #    html = HTMLTemplates.mp3Temp
+    elif ext.lower() == ".mp3":
+        html = HTMLTemplates.mp3Temp
     elif ext.lower() == ".mp4":
         html = HTMLTemplates.mp4Temp
     elif ext.lower() == ".flv":
         html = HTMLTemplates.flvTemp
+        width, height = flvreader.getFlvDimensions(filename)
+        html = html.replace("_width_", str(width))
+        html = html.replace("_height_", str(height))
         
-    html = string.replace(html, "_mimetype_", mimetype)
+    html = html.replace("_mimetype_", mimetype)
+    html = html.replace("_filename_", url)
+    
+    autostart = "False"
+    if autoStart == True:
+        autostart = "True"
+    html = html.replace("_autostart_", autostart)
     
     return html
     
