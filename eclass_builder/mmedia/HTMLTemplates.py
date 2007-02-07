@@ -82,10 +82,10 @@ flashTemp = """
 		</object> 
 		"""
 flvTemp = """
-		<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0">
+		<object width="_width_" height="_height_" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0">
 			<param name="FlashVars" value="0">
-			<param name="Movie" value="mp3player.swf?file=__filename__">
-			<param name="Src" value="mp3player.swf?file=__filename__">
+			<param name="Movie" value="flvplayer.swf?file=_filename_&autoStart=_autostart_">
+			<param name="Src" value="flvplayer.swf?file=_filename_&autoStart=_autostart_">
 			<param name="menu" value="False">
 			<param name="WMode" value="Window">
 			<param name="Play" value="True">
@@ -100,7 +100,7 @@ flvTemp = """
 			<param name="EmbedMovie" value="0">
 			<param name="BGColor" value>
 			<param name="SWRemote" value>
-			<embed src="mp3player.swf" flashvars="&file=__filename__" menu="false" quality="autolow" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" scale="exactfit"> 
+			<embed src="flvplayer.swf" width="_width_" height="_height_" flashvars="&file=_filename_&autoStart=_autostart_" menu="false" quality="autolow" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" scale="exactfit"> 
 		</object> 
 		"""
 
@@ -128,3 +128,26 @@ mp3Temp = """
 </object>
 </center>
 		"""
+
+#mp3Temp = """
+#		<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0">
+#			<param name="FlashVars" value="0">
+#			<param name="Movie" value="mp3player.swf?file=_filename_">
+#			<param name="Src" value="mp3player.swf?file=_filename_">
+#			<param name="menu" value="False">
+#			<param name="WMode" value="Window">
+#			<param name="Play" value="True">
+#			<param name="Loop" value="-1">
+#
+#			<param name="Quality" value="AutoHigh">
+#			<param name="SAlign" value>
+#			<param name="Menu" value="-1">
+#			<param name="Base" value>
+#			<param name="Scale" value="ExactFit">
+#			<param name="DeviceFont" value="0">
+#			<param name="EmbedMovie" value="0">
+#			<param name="BGColor" value>
+#			<param name="SWRemote" value>
+#			<embed src="mp3player.swf" flashvars="&file=_filename_" menu="false" quality="autolow" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" scale="exactfit"> 
+#		</object> 
+#		"""

@@ -627,27 +627,17 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		if len(mypage.media.image) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "Graphics", mypage.media.image)):
 			imageHTML = "<IMG src='../Graphics/%s'>" % (mypage.media.image)
 		
-		if len(mypage.media.video) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "pub", "Video", mypage.media.video)):
-			template = ""
+		videofile = os.path.join(settings.ProjectDir, "pub", "Video", mypage.media.video)
+		if len(mypage.media.video) > 0 and os.path.exists(videofile):
 			url = "Video/" + mypage.media.video
-			template = mmedia.getHTMLTemplate(os.path.join(settings.ProjectDir, "pub", url), isVideo=True)
+			videoHTML = mmedia.getHTMLTemplate(videofile, url, isVideo=True, 
+			                autoStart=mypage.media.videoautostart)
 
-			videoHTML = string.replace(template, "_filename_", url)
-			autostart = "False"
-			if mypage.media.videoautostart == True:
-				autostart = "True"
-			videoHTML = string.replace(videoHTML, "_autostart_", autostart)
-
-		if len(mypage.media.audio) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "pub", "Audio", mypage.media.audio)):
-			template = ""
+		audiofile = os.path.join(settings.ProjectDir, "pub", "Audio", mypage.media.audio)
+		if len(mypage.media.audio) > 0 and os.path.exists(audiofile):
 			url = "Audio/" + mypage.media.audio
-			template = mmedia.getHTMLTemplate(os.path.join(settings.ProjectDir, "pub", url), isVideo=False)
-
-			audioHTML = string.replace(template, "_filename_", url)
-			autostart = "False"
-			if mypage.media.audioautostart == True:
-				autostart = "True"
-			audioHTML = string.replace(audioHTML, "_autostart_", autostart)
+			audioHTML = mmedia.getHTMLTemplate(audiofile, url, isVideo=False, 
+			                autoStart=mypage.media.audioautostart)
 
 		if len(mypage.media.powerpoint) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "Present", mypage.media.powerpoint)):
 			presentHTML = """<a href="../Present/%(pres)s" target="_blank">%(viewpres)s</a>""" % {"pres":mypage.media.powerpoint, "viewpres":_("View Presentation")}
@@ -918,8 +908,6 @@ class EditorDialog (sc.SizedDialog):
 		midPane = sc.SizedPanel(pane, -1)
 		midPane.SetSizerType("grid", {"cols": 2})
 		midPane.SetSizerProp("expand", True)
-		midPane.GetSizer().AddGrowableCol(0)
-		midPane.GetSizer().AddGrowableCol(1)
 		
 		# Left-hand side
 		midleftPane = sc.SizedPanel(midPane, -1)
@@ -972,9 +960,7 @@ class EditorDialog (sc.SizedDialog):
 		bottomPane = sc.SizedPanel(pane, -1)
 		bottomPane.SetSizerType("grid", {"cols": 2})
 		bottomPane.SetSizerProps({"expand": True, "proportion":1})
-		bottomPane.GetSizer().AddGrowableCol(0)
-		bottomPane.GetSizer().AddGrowableCol(1)
-		bottomPane.GetSizer().AddGrowableRow(1)
+		
 		wx.StaticText(bottomPane, -1, _("Hotwords"))
 		wx.StaticText(bottomPane, -1, _("Objectives"))
 
