@@ -14,11 +14,44 @@ import ConfigParser
 import errors
 import types
 import shutil
+import library.metadata
 
 indexLog = utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
 
 docFormats = ["htm", "html", "doc", "rtf", "ppt", "xls", "txt", "pdf"]
 textFormats = ["htm", "html", "txt", "h", "c", "cpp", "cxx", "py", "php", "pl", "rb"]
+
+ignoreFolders = ["CVS", ".svn"]
+# metadata that should not be edited by users
+internalMetadata = ["contents", "url", "filesize", "last_modified"]
+            
+def indexingWalker(indexer, dirname, names):
+    
+     # skip ignored folders
+    for dir in ignoreFolders:
+        if dirname.find(dir) != -1:
+            return
+    
+    metadata = {}
+    
+    # automatically import GSDL metadata
+    metadata_filename = os.path.join(dirname, "metadata.xml")
+    if os.path.exists(metadata_filename):
+        metadata = library.metadata.readGSMetadata(metadata_filename)
+        
+    for name in names:
+        fullpath = os.path.join(dirname, name)
+        if os.path.isfile(fullpath) and not fullpath == metadata_filename:
+            if indexer.callback:
+                indexer.callback.fileIndexingStarted(fullpath)
+            
+            file_metadata = {}
+            metafilename = fullpath.replace(indexer.folder + os.sep, "")
+            
+            if metafilename in metadata:
+                file_metadata = metadata[metafilename].metadata
+            
+            indexer.addFile(fullpath, file_metadata)
 
 class IndexingCallback:
     def __init__(self, index):
@@ -27,7 +60,7 @@ class IndexingCallback:
         
     def indexingStarted(self, numFiles):
         self.numFiles = numFiles
-        print "Indexing files in %s" % (self.index, `self.numFiles`)
+        print "Indexing files in %s" % (self.index)
         
     def fileIndexingStarted(self, filename):
         print "%s: Indexing %s" % (self.index, filename)
@@ -56,7 +89,7 @@ class Index:
                 self.ignoreTypes = ignoreTypes.replace(" ", "").lower().split(",")
         
     def indexExists(self):
-        return os.path.isfile(os.path.join(self.indexdir, "segments"))
+        return os.path.isfile(os.path.join(self.indexdir, "segments.gen"))
         
     def getRelativePath(self, filename):
         retval = filename.replace(self.folder, "")
@@ -64,9 +97,24 @@ class Index:
             retval = retval[1:]
             
         return retval
-        
+    
     def indexLibrary(self, callback=None):
-        pass
+        self.callback = callback
+
+        if self.callback:
+            self.callback.indexingStarted(0)
+        
+        currentdir = os.getcwd()
+        os.chdir(self.folder)
+        
+        os.path.walk(self.folder, indexingWalker, self)
+        
+        os.chdir(currentdir)
+        
+        if self.callback:
+            self.callback.indexingComplete()
+        
+        self.callback = None        
         
     def reindexLibrary(self, callback=None):
         files = self.getFilesInIndex()
@@ -87,28 +135,35 @@ class Index:
     def getAbsolutePath(self, filename):
         return os.path.join(self.folder, filename)
         
-    def addFile(self, filename, metadata):
+    def addFile(self, filename, metadata, indexText=True):
         # first, check to see if we're in the index.
         ext = os.path.splitext(filename)[1][1:]
         if not ext.lower() in self.ignoreTypes:
             doc = PyLucene.Document()
-            doc.add(PyLucene.Field("url", self.getRelativePath(filename), PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
+            doc.add(PyLucene.Field("url", self.getRelativePath(filename), PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
             for field in metadata:
+                if field in ["url", "last_modified", "filesize"]:
+                    continue
                 values = metadata[field]
                 if not type(values) in [types.ListType, types.TupleType]:
                     values = [values]
-                for value in values:
-                    doc.add(PyLucene.Field(field.lower(), value, PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
+                if field == "contents":
+                    if not indexText:
+                        doc.add(PyLucene.Field("contents", values[0], PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED))
+                else:
+                    for value in values:
+                        doc.add(PyLucene.Field(field.lower(), value, PyLucene.Field.Store.YES, PyLucene.Field.Index.TOKENIZED))
             
             # get document text
             mytext = ""
             fullpath = os.path.join(self.folder, filename)
 
-            if ext.lower() in docFormats + textFormats:
+            if indexText:
                 try: 
                     #unfortunately, sometimes conversion is hit or miss. Worst case, index the doc with
                     #no text.
-                    mytext = self.GetTextFromFile(fullpath)
+                    if ext.lower() in docFormats + textFormats:
+                        mytext = self.GetTextFromFile(fullpath)
                 except:
                     import traceback
                     indexLog.write(`traceback.print_exc()`)#pass
@@ -116,6 +171,9 @@ class Index:
                 if mytext == "":
                     print "No text indexed for file: " + filename
                     indexLog.write("No text indexed for file: " + filename)
+
+                doc.add(PyLucene.Field("contents", mytext, PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED))
+                            
             try:
                 props = os.stat(fullpath)
                 doc.add(PyLucene.Field("last_modified", `props[stat.ST_MTIME]`, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
@@ -123,13 +181,31 @@ class Index:
             except:
                 import traceback
                 print `traceback.print_exc()`
-            doc.add(PyLucene.Field("contents", mytext, PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED))
+
             newIndex = not self.indexExists()
             store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
             writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), newIndex)
             writer.addDocument(doc)
             writer.optimize()
             writer.close()
+            
+    def updateFileMetadata(self, filename, metadata):
+        """
+        This function is used to update metadata, but not re-convert/index text.
+        """
+        
+        if metadata != {}:
+            allMetadata = self.getFileInfo(filename)[1]
+            if not allMetadata:
+                return
+            
+            for field in metadata:
+                if allMetadata.has_key(field):
+                    del allMetadata[field]
+                
+            allMetadata.update(metadata)
+            self.removeFile(filename)
+            self.addFile(filename, allMetadata, indexText=False)
             
     def findDoc(self, filename):
         result = (-1, None)
@@ -142,7 +218,6 @@ class Index:
             if hits.length() > 0:
                 result = (hits.id(0), hits.doc(0))
             searcher.close()
-                
         return result
         
     def getDocMetadata(self, doc):
@@ -213,10 +288,13 @@ class Index:
         files = {}
         if self.indexExists():
             reader = PyLucene.IndexReader.open(self.indexdir)
-            numDocs = reader.numDocs()
-            for i in range(0, numDocs-1):
-                doc = reader.document(i)
-                files[doc.get("url")] = ""
+            try:
+                numDocs = reader.numDocs()
+                for i in range(0, numDocs):
+                    doc = reader.document(i)
+                    files[doc.get("url")] = ""
+            finally:
+                reader.close()
                 
         return files
             
