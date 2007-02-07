@@ -9,7 +9,7 @@ activeTasks = []
 def addTask(command, args=[], env=os.environ):
     global activeTasks
     
-    job = Job(command, command, args, env)
+    job = Job(os.path.basename(command), command, args, env)
     name = command + " " + string.join(args, " ")
     print name
     manager = TaskRunner([Task(job)], name=name)
