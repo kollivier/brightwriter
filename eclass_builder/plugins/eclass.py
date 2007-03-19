@@ -541,8 +541,9 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 		bjtext = utils.makeUnicode(objtext)
 		myhtml = self._AddMedia(mypage) + objtext + utils.makeUnicode(myhtml)
 
+		self.data['content'] = myhtml
+		
 		if not ishotword:
-			self.data['content'] = myhtml
 			self.data['credit'] = self.GetCreditString() 
 			
 		else: #ugly hack for now...
@@ -801,7 +802,7 @@ class EClassHyperlinkEditorDialog(sc.SizedDialog):
 		self.term.name = self.txtName.GetValue()
 		self.term.url = self.selectFile.textbox.GetValue()
 		self.SaveState("HyperlinkEditor")
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
 #--------------------------- E-Class Page Editor Class ------------------------------------
 class EditorDialog (sc.SizedDialog):
