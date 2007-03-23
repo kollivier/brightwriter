@@ -7,7 +7,6 @@ import types
 import locale
 import utils
 
-
 pluginList = []
 def LoadPlugins():
 	global pluginList
