@@ -49,6 +49,7 @@ class IndexManager:
         self.indexFile = cfgFile
         self.indexes.read(self.indexFile)
         self.indexesDir = os.path.join(os.path.dirname(cfgFile), "indexes")
+        self.openIndexes = {}
         
         # Automatically load any projects in the indexes dir, if they have 
         # a contents directory.
@@ -87,11 +88,15 @@ class IndexManager:
             
     def getIndex(self, name):
         if self.indexes.has_section(name):
+            if self.openIndexes.has_key(name):
+                return self.openIndexes[name]
+                
             folder = self.getIndexProp(name, CONTENT_DIR)
             indexdir = self.getIndexProp(name, INDEX_DIR)
     
             lucenedir = os.path.join(indexdir, "index.lucene")
             indexer = index.Index(lucenedir, folder)
+            self.openIndexes[name] = indexer
             return indexer
         else:
             raise IndexNotFoundError(name)
