@@ -76,7 +76,9 @@ class Index:
         self.files = []
         self.keepgoing = True
         self.ignoreTypes = []
-        
+        self.extra_fields = library.metadata.ExtraMetadataFields(os.path.join(self.indexdir, "extra_fields.cfg"))
+        self.filenameIDs = {}
+        self.reader = None
         
         if not os.path.exists(self.indexdir):
             os.makedirs(self.indexdir)
@@ -88,6 +90,9 @@ class Index:
             if ignoreTypes != "":
                 self.ignoreTypes = ignoreTypes.replace(" ", "").lower().split(",")
         
+    def __del__(self):
+        self.closeIndex()
+            
     def indexExists(self):
         return os.path.isfile(os.path.join(self.indexdir, "segments.gen"))
         
@@ -135,7 +140,28 @@ class Index:
     def getAbsolutePath(self, filename):
         return os.path.join(self.folder, filename)
         
+    def addExtraFields(self, field):
+        for field in fields:
+            if not field in self.extra_fields.fields:
+                self.extra_fields.fields.append(field)
+        self.extra_fields.SaveData()
+        
+    def removeExtraFields(self, fields):
+        for field in fields:
+            if field in self.fields:
+                self.fields.remove(field)
+        self.extra_fields.SaveData()
+        
+    def openIndex(self):
+        if self.indexExists() and not self.reader:
+            self.reader = PyLucene.IndexReader.open(self.indexdir)
+            
+    def closeIndex(self):
+        if self.reader:
+            self.reader.close()
+
     def addFile(self, filename, metadata, indexText=True):
+        self.closeIndex() # close it if it's being read from...
         # first, check to see if we're in the index.
         ext = os.path.splitext(filename)[1][1:]
         if not ext.lower() in self.ignoreTypes:
@@ -210,9 +236,14 @@ class Index:
     def findDoc(self, filename):
         result = (-1, None)
         if self.indexExists():
+            filename = filename.replace(self.folder + os.sep, "")        
+            if self.filenameIDs.has_key(filename):
+                id = self.filenameIDs[filename]
+                doc = self.reader.document(id)
+                return (id, doc)
+                
             searcher = PyLucene.IndexSearcher(self.indexdir)
             analyzer = PyLucene.StandardAnalyzer()
-            filename = filename.replace(self.folder + os.sep, "")
             query = PyLucene.TermQuery(PyLucene.Term("url", filename))
             hits = searcher.search(query)
             if hits.length() > 0:
@@ -262,13 +293,13 @@ class Index:
     def removeFile(self, filename):
         id, doc = self.findDoc(filename)
         if id != -1:
-            reader = PyLucene.IndexReader.open(self.indexdir)
+            self.openIndex()
             #for num in range(0, reader.numDocs()-1):
                 #print "url: %s, filename: %s" % (reader.document(num).get('url'), filename)
-            if reader: #$ reader.document(num).get('url') == filename:
-                reader.deleteDocument(id)
+            if self.reader: #$ reader.document(num).get('url') == filename:
+                self.reader.deleteDocument(id)
                 #reader.commit()
-                reader.close()
+                #reader.close()
 
     def search(self, field, search_term):
         results = []
@@ -285,34 +316,35 @@ class Index:
         return results
         
     def getFilesInIndex(self):
-        files = {}
+        files = []
         if self.indexExists():
-            reader = PyLucene.IndexReader.open(self.indexdir)
+            self.openIndex() #reader = PyLucene.IndexReader.open(self.indexdir)
             try:
-                numDocs = reader.numDocs()
+                numDocs = self.reader.numDocs()
                 for i in range(0, numDocs):
-                    doc = reader.document(i)
-                    files[doc.get("url")] = ""
+                    doc = self.reader.document(i)
+                    filename = doc.get("url")
+                    self.filenameIDs[filename] = i
+                    files.append( filename )
             finally:
-                reader.close()
+                pass #    reader.close()
                 
         return files
             
     def getIndexInfo(self):
         info = {}
         if self.indexExists:
-            reader = PyLucene.IndexReader.open(self.indexdir)
-            info["NumDocs"] = reader.numDocs()
-            info["MetadataFields"] = reader.getFieldNames(PyLucene.IndexReader.FieldOption.ALL)
+            self.openIndex() #reader = PyLucene.IndexReader.open(self.indexdir)
+            info["NumDocs"] = self.reader.numDocs()
+            info["MetadataFields"] = self.reader.getFieldNames(PyLucene.IndexReader.FieldOption.ALL)
             termList = []
-            terms = reader.terms()
+            terms = self.reader.terms()
             moreTerms = True
             while moreTerms:
                 termList.append(terms.term())
                 moreTerms = terms.next()
             
-            info["Terms"] = termList
-            
+            info["Terms"] = termList 
         return info
         
     def getUniqueFieldValues(self, field, sort="A-Z"):
