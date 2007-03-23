@@ -5,12 +5,25 @@ import utils
 metadata_ns = ["dc", "dls"]
 
 
-class ExtendedMetadata:
+class ExtraMetadataFields:
     def __init__(self, filename):
         self.filename = filename
+        self.fields = []
+        self.LoadData()
+        
+    def SaveData(self):
+        md_file = open(self.filename, "w")
+        for field in self.fields:
+            md_file.write(field + "\n")
+        md_file.close()
         
     def LoadData(self):
-        pass
+        if os.path.exists(self.filename):
+            md_file = open(self.filename, "r")
+            line = md_file.readline()
+            while line != "":
+                self.fields.append(line.strip())
+            md_file.close()
 
 class FileMetadata:
     def __init__(self):
