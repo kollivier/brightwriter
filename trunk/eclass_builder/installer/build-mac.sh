@@ -22,10 +22,7 @@ if [ $skipmac != yes ]; then
      
      echo "Running build script on $MAC_HOST..."
      dir=$MAC_BUILD/eclass_builder
-     cmd="export PYTHONPATH=.. && /usr/local/bin/python2.4 make_builder_osx.py py2app"
-     ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
-
-     cmd="/usr/local/bin/python2.4 make_library_osx.py py2app"
+     cmd="export PYTHONPATH=.. && /usr/local/bin/python2.4 make_builder_osx.py py2app && /usr/local/bin/python2.4 make_library_osx.py py2app"
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
 
      # now it's time for 'fun fixing the PyXML hacks!'
