@@ -24,7 +24,10 @@ if [ $skipmac != yes ]; then
      dir=$MAC_BUILD/eclass_builder
      cmd="export PYTHONPATH=.. && /usr/local/bin/python2.4 make_builder_osx.py py2app"
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
-     
+
+     cmd="/usr/local/bin/python2.4 make_library_osx.py py2app"
+     ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
+
      # now it's time for 'fun fixing the PyXML hacks!'
      #OLDDIR=$PWD
      APP_PYDIR=$dir/installer/dist/EClass.Builder.app/Contents/Resources/Python
@@ -35,6 +38,7 @@ if [ $skipmac != yes ]; then
      echo "Fetching the results..."
      mkdir -p $DIST_DIR/dmg_files
      scp -r "$MAC_HOST:$dir/installer/dist/EClass.Builder.app "  $DIST_DIR/dmg_files
+     scp -r "$MAC_HOST:$dir/installer/dist/EClass.Library.app "  $DIST_DIR/dmg_files
      #cd $OLDDIR
 
      DMG_NAME=deliver/eclass-builder-$BUILD_VERSION.dmg
@@ -42,7 +46,7 @@ if [ $skipmac != yes ]; then
        rm $DMG_NAME
      fi
      
-     hdiutil create -srcfolder $DIST_DIR/dmg_files -volname "EClass.Builder" -imagekey zlib-level=9 $DMG_NAME
+     hdiutil create -srcfolder $DIST_DIR/dmg_files -volname "EClass.Toolkit" -imagekey zlib-level=9 $DMG_NAME
      
      rm -rf $DIST_DIR/dmg_files
      #hdiutil attach $DMG_NAME
