@@ -85,6 +85,8 @@ linuxtasks = TaskRunner( Task([ Job("lin_tarball", "./build-linux.sh", env=confi
                
 mactasks = TaskRunner( Task([ Job("mac_tarball", "./build-mac.sh", env=config_env), ]) )
 
+mactasks_intel = TaskRunner( Task([ Job("mac_tarball_intel", "./build-mac.sh", env=config_env.update({"IS_INTEL":"true"})), ]) )
+
 winthread = TaskRunnerThread(wintasks)
 winthread.start()
 
@@ -94,10 +96,13 @@ linuxthread.start()
 macthread = TaskRunnerThread(mactasks)
 macthread.start()
 
-while winthread.isAlive() or macthread.isAlive():
+macthread_intel = TaskRunnerThread(mactasks_intel)
+macthread_intel.start()
+
+while winthread.isAlive() or macthread.isAlive() or macthread_intel.isAlive():
     time.sleep(1)
 
-errorOccurred = (wintasks.errorOccurred() or mactasks.errorOccurred())
+errorOccurred = (wintasks.errorOccurred() or mactasks.errorOccurred() or linuxtasks.errorOccurred() or mactasks_intel.errorOccurred())
 
 if errorOccurred:
     if wintasks.rc != 0:
@@ -109,6 +114,8 @@ if errorOccurred:
     if mactasks.rc != 0:
         print "Error occurred during Mac build tasks. Please check the error log."
 
+    if mactasks_intel.rc != 0:
+        print "Error occurred during Mac build tasks. Please check the error log."
 
 if not errorOccurred and "upload" in sys.argv:
     releasefiles = getDistribFiles()
