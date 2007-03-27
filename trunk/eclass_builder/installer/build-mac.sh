@@ -27,7 +27,7 @@ if [ $skipmac != yes ]; then
 
      # now it's time for 'fun fixing the PyXML hacks!'
      #OLDDIR=$PWD
-     APP_PYDIR=$dir/installer/dist/EClass.Builder.app/Contents/Resources/Python
+     APP_PYDIR=$dir/installer/dist/EClass.Builder.app/Contents/Resources/lib/python-2.4
      ssh $MAC_HOST "cd $APP_PYDIR && mv lib-dynload/xml/parsers/pyexpat.so lib-dynload && mv lib-dynload/xml/parsers/sgmlop.so lib-dynload"
      ssh $MAC_HOST "zip $APP_PYDIR/site-packages.zip -d xml/*"
      ssh $MAC_HOST "cd /Library/Frameworks/Python.framework/Versions/2.4/lib/python2.4 && zip -r -g -n .pyc $APP_PYDIR/site-packages.zip . -i xml\*.pyc && cd site-packages && zip -r -g -n .pyc:.mo $APP_PYDIR/site-packages . -i _xmlplus\*.pyc _xmlplus\*.mo"
