@@ -3,15 +3,18 @@
 
 set -o errexit
 
-if [ $skipmac != yes ]; then
+if [ "$skipmac" != "yes" ]; then
     # test if the target machine is online
     #if ping -q -c1 $WIN_HOST > /dev/null; then
-	#echo " The $WIN_HOST machine is online, Windows build continuing..."
+    #echo " The $WIN_HOST machine is online, Windows build continuing..."
     #else
-	#echo "The $WIN_HOST machine is **OFFLINE**, skipping the Windows build."
-	#exit 0
+    #echo "The $WIN_HOST machine is **OFFLINE**, skipping the Windows build."
+    #exit 0
     #fi
 
+    if [ "$IS_INTEL" == "yes" ]; then
+        MAC_HOST=$MAC_HOST_INTEL
+    fi
     echo "Copying source file and build script..."
     scp -r $STAGING_DIR/* $MAC_HOST:$MAC_BUILD
     
