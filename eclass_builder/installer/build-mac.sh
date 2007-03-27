@@ -35,7 +35,6 @@ if [ $skipmac != yes ]; then
      echo "Fetching the results..."
      mkdir -p $DIST_DIR/dmg_files
      scp -r "$MAC_HOST:$dir/installer/dist/EClass.Builder.app "  $DIST_DIR/dmg_files
-     scp -r "$MAC_HOST:$dir/installer/dist/EClass.Library.app "  $DIST_DIR/dmg_files
      #cd $OLDDIR
 
      DMG_NAME=deliver/eclass-builder-$BUILD_VERSION.dmg
@@ -43,7 +42,17 @@ if [ $skipmac != yes ]; then
        rm $DMG_NAME
      fi
      
-     hdiutil create -srcfolder $DIST_DIR/dmg_files -volname "EClass.Toolkit" -imagekey zlib-level=9 $DMG_NAME
+     hdiutil create -srcfolder $DIST_DIR/dmg_files -volname "EClass.Builder" -imagekey zlib-level=9 $DMG_NAME
+     
+     rm -rf $DIST_DIR/dmg_files
+
+     scp -r "$MAC_HOST:$dir/installer/dist/EClass.Library.app "  $DIST_DIR/dmg_files
+     DMG_NAME=deliver/eclass-library-$LIBRARY_VERSION.dmg
+     if [ -f $DMG_NAME ]; then
+       rm $DMG_NAME
+     fi
+     
+     hdiutil create -srcfolder $DIST_DIR/dmg_files -volname "EClass.Library" -imagekey zlib-level=9 $DMG_NAME
      
      rm -rf $DIST_DIR/dmg_files
      #hdiutil attach $DMG_NAME
