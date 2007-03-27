@@ -52,7 +52,7 @@ if [ "$skipmac" != "yes" ]; then
      rm -rf $DIST_DIR/dmg_files
 
      scp -r "$MAC_HOST:$dir/installer/dist/EClass.Library.app "  $DIST_DIR/dmg_files
-     DMG_NAME=deliver/eclass-library-$LIBRARY_VERSION.dmg
+     DMG_NAME=deliver/eclass-library-$LIBRARY_VERSION-$BUILD_TYPE.dmg
      if [ -f $DMG_NAME ]; then
        rm $DMG_NAME
      fi

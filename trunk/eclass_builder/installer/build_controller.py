@@ -85,7 +85,10 @@ linuxtasks = TaskRunner( Task([ Job("lin_tarball", "./build-linux.sh", env=confi
                
 mactasks = TaskRunner( Task([ Job("mac_tarball", "./build-mac.sh", env=config_env), ]) )
 
-mactasks_intel = TaskRunner( Task([ Job("mac_tarball_intel", "./build-mac.sh", env=config_env.update({"IS_INTEL":"true"})), ]) )
+intel_config = config_env.copy()
+intel_config.update({"IS_INTEL":"true"})
+
+mactasks_intel = TaskRunner( Task([ Job("mac_tarball_intel", "./build-mac.sh", env=intel_config), ]) )
 
 winthread = TaskRunnerThread(wintasks)
 winthread.start()
