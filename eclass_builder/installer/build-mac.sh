@@ -12,8 +12,10 @@ if [ "$skipmac" != "yes" ]; then
     #exit 0
     #fi
 
+    BUILD_TYPE="ppc"
     if [ "$IS_INTEL" == "yes" ]; then
         MAC_HOST=$MAC_HOST_INTEL
+        BUILD_TYPE="universal"
     fi
     echo "Copying source file and build script..."
     scp -r $STAGING_DIR/* $MAC_HOST:$MAC_BUILD
@@ -40,7 +42,7 @@ if [ "$skipmac" != "yes" ]; then
      scp -r "$MAC_HOST:$dir/installer/dist/EClass.Builder.app "  $DIST_DIR/dmg_files
      #cd $OLDDIR
 
-     DMG_NAME=deliver/eclass-builder-$BUILD_VERSION.dmg
+     DMG_NAME=deliver/eclass-builder-$BUILD_VERSION-$BUILD_TYPE.dmg
      if [ -f $DMG_NAME ]; then
        rm $DMG_NAME
      fi
