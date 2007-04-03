@@ -2,6 +2,7 @@ call "%VS71COMNTOOLS%vsvars32.bat"
 REM Python24 gives an "invalid group reference" error
 C:\Python24\python ..\updateVersion.py %1
 C:\Python24\python make_py_dist.py --unicode
+C:\cx_Freeze-3.0.1\FreezePython --install-dir librarian-win32 ../librarian.py
 nmake -f makefile.vc
 cd ..\autorun\loader
 nmake -f loader.mak
