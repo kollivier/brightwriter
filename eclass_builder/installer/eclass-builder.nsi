@@ -64,6 +64,7 @@ Section "Program Files" SecCopyUI
   File /r "..\web"
   File /r "..\gui"
   File /r "..\mmedia"
+  File /r "..\utils"
 
   SetOutPath "$INSTDIR\autorun"
   File "..\autorun\autorun.inf"
