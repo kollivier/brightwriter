@@ -1,8 +1,17 @@
 import sys, os
 import wx
+
+# this is needed for the freeze scripts.
+import wxaddons.wxblox.events 
+import wxaddons.wxblox.menus
+
 import wxaddons.wxblox.events as eventblox
 import wxaddons.wxblox.menus as menublox
 import plugin
+
+#import psyco
+#psyco.log()
+#psyco.profile()
 
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
