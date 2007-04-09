@@ -7,7 +7,6 @@ import wxaddons.wxblox.menus
 
 import wxaddons.wxblox.events as eventblox
 import wxaddons.wxblox.menus as menublox
-import plugin
 
 #import psyco
 #psyco.log()
