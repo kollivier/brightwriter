@@ -92,20 +92,6 @@ def DeleteFiles(pattern):
 	for afile in glob.glob(pattern):
 		if os.path.exists(afile):
 			os.remove(afile)
-
-def DeleteFolder(folder):
-	if not os.path.exists(folder):
-		return False
-
-	files = os.listdir(folder)
-	for file in files:
-		filename = os.path.join(folder, file)
-		if os.path.isfile(filename):
-			os.remove(filename)
-		elif os.path.isdir(filename):
-			DeleteFolder(filename) 
-
-	os.rmdir(folder)
 	
 def getShortenedFilename(filename):
     oldfilename = filename
