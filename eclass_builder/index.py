@@ -69,15 +69,16 @@ class IndexingCallback:
         print "Finished indexing %s" % (self.index)
 
 class Index:
-    def __init__(self, indexdir, rootFolder=""):
+    def __init__(self, indexdir, rootFolder="", log_errors=True):
         self.indexdir = indexdir
         self.folder = rootFolder
         self.reader = None
         self.files = []
         self.keepgoing = True
         self.ignoreTypes = []
-        self.extra_fields = library.metadata.ExtraMetadataFields(os.path.join(self.indexdir, "extra_fields.cfg"))
+        self.ignoreFiles = [".DS_Store"]
         self.filenameIDs = {}
+        self.log_errors = log_errors
         self.reader = None
         
         if not os.path.exists(self.indexdir):
@@ -89,12 +90,43 @@ class Index:
             ignoreTypes = config.get("Settings", "IgnoreFileTypes")
             if ignoreTypes != "":
                 self.ignoreTypes = ignoreTypes.replace(" ", "").lower().split(",")
+                
+        self.removeOldLocks()
         
     def __del__(self):
         self.closeIndex()
             
     def indexExists(self):
         return os.path.isfile(os.path.join(self.indexdir, "segments.gen"))
+        
+    def removeOldLocks(self):
+        """
+        If a crash occurs while a PyLucene database is open, the lock file may never get
+        deleted, even though access to the database ends when the program shuts down.
+        
+        So, what we are doing here is checking to see whether an old FSLock file is hanging
+        around, and if so, delete it. 
+        
+        TODO: handle concurrent access scenarios, though they are not likely to occur. 
+        """
+        
+        if self.indexExists():
+            try:
+                store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
+                writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), False)
+                writer.close()
+            except Exception, e:
+                message = e.getJavaException().getMessage()
+                lockFile = ""
+                lockError = "Lock obtain timed out: SimpleFSLock@"
+                if message.find(lockError) != -1:
+                    lockFile = message.replace(lockError, "")
+                if os.path.exists(lockFile):
+                    try:
+                        os.remove(lockFile)
+                        return True
+                    except:
+                        return False
         
     def getRelativePath(self, filename):
         retval = filename.replace(self.folder, "")
@@ -140,18 +172,6 @@ class Index:
     def getAbsolutePath(self, filename):
         return os.path.join(self.folder, filename)
         
-    def addExtraFields(self, field):
-        for field in fields:
-            if not field in self.extra_fields.fields:
-                self.extra_fields.fields.append(field)
-        self.extra_fields.SaveData()
-        
-    def removeExtraFields(self, fields):
-        for field in fields:
-            if field in self.fields:
-                self.fields.remove(field)
-        self.extra_fields.SaveData()
-        
     def openIndex(self):
         if self.indexExists() and not self.reader:
             self.reader = PyLucene.IndexReader.open(self.indexdir)
@@ -159,12 +179,14 @@ class Index:
     def closeIndex(self):
         if self.reader:
             self.reader.close()
+            self.reader = None
 
     def addFile(self, filename, metadata, indexText=True):
         self.closeIndex() # close it if it's being read from...
         # first, check to see if we're in the index.
         ext = os.path.splitext(filename)[1][1:]
-        if not ext.lower() in self.ignoreTypes:
+        basename = os.path.basename(filename)
+        if not ext.lower() in self.ignoreTypes and basename not in self.ignoreFiles:
             doc = PyLucene.Document()
             doc.add(PyLucene.Field("url", self.getRelativePath(filename), PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
             for field in metadata:
@@ -192,11 +214,13 @@ class Index:
                         mytext = self.GetTextFromFile(fullpath)
                 except:
                     import traceback
-                    indexLog.write(`traceback.print_exc()`)#pass
+                    if self.log_errors:
+                        indexLog.write(`traceback.print_exc()`)#pass
                     
                 if mytext == "":
                     print "No text indexed for file: " + filename
-                    indexLog.write("No text indexed for file: " + filename)
+                    if self.log_errors:
+                        indexLog.write("No text indexed for file: " + filename)
 
                 doc.add(PyLucene.Field("contents", mytext, PyLucene.Field.Store.NO, PyLucene.Field.Index.TOKENIZED))
                             
@@ -213,7 +237,7 @@ class Index:
             writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), newIndex)
             writer.addDocument(doc)
             writer.optimize()
-            writer.close()
+            writer.close()             
             
     def updateFileMetadata(self, filename, metadata):
         """
@@ -222,7 +246,9 @@ class Index:
         
         if metadata != {}:
             allMetadata = self.getFileInfo(filename)[1]
+            
             if not allMetadata:
+                print "All metadata is none?"
                 return
             
             for field in metadata:
@@ -236,6 +262,7 @@ class Index:
     def findDoc(self, filename):
         result = (-1, None)
         if self.indexExists():
+            self.openIndex()
             filename = filename.replace(self.folder + os.sep, "")        
             if self.filenameIDs.has_key(filename):
                 id = self.filenameIDs[filename]
@@ -298,7 +325,6 @@ class Index:
                 #print "url: %s, filename: %s" % (reader.document(num).get('url'), filename)
             if self.reader: #$ reader.document(num).get('url') == filename:
                 self.reader.deleteDocument(id)
-                #reader.commit()
                 #reader.close()
 
     def search(self, field, search_term):
@@ -368,7 +394,7 @@ class Index:
         """
         data = ""
         global indexLog
-        if filename == "":
+        if filename == "" and self.log_errors:
             indexLog.write('GetTextFromFile: No filename!')
             return ""
 
@@ -499,39 +525,84 @@ class IndexingTests(unittest.TestCase):
         rootdir = os.path.abspath(sys.path[0])
         if not os.path.isdir(rootdir):
             rootdir = os.path.dirname(rootdir)
+        settings.ThirdPartyDir = os.path.join(rootdir, "3rdparty", utils.getPlatformName())
+
         self.testdir = os.path.join(rootdir, "testFiles", "libraryTest")
-        self.index = Index(self.tempdir, self.testdir)
+        self.index = Index(self.tempdir, self.testdir, log_errors=False)
         
-    def testHtml(self):
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        
+    def testAddDocFile(self):
+        filename = os.path.join(self.testdir, "hello.doc")
+        self.index.updateFile(filename)
+        results = self.index.search("contents", "import")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], "hello.doc")
+        
+    def testAddPDFFile(self):
+        filename = os.path.join(self.testdir, "hello.pdf")
+        self.index.updateFile(filename)
+        results = self.index.search("contents", "appears")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["url"], "hello.pdf")
+        
+    def testIndexLibrary(self):
+        self.index.indexLibrary()
+        print `self.index.getFilesInIndex()`
+        self.assertEqual(self.index.getIndexInfo()["NumDocs"], 5)
+        
+    def testAddHtmlFile(self):
         filename = os.path.join(self.testdir, "html_test", "test.html")
         self.index.updateFile(filename)
         results = self.index.search("contents", "Test")
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["url"], "html_test/test.html")
         
-    def testText(self):
+    def testAddTextFile(self):
         filename = os.path.join(self.testdir, "text_test", "test.txt")
         self.index.updateFile(filename)
         results = self.index.search("contents", "Text")
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["url"], "text_test/test.txt")
+
+    def testGetFileInfo(self):
+        filename = os.path.join(self.testdir, "text_test", "test.txt")
+        self.index.updateFile(filename)
+        metadata = self.index.getFileInfo(filename)[1]
+        self.assertEqual(len(metadata), 3)
         
-    def testSingeFieldValue(self):
+    def testUpdateMetadata(self):
+        filename = os.path.join(self.testdir, "text_test", "test.txt")
+        newMetadata = {"testing": "test_value"}
+        self.index.updateFile(filename)
+        metadata = self.index.getFileInfo(filename)[1]
+        self.assertEqual(len(metadata), 3)
+        
+        self.index.updateFileMetadata(filename, newMetadata)
+        updatedMetadata = self.index.getFileInfo(filename)[1]
+        print "updatedMetadata = " + `updatedMetadata`
+        
+        self.assert_(updatedMetadata.has_key("testing"))
+        self.assertEqual(len(updatedMetadata), len(metadata) + len(newMetadata))
+        self.assertEqual(updatedMetadata["testing"], newMetadata["testing"])
+
+        results = self.index.search("testing", newMetadata["testing"])
+        self.assertEqual(len(results), 1)
+    
+    def testSearchSingeFieldValue(self):
         filename = os.path.join(self.testdir, "html_test", "test.html")
         self.index.updateFile(filename, metadata={"Subject": "document"} )
         results = self.index.search("Subject", "document")
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["url"], "html_test/test.html")
 
-    def testMultipleFieldValues(self):
+    def testSearchMultipleFieldValues(self):
         filename = os.path.join(self.testdir, "html_test", "test.html")
         self.index.updateFile(filename, metadata={"Subject": ["Test", "HTML", "document"]} )
         results = self.index.search("Subject", "document")
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["url"], "html_test/test.html")
-        
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
         
 def getTestSuite():
     return unittest.makeSuite(IndexingTests)
