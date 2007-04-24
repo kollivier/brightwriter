@@ -1,4 +1,5 @@
 import string, sys, os
+import shutil
 
 import wx
 import wxaddons.sized_controls as sc
@@ -190,7 +191,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 				os.remove(themefile + "c")
 			foldername = os.path.join(themedir, self.lstThemeList.GetStringSelection())
 			if os.path.exists(foldername):
-				fileutils.DeleteFolder(foldername)
+				shutil.rmtree(foldername)
 			
 			self.parent.themes.LoadThemes()
 			self.ReloadThemes()
