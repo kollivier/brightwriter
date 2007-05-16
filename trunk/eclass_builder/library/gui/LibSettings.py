@@ -44,13 +44,26 @@ class LibSettingsDialog(sc.SizedDialog):
         
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         
+        okbutton = self.FindWindowById(wx.ID_OK)
+        okbutton.Bind(wx.EVT_BUTTON, self.OnButton)
+        cancelbutton = self.FindWindowById(wx.ID_CANCEL)
+        self.Bind(wx.EVT_BUTTON, self.OnButton, id=wx.CANCEL)
+        
         self.Fit()
         self.SetMinSize(self.GetSize())
         
         self.LoadState("LibSettingsDialog")
         
-    def OnClose(self, evt):
+    def Takedown(self):
         self.SaveState("LibSettingsDialog")
+                
+    def OnButton(self, evt):
+        self.Takedown()
+        evt.Skip()
+        
+    def OnClose(self, evt):
+        self.Takedown()
+        evt.Skip()
         
     def GetIndexDir(self):
         return self.settingsPane.indexChooser.GetValue()
