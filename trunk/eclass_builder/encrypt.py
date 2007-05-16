@@ -39,6 +39,11 @@ class EncryptionTests(unittest.TestCase):
         result = decrypt(self.crypt)
         self.assertEqual(result, self.testString)
         
+    def testEmptyDecrypt(self):
+        blank = ""
+        result = decrypt(blank)
+        self.assertEqual(result, blank)
+        
     def testRoundtrip(self):
         result = decrypt(encrypt(self.testString))
         self.assertEqual(result, self.testString)
