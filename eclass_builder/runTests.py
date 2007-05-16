@@ -3,6 +3,13 @@ import os, sys
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
     rootdir = os.path.dirname(rootdir)
+figfile = os.path.join(rootdir, 'tests.figleaf')
+
+if os.path.exists(figfile):
+    os.remove(figfile)
+
+import figleaf
+figleaf.start()
 
 # do this first because other modules may rely on _()
 localedir = os.path.join(rootdir, 'locale')
@@ -19,6 +26,7 @@ import unittest
 import encrypt
 import analyzer
 import index
+#import converter
 import library.metadata
 
 alltests = unittest.TestSuite(( encrypt.getTestSuite(), 
@@ -32,7 +40,6 @@ alltests.run(results)
 
 if results.wasSuccessful():
     print "%d tests passed!" % (results.testsRun)
-    sys.exit(0)
 else:
     print "\n%d tests failed!\n" % (len(results.failures))
     for error in results.failures:
@@ -44,3 +51,8 @@ else:
         print error[1]
     sys.exit(1)
         
+figleaf.stop()
+figleaf.write_coverage(figfile)
+
+# generate a spiffy HTML report from this
+os.system("figleaf2html -d ./tests_code_coverage %s" % figfile)
