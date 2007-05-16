@@ -4,6 +4,9 @@
 set -o errexit
 
 if [ $skipwin != yes ]; then
+    
+    ssh $WIN_HOST "rm -rf $WIN_BUILD/*"
+    
     echo "Copying source file and build script..."
     scp -r $STAGING_DIR/* $WIN_HOST:$WIN_BUILD
     
@@ -22,7 +25,6 @@ if [ $skipwin != yes ]; then
 
      echo "Fetching the results..."
      scp "$WIN_HOST:$dir/installer/eclass-builder-$BUILD_VERSION-unicode.exe "  $DIST_DIR
-     ssh $WIN_HOST "rm -rf $WIN_BUILD/*"
 
      echo "Done!"
 fi
