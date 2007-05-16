@@ -90,16 +90,14 @@ class Index:
             ignoreTypes = config.get("Settings", "IgnoreFileTypes")
             if ignoreTypes != "":
                 self.ignoreTypes = ignoreTypes.replace(" ", "").lower().split(",")
-                
-        self.removeOldLocks()
         
     def __del__(self):
         self.closeIndex()
             
     def indexExists(self):
-        return os.path.isfile(os.path.join(self.indexdir, "segments.gen"))
+        return os.path.isfile(os.path.join(self.indexdir, "segments"))
         
-    def removeOldLocks(self):
+    def openWriter(self):
         """
         If a crash occurs while a PyLucene database is open, the lock file may never get
         deleted, even though access to the database ends when the program shuts down.
@@ -110,23 +108,24 @@ class Index:
         TODO: handle concurrent access scenarios, though they are not likely to occur. 
         """
         
-        if self.indexExists():
-            try:
-                store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
-                writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), False)
-                writer.close()
-            except Exception, e:
-                message = e.getJavaException().getMessage()
-                lockFile = ""
-                lockError = "Lock obtain timed out: SimpleFSLock@"
-                if message.find(lockError) != -1:
-                    lockFile = message.replace(lockError, "")
-                if os.path.exists(lockFile):
-                    try:
-                        os.remove(lockFile)
-                        return True
-                    except:
-                        return False
+        newindex = not self.indexExists()
+        try:
+            store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
+            self.writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), newindex)
+            #writer.close()
+        except Exception, e:
+            message = e.getJavaException().getMessage()
+            lockFile = ""
+            lockError = "Lock obtain timed out: SimpleFSLock@"
+            if message.find(lockError) != -1:
+                lockFile = message.replace(lockError, "")
+            #print "lockFile = " + lockFile
+            if os.path.exists(lockFile):
+                try:
+                    os.remove(lockFile)
+                    return self.openWriter()
+                except:
+                    return False
         
     def getRelativePath(self, filename):
         retval = filename.replace(self.folder, "")
@@ -234,10 +233,10 @@ class Index:
 
             newIndex = not self.indexExists()
             store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
-            writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), newIndex)
-            writer.addDocument(doc)
-            writer.optimize()
-            writer.close()             
+            self.openWriter() #PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), newIndex)
+            self.writer.addDocument(doc)
+            self.writer.optimize()
+            self.writer.close()             
             
     def updateFileMetadata(self, filename, metadata):
         """
@@ -247,9 +246,9 @@ class Index:
         if metadata != {}:
             allMetadata = self.getFileInfo(filename)[1]
             
-            if not allMetadata:
-                print "All metadata is none?"
-                return
+            assert allMetadata
+                #print "All metadata is none?"
+                #return
             
             for field in metadata:
                 if allMetadata.has_key(field):
@@ -359,7 +358,7 @@ class Index:
             
     def getIndexInfo(self):
         info = {}
-        if self.indexExists:
+        if self.indexExists():
             self.openIndex() #reader = PyLucene.IndexReader.open(self.indexdir)
             info["NumDocs"] = self.reader.numDocs()
             info["MetadataFields"] = self.reader.getFieldNames(PyLucene.IndexReader.FieldOption.ALL)
@@ -436,7 +435,7 @@ class Index:
             convert.close()
             encoding = "iso-8859-1"
             if convert.encoding != "":
-                print "Encoding is: " + convert.encoding
+                #print "Encoding is: " + convert.encoding
                 encoding = convert.encoding
             text = convert.text
 
@@ -533,6 +532,11 @@ class IndexingTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
         
+    def testIndexExists(self):
+        filename = os.path.join(self.testdir, "hello.doc")
+        self.index.updateFile(filename)
+        self.assertEqual(self.index.indexExists(), True)
+        
     def testAddDocFile(self):
         filename = os.path.join(self.testdir, "hello.doc")
         self.index.updateFile(filename)
@@ -549,7 +553,7 @@ class IndexingTests(unittest.TestCase):
         
     def testIndexLibrary(self):
         self.index.indexLibrary()
-        print `self.index.getFilesInIndex()`
+        #print `self.index.getFilesInIndex()`
         self.assertEqual(self.index.getIndexInfo()["NumDocs"], 5)
         
     def testAddHtmlFile(self):
@@ -581,7 +585,7 @@ class IndexingTests(unittest.TestCase):
         
         self.index.updateFileMetadata(filename, newMetadata)
         updatedMetadata = self.index.getFileInfo(filename)[1]
-        print "updatedMetadata = " + `updatedMetadata`
+        #print "updatedMetadata = " + `updatedMetadata`
         
         self.assert_(updatedMetadata.has_key("testing"))
         self.assertEqual(len(updatedMetadata), len(metadata) + len(newMetadata))
