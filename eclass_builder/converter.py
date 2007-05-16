@@ -2,7 +2,10 @@ import getopt,sys, os, string
 import cStringIO, tempfile, glob, time
 import settings
 import subprocess
+import killableprocess
 import utils
+
+import unittest
 
 hasOOo = False
 hasMSOffice = False
@@ -151,6 +154,7 @@ class CommandLineDocConverter:
 		path = ""
 		command = ""
 		html = ""
+		env = None
 		outformat = "html"
 
 		if os.name == "nt":
@@ -162,8 +166,12 @@ class CommandLineDocConverter:
 		if ext == ".doc":
 			path = os.path.join(thirdpartydir, "wv")
 			command = "wvWare"
-			#args = ["--config " + os.path.join("..", "share", "wv", "wvHtml.xml")]
-			args = [filename]
+			if sys.platform.startswith("darwin"):
+			    env = {"DYLD_LIBRARY_PATH": "../lib"}
+			elif not sys.platform.startswith("win"):
+			    env = {"LD_LIBRARY_PATH": "../lib"}
+			args = ["--config " + os.path.join("..", "share", "wv", "wvHtml.xml")]
+			args.append(filename)
 			#outformat = "txt"
 		elif ext == ".rtf":
 			path = os.path.join(thirdpartydir, "unrtf")
@@ -196,7 +204,7 @@ class CommandLineDocConverter:
 		try:
 			oldcwd = os.getcwd()
 			os.chdir(path)
-			print "working directory is %s" % path
+			#print "working directory is %s" % path
 			#Let's check for hung programs
 			seconds = 0.0
 			
@@ -211,13 +219,21 @@ class CommandLineDocConverter:
 			
 			mycommand = [command] + args
 			print "Running command: '%s'" % string.join(mycommand, " ")
-			myprocess = subprocess.Popen( mycommand, stdout=subprocess.PIPE)
+			myprocess = killableprocess.Popen( mycommand, stdout=subprocess.PIPE, env=env)
 			
 			import time
-			while myprocess.poll():
+			runtime = 0.0
+			killed = False
+			while myprocess.poll() == None:
 				time.sleep(0.01)
+				runtime += 0.01
+				if runtime >= 20.00:
+				    myprocess.kill()
+				    killed = True
+				    break
 			
-			html = myprocess.stdout.read()
+			if not killed:
+			    html = myprocess.stdout.read()
 			output = utils.openFile(htmlfile, "wb")
 			output.write(html) 
 			output.close()
@@ -239,39 +255,61 @@ class CommandLineDocConverter:
 			for afile in glob.glob(os.path.join(path, "*." + ext)):
 				os.remove(os.path.join(path, afile))
 		
-if hasOOo:
-    class OOoDocConverter:
-    	def __init__(self):
-    		self.infile = ""
-    		self.outformat = "html"
-    		self.outfilters = {"html": "HTML (StarWriter)",
-    							"txt": "Text (Encoded)",
-    							"pdf": "writer_pdf_Export"}
-    		self.infilters = {"doc":"MS Word 97",
-    						"html": "HTML (StarWriter)", 
-    						"rtf":"Rich Text Format",
-    						"txt":"Text"}
-    		self.url = "uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext"
-    		
-    	def ConvertFile(self, filename, outformat="html"):
-			oodir = settings.AppSettings["OpenOffice"]
-			if oodir != "":
-				oldcwd = os.getcwd()
-				os.chdir(settings.AppDir)
-				import win32api
-				#get the output and send it to a file
-				command = "ooconvert.bat \"" + win32api.GetShortPathName(oodir) + "\" \"" + win32api.GetShortPathName(filename) + "\""
-				import win32pipe
-				myin, mystream = win32pipe.popen4(command)
-				filetext = mystream.read() 				
-				mystream.close()
-				handle, htmlfile = tempfile.mkstemp()
-				os.close(handle)
-				myfile = open(htmlfile, "wb")
-				myfile.write(filetext)
-				myfile.close()
-				os.chdir(oldcwd)
-				return htmlfile, "html"
+class OOoDocConverter:
+    def __init__(self):
+        self.infile = ""
+        self.outformat = "html"
+        self.outfilters = {"html": "HTML (StarWriter)",
+                            "txt": "Text (Encoded)",
+                            "pdf": "writer_pdf_Export"}
+        self.infilters = {"doc":"MS Word 97",
+                        "html": "HTML (StarWriter)", 
+                        "rtf":"Rich Text Format",
+                        "txt":"Text"}
+        self.url = "uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext"
+        
+    def ConvertFile(self, filename, outformat="html"):
+        oodir = settings.AppSettings["OpenOffice"]
+        if oodir != "":
+            oldcwd = os.getcwd()
+            os.chdir(settings.AppDir)
+            import win32api
+            #get the output and send it to a file
+            command = "ooconvert.bat \"" + win32api.GetShortPathName(oodir) + "\" \"" + win32api.GetShortPathName(filename) + "\""
+            import win32pipe
+            myin, mystream = win32pipe.popen4(command)
+            filetext = mystream.read() 				
+            mystream.close()
+            handle, htmlfile = tempfile.mkstemp()
+            os.close(handle)
+            myfile = open(htmlfile, "wb")
+            myfile.write(filetext)
+            myfile.close()
+            os.chdir(oldcwd)
+            return htmlfile, "html"
 
-			return ""
-		
+        return ""
+			
+class ConversionTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        self.tempdir = tempfile.mkdtemp()
+        rootdir = os.path.abspath(sys.path[0])
+        if not os.path.isdir(rootdir):
+            rootdir = os.path.dirname(rootdir)
+        self.filesRootDir = os.path.join(rootdir, "testFiles", "convertTest")
+        settings.ThirdPartyDir = os.path.join(rootdir, "3rdparty", utils.getPlatformName())
+        self.converter = DocConverter()
+    
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        
+    def testCommandLineHang(self):
+        filename = os.path.join(self.filesRootDir, "hung_process_test", "ANEXO1.xls")
+        self.converter.ConvertFile(filename)
+
+def getTestSuite():
+    return unittest.makeSuite(ConversionTests)
+
+if __name__ == '__main__':
+    unittest.main()
