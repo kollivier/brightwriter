@@ -187,7 +187,8 @@ class Index:
         basename = os.path.basename(filename)
         if not ext.lower() in self.ignoreTypes and basename not in self.ignoreFiles:
             doc = PyLucene.Document()
-            doc.add(PyLucene.Field("url", self.getRelativePath(filename), PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
+            url = self.getRelativePath(filename).replace(os.sep, "/")
+            doc.add(PyLucene.Field("url", url, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
             for field in metadata:
                 if field in ["url", "last_modified", "filesize"]:
                     continue
