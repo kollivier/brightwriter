@@ -1,0 +1,25 @@
+HTMLDOC TODO
+
+*	- Need HTTP cache - images/HTML files overwriting themselves.
+	  (done except for PID/user mapping for Windows, plus finding
+	   the Windows directory)
+	- --path not working right.
+	- Fix perl example so that it works.
+	- Add "--batch filename.book" support.
+	- Fix table cell width code to parse tree and return overall
+	  width, accounting for nested tables, etc.
+	- Conditional comments ("IF", "ELSE", "ELSEIF", "ENDIF")
+	- Add table "rules" attribute support.
+	- Add THEAD, TFOOT, and TBODY support?
+	- Header/footer strings need to be wrapped or truncated.
+	- Image links in PDF output not taking base directory
+	  into account...
+	- Add "All" button to file chooser in multiple selection
+	  mode.
+	- Damaged image files (PNG particularly) should not crash
+	  HTMLDOC.
+
+ColdFusion/ASP/PHP People To Contact
+
+	- Mike McCarthy, mmccarthy@equinix.com (ColdFusion, NT)
+	  wants to beta test
