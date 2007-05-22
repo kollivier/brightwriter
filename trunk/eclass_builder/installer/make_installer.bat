@@ -6,8 +6,6 @@ C:\cx_Freeze-3.0.1\FreezePython --exclude-modules=wx --install-dir librarian-win
 nmake -f makefile.vc
 cd ..\autorun\loader
 nmake -f loader.mak
-cd ..\..\3rdparty\win32
-unzip -o win32extras.zip
 cd ..\..
 C:\Python24\python runTests.py
 cd installer
