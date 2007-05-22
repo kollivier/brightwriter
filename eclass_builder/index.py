@@ -16,7 +16,7 @@ import types
 import shutil
 import library.metadata
 
-indexLog = utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
+indexLog = errors.appErrorLog #utils.LogFile(os.path.join(settings.ProjectDir, "indexing_log.txt"))
 
 docFormats = ["htm", "html", "doc", "rtf", "ppt", "xls", "txt", "pdf"]
 textFormats = ["htm", "html", "txt", "h", "c", "cpp", "cxx", "py", "php", "pl", "rb"]
