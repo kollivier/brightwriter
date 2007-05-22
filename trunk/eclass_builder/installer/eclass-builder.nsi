@@ -92,7 +92,7 @@ Section "Program Files" SecCopyUI
 
   SetOutPath "$INSTDIR\3rdparty\win32"
   File "C:\Python24\w9xpopen.exe"
-  File "..\3rdparty\win32\pdftohtml.exe"
+  File /r "..\3rdparty\win32\pdftohtml"
   File /r "..\3rdparty\win32\Karrigell"
   File /r "..\3rdparty\win32\xlHtml"
   File /r "..\3rdparty\win32\wv"
