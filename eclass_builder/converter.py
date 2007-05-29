@@ -4,6 +4,7 @@ import settings
 import subprocess
 import killableprocess
 import utils
+import shutil
 
 import unittest
 
