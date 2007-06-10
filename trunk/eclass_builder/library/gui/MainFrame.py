@@ -1,6 +1,7 @@
 import sys, os, shutil
 
 import wx
+import wx.aui
 import wxaddons.sized_controls as sc
 import wxaddons.persistence
 
@@ -21,6 +22,17 @@ import PyLucene
 
 errorLog = None
 
+frameEvents = [
+                wx.ID_NEW, 
+                constants.ID_DEL_LIBRARY, 
+                constants.ID_INDEX,
+                constants.ID_UPDATE_INDEX,
+                constants.ID_LIB_SETTINGS,
+                constants.ID_ADD_FILES,
+                constants.ID_PROPS,
+                constants.ID_ERROR_LOG
+              ]
+
 class FrameStatusBarIndexingCallback(index.IndexingCallback):
     def __init__(self, index, parent=None):
         self.index = index
@@ -29,7 +41,7 @@ class FrameStatusBarIndexingCallback(index.IndexingCallback):
         self.numFiles = 0
         
     def indexingStarted(self, numFiles):
-        wx.CallAfter(self.parent.updateLibraryStatus, self.index, enabled=False)
+        wx.CallAfter(self.parent.GetMainView().updateLibraryStatus, self.index, enabled=False)
     
         self.numFiles = numFiles
         message = _("Indexing files in %s") % (self.index)
@@ -49,7 +61,7 @@ class FrameStatusBarIndexingCallback(index.IndexingCallback):
             wx.CallAfter(self.parent.GetStatusBar().SetStatusText, message)
         print message
         
-        wx.CallAfter(self.parent.updateLibraryStatus, self.index, enabled=True)
+        wx.CallAfter(self.parent.GetMainView().updateLibraryStatus, self.index, enabled=True)
             
 
 class ContentsList(autolist.AutoSizeListCtrl):
@@ -58,6 +70,7 @@ class ContentsList(autolist.AutoSizeListCtrl):
         self.files = []
         
     def OnGetItemText(self, itemNum, col):
+        #print "itemNum = %d, numFiles = %d\n" % (itemNum, len(self.files))
         if len(self.files) >= itemNum:
             return self.files[itemNum]
         
@@ -97,7 +110,7 @@ class MainView(sc.SizedPanel):
         self.statusPane = sc.SizedPanel(self.listPane, -1)
         self.statusText = wx.StaticText(self.statusPane, -1)
         self.statusPane.Hide()
-        self.contentsList = ContentsList(self.listPane, -1, style = wx.LC_REPORT | wx.LC_VIRTUAL )
+        self.contentsList = ContentsList(self.listPane, -1, style = wx.LC_REPORT | wx.LC_VIRTUAL | wx.LC_SINGLE_SEL)
         self.contentsList.SetSizerProps(expand=True, proportion=1)
         self.contentsList.InsertColumn(0, _("Filename"))
         
@@ -126,7 +139,9 @@ class MainView(sc.SizedPanel):
         return cmpVal
 
     def menuEventHandler(self, event):
+        print "hello!"
         id = event.GetId()
+        libName = self.indexList.GetStringSelection()
         
         if id == wx.ID_NEW:
             self.createNewLibrary()
@@ -151,11 +166,16 @@ class MainView(sc.SizedPanel):
                 self.addFiles(libName)
                 
         elif id == constants.ID_PROPS:
-            self.tlw.propsFrame.Show(not self.propsFrame.IsShown())
+            if self.tlw.propsFrame:
+                self.tlw.propsFrame.Show(not self.propsFrame.IsShown())
+            
             self.refreshMetadataPropsForSelectedFiles("blah")
             
         elif id == constants.ID_METADATA_EDITOR:
             self.metadataFrame.Show()
+            
+        elif id == constants.ID_ERROR_LOG:
+            print "Error log selected!"
                 
         else:
             event.Skip()
@@ -188,7 +208,7 @@ class MainView(sc.SizedPanel):
                 self.statusText.SetLabel(_("Library %(library)s is currently being indexed..."))                
 
     def refreshMetadataPropsForSelectedFiles(self, filename, added=True):
-        if not self.tlw.propsFrame.IsShown():
+        if self.tlw.propsFrame and not self.tlw.propsFrame.IsShown():
             return
             
         #print "filename %s" % (filename)
@@ -200,7 +220,7 @@ class MainView(sc.SizedPanel):
         #prof.start()
 
         indexName = self.indexList.GetStringSelection()
-        print `len(self.selectedFiles)`
+        #print `len(self.selectedFiles)`
         if len(self.selectedFiles) <= 1:
             self.selectedMetadata = {}
             
@@ -209,23 +229,31 @@ class MainView(sc.SizedPanel):
             #selItem = self.contentsList.GetFirstSelected()
             counter = 0
 
-            for filename in self.selectedFiles:
-                props = self.getFileProps(filename)
-                #print `props`
+            print "len(self.selectedFiles) = " + `len(self.selectedFiles)`
+                    
+            if len(self.selectedFiles) == 1:
+                self.selectedMetadata = self.getFileProps(filename)
+
+            else:
+                for filename in self.selectedFiles:
+                    props = self.getFileProps(filename)
     
-                for prop in props:
-                    if len(self.selectedFiles) == 1 and not self.selectedMetadata.has_key(prop):
-                        self.selectedMetadata[prop] = props[prop]
-                    else:
-                        if self.selectedMetadata.has_key(prop) and not props[prop] == self.selectedMetadata[prop]:
-                            del self.selectedMetadata[prop]
-                counter += 1
+                    if props:
+                        # start with all the props in the first item, then eliminate any
+                        # that don't have the same value in subsequent files
+                        if counter == 0:
+                            self.selectedMetadata.update(props)
+                        else:
+                            for prop in props:
+                                if self.selectedMetadata.has_key(prop) and not props[prop] == self.selectedMetadata[prop]:
+                                    del self.selectedMetadata[prop]
+                    counter += 1
         
                 #selItem = self.contentsList.GetNextItem(selItem, wx.LIST_NEXT_BELOW, wx.LIST_STATE_SELECTED)
             
-            print `self.selectedMetadata`
+            #print `self.selectedMetadata`
             fields = self.getIndexInfo()["MetadataFields"]
-            self.tlw.propsFrame.props.loadProps(self.selectedMetadata, fields)
+            self.tlw.props.loadProps(self.selectedMetadata, fields)
         #prof.stop()
 
     def updateMetadataForSelectedFiles(self, field, value):
@@ -325,7 +353,7 @@ class MainView(sc.SizedPanel):
                 self.callback = FrameStatusBarIndexingCallback(self.libName, self.frame)
                 self.index.indexLibrary(self.callback)
                 
-        self.indexthread = IndexThread(thisindex, libName, self)
+        self.indexthread = IndexThread(thisindex, libName, self.tlw)
         self.indexthread.start()
         
     def updateLibrary(self, libName):
@@ -342,9 +370,9 @@ class MainView(sc.SizedPanel):
                 
             def run(self):
                 self.callback = FrameStatusBarIndexingCallback(self.libName, self.frame)
-                self.index.updateLibrary(self.callback)
+                self.index.reindexLibrary(self.callback)
                 
-        self.indexthread = IndexThread(thisindex, libName, self)
+        self.indexthread = IndexThread(thisindex, libName, self.tlw)
         self.indexthread.start()
         
     def selectLibrary(self, libName):
@@ -354,20 +382,21 @@ class MainView(sc.SizedPanel):
             self.loadLibraryFiles(libName)
         else:
             self.contentsList.Enable(False)
-            self.statusText.SetLabel(_("Library %(library)s is currently being indexed...") % libname) 
+            self.statusText.SetLabel(_("Library %(library)s is currently being indexed...") % libName) 
             self.statusPane.Show()   
     
     def OnIndexSelected(self, evt):
         self.selectLibrary(evt.GetString())
             
     def OnItemDeselected(self, evt):
-        filename = evt.GetText()
+        filename = self.contentsList.GetItemText(evt.GetIndex())
         self.selectedFiles.remove(filename)
-        self.refreshMetadataPropsForSelectedFiles(filename, added=False)
+        wx.FutureCall(10, self.refreshMetadataPropsForSelectedFiles, filename, added=False)
             
     def OnItemSelected(self, evt):
-        filename = evt.GetText()
-        self.selectedFiles.append(filename)
+        filename = self.contentsList.GetItemText(evt.GetIndex())
+        assert filename != "", "Selection has no filename."
+        self.selectedFiles = [filename]
         self.refreshMetadataPropsForSelectedFiles(filename, added=True)
     
     def OnSearchText(self, evt):
@@ -438,6 +467,8 @@ class MainView(sc.SizedPanel):
         
         if result == wx.YES:
             index_dir = self.indexManager.getIndexProp(libName, index_manager.INDEX_DIR)
+            index = self.indexManager.getIndex(libName)
+            index.closeIndex()
             shutil.rmtree(index_dir)
             if not os.path.exists(index_dir):
                 os.makedirs(index_dir)
@@ -459,6 +490,58 @@ class MainView(sc.SizedPanel):
             if libName != "" and libName in self.indexManager.getIndexes():
                 self.indexList.SetStringSelection(libName)
                 self.loadLibraryFiles(libName)
+                
+class AUIMainFrame(wx.Frame):
+    def __init__(self, *args, **kwargs):
+        wx.Frame.__init__(self, *args, **kwargs)
+        
+        self.stateName = "LibraryAUIFrame"
+        self.mgr = wx.aui.AuiManager()
+        self.mgr.SetManagedWindow(self)
+        
+        self.mainView = MainView(self, -1)
+        self.mgr.AddPane(self.mainView, wx.aui.AuiPaneInfo().Name("Main Window").CenterPane())
+        
+        self.props = Props.PropsView(self, -1)
+        self.mgr.AddPane(self.props, wx.aui.AuiPaneInfo().Name(Props.getName()).Bottom().MinSize((-1, 200)))
+
+        self.propsFrame = self.mgr.GetPane(Props.getName())
+        
+        self.LoadState(self.stateName)
+
+        self.mgr.Update()
+        
+        app = wx.GetApp()
+        for eventID in frameEvents:    
+            app.AddHandlerForID(eventID, self.mainView.menuEventHandler)
+            #app.AddUIHandlerForID(eventID, self.ProcessUpdateUIEvent)
+        
+        self.CreateStatusBar()
+        
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        
+    def LoadState(self, id):
+        config = wx.Config()
+        if config:
+            config.SetPath(id)
+            perspective = config.Read("perspective")
+            if perspective != "":
+                self.mgr.LoadPerspective(perspective)
+                
+    def SaveState(self, id):
+        config = wx.Config()
+        if config:
+            config.SetPath(id)
+            
+            config.Write("perspective", self.mgr.SavePerspective())
+        
+    def GetMainView(self):
+        return self.mainView
+        
+    def OnClose(self, event):
+        self.SaveState(self.stateName)
+        self.mgr.UnInit()
+        event.Skip()
 
 class MainFrame(sc.SizedFrame):
     def __init__(self, *args, **kwargs):
@@ -482,17 +565,27 @@ class MainFrame(sc.SizedFrame):
         #        frame.LoadState("Library" + palette.getName() + "Frame")
         #        self.palettes.append(frame)
         
-        self.propsFrame = Props.PropsMiniFrame(self, -1, _("Properties"), style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX)
+        self.propsFrame = Props.createFrame(self, -1)
         self.propsFrame.LoadState("LibraryPropsFrame")
         self.propsFrame.Show()
         
-        self.metadataFrame = Metadata.MetadataMiniFrame(self, -1, _("Field Editor"), style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX)
-        self.metadataFrame.LoadState("LibraryMetadataFrame")
-        self.metadataFrame.Show()
+        self.props = self.propsFrame.props
+        
+        app = wx.GetApp()
+        for eventID in frameEvents:    
+            app.AddHandlerForID(eventID, self.props.menuEventHandler)
+            #app.AddUIHandlerForID(eventID, self.ProcessUpdateUIEvent)
+        
+        #self.metadataFrame = Metadata.MetadataMiniFrame(self, -1, _("Field Editor"), style=wx.CAPTION | wx.RESIZE_BORDER | wx.CLOSE_BOX)
+        #self.metadataFrame.LoadState("LibraryMetadataFrame")
+        #self.metadataFrame.Show()
         
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         
         self.LoadState("LibraryMainFrame")
+        
+    def GetMainView(self):
+        return self
 
     def OnClose(self, evt):
         self.propsFrame.SaveState("LibraryPropsFrame")
