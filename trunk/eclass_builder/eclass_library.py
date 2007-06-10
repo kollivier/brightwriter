@@ -12,6 +12,14 @@ import wxaddons.wxblox.menus as menublox
 #psyco.log()
 #psyco.profile()
 
+has_figleaf = False
+try:
+    import figleaf
+    figleaf.start()
+    has_figleaf = True
+except:
+    pass
+
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
     rootdir = os.path.dirname(rootdir)
@@ -28,6 +36,7 @@ lang_dict = {
             
 # setup our translation system before importing project-specific files.
 import settings
+import utils
 import guiutils
 
 import library
@@ -77,7 +86,6 @@ class MyApp(wx.PySimpleApp, eventblox.AppEventHandlerMixin, menublox.MenuManager
             _("&Window"):
             [
                 (constants.ID_PROPS, _("Property Editor\tCTRL+E"), _("Edit item properties")),
-                (constants.ID_METADATA_EDITOR, _("Field Editor\tCTRL+F"), _("Edit fields in property list.")),
                 (constants.ID_ERROR_LOG, _("Error Log"), _("View any program errors")),
             ],
             _("&Help"):
@@ -100,20 +108,34 @@ class MyApp(wx.PySimpleApp, eventblox.AppEventHandlerMixin, menublox.MenuManager
         settings.PrefDir = guiutils.getAppDataDir()
         if not os.path.exists(settings.PrefDir):
             os.makedirs(settings.PrefDir)
+            
+        settings.ThirdPartyDir = os.path.join(settings.AppDir, "3rdparty", utils.getPlatformName())
+
         
+        self.interfaceStyle = "MDI"
         self.CreateNewWindow()
         return True
+
+    def OnExit(self):
+        if has_figleaf:
+            figleaf.stop()
+            figleaf.write_coverage("eclass_library_run.figleaf")
+        
+        return True #wx.PySimpleApp.OnExit(self)
 
     def GetMenuBar():
         return self.GetTopWindow().GetMenuBar()
 
     def CreateNewWindow(self, filename=""):
-        frame = libgui.MainFrame.MainFrame(None, -1, self.GetAppName(), size=(600, 400))
+        if self.interfaceStyle == "MFI":
+            frame = libgui.MainFrame.MainFrame(None, -1, self.GetAppName(), size=(600, 400))
+        elif self.interfaceStyle == "MDI":
+            frame = libgui.MainFrame.AUIMainFrame(None, -1, self.GetAppName(), size=(600,400))
+
         frame.SetMenuBar(self.CreateMenuBar())
         frame.Show(True)
         self.SetTopWindow(frame)
         
 app = MyApp(0)
 app.MainLoop()
-
 
