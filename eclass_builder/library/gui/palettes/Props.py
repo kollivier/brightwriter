@@ -61,7 +61,7 @@ class PropsView(sc.SizedPanel):
         value = self.grid.GetCellValue(event.GetRow(), 1)
         value = value.split(",")
         if value != self.oldValue:
-            mainFrame = wx.GetApp().GetTopWindow()
+            mainFrame = wx.GetApp().GetTopWindow().GetMainView()
             if mainFrame:
                 mainFrame.updateMetadataForSelectedFiles(field, value)
         
