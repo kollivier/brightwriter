@@ -95,7 +95,7 @@ class Index:
         self.closeIndex()
             
     def indexExists(self):
-        return os.path.isfile(os.path.join(self.indexdir, "segments"))
+        return os.path.isfile(os.path.join(self.indexdir, "segments")) or os.path.isfile(os.path.join(self.indexdir, "segments.gen"))
         
     def openWriter(self):
         """
