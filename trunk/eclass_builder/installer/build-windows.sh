@@ -17,6 +17,15 @@ if [ $skipwin != yes ]; then
      
      echo "Running build script on $WIN_HOST..."
      dir=$WIN_BUILD/eclass_builder
+
+    #ssh $WIN_HOST "cd $dir/3rdparty/win32 && unzip -o win32extras.zip"
+    # run unit tests
+    #ssh $WIN_HOST "cd $dir && python runTests.py"
+    if [ $? != 0 ]; then
+        echo "Unit tests failed! Stopping Windows release..."
+        exit 1 
+    fi
+
      cmd="export VS71COMNTOOLS=$MSVS7_DIR/Common7/Tools/ && cmd /c make_installer.bat $BUILD_VERSION"
      #cmd="/c/python23/python ../updateVersion.py && python2.4 make_py_dist.py && /c/Progra~1/nsis/makensis eclass-builder.nsi"
      #scp ./make_msvc7_setup $WIN_HOST:$dir/installer

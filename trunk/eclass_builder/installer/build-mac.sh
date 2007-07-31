@@ -4,21 +4,13 @@
 set -o errexit
 
 if [ "$skipmac" != "yes" ]; then
-    # test if the target machine is online
-    #if ping -q -c1 $WIN_HOST > /dev/null; then
-    #echo " The $WIN_HOST machine is online, Windows build continuing..."
-    #else
-    #echo "The $WIN_HOST machine is **OFFLINE**, skipping the Windows build."
-    #exit 0
-    #fi
-
-    BUILD_TYPE="ppc"
-    if [ "$IS_INTEL" == "yes" ]; then
-        MAC_HOST=$MAC_HOST_INTEL
-        BUILD_TYPE="universal"
-    fi
-    echo "Copying source file and build script..."
-    scp -r $STAGING_DIR/* $MAC_HOST:$MAC_BUILD
+     BUILD_TYPE="ppc"
+     if [ "$IS_INTEL" == "yes" ]; then
+         MAC_HOST=$MAC_HOST_INTEL
+         BUILD_TYPE="universal"
+     fi
+     echo "Copying source file and build script..."
+     scp -r $STAGING_DIR/* $MAC_HOST:$MAC_BUILD
     
      echo "Untarring dist on $MAC_HOST..."
      tarball=$MAC_BUILD/eclass.builder-$BUILD_VERSION.tar.gz
@@ -27,6 +19,14 @@ if [ "$skipmac" != "yes" ]; then
      
      echo "Running build script on $MAC_HOST..."
      dir=$MAC_BUILD/eclass_builder
+     
+     # run unit tests
+     ssh $MAC_HOST "cd $dir && /usr/local/bin/python2.4 runTests.py"
+     if [ $? != 0 ]; then
+         echo "Unit tests failed! Stopping Windows release..."
+         exit 1 
+     fi
+
      cmd="export PYTHONPATH=.. && /usr/local/bin/python2.4 make_builder_osx.py py2app && /usr/local/bin/python2.4 make_library_osx.py py2app"
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
 

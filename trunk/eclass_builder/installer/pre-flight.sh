@@ -16,13 +16,11 @@ fi
 
 cd $TEMP_DIR
 
-# just do an update if we started a build but it failed somewhere
-if [ ! -d $ECLASS_TEMP_DIR ]; then
-    svn co https://eclass.svn.sourceforge.net/svnroot/eclass/trunk/eclass_builder
-else
-    cd $ECLASS_TEMP_DIR
-    svn update
+if [ -d $ECLASS_TEMP_DIR ]; then
+    rm -rf $ECLASS_TEMP_DIR
 fi
+
+svn co https://eclass.svn.sourceforge.net/svnroot/eclass/trunk/eclass_builder
 
 # this is where we will store the wxAll tarball we create
 if [ ! -d $DISTDIR ]; then
@@ -30,18 +28,10 @@ if [ ! -d $DISTDIR ]; then
 fi
 
 cd $ECLASS_TEMP_DIR
-
 # generate docs
 ./installer/makedocs.sh
 if [ $? != 0 ]; then
     echo "Making docs failed! Stopping release..."
-    exit 1 
-fi
-
-# run unit tests
-python2.4 runTests.py
-if [ $? != 0 ]; then
-    echo "Unit tests failed! Stopping release..."
     exit 1 
 fi
 
