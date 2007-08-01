@@ -8,8 +8,13 @@ figfile = os.path.join(rootdir, 'tests.figleaf')
 if os.path.exists(figfile):
     os.remove(figfile)
 
-import figleaf
-figleaf.start()
+hasFigleaf=False
+try:
+    import figleaf
+    figleaf.start()
+    hasFigleaf=True
+except:
+    pass
 
 # do this first because other modules may rely on _()
 localedir = os.path.join(rootdir, 'locale')
@@ -51,9 +56,10 @@ else:
         print "------ " + str(error[0]) + " ------"
         print error[1]
     sys.exit(1)
-        
-figleaf.stop()
-figleaf.write_coverage(figfile)
 
-# generate a spiffy HTML report from this
-os.system("figleaf2html -d ./tests_code_coverage %s" % figfile)
+if hasFigleaf:
+    figleaf.stop()
+    figleaf.write_coverage(figfile)
+
+    # generate a spiffy HTML report from this
+    os.system("figleaf2html -d ./tests_code_coverage %s" % figfile)
