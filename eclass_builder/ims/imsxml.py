@@ -28,13 +28,19 @@ def newXMLNode(doc, name, text=None, attrs={}, ns=None):
     
 
 class Tag:
-    def __init__(self, name="", text=None, attrs={}, children=[], ns=None, maxlength=-1):
+    def __init__(self, name="", text=None, attrs=None, children=None, ns=None, maxlength=-1):
         self.namespace = ns
         self.name = name
         self.text = text
-        self.attrs = attrs
+        self.attrs = {}
+        if attrs:
+            self.attrs = attrs
+        
         self.maxlength = maxlength
-        self.children = children
+        
+        self.children = []
+        if self.children:
+            self.children = children
         # If a tag isn't required to be in the output, let's only create it 
         # if it has attributes, a value, or children set.
         self.required = False
@@ -69,6 +75,7 @@ class Tag:
         
         if strictMode and not self.validate():
             raise ValueError
+
     def asString(self):
         attrs=""
         for attr in self.attrs:
@@ -92,13 +99,17 @@ class Tag:
             raise ValueError
             
         hasValidChild = False
+        #print "Name is: " + self.name
         node = newXMLNode(doc, self.name, self.text, self.attrs, self.namespace)
         for child in self.children:
+            #print "in asXml, children are " + `len(self.children)`
             childNodes = [child]
             if isinstance(child, TagList):
+                #print "name = %s, len(child) is %s" % (child.name, `len(child)`)
                 childNodes = child
                 
             for anode in childNodes:
+                #print "anode.name = " + anode.name
                 childNode = anode.asXML(doc, strictMode)
                 if childNode:
                     hasValidChild = True
@@ -165,6 +176,58 @@ class TagList:
         newTag = self.tagClass(self.name, **self.args)
         newTag.fromXML(node, strictMode)
         self.append(newTag)
+        
+class Container(Tag):
+    def __init__(self, name, childTagName, childTagClass):
+        Tag.__init__(self, name)
+        self.childTags = TagList(childTagName, tagClass=childTagClass)
+        
+        self.children = [self.childTags]
+        
+    def append(self, item):
+        self.childTags.append(item)
+        
+    def extend(self, item):
+        self.childTags.extend(item)
+        
+    def sort(self, *args, **kwargs):
+        self.childTags.sort(*args, **kwargs)
+        
+    def reverse(self):
+        self.childTags.reverse()
+        
+    def index(self, *args, **kwargs):
+        self.childTags.reverse(*args, **kwargs)
+        
+    def insert(self, *args, **kwargs):
+        self.childTags.insert(*args, **kwargs)
+        
+    def count(self, *args, **kwargs):
+        self.childTags.count(*args, **kwargs)
+        
+    def remove(self, *args, **kwargs):
+        self.childTags.remove(*args, **kwargs)
+        
+    def pop(self, *args, **kwargs):
+        self.childTags.pop(*args, **kwargs)
+        
+    def __iter__(self):
+        return iter(self.childTags)
+        
+    def __len__(self):
+        return len(self.childTags)
+        
+    def __contains__(self, item):
+        return item in self.childTags
+        
+    def __getitem__(self, key):
+        return self.childTags[key]
+        
+    def __setitem__(self, key, value):
+        self.childTags[key] = value
+        
+    def __delitem__(self, key):
+        del self.childTags[key]
         
         
 class LangStringTag(Tag):
