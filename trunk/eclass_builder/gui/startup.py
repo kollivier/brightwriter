@@ -1,46 +1,46 @@
 import string, os, sys
-from wxPython.wx import *
+import wx
 import version
 
-class StartupDialog(wxDialog):
+class StartupDialog(wx.Dialog):
 	def __init__(self, parent):
 		point = parent.GetPositionTuple()
 		size = parent.GetSizeTuple()
-		wxDialog.__init__ (self, parent, -1, _("Welcome to EClass.Builder"),wxDefaultPosition, wxSize(460,160), wxDIALOG_MODAL|wxDEFAULT_DIALOG_STYLE)
+		wx.Dialog.__init__ (self, parent, -1, _("Welcome to EClass.Builder"),wx.DefaultPosition, wx.Size(460,160), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE)
 		height = 20
 		buttonstart = 90
 		fontsize = 22
-		if wxPlatform == "__WXMAC__":
+		if wx.Platform == "__WXMAC__":
 			buttonstart = 50
 			height = 25
 			fontsize = 28
 		self.parent = parent
-		myfont = wxFont(fontsize, wxMODERN, wxNORMAL, wxBOLD, False, "Arial")
-		self.lblWelcome = wxStaticText(self, -1, _("Welcome to EClass.Builder"))
+		myfont = wx.Font(fontsize, wx.MODERN, wx.NORMAL, wx.BOLD, False, "Arial")
+		self.lblWelcome = wx.StaticText(self, -1, _("Welcome to EClass.Builder"))
 		self.lblWelcome.SetFont(myfont)
-		self.lblWelcome.SetForegroundColour(wxNamedColour("blue"))
+		self.lblWelcome.SetForegroundColour(wx.NamedColour("blue"))
 
-		self.lblVersion = wxStaticText(self, -1, "Version " + version.asString())
+		self.lblVersion = wx.StaticText(self, -1, "Version " + version.asString())
 
-		self.chkShowThisDialog = wxCheckBox(self, -1, _("Don't show this dialog on startup."))
-		self.btnNew = wxButton(self, -1, _("New Project"))
-		self.btnOpen = wxButton(self, -1, _("Open Project"))
+		self.chkShowThisDialog = wx.CheckBox(self, -1, _("Don't show this dialog on startup."))
+		self.btnNew = wx.Button(self, -1, _("New Project"))
+		self.btnOpen = wx.Button(self, -1, _("Open Project"))
 		self.btnOpen.SetDefault()
-		self.btnTutorial = wxButton(self, -1, _("View Tutorial"))
+		self.btnTutorial = wx.Button(self, -1, _("View Tutorial"))
 
-		self.dialogsizer = wxBoxSizer(wxVERTICAL)
-		self.dialogsizer.Add(self.lblWelcome, 0, wxALL|wxALIGN_CENTER, 4)	
-		self.dialogsizer.Add(self.lblVersion, 0, wxALL|wxALIGN_CENTER, 4)	
-		self.dialogsizer.Add(self.chkShowThisDialog, 0, wxALL|wxALIGN_CENTER, 10)
-		self.boxsizer = wxBoxSizer(wxHORIZONTAL)
-		self.boxsizer.Add(self.btnNew, 0, wxALL | wxALIGN_CENTER, 10)
-		self.boxsizer.Add(self.btnOpen, 0, wxALL | wxALIGN_CENTER, 10)
-		self.boxsizer.Add(self.btnTutorial, 0, wxALL | wxALIGN_CENTER, 10)
-		self.dialogsizer.Add(self.boxsizer, 1, wxALIGN_CENTER)
+		self.dialogsizer = wx.BoxSizer(wx.VERTICAL)
+		self.dialogsizer.Add(self.lblWelcome, 0, wx.ALL|wx.ALIGN_CENTER, 4)	
+		self.dialogsizer.Add(self.lblVersion, 0, wx.ALL|wx.ALIGN_CENTER, 4)	
+		self.dialogsizer.Add(self.chkShowThisDialog, 0, wx.ALL|wx.ALIGN_CENTER, 10)
+		self.boxsizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.boxsizer.Add(self.btnNew, 0, wx.ALL | wx.ALIGN_CENTER, 10)
+		self.boxsizer.Add(self.btnOpen, 0, wx.ALL | wx.ALIGN_CENTER, 10)
+		self.boxsizer.Add(self.btnTutorial, 0, wx.ALL | wx.ALIGN_CENTER, 10)
+		self.dialogsizer.Add(self.boxsizer, 1, wx.ALIGN_CENTER)
 		self.SetAutoLayout(True)
 		self.SetSizerAndFit(self.dialogsizer)
 		self.Layout()
-		self.CentreOnParent(wxBOTH)
+		self.CentreOnParent(wx.BOTH)
 
 		EVT_BUTTON(self, self.btnNew.GetId(), self.OnNew)
 		EVT_BUTTON(self, self.btnOpen.GetId(), self.OnOpen)
