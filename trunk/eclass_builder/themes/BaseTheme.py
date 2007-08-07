@@ -5,7 +5,7 @@ import re
 import StringIO
 #import pre as re
 import string
-from wxPython.wx import *
+import wx
 import fileutils
 from htmlutils import *
 import plugins
@@ -64,8 +64,8 @@ class BaseHTMLPublisher:
 			#files.DeleteFiles(os.path.join(self.dir, "*.html"))
 			#files.DeleteFiles(os.path.join(self.dir, "pub", "*.*"))
 
-			if isinstance(self.parent, wxFrame):
-				self.progress = wxProgressDialog(_("Updating EClass"), _("Preparing to update EClass..."), self.parent.projectTree.GetCount() + 1, None, wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT)
+			if isinstance(self.parent, wx.Frame):
+				self.progress = wx.ProgressDialog(_("Updating EClass"), _("Preparing to update EClass..."), self.parent.projectTree.GetCount() + 1, None, wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_CAN_ABORT)
 			self.CopySupportFiles()
 			self.CreateTOC()
 			self.counter = 1
@@ -164,8 +164,8 @@ class BaseHTMLPublisher:
 		if self.progress:
 			keepgoing = self.progress.Update(self.counter, _("Updating page %(page)s") % {"page":node.content.metadata.name})
 		if not keepgoing:
-			result = wxMessageDialog(self.parent, "Are you sure you want to cancel publishing this EClass?", "Cancel Publishing?", wxYES_NO).ShowModal()
-			if result == wxID_NO:
+			result = wx.MessageDialog(self.parent, "Are you sure you want to cancel publishing this EClass?", "Cancel Publishing?", wx.YES_NO).ShowModal()
+			if result == wx.ID_NO:
 				self.cancelled = false
 				self.progress.Resume()
 			else:
