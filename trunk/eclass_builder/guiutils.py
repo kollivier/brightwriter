@@ -1,14 +1,14 @@
 import sys, os, string
 import settings
 import utils
-from wxPython.wx import *
+import wx
 try:
 	import win32api
 except:
 	pass
 
 def getOpenCommandForFilename(filename):
-	aFileType = wxTheMimeTypesManager.GetFileTypeFromExtension(os.path.splitext(filename)[1])
+	aFileType = wx.TheMimeTypesManager.GetFileTypeFromExtension(os.path.splitext(filename)[1])
 	if aFileType:
 		return aFileType.GetOpenCommand(filename)
 
@@ -17,12 +17,12 @@ def getOpenCommandForFilename(filename):
 def openInHTMLEditor(filename):
     htmleditor = settings.AppSettings["HTMLEditor"]
     if htmleditor == "":
-        wxMessageDialog(self, _("To edit the page, EClass needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wxOK).ShowModal()
+        wx.MessageDialog(self, _("To edit the page, EClass needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wx.OK).ShowModal()
     else:
         if not os.path.exists(filename):
             return 
             
-        if wxPlatform == "__WXMSW__":
+        if wx.Platform == "__WXMSW__":
             import win32api
             editor = "\"" + htmleditor + "\""
             if not string.find(string.lower(editor), "mozilla") == -1:
@@ -31,7 +31,7 @@ def openInHTMLEditor(filename):
                 
         else:
             editor = htmleditor 
-            if wxPlatform == "__WXMAC__":
+            if wx.Platform == "__WXMAC__":
                 editor = "open -a '" + editor + "'"
             path = editor + " \"" + filename + "\""
             os.system(path)
@@ -42,7 +42,7 @@ def sendCommandToApplication(filename, action="open", application=""):
 	if not os.path.exists(filename):
 		return ranCommand
 	
-	aFileType = wxTheMimeTypesManager.GetFileTypeFromExtension(os.path.splitext(filename)[1])
+	aFileType = wx.TheMimeTypesManager.GetFileTypeFromExtension(os.path.splitext(filename)[1])
 	if sys.platform == "win32":
 		filename = win32api.GetShortPathName(filename)
 	
@@ -74,14 +74,14 @@ def sendCommandToApplication(filename, action="open", application=""):
 		#command = unicode(command, "utf-8")
 		ranCommand = True
 		print `command`
-		wxExecute(command.encode("utf-8"))
+		wx.Execute(command.encode("utf-8"))
 	
 	return ranCommand
 
 def getAppDataDir():
 	dir = ""
-	if wxGetApp():
-		dir = wxStandardPaths.Get().GetUserDataDir()
+	if wx.GetApp():
+		dir = wx.StandardPaths.Get().GetUserDataDir()
 		if not os.path.exists(dir):
 			os.mkdir(dir)
 	
@@ -93,7 +93,7 @@ def getOldAppDataDir():
 	in place so that any old preferences can be moved to the data dir returned by StandardPaths.
 	"""
 	prefdir = ""
-	if wxPlatform == '__WXMSW__':
+	if wx.Platform == '__WXMSW__':
 		import _winreg as wreg
 		key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
 		prefdir = ""
@@ -112,7 +112,7 @@ def getOldAppDataDir():
 				os.mkdir(os.path.join(prefdir, "EClass"))
 			prefdir = os.path.join(prefdir, "EClass")
 
-	elif wxPlatform == '__WXMAC__':
+	elif wx.Platform == '__WXMAC__':
 		prefdir = os.path.join(os.path.expanduser("~"), "Library", "Preferences", "EClass")
 
 	else: #Assume we're UNIX-based
@@ -122,7 +122,7 @@ def getOldAppDataDir():
 
 def getDocumentsDir():
 	docsfolder = ""
-	if wxPlatform == '__WXMSW__':
+	if wx.Platform == '__WXMSW__':
 		try:
 			import _winreg as wreg
 			key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") 
@@ -132,7 +132,7 @@ def getDocumentsDir():
 		except:
 			key.Close()
 				
-	elif wxPlatform == '__WXMAC__':
+	elif wx.Platform == '__WXMAC__':
 		docsfolder = os.path.join(os.path.expanduser("~"),"Documents")
 	else:
 		docsfolder = os.path.expanduser("~")
@@ -143,33 +143,33 @@ def getDocumentsDir():
 	return docsfolder
 
 def getEClassProjectsDir():
-	if wxPlatform in ['__WXMAC__', '__WXMSW__']:
+	if wx.Platform in ['__WXMAC__', '__WXMSW__']:
 		return os.path.join(getDocumentsDir(), "EClass Projects")
 	else:
 		return os.path.join(getDocumentsDir(), "eclass_projects")
 
 def openFolderInGUI(folder):
-	if wxPlatform == "__WXMSW__":
+	if wx.Platform == "__WXMSW__":
 		win32api.ShellExecute(0, "open", folder, "", folder, 1)
-	elif wxPlatform == "__WXMAC__":
+	elif wx.Platform == "__WXMAC__":
 		result = os.popen("open " + string.replace(folder, " ", "\ "))
 		result.close()
 		
 def getOSProgramExt():
 	ext = "*"
-	if wxPlatform == "__WXMSW__":
+	if wx.Platform == "__WXMSW__":
 		ext = "exe"
-	elif wxPlatform == "__WXMAC__":
+	elif wx.Platform == "__WXMAC__":
 		ext = "app"
 	return ext 
 	
 def getOSApplicationsDir():
 	appdir = ""
-	if wxPlatform == "__WXMSW__":
+	if wx.Platform == "__WXMSW__":
 		appdir = "C:\Program Files"
-	elif wxPlatform == "__WXMAC__":
+	elif wx.Platform == "__WXMAC__":
 		appdir = "/Applications"
-	elif wxPlatform == "__WXGTK__":
+	elif wx.Platform == "__WXGTK__":
 		appdir = "/usr/bin"
 	   
 	return appdir
