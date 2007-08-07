@@ -169,7 +169,6 @@ class LOMetadata(Tag):
         self.technical = Technical()
         self.educational = Educational()
         self.rights = Rights()
-        
         # TODO: Add relation, annotation and classification support
         
         self.children = [self.general, self.lifecycle, self.metametadata, self.technical, self.educational, self.rights]
@@ -177,8 +176,8 @@ class LOMetadata(Tag):
 class Metadata(Tag):
     def __init__(self, name="metadata"):
         Tag.__init__(self, name)
-        self.schema=Tag("schema", text="IMS Content")
-        self.schemaversion=Tag("schemaversion", text="1.2.1")
+        self.schema=Tag("schema")
+        self.schemaversion=Tag("schemaversion")
         
         self.lom = LOMetadata()
         
@@ -189,76 +188,46 @@ class Item(Tag):
         Tag.__init__(self, name)
         self.title = Tag("title")
         self.items = TagList("item", tagClass=Item)
-        self.attrs = {}
+        self.metadata = Metadata()
         
-        self.children = [self.title, self.items]
+        self.children = [self.title, self.items, self.metadata]
         
+class File(Tag):
+    def __init__(self, name="file"):
+        Tag.__init__(self, name)
+        
+        self.metadata = Metadata()
+        
+        self.children = [self.metadata]
+
 class Organization(Item):
     def __init__(self, name="organization"):
         Item.__init__(self, name)
-        self.attrs = {}
         
-        self.children = [self.title, self.items]
-        
-class Organizations(Tag):
-    def __init__(self, name="organizations"):
+class Resource(Tag):
+    def __init__(self, name="resource"):
         Tag.__init__(self, name)
-        self.orgs = TagList("organization", tagClass=Organization)
-        self.attrs = {}
         
-        self.children = [self.orgs]
+        self.metadata = Metadata()
+        self.files = TagList("file", tagClass=File)
+        self.dependencies = TagList("dependency", tagClass=Tag)
         
-    def append(self, item):
-        self.orgs.append(item)
+        self.children = [self.metadata, self.files, self.dependencies]
         
-    def extend(self, item):
-        self.orgs.extend(item)
+class Organizations(Container):
+    def __init__(self, name="organizations"):
+        Container.__init__(self, name, "organization", Organization)
         
-    def sort(self, *args, **kwargs):
-        self.orgs.sort(*args, **kwargs)
-        
-    def reverse(self):
-        self.orgs.reverse()
-        
-    def index(self, *args, **kwargs):
-        self.orgs.reverse(*args, **kwargs)
-        
-    def insert(self, *args, **kwargs):
-        self.orgs.insert(*args, **kwargs)
-        
-    def count(self, *args, **kwargs):
-        self.orgs.count(*args, **kwargs)
-        
-    def remove(self, *args, **kwargs):
-        self.orgs.remove(*args, **kwargs)
-        
-    def pop(self, *args, **kwargs):
-        self.orgs.pop(*args, **kwargs)
-        
-    def __iter__(self):
-        return iter(self.orgs)
-        
-    def __len__(self):
-        return len(self.orgs)
-        
-    def __contains__(self, item):
-        return item in self.orgs
-        
-    def __getitem__(self, key):
-        return self.orgs[key]
-        
-    def __setitem__(self, key, value):
-        self.orgs[key] = value
-        
-    def __delitem__(self, key):
-        del self.orgs[key]
+class Resources(Container):
+    def __init__(self, name="resources"):
+        Container.__init__(self, name, "resource", Resource)
         
 class ContentPackage(Tag):
     def __init__(self, name="manifest"):
         Tag.__init__(self, name)
         self.metadata = Metadata()
         self.organizations = Organizations()
-        self.resources = Tag("resources")
+        self.resources = Resources()
         
         self.attrs["xmlns"] = "http://www.imsglobal.org/xsd/imscp_v1p1"
         self.attrs["xmlns:imsmd"] = "http://www.imsglobal.org/xsd/imsmd_v1p2"
@@ -413,6 +382,11 @@ class IMSContentPackageTests(unittest.TestCase):
         self.assertEquals(self.cp.organizations[0].items[0].items[0].attrs["identifier"], "ITEM2")
         self.assertEquals(self.cp.organizations[0].items[0].items[0].attrs["identifierref"], "RESOURCE2")
         self.assertEquals(self.cp.organizations[0].items[0].items[0].title.text, "Introduction 1")
+        
+        self.assertEquals(self.cp.resources[0].attrs["identifier"], "RESOURCE1")
+        self.assertEquals(self.cp.resources[0].attrs["type"], "webcontent")
+        self.assertEquals(self.cp.resources[0].attrs["href"], "lesson1.htm")
+        self.assertEquals(self.cp.resources[0].files[0].attrs["href"], "lesson1.htm")
         
     def testGeneralMetadata(self):
         self.cp.metadata.lom.general.title["en-US"] = "Hello World!"
