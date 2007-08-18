@@ -7,7 +7,6 @@ import sys
 import os
 import utils
 import settings
-import constants
 
 
 def getNumFiles(dirname, recurse=True):
