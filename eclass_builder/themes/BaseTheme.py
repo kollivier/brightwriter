@@ -54,7 +54,7 @@ class BaseHTMLPublisher:
 		
 		self.counter = 1
 		self.themedir = os.path.join(settings.AppDir, "themes", themename)
-		self.cancelled = false
+		self.cancelled = False
 
 	def Publish(self):
 		self.progress = None
@@ -166,7 +166,7 @@ class BaseHTMLPublisher:
 		if not keepgoing:
 			result = wx.MessageDialog(self.parent, "Are you sure you want to cancel publishing this EClass?", "Cancel Publishing?", wx.YES_NO).ShowModal()
 			if result == wx.ID_NO:
-				self.cancelled = false
+				self.cancelled = False
 				self.progress.Resume()
 			else:
 				self.cancelled = true
