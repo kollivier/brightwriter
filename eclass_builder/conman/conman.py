@@ -443,7 +443,7 @@ class ConMan (ConManData):
             filename = self.filename
         else:
             self.filename = filename
-            self.directory = os.path.split(filename)[0]
+            self.directory = os.path.dirname(filename)
         
         myxml = """<?xml version="1.0"?>
 <manifest identifier="%s" xmlns:imsmd="http://www.imsproject.org">
@@ -457,7 +457,9 @@ class ConMan (ConManData):
     <resources>%s
     </resources>
 </manifest>
-""" % (self.namespace + self.id, self._MetadataAsXML(), self.namespace + self.orgid, self.namespace + self.orgid, TextToXMLAttr(self.name), TextToXMLAttr(self.name), self._TOCAsXML(self.nodes[0]), self._ResourcesAsXML())        
+""" % (self.namespace + self.id, self._MetadataAsXML(), self.namespace + self.orgid, 
+            self.namespace + self.orgid, TextToXMLAttr(self.name), TextToXMLAttr(self.name), 
+            self._TOCAsXML(self.nodes[0]), self._ResourcesAsXML())        
         try:    
             self.settings.SaveAsXML(os.path.join(self.directory, "settings.xml"))
         except:
