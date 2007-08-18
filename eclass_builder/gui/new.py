@@ -17,6 +17,7 @@ class NewPubDialog(sc.SizedDialog):
 	def __init__(self, parent):
 		sc.SizedDialog.__init__ (self, parent, -1, _("New Project"), wx.Point(100,100), style=wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
+		self.eclassdir = None
 		pane = self.GetContentsPane()
 		pane.SetSizerType("form")
 		self.lblTitle = wx.StaticText(pane, -1, _("Name"))
@@ -52,14 +53,10 @@ class NewPubDialog(sc.SizedDialog):
 		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 	
 	def btnOKClicked(self, event):
-		settings.ProjectDir = self.parent.pub.directory = os.path.join(settings.AppSettings["CourseFolder"], utils.createSafeFilename(self.txtTitle.GetValue()))
-		#print self.parent.ProjectDir
+		self.eclassdir = os.path.join(settings.AppSettings["CourseFolder"], 
+		                        utils.createSafeFilename(self.txtTitle.GetValue()))
 
-		if not os.path.exists(settings.ProjectDir):
-			os.mkdir(settings.ProjectDir)
-			self.parent.pub.name = self.txtTitle.GetValue()
-			self.parent.pub.description = self.txtDescription.GetValue()
-			self.parent.pub.keywords = self.txtKeywords.GetValue()
+		if not os.path.exists(self.eclassdir):
 			self.EndModal(wx.ID_OK)
 		else:
 			wx.MessageDialog(self, _("A publication with this name already exists. Please choose another name."), _("Publication exists!"), wx.OK).ShowModal()

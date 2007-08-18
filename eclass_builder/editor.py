@@ -26,11 +26,7 @@ import time
 
 wx.SystemOptions.SetOptionInt("mac.textcontrol-use-mlte", 1)
 
-hasmozilla = True
-try:
-	from wxPython.mozilla import *
-except:
-	hasmozilla = False
+hasmozilla = False
 
 import settings
 settings.AppDir = rootdir
@@ -61,6 +57,7 @@ import guiutils
 import constants
 import mmedia
 import analyzer
+import eclass_convert
 
 # Import the gui dialogs. They used to be embedded in editor.py
 # so we will just import their contents for now to avoid conflicts.
@@ -68,7 +65,11 @@ import analyzer
 # examine the code to find module dependencies.
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
-import taskrunner
+
+try:
+    import taskrunner
+except:
+    pass
 
 from gui.theme_manager import *
 from gui.link_manager import *
@@ -109,7 +110,7 @@ ID_COPY = wx.NewId()
 ID_PASTE = wx.NewId()
 ID_PASTE_BELOW = wx.NewId()
 ID_PASTE_CHILD = wx.NewId()
-ID_EDIT_AUTHORS = wxNewId()
+ID_EDIT_AUTHORS = wx.NewId()
 ID_PROPS = wx.NewId()
 ID_NEW_CONTACT = wx.NewId()
 ID_TREE_ADD = wx.NewId()
@@ -139,7 +140,7 @@ ID_UPLOAD_PAGE = wx.NewId()
 ID_CONTACTS = wx.NewId()
 ID_ERRORLOG = wx.NewId()
 ID_ACTIVITY = wx.NewId()
-ID_FIND_IN_PROJECT = wxNewId()
+ID_FIND_IN_PROJECT = wx.NewId()
 
 from constants import *
 
@@ -177,13 +178,15 @@ class GUIFileCopyCallback:
 class MainFrame2(sc.SizedFrame): 
 	def __init__(self, parent, ID, title):
 		busy = wx.BusyCursor()
-		sc.SizedFrame.__init__(self, parent, ID, title, size=wxSize(780,580), 
+		sc.SizedFrame.__init__(self, parent, ID, title, size=(780,580), 
 		              style=wx.DEFAULT_FRAME_STYLE|wx.CLIP_CHILDREN)
 		
 		# the default encoding isn't correct for Mac.
 		if wx.Platform == "__WXMAC__":
 			wx.SetDefaultPyEncoding("utf-8")
 		
+		#wx.FRAME_EX_UNIFIED = 0x100
+		#self.SetExtraStyle(wx.FRAME_EX_UNIFIED)
 		self.isDirty = False
 		self.isNewCourse = False
 		self.CurrentItem = None #current node
@@ -232,7 +235,7 @@ class MainFrame2(sc.SizedFrame):
 		if not os.path.exists(settings.AppSettings["CourseFolder"]):
 			os.makedirs(settings.AppSettings["CourseFolder"])
 
-		self.statusBar = self.CreateStatusBar()
+		self.statusBar = None #self.CreateStatusBar()
 
 		if sys.platform.startswith("win"):
 			self.SetIcon(wx.Icon(os.path.join(settings.AppDir, "icons", "eclass_builder.ico"), wx.BITMAP_TYPE_ICO))
@@ -377,7 +380,8 @@ class MainFrame2(sc.SizedFrame):
 		
 		pane = self.GetContentsPane()
 		#split the window into two - Treeview on one side, browser on the other
-		self.splitter1 = wx.SplitterWindow(pane, -1)
+		self.splitter1 = wx.SplitterWindow(pane, -1, style=wx.NO_BORDER)
+		self.splitter1.SetSashSize(7)
 		self.splitter1.SetSizerProps({"expand":True, "proportion":1})
 
 		# Tree Control for the XML hierachy
@@ -393,30 +397,34 @@ class MainFrame2(sc.SizedFrame):
 		accelerators = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_TREE_REMOVE)])
 		self.SetAcceleratorTable(accelerators)
 
-		self.previewbook = wx.Notebook(self.splitter1, -1, style=wx.CLIP_CHILDREN)
-		
-		self.splitter1.SplitVertically(self.projectTree, self.previewbook, 200)
+		#self.previewbook = wx.Notebook(self.splitter1, -1, style=wx.CLIP_CHILDREN)
 
 		# TODO: This really needs fixed once webkit issues are worked out
 		self.browsers = {}
 		browsers = wxbrowser.browserlist
-		if len(browsers) == 1 and browsers[0] == "htmlwindow":
-			self.browsers["htmlwin"] = self.browser = wx.HtmlWindow(self.previewbook, -1)
-			self.previewbook.AddPage(self.browser, _("HTML Preview"))
-		else:
-			if "htmlwindow" in browsers:
-				browsers.remove("htmlwindow")
-			default = "mozilla"
+		#if len(browsers) == 1 and browsers[0] == "htmlwindow":
+		#	self.browsers["htmlwin"] = self.browser = wx.HtmlWindow(self.previewbook, -1)
+		#	self.previewbook.AddPage(self.browser, _("HTML Preview"))
+		#else:
+		if 1:
+			#if "htmlwindow" in browsers:
+			#	browsers.remove("htmlwindow")
+			default = "htmlwindow"
 			if sys.platform.startswith("win") and "ie" in browsers:
 				default = "ie"
 			elif sys.platform.startswith("darwin") and "webkit" in browsers:
 				default = "webkit"
-			
-			for browser in browsers:
+			elif "mozilla" in browsers:
+				default = "mozilla"
+			self.browser = wxbrowser.wxBrowser(self.splitter1, -1, default)
+			self.browsers[default] = self.browser
+			#for browser in browsers:
 				#panel = sc.SizedPanel(self.previewbook, -1)
-				self.browser = self.browsers[browser] = wxbrowser.wxBrowser(self.previewbook, -1, browser)
+				#self.browser = self.browsers[browser] = wxbrowser.wxBrowser(self.previewbook, -1, browser)
 				#self.browser.browser.SetSizerProps({"expand": True, "proportion":1})
-				self.previewbook.AddPage(self.browser.browser, self.browsers[browser].GetBrowserName())
+				#self.previewbook.AddPage(self.browser.browser, self.browsers[browser].GetBrowserName())
+		
+		self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
 		wx.EVT_MENU(self, ID_NEW, self.NewProject)
 		wx.EVT_MENU(self, ID_SAVE, self.SaveProject)
@@ -772,7 +780,7 @@ class MainFrame2(sc.SizedFrame):
 		"""
 		Routine to create a new project. 
 		"""
-		if self.pub:
+		if self.pub and self.isDirty:
 			answer = self.CheckSave()
 			if answer == wx.ID_YES:
 				self.SaveProject(event)
@@ -787,17 +795,31 @@ class MainFrame2(sc.SizedFrame):
 			return
 		else:
 			self.pub = conman.ConMan()
-			result = NewPubDialog(self).ShowModal()
+			newdialog = NewPubDialog(self)
+			result = newdialog.ShowModal()
 			if result == wx.ID_OK:
+				settings.ProjectDir = self.pub.directory = newdialog.eclassdir
+				import eclass
+				eclass.createEClass(settings.ProjectDir)
+				
+				self.pub.filename = os.path.join(self.pub.directory, "imsmanifest.xml")
+				self.pub.name = newdialog.txtTitle.GetValue()
+				self.pub.description = newdialog.txtDescription.GetValue()
+				self.pub.keywords = newdialog.txtKeywords.GetValue()
+				
+				self.CurrentItem = self.pub.NewPub(self.pub.name, "English", settings.ProjectDir)
+				
 				self.isNewCourse = True
-				self.LoadEClass(self.pub.filename)
 				self.AddNewEClassPage(None, self.pub.name, True)
+				self.pub.SaveAsXML(self.pub.filename)
+				self.LoadEClass(self.pub.filename)
 
 				self.SaveProject(event)	 
 				publisher = self.currentTheme.HTMLPublisher(self)
 				publisher.CopySupportFiles()
 				publisher.CreateTOC()
 				self.SwitchMenus(True)
+			newdialog.Destroy()
 	
 	def TimeToQuit(self, event):
 		self.ShutDown(event)
@@ -875,18 +897,7 @@ class MainFrame2(sc.SizedFrame):
 			        
 				os.remove(dialog.GetPath())
 		
-			myzip = zipfile.ZipFile(zipname, "w")
-			import utils.zip
-			utils.zip.dirToZipFile("", myzip, settings.ProjectDir, excludeFiles=["imsmanifest.xml"], 
-			                excludeDirs=["installers", "cgi-bin"], ignoreHidden=True)
-			
-			handle, imsfile = tempfile.mkstemp()
-			os.close(handle)
-			oldfile = self.pub.filename
-			self.pub.SaveAsXML(imsfile, exporting=True)
-			self.pub.filename = oldfile
-			myzip.write(imsfile, "imsmanifest.xml")
-			myzip.close()
+			self.pub.ExportToZIP(zipname)
 			os.rename(zipname, dialog.GetPath())
 
 		wx.MessageBox("Finished exporting!")		
@@ -1040,8 +1051,8 @@ class MainFrame2(sc.SizedFrame):
 		busy = wx.BusyCursor()
 		wxYield()
 		try:
-			self.CreateDocumancerBook()
-			self.CreateDevHelpBook()
+			#self.CreateDocumancerBook()
+			#self.CreateDevHelpBook()
 			utils.CreateJoustJavascript(self.pub)
 			index_config_file = os.path.join(settings.ProjectDir, "index_settings.cfg")
 			# if an index settings file doesn't exist, create one with some common defaults
@@ -1111,8 +1122,8 @@ class MainFrame2(sc.SizedFrame):
 				self.isDirty = False
 			f.Destroy()
 		
-		self.CreateDocumancerBook()
-		self.CreateDevHelpBook()
+		#self.CreateDocumancerBook()
+		#self.CreateDevHelpBook()
 
 		try:
 			self.pub.SaveAsXML(filename)
@@ -1235,7 +1246,7 @@ class MainFrame2(sc.SizedFrame):
 							self.EditFile(None)
 							self.UpdateContents()
 						else:
-							self.CurrentItem.parent.children.remove(self.CurrentItem)
+							print "Why is create new file returning false?" #self.CurrentItem.parent.children.remove(self.CurrentItem)
 					except:
 						message = constants.createPageErrorMsg
 						self.log.write(message)
@@ -1388,7 +1399,9 @@ class MainFrame2(sc.SizedFrame):
 		if not os.path.exists(filename):
 			wx.MessageBox(_("Could not find EClass file: %s") % filename)
 			return
-
+			
+		converter = eclass_convert.EClassIMSConverter(filename)
+        
 		self.pub = conman.ConMan()
 		result = self.pub.LoadFromXML(filename)
 		
@@ -1399,11 +1412,6 @@ class MainFrame2(sc.SizedFrame):
 			self.pub.directory = settings.ProjectDir = os.path.dirname(filename)
 			# TODO: We should store the project as a global rather than its settings
 			settings.ProjectSettings = self.pub.settings
-			global eclassdirs
-			for dir in eclassdirs:
-				subdir = os.path.join(self.pub.directory, dir)
-				if not os.path.exists(subdir):
-					os.mkdir(subdir)
 			
 			pylucenedir = os.path.join(self.pub.directory, "index.pylucene")
 			if os.path.exists(pylucenedir):
