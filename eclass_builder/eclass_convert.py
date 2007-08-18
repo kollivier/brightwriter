@@ -3,12 +3,23 @@ import sys, os, shutil
 import utils
 import unittest
 import conman
+import plugins
 import ims
 import ims.contentpackage
+import settings
+
+if not os.path.exists(settings.AppDir):
+    rootdir = os.path.abspath(sys.path[0])
+    # os.path.dirname will chop the last dir if the path is to a directory
+    if not os.path.isdir(rootdir):
+        rootdir = os.path.dirname(rootdir)
+        
+    settings.AppDir = rootdir
 
 class EClassIMSConverter:
     def __init__(self, filename):
         self.filename=filename
+        self.id_namespace = u"URN:IMS-PLIRID-V0:"
         
     def IsEClass(self):
         myfile = utils.openFile(self.filename)
@@ -23,9 +34,9 @@ class EClassIMSConverter:
         eclasspub.ExportToZIP(backupfile)
         
     def ConvertToIMSContentPackage(self, language="en-US"):
+        plugins.LoadPlugins()
         eclasspub = conman.ConMan()
         eclasspub.LoadFromXML(self.filename)
-        print eclasspub.name
         
         imspackage = ims.contentpackage.ContentPackage()
         imspackage.metadata.lom.general.title[language] = eclasspub.name
@@ -35,45 +46,66 @@ class EClassIMSConverter:
             imspackage.metadata.lom.general.keyword[language] = eclasspub.keywords
         
         imspackage.organizations.append(ims.contentpackage.Organization())
+        imspackage.organizations[0].attrs["identifier"] = self.id_namespace + eclasspub.orgid
         newitems = self._convertEClassNodes(eclasspub.nodes, language)
         for item in newitems:
             imspackage.organizations[0].items.append(item)
             
-        newresources = self._convertEClassResources(eclasspub.content)
+        newresources = self._convertEClassResources(eclasspub.content, language)
         for res in newresources:
             imspackage.resources.append(res)
-        
-        print "Num items = " + `len(imspackage.organizations[0].items)`
         
         return imspackage
         
     def _convertEClassMetadata(self, node, imsnode, language):
-        if not node.content.metadata.description == "":
-            imsnode.metadata.lom.general.description[language] = node.content.metadata.description
-        if not node.content.metadata.keywords == "":
-            imsnode.metadata.lom.general.keyword[language] = node.content.metadata.keywords
+        if not node.metadata.description == "":
+            imsnode.metadata.lom.general.description[language] = node.metadata.description
+        if not node.metadata.keywords == "":
+            imsnode.metadata.lom.general.keyword[language] = node.metadata.keywords
         
-        if not node.content.metadata.lifecycle.version == "":
-            imsnode.metadata.lom.lifecycle.version[language] = node.content.metadata.lifecycle.version
+        if not node.metadata.lifecycle.version == "":
+            imsnode.metadata.lom.lifecycle.version[language] = node.metadata.lifecycle.version
         
-        if not node.content.metadata.lifecycle.status == "": 
+        if not node.metadata.lifecycle.status == "": 
             imsnode.metadata.lom.lifecycle.status.source["x-none"] = "LOMv1.0" 
-            imsnode.metadata.lom.lifecycle.status.value[language] = node.content.metadata.lifecycle.status
+            imsnode.metadata.lom.lifecycle.status.value[language] = node.metadata.lifecycle.status
         
-        for contrib in node.content.metadata.lifecycle.contributors:
+        for contrib in node.metadata.lifecycle.contributors:
             newcontrib = ims.contentpackage.Contributor()
             newcontrib.role.source["x-none"] = "LOMv1.0"
             newcontrib.role.value[language] = contrib.role
             newcontrib.date.datetime.text = contrib.date
-            newcontrib.centity.vcard = contrib.entity.asString()
+            newcontrib.centity.vcard.text = contrib.entity.asString()
+            imsnode.metadata.lom.lifecycle.contributors.append(newcontrib)
             
-    def _convertEClassResources(self, resources):
+        if not node.metadata.rights.description == "":
+            imsnode.metadata.lom.rights.description[language] = node.metadata.rights.description            
+            
+    def _convertEClassResources(self, resources, language):
         imsresources = []
         for resource in resources:
             imsresource = ims.contentpackage.Resource()
             imsresource.attrs["type"] = resource.type
-            imsresource.attrs["href"] = resource.filename
-            imsresource.attrs["identifier"] = resource.id
+            imsresource.attrs["identifier"] = self.id_namespace + resource.id
+            self._convertEClassMetadata(resource, imsresource, language)
+            
+            # Since only EClass can read The EClass Page (ecp) format, 
+            # The main file reference should be the html file it produces
+            # EClass will check if there's an EClass page and use that if so.
+            if os.path.splitext(resource.filename)[1] == ".ecp":
+                plugin = plugins.GetPluginForFilename(resource.filename)
+                publisher = plugin.HTMLPublisher()
+                filelink = publisher.GetFileLink(resource.filename)
+                
+                imsresource.attrs["href"] = filelink
+                
+                imsfile = ims.contentpackage.File()
+                imsfile.attrs["href"] = filelink
+                imsresource.files.append(imsfile)
+            
+            else:
+                imsresource.attrs["href"] = resource.filename
+            
             
             # According to the IMS standard, the resource's href must also
             # be listed as a file reference.
@@ -90,10 +122,9 @@ class EClassIMSConverter:
         for node in nodes:
             #print "newitem name is " + node.content.metadata.name
             newitem = ims.contentpackage.Item()
-            newitem.attrs["identifier"] = node.id
-            newitem.attrs["identifierref"] = node.content.id
+            newitem.attrs["identifier"] = self.id_namespace + node.id
+            newitem.attrs["identifierref"] = self.id_namespace + node.content.id
             newitem.title.text = node.content.metadata.name
-            self._convertEClassMetadata(node, newitem, language)
             
             if len(node.children) > 0:
                 newchildren = self._convertEClassNodes(node.children, language)
@@ -124,13 +155,35 @@ class EClassIMSConverterTests(unittest.TestCase):
         converter.BackupEClass(zipfile)
         self.assert_(os.path.exists(zipfile))
         
-        imspackage = converter.ConvertToIMSContentPackage()
-        imspackage.saveAsXML(os.path.expanduser("~/imsmanifest.xml"))
+        lang="en-US"
+        imspackage = converter.ConvertToIMSContentPackage(lang)
+        self.assertEqual(imspackage.metadata.lom.general.title[lang], "12 Steps of Instructional Design")
+        self.assertEqual(imspackage.organizations[0].items[0].title.text, "12 Steps of Instructional Design")
+        #imspackage.saveAsXML(os.path.expanduser("~/imsmanifest.xml"))
         
+    def testConvertEClassMetadata(self):
+        filename = os.path.join(self.filesRootDir, "Metadata", "imsmanifest.xml")
+        converter = EClassIMSConverter(filename)
+        self.assert_(converter.IsEClass())
+        
+        lang="en-US"
+        imspackage = converter.ConvertToIMSContentPackage(lang)
+        #elf.assertEqual(imspackage.metadata.lom.general.title[lang], "12 Steps of Instructional Design")
+        #self.assertEqual(imspackage.organizations[0].items[0].title.text, "12 Steps of Instructional Design")
+        imspackage.saveAsXML(os.path.expanduser("~/imsmanifest.xml"))
         
 
 def getTestSuite():
     return unittest.makeSuite(EClassIMSConverterTests)
 
 if __name__ == '__main__':
+    localedir = os.path.join(rootdir, 'locale')
+    import gettext
+    gettext.install('eclass', localedir)
+    lang_dict = {
+			"en": gettext.translation('eclass', localedir, languages=['en']), 
+			"es": gettext.translation('eclass', localedir, languages=['es']),
+			"fr": gettext.translation('eclass', localedir, languages=['fr'])
+			}
+			
     unittest.main()
