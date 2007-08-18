@@ -42,10 +42,10 @@ class StartupDialog(wx.Dialog):
 		self.Layout()
 		self.CentreOnParent(wx.BOTH)
 
-		EVT_BUTTON(self, self.btnNew.GetId(), self.OnNew)
-		EVT_BUTTON(self, self.btnOpen.GetId(), self.OnOpen)
-		EVT_BUTTON(self, self.btnTutorial.GetId(), self.OnTutorial)
-		EVT_CHECKBOX(self, self.chkShowThisDialog.GetId(), self.OnCheck)
+		wx.EVT_BUTTON(self, self.btnNew.GetId(), self.OnNew)
+		wx.EVT_BUTTON(self, self.btnOpen.GetId(), self.OnOpen)
+		wx.EVT_BUTTON(self, self.btnTutorial.GetId(), self.OnTutorial)
+		wx.EVT_CHECKBOX(self, self.chkShowThisDialog.GetId(), self.OnCheck)
 
 	def OnNew(self, event):
 		self.EndModal(0)
