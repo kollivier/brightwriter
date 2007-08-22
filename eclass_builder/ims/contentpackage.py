@@ -237,6 +237,8 @@ class ContentPackage(Tag):
         
         self.children = [self.metadata, self.organizations, self.resources]
         
+        self.clearDirtyBit()
+        
     def saveAsXML(self, filename, strictMode=False):
         doc = xml.dom.minidom.Document()
         
@@ -254,6 +256,8 @@ class ContentPackage(Tag):
         doc = minidom.parse(filename)
         
         self.fromXML(doc.getElementsByTagName(self.name)[0], strictMode)
+        # Obviously a load shouldn't set the publication as needing saved
+        self.clearDirtyBit()
 
 import unittest
 
@@ -448,6 +452,42 @@ class IMSContentPackageTests(unittest.TestCase):
         self.assert_(os.path.exists("./imsmanifest.xml"))
         data = open("./imsmanifest.xml").read().decode("utf-8")
         self.assert_(data.find(u"&quot;Milk&quot; &amp; cookies &gt; apples &lt; bananas") != -1)
+        
+    def testDirtyBit(self):
+        self.assert_(not self.cp.isDirty())
+        
+        filename = os.path.join("..", "testFiles", "cpv1p1p4cp","exmpldocs", "Full_Metadata", "imsmanifest.xml")
+        if not os.path.exists(filename):
+            print "Filename not found. Have you downloaded and installed the IMS Content Packaging examples?"
+            return
+            
+        self.cp.loadFromXML(filename)
+        self.assert_(not self.cp.isDirty())
+        
+        # Tag test
+        self.cp.metadata.lom.technical.formats[0].text = "Hello"
+        self.assert_(self.cp.isDirty())
+        self.cp.clearDirtyBit()
+        self.assert_(not self.cp.isDirty())
+        
+        # LangString test
+        self.cp.metadata.lom.lifecycle.version["en-US"] = "1.0"
+        self.assert_(self.cp.isDirty())
+        self.cp.clearDirtyBit()
+        self.assert_(not self.cp.isDirty())
+        
+        # Container test
+        org = Organization()
+        self.cp.organizations.append(org)
+        self.assert_(self.cp.isDirty())
+        self.cp.clearDirtyBit()
+        self.assert_(not self.cp.isDirty())
+        
+        contributor = Contributor()        
+        self.cp.metadata.lom.lifecycle.contributors.append(contributor)
+        self.assert_(self.cp.isDirty())
+        self.cp.clearDirtyBit()
+        self.assert_(not self.cp.isDirty())
         
     def testStrictMode(self):
         error = False

@@ -35,6 +35,10 @@ class Tag:
         self.attrs = {}
         if attrs:
             self.attrs = attrs
+            
+        # isDirty bit exists to make life easy when determining when a project is in need
+        # of being saved.
+        self._isDirty = False
         
         self.maxlength = maxlength
         
@@ -44,6 +48,30 @@ class Tag:
         # If a tag isn't required to be in the output, let's only create it 
         # if it has attributes, a value, or children set.
         self.required = False
+    
+    def __setattr__(self, name, value):
+        if name.find("_") != 0: # make sure changing private vars don't set the bit
+            self._isDirty = True
+        
+        self.__dict__[name] = value
+        
+    def isDirty(self):
+        if self._isDirty:
+            return True
+            
+        for child in self.children:
+            if child.isDirty():
+                return True
+                
+        return False
+    
+    def clearDirtyBit(self):
+        """
+        Recursively reset the dirty bit on all tags.
+        """
+        self._isDirty = False
+        for child in self.children:
+            child.clearDirtyBit()
         
     def validate(self):
         for child in self.children:
@@ -126,6 +154,17 @@ class TagList:
         self.tagClass = tagClass
         self.tags = []
         self.args = kwargs
+    
+    def clearDirtyBit(self):
+        for tag in self.tags:
+            tag.clearDirtyBit()
+    
+    def isDirty(self):
+        for tag in self.tags:
+            if tag.isDirty():
+                return True
+                
+        return False
     
     def append(self, item):
         self.tags.append(item)
@@ -241,6 +280,7 @@ class LangStringTag(Tag):
         return self.strings[key]
         
     def __setitem__(self, key, value):
+        self._isDirty = True
         self.strings[key] = value
         
     def __delitem__(self, key):
