@@ -228,6 +228,7 @@ class ContentPackage(Tag):
         self.metadata = Metadata()
         self.organizations = Organizations()
         self.resources = Resources()
+        self.filename = None
         
         self.attrs["xmlns"] = "http://www.imsglobal.org/xsd/imscp_v1p1"
         self.attrs["xmlns:imsmd"] = "http://www.imsglobal.org/xsd/imsmd_v1p2"
@@ -239,7 +240,9 @@ class ContentPackage(Tag):
         
         self.clearDirtyBit()
         
-    def saveAsXML(self, filename, strictMode=False):
+    def saveAsXML(self, filename=None, strictMode=False):
+        if not filename:
+            filename = self.filename
         doc = xml.dom.minidom.Document()
         
         doc.appendChild(self.asXML(doc, strictMode))
@@ -253,6 +256,7 @@ class ContentPackage(Tag):
 
     def loadFromXML(self, filename, strictMode=False):
         assert(os.path.exists(filename))
+        self.filename = filename
         doc = minidom.parse(filename)
         
         self.fromXML(doc.getElementsByTagName(self.name)[0], strictMode)
