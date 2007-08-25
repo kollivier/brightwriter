@@ -39,6 +39,8 @@ import conman.xml_settings as xml_settings
 import conman.vcard as vcard
 from convert.PDF import PDFPublisher
 import wxbrowser
+import ims
+import ims.contentpackage
 
 hasLucene = False
 try:
@@ -191,7 +193,7 @@ class MainFrame2(sc.SizedFrame):
         self.isNewCourse = False
         self.CurrentItem = None #current node
         self.CurrentTreeItem = None
-        self.pub = conman.ConMan()
+        self.imscp = ims.contentpackage.ContentPackage() 
         #dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
         self.dirtyNodes = []
 
@@ -780,44 +782,46 @@ class MainFrame2(sc.SizedFrame):
         """
         Routine to create a new project. 
         """
-        if self.pub and self.isDirty:
+        if self.imscp and self.imscp.isDirty:
             answer = self.CheckSave()
             if answer == wx.ID_YES:
                 self.SaveProject(event)
             elif answer == wx.ID_CANCEL:
                 return
-            else:
-                self.isDirty = False
+            #else:
+            #    self.isDirty = False
 
         defaultdir = ""
         if settings.AppSettings["CourseFolder"] == "" or not os.path.exists(settings.AppSettings["CourseFolder"]):
             msg = wx.MessageBox(_("You need to specify a folder to store your course packages. To do so, select Options->Preferences from the main menu."),_("Course Folder not specified"))
             return
         else:
-            self.pub = conman.ConMan()
+            self.imscp = ims.contentpackage.ContentPackage() # conman.ConMan()
             newdialog = NewPubDialog(self)
             result = newdialog.ShowModal()
             if result == wx.ID_OK:
-                settings.ProjectDir = self.pub.directory = newdialog.eclassdir
+                settings.ProjectDir = newdialog.eclassdir
                 import eclass
                 eclass.createEClass(settings.ProjectDir)
                 
-                self.pub.filename = os.path.join(self.pub.directory, "imsmanifest.xml")
-                self.pub.name = newdialog.txtTitle.GetValue()
-                self.pub.description = newdialog.txtDescription.GetValue()
-                self.pub.keywords = newdialog.txtKeywords.GetValue()
+                filename = os.path.join(self.pub.directory, "imsmanifest.xml")
+                self.imscp.metadata.lom.general.title = newdialog.txtTitle.GetValue()
+                self.imscp.metadata.lom.general.description = newdialog.txtDescription.GetValue()
+                self.imscp.metadata.lom.general.keyword = newdialog.txtKeywords.GetValue()
                 
-                self.CurrentItem = self.pub.NewPub(self.pub.name, "English", settings.ProjectDir)
+                self.imscp.organizations.append(ims.contentpackage.Organization())
+                newpage = self.AddNewEClassPage(None, self.pub.name, True)
+                #self.CurrentItem = self.pub.NewPub(self.pub.name, "English", settings.ProjectDir)
                 
-                self.isNewCourse = True
-                self.AddNewEClassPage(None, self.pub.name, True)
-                self.pub.SaveAsXML(self.pub.filename)
+                #self.isNewCourse = True
+                if newpage: 
+                    self.imscp.saveAsXML(filename)
                 self.LoadEClass(self.pub.filename)
 
-                self.SaveProject(event)  
-                publisher = self.currentTheme.HTMLPublisher(self)
-                publisher.CopySupportFiles()
-                publisher.CreateTOC()
+                #self.SaveProject(event)  
+                #publisher = self.currentTheme.HTMLPublisher(self)
+                #publisher.CopySupportFiles()
+                #publisher.CreateTOC()
                 self.SwitchMenus(True)
             newdialog.Destroy()
     
@@ -1207,28 +1211,27 @@ class MainFrame2(sc.SizedFrame):
                 message = constants.createPageErrorMsg
                 self.log.write(message)
                 wx.MessageBox(message + constants.errorInfoMsg)
+                
+    def AddIMSResourceToTree(self, imsresource):
+        pass
     
-    def AddNewEClassPage(self, event, name="", isroot=False):
-        if self.CurrentItem and self.projectTree.IsSelected(self.CurrentTreeItem) or self.isNewCourse:
-            dialog = NewPageDialog(self)
-            if name != "":
-                dialog.txtTitle.SetValue(name)
+    def CreateIMSResource(self, event, name="", isroot=False):
+        dialog = NewPageDialog(self)
+        if name != "":
+            dialog.txtTitle.SetValue(name)
 
-            if dialog.ShowModal() == wx.ID_OK:
-                pluginName = dialog.cmbType.GetStringSelection()
-                plugin = plugins.GetPlugin(pluginName)
-                if plugin and self.CurrentItem and self.CurrentTreeItem:
-                    if not isroot:
-                        parent = self.CurrentTreeItem
-                        newnode = self.pub.AddChild("", "")
-                    else:
-                        parent = None
-                        newnode = self.CurrentItem
-                    self.CurrentItem = newnode
-                    newnode.content.metadata.name = dialog.txtTitle.GetValue()
-                    newnode.content.filename = os.path.join(plugin.plugin_info["Directory"], dialog.txtFilename.GetValue())
-                    print "filename is: " + newnode.content.filename
-                    
+        if dialog.ShowModal() == wx.ID_OK:
+            pluginName = dialog.cmbType.GetStringSelection()
+            plugin = plugins.GetPlugin(pluginName)
+            if plugin:
+                
+                filename = os.path.join(plugin.plugin_info["Directory"], dialog.txtFilename.GetValue())
+            
+                newresource = ims.contentpackage.Resource()
+                newresource.metadata.lom.general.name = dialog.txtTitle.GetValue()
+                newresource.attrs["href"] = filename
+                
+                
                     
                     try:
                         file = plugin.CreateNewFile(newnode.content.metadata.name, os.path.join(settings.ProjectDir, newnode.content.filename))
