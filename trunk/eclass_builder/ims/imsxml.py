@@ -94,7 +94,7 @@ class Tag:
         
         for childNode in node.childNodes:
             if childNode.nodeType == childNode.TEXT_NODE:
-                self.text = childNode.nodeValue
+                self.text = childNode.nodeValue.strip()
             elif childNode.nodeType == childNode.ELEMENT_NODE:
                 for child in self.children:
                     if childNode.nodeName == child.name:
