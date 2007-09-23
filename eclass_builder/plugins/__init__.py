@@ -47,7 +47,12 @@ def GetExtensionsForPlugin(name):
         return plugin.plugin_info["Extension"]
 
     return []
-    
+
+def GetPublisherForFilename(filename):
+    publisher = None
+    plugin = GetPluginForFilename(filename)
+    publisher = plugin.HTMLPublisher()
+    return publisher
     
 # base plugin data types
 
