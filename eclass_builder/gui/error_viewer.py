@@ -28,6 +28,7 @@ class ErrorLogViewer(sc.SizedDialog):
 		self.listCtrl.InsertColumn(1, _("Error Message"))
 		self.listCtrl.SetColumnWidth(0, 100)
 		self.listCtrl.SetColumnWidth(1, 280)
+		self.SetMaxSize((-1, 700))
 
 		btnpane = sc.SizedPanel(pane, -1)
 		btnpane.SetSizerType("horizontal")
