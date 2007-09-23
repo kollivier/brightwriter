@@ -39,6 +39,7 @@ class EClassIMSConverter:
         eclasspub.LoadFromXML(self.filename)
         
         imspackage = ims.contentpackage.ContentPackage()
+        imspackage.filename = self.filename
         imspackage.metadata.lom.general.title[language] = eclasspub.name
         if not eclasspub.description == "":
             imspackage.metadata.lom.general.description[language] = eclasspub.description

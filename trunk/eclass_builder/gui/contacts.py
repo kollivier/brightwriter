@@ -7,6 +7,7 @@ from conman import vcard
 import utils
 import fileutils
 import settings
+import appdata
 
 class ContactsDialog(sc.SizedDialog):
 	def __init__(self, parent):
@@ -43,17 +44,17 @@ class ContactsDialog(sc.SizedDialog):
 
 	def LoadContacts(self):
 		self.lstContacts.Clear()
-		for name in self.parent.vcardlist.keys():
+		for name in appdata.vcards.keys():
 			if not string.strip(name) == "":
-				self.lstContacts.Append(name, self.parent.vcardlist[name])
+				self.lstContacts.Append(name, appdata.vcards[name])
 
 	def OnAdd(self, event):
 		thisvcard = vcard.VCard()
 		editor = ContactEditor(self, thisvcard)
 		if editor.ShowModal() == wx.ID_OK:
 			thisname = editor.vcard.fname.value
-			self.parent.vcardlist[thisname] = editor.vcard
-			self.lstContacts.Append(thisname, self.parent.vcardlist[thisname])
+			appdata.vcards[thisname] = editor.vcard
+			self.lstContacts.Append(thisname, appdata.vcards[thisname])
 
 	def OnImport(self, event):
 		dialog = wx.FileDialog(self, _("Choose a vCard"), "", "", 
@@ -77,7 +78,7 @@ class ContactsDialog(sc.SizedDialog):
 						myvcard.fname.value = myvcard.fname.value + myvcard.name.middleName + " "
 					myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
 				
-				self.parent.vcardlist[newvcard.fname.value] = newvcard
+				appdata.vcards[newvcard.fname.value] = newvcard
 				self.lstContacts.Append(newvcard.fname.value, newvcard)
 			except:
 				message = _("The VCard %(filename)s could not be imported.") % {"filename": dialog.GetFilename()}
@@ -96,8 +97,8 @@ class ContactsDialog(sc.SizedDialog):
 		if editor.ShowModal() == wx.ID_OK:
 			thisname = editor.vcard.fname.value
 			if name != thisname:
-				self.parent.vcardlist.pop(name)
-			self.parent.vcardlist[thisname] = editor.vcard
+				appdata.vcards.pop(name)
+			appdata.vcards[thisname] = editor.vcard
 			self.lstContacts.SetClientData(self.lstContacts.GetSelection(), editor.vcard)
 		editor.Destroy()
 
@@ -115,7 +116,7 @@ class ContactsDialog(sc.SizedDialog):
 				wx.MessageBox(message)
 				return
 
-			del self.parent.vcardlist[thisvcard.fname.value]
+			del appdata.vcards[thisvcard.fname.value]
 			self.lstContacts.Delete(self.lstContacts.GetSelection())
 
 class ContactEditor(sc.SizedDialog):

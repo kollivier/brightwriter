@@ -40,6 +40,7 @@ import constants
 import mmedia
 import analyzer
 import eclass_convert
+import appdata
 
 # Import the gui dialogs. They used to be embedded in editor.py
 # so we will just import their contents for now to avoid conflicts.
@@ -191,29 +192,6 @@ class MainFrame2(sc.SizedFrame):
 
         import errors
         self.log = errors.appErrorLog
-
-        settings.PrefDir = guiutils.getAppDataDir()
-        oldprefdir = guiutils.getOldAppDataDir()
-
-        # Move old AppDataDir if it exists.
-        if oldprefdir and os.path.exists(oldprefdir) and not oldprefdir == settings.PrefDir:
-            try:
-                fileutils.CopyFiles(oldprefdir, settings.PrefDir, 1)
-                shutil.rmtree(oldprefdir)
-            except:
-                self.log.write(_("Error moving preferences."))
-
-        settings.AppSettings = xml_settings.XMLSettings()
-        if os.path.exists(os.path.join(settings.PrefDir, "settings.xml")):
-            settings.AppSettings.LoadFromXML(os.path.join(settings.PrefDir, "settings.xml"))
-
-        contactsdir = os.path.join(settings.PrefDir, "Contacts")
-        if not os.path.exists(contactsdir):
-            os.mkdir(contactsdir)
-        
-        self.LoadVCards()
-        if not os.path.exists(settings.AppSettings["CourseFolder"]):
-            os.makedirs(settings.AppSettings["CourseFolder"])
 
         self.statusBar = None #self.CreateStatusBar()
 
@@ -370,8 +348,6 @@ class MainFrame2(sc.SizedFrame):
                     style=wx.TR_HAS_BUTTONS | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER)
 
         #self.projectTree.SetImageList(self.treeimages)
-        droptarget = wxTreeDropTarget(self, self.projectTree)
-        self.projectTree.SetDropTarget(droptarget)
 
         #handle delete key
         accelerators = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_TREE_REMOVE)])
@@ -457,9 +433,9 @@ class MainFrame2(sc.SizedFrame):
         # It appears it is now needed on Mac, too.
         self.SetSize((self.GetSize()[0]+1, self.GetSize()[1]+1))
             
-        if sys.platform.startswith("darwin"):
-            self.FileMenu.FindItemById(ID_PUBLISH_PDF).Enable(False)
-            self.toolbar.EnableTool(ID_PUBLISH_PDF, False)
+        #if sys.platform.startswith("darwin"):
+        #    self.FileMenu.FindItemById(ID_PUBLISH_PDF).Enable(False)
+        #    self.toolbar.EnableTool(ID_PUBLISH_PDF, False)
         
         self.activityMonitor = ActivityMonitor(self)
         self.activityMonitor.LoadState("ActivityMonitor")
@@ -494,32 +470,6 @@ class MainFrame2(sc.SizedFrame):
         
     def SkipNotebookEvent(self, evt):
         evt.Skip()
-        
-    def LoadVCards(self):
-        #load the VCards
-        self.vcardlist = {}
-        vcards = glob.glob(os.path.join(settings.PrefDir, "Contacts", "*.vcf"))
-        errOccurred = False
-        errCards = []
-        for card in vcards:
-            try:
-                myvcard = vcard.VCard()
-                myvcard.parseFile(os.path.join(settings.PrefDir, "Contacts", card))
-                # accomodate for missing fields EClass expects
-                if myvcard.fname.value == "":
-                    myvcard.fname.value = myvcard.name.givenName + " "
-                    if myvcard.name.middleName != "":
-                        myvcard.fname.value = myvcard.fname.value + myvcard.name.middleName + " "
-                    myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
-                self.vcardlist[myvcard.fname.value] = myvcard
-            except:
-                self.log.write("Error loading vCard '%s'" % (card))
-                errOccurred = True
-                errCards.append(card)
-
-        if errOccurred:
-            message = _("EClass could not load the following vCards from your Contacts folder: %(badCards)s. You may want to try deleting these cards and re-creating or re-importing them.") % {"badCards":`errCards`}
-            wx.MessageBox(message)
     
     def OnErrorLog(self, evt):
         self.errorViewer.Show()
@@ -770,6 +720,11 @@ class MainFrame2(sc.SizedFrame):
     
     def TimeToQuit(self, event):
         self.ShutDown(event)
+
+    def CheckSave(self):
+        msg = wx.MessageDialog(self, _("Would you like to save the current project before continuing?"),
+                                        _("Save Project?"), wx.YES_NO | wx.CANCEL)
+        return msg.ShowModal()
 
     def ShutDown(self, event):
         if self.isDirty:
@@ -1252,7 +1207,8 @@ class MainFrame2(sc.SizedFrame):
         self.UploadFiles(ftpfiles)
 
     def UpdateContents(self):
-        self.statusBar.SetStatusText(_("Updating table of contents..."))
+        if self.statusBar:
+            self.statusBar.SetStatusText(_("Updating table of contents..."))
         if not self.currentTheme:
             self.currentTheme = self.themes.FindTheme("Default (frames)")
         try:
@@ -1265,7 +1221,9 @@ class MainFrame2(sc.SizedFrame):
         except:
             pass #we shouldn't do this, but there may be non-fatal errors we shouldn't
                  #catch
-        self.statusBar.SetStatusText("")
+        
+        if self.statusBar:
+            self.statusBar.SetStatusText("")
 
     def GetPublisher(self, filename):
         publisher = None

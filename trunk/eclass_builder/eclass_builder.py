@@ -1,7 +1,9 @@
-import string, sys, os, shutil
-import settings, guiutils
+import string, sys, os, shutil, glob
+import settings, guiutils, appdata, errors
 import conman.xml_settings as xml_settings
+import conman.vcard as vcard
 import wx
+import wxaddons.wxblox.events as events
 
 rootdir = os.path.abspath(sys.path[0])
 # os.path.dirname will chop the last dir if the path is to a directory
@@ -19,10 +21,11 @@ lang_dict = {
             "en": gettext.translation('eclass', localedir, languages=['en']), 
             "es": gettext.translation('eclass', localedir, languages=['es']),
             "fr": gettext.translation('eclass', localedir, languages=['fr'])
-            }
-
-class MyApp(wx.App):
+            }  
+        
+class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def OnInit(self):
+        events.AppEventHandlerMixin.__init__(self)
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
         self.SetAppName("EClass.Builder")
 
@@ -30,6 +33,8 @@ class MyApp(wx.App):
         self.LoadPrefs()
         self.LoadLanguage()
         self.SetDefaultDirs()
+        self.CreateAppDirsIfNeeded()
+        self.LoadVCards()
 
         global test_new_editor
         
@@ -44,6 +49,14 @@ class MyApp(wx.App):
         self.SetTopWindow(self.frame)
         return True
         
+    def CreateAppDirsIfNeeded(self):
+        contactsdir = os.path.join(settings.PrefDir, "Contacts")
+        if not os.path.exists(contactsdir):
+            os.mkdir(contactsdir)
+            
+        if not os.path.exists(settings.AppSettings["CourseFolder"]):
+            os.makedirs(settings.AppSettings["CourseFolder"])
+    
     def LoadPrefs(self):
         settings.PrefDir = guiutils.getAppDataDir()
         oldprefdir = guiutils.getOldAppDataDir()
@@ -93,11 +106,54 @@ class MyApp(wx.App):
             if os.path.exists(htmleditor):
                 settings.AppSettings["HTMLEditor"] = htmleditor
 
+    def LoadVCards(self):
+        #load the VCards
+        vcards = glob.glob(os.path.join(settings.PrefDir, "Contacts", "*.vcf"))
+        errOccurred = False
+        errCards = []
+        for card in vcards:
+            try:
+                myvcard = vcard.VCard()
+                myvcard.parseFile(os.path.join(settings.PrefDir, "Contacts", card))
+                # accomodate for missing fields EClass expects
+                if myvcard.fname.value == "":
+                    myvcard.fname.value = myvcard.name.givenName + " "
+                    if myvcard.name.middleName != "":
+                        myvcard.fname.value = myvcard.fname.value + myvcard.name.middleName + " "
+                    myvcard.fname.value = myvcard.fname.value + myvcard.name.familyName
+                appdata.vcards[myvcard.fname.value] = myvcard
+            except:
+                errors.appErrorLog.write("Error loading vCard '%s'" % (card))
+                errOccurred = True
+                errCards.append(string.join(card, " "))
+
+        if errOccurred:
+            message = _("EClass could not load the following vCards from your Contacts folder: %(badCards)s. You may want to try deleting these cards and re-creating or re-importing them.") % {"badCards":`errCards`}
+            wx.MessageBox(message)
+        
+
 for arg in sys.argv:
     if arg == "--debug":
         debug = 1
     elif arg == "--new-editor":
         test_new_editor = True
 
-app = MyApp(0)
+app = BuilderApp(0)
 app.MainLoop()
+
+
+import unittest
+
+class UITests(unittest.TestCase):
+    def setUp(self):
+        self.app = BuilderApp(0)
+        
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        
+
+def getTestSuite():
+    return unittest.makeSuite(IndexingTests)
+
+if __name__ == '__main__':
+    unittest.main()
