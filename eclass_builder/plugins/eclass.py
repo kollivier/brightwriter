@@ -19,6 +19,10 @@ import wx
 import wxaddons.persistence
 import wxaddons.sized_controls as sc
 import gui.select_box as picker
+import appdata
+import eclassutils
+import ims.contentpackage
+import ims.utils
 
 USE_MINIDOM=0
 try:
@@ -486,9 +490,17 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         return filename
 
     def GetData(self):
-        filename = os.path.join(settings.ProjectDir, self.node.content.filename)
+        filename = None
+        if isinstance(self.node, conman.conman.ConNode):
+            filename = self.node.content.filename
+               
+        elif isinstance(self.node, ims.contentpackage.Item):
+            resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+            filename = eclassutils.getEClassPageForIMSResource(resource)
+        
+        filename = os.path.join(settings.ProjectDir, filename)
         if not os.path.exists(filename):
-            filename = os.path.join(settings.ProjectDir, "EClass", self.node.content.filename)
+            filename = os.path.join(settings.ProjectDir, "EClass", filename)
         self.mypage = EClassPage()
         self.mypage.LoadPage(filename)
         
@@ -547,9 +559,6 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             self.data['credit'] = self.GetCreditString() 
             
         else: #ugly hack for now...
-            if self.node.content.template == None or self.node.content.template == "None":
-                self.node.content.template = "Default"
-
             try:
                 myhtml = self.ApplyTemplate(data=self.data)
             except UnicodeError:
@@ -836,49 +845,60 @@ class EditorDialog (sc.SizedDialog):
         busy = wx.BusyCursor()
         self.item = item
         self.parent = parent
+        self.filename = None
         self.CurrentObj = None
         loaded = True 
         self.isHotword = False 
 
-        #check if ConNode or if EClassPage
-        if isinstance(item, conman.conman.ConNode):
-            self.filename = item.content.filename
+        try:
+            #check if ConNode or if EClassPage
+            import ims.contentpackage
             self.page = EClassPage(self)
-            if len(self.filename) > 0:
-                try:
-                    self.page.LoadPage(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
-                except RuntimeError, e:
-                    global log
-                    message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
-                    wx.MessageDialog(parent, message, _("Error loading page"), wx.OK).ShowModal()
-                    log.write(message)
-                    del busy
-                    return
-
-            self.page.name = item.content.metadata.name
-        else:
-            self.page = item.page
-            self.isHotword = True
-        
-        authorname = ""
-        if self.isHotword:
-            authorname = self.page.author
-        else:
-            if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
-                self.item.content.metadata.lifecycle.addContributor(self.page.author, "Author")
-
-            author = self.item.content.metadata.lifecycle.getAuthor()
-            if author:
-                authorname = author.entity.fname.value
+            
+            if isinstance(item, conman.conman.ConNode):
+                self.filename = item.content.filename
+    
+                self.page.name = item.content.metadata.name
                 
-        credits = ""
-        if self.isHotword:
-            credits = self.page.credit
-        else:
-            if self.page.credit and self.item.content.metadata.rights.description == "":
-                self.item.content.metadata.rights.description = self.page.credit
+            elif isinstance(item, ims.contentpackage.Item):
+                import ims.utils
+                resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, item)
+                self.filename = eclassutils.getEClassPageForIMSResource(resource)
+                self.page.name = item.title.text
+    
+            else:
+                self.page = item.page
+                self.isHotword = True
+                
+            if len(self.filename) > 0:
+                self.page.LoadPage(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
+        except RuntimeError, e:
+            global log
+            message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
+            wx.MessageDialog(parent, message, _("Error loading page"), wx.OK).ShowModal()
+            log.write(message)
+            del busy
+            return
+        
+        #authorname = ""
+        #if self.isHotword:
+        #    authorname = self.page.author
+        #else:
+        #    if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
+        #        self.item.content.metadata.lifecycle.addContributor(self.page.author, "Author")
 
-            credits = self.item.content.metadata.rights.description
+        #    author = self.item.content.metadata.lifecycle.getAuthor()
+        #    if author:
+        #        authorname = author.entity.fname.value
+                
+        #credits = ""
+        #if self.isHotword:
+        #    credits = self.page.credit
+        #else:
+        #    if self.page.credit and self.item.content.metadata.rights.description == "":
+        #        self.item.content.metadata.rights.description = self.page.credit
+
+        #   credits = self.item.content.metadata.rights.description
 
         
         sc.SizedDialog.__init__ (self, parent, -1, _("EClass Page Editor"),
@@ -897,14 +917,14 @@ class EditorDialog (sc.SizedDialog):
         self.txtTitle = wx.TextCtrl(topPane, -1, self.page.name)
         self.txtTitle.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
         
-        self.lblAuthor = wx.StaticText(topPane, -1, _("Author"))
-        self.txtAuthor = wx.TextCtrl(topPane, -1, authorname)
-        self.txtAuthor.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
+        #self.lblAuthor = wx.StaticText(topPane, -1, _("Author"))
+        #self.txtAuthor = wx.TextCtrl(topPane, -1, authorname)
+        #self.txtAuthor.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
         
-        self.lblCredit = wx.StaticText(topPane, -1, _("Credit"))
-        self.txtCredit = wx.TextCtrl(topPane, -1, credits, style=wx.TE_MULTILINE)
-        self.txtCredit.SetSize(wx.Size(self.txtCredit.GetSize()[0], 80))
-        self.txtCredit.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
+        #self.lblCredit = wx.StaticText(topPane, -1, _("Credit"))
+        #self.txtCredit = wx.TextCtrl(topPane, -1, credits, style=wx.TE_MULTILINE)
+        #self.txtCredit.SetSize(wx.Size(self.txtCredit.GetSize()[0], 80))
+        #self.txtCredit.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
 
         midPane = sc.SizedPanel(pane, -1)
         midPane.SetSizerType("grid", {"cols": 2})
@@ -1171,29 +1191,32 @@ class EditorDialog (sc.SizedDialog):
         self.page.name = self.txtTitle.GetValue()
         if isinstance(self.item, conman.conman.ConNode):
             self.item.content.metadata.name = self.page.name
+        elif isinstance(self.item, ims.contentpackage.Item):
+            self.item.title.text = self.page.name
         else:
             self.item.name = self.page.name
 
         #self.page.author = self.txtAuthor.GetValue()
-        if self.isHotword:
-            self.page.author = self.txtAuthor.GetValue()
-        else:
-            author = self.item.content.metadata.lifecycle.getAuthor()
-            if not author:
-                self.item.content.metadata.lifecycle.addContributor(self.txtAuthor.GetValue(), "Author")
-                author = self.item.content.metadata.lifecycle.getAuthor()
+        #if self.isHotword:
+        #    self.page.author = self.txtAuthor.GetValue()
+        #else:
+        #    author = self.item.content.metadata.lifecycle.getAuthor()
+        #    if not author:
+        #        self.item.content.metadata.lifecycle.addContributor(self.txtAuthor.GetValue(), "Author")
+        #        author = self.item.content.metadata.lifecycle.getAuthor()
         
-            author.entity.fname.value = self.txtAuthor.GetValue()
-            if author.entity.filename == "":
-                afilename = os.path.join(settings.PrefDir, "Contacts", fileutils.MakeFileName2(author.entity.fname.value) + ".vcf")
-                author.entity.filename = afilename
+        #    author.entity.fname.value = self.txtAuthor.GetValue()
+        #    if author.entity.filename == "":
+        #        afilename = os.path.join(settings.PrefDir, "Contacts", fileutils.MakeFileName2(author.entity.fname.value) + ".vcf")
+        #        author.entity.filename = afilename
             
-            author.entity.saveAsFile()
+        #    author.entity.saveAsFile()
 
-        if self.isHotword:
-            self.page.credit = self.txtCredit.GetValue()
-        else:
-            self.item.content.metadata.rights.description = self.txtCredit.GetValue()
+        #if self.isHotword:
+        #    self.page.credit = self.txtCredit.GetValue()
+        #else:
+        #    self.item.content.metadata.rights.description = self.txtCredit.GetValue()
+        
         self.page.media.image = self.selectImage.GetValue()
         self.page.media.video = self.selectVideo.GetValue()
         if self.chkVideoAutostart.IsChecked():
@@ -1237,7 +1260,7 @@ class EditorDialog (sc.SizedDialog):
             if result == wx.ID_NO:
                 return
 
-        if isinstance(self.item, conman.conman.ConNode):
+        if isinstance(self.item, conman.conman.ConNode) or isinstance(self.item, ims.contentpackage.Item):
             if len(self.filename) > 0:
                 filename = os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))
                 try:
@@ -1248,18 +1271,8 @@ class EditorDialog (sc.SizedDialog):
                     log.write(message)
                     wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
                     return
-
-            eclassPub = HTMLPublisher()
-            try:
-                #filename = eclassPub.Publish(self.parent, self.parent.CurrentItem, self.parent.ProjectDir)
-                #self.parent.Preview(filename)
-                del busy
-            except Exception, ex:
-                del busy
-                message = _("There was an error publishing the EClass Page to HTML. Please check to make sure you have sufficient disk space, have write permission to the 'pub' directory, and that the page does not contain any foreign characters.")
-                global log
-                log.write(message)
-                wx.MessageDialog(self, message, _("Publishing Error")).ShowModal()
+            
+                
             
         self.EndModal(wx.ID_OK)
 

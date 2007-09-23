@@ -8,6 +8,23 @@ def getTraceback():
 	type, value, trace = sys.exc_info()
 	list = traceback.format_exception_only(type, value) + ["\n"] + traceback.format_tb(trace)
 	return string.join(list, "")
+	
+class errorCallbacks:
+    def displayError(self, message):
+        print "ERROR: " + message
+        if appErrorLog:
+            appErrorLog.write(message)
+        
+    def displayWarning(self, message):
+        print "WARNING: " + message
+        if appErrorLog:
+            appErrorLog.write(message)
+            
+    def displayInformation(self, message):
+        print "INFO: " + message
+        if appErrorLog:
+            appErrorLog.write(message)
+            
 
 class AppErrorLog(utils.LogFile):
 	def __init__(self):
