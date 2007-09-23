@@ -124,9 +124,9 @@ class ConMan (ConManData):
 
     def NewPub(self, name, lang, directory=''):
         self.directory = directory
-        mycontent = self.content.AddItem(GetUUID(), self.language)
+        mycontent = self.content.AddItem(utils.getUUID(), self.language)
         mycontent.metadata.name = name
-        mynode = ConNode(GetUUID(), mycontent, None)
+        mynode = ConNode(utils.getUUID(), mycontent, None)
         mynode.dir = directory
         self.CurrentNode = mynode
         self.name = name 
@@ -201,7 +201,7 @@ class ConMan (ConManData):
                     self.id = string.replace(self.id, "-", "")
 
             if self.id == "":
-                self.id = GetUUID()
+                self.id = utils.getUUID()
                     
         metadata = doc.getElementsByTagName("metadata")[0]
         if metadata.childNodes:
@@ -230,7 +230,7 @@ class ConMan (ConManData):
                     self.orgid = string.replace(self.orgid, "-", "")
 
             if self.orgid == "":
-                self.orgid = GetUUID()
+                self.orgid = utils.getUUID()
         items = doc.getElementsByTagName("item")[0]
         self._GetNodes(items, None)
         self.CurrentNode = self.nodes[0]
@@ -248,7 +248,7 @@ class ConMan (ConManData):
                         myid = string.replace(attr.value, self.namespace, "")
                         myid = string.replace(myid, "-", "")
                         #if len(myid) < 32: #Created before IMS identifiers used
-                        #   self.updatedids[myid] = GetUUID()
+                        #   self.updatedids[myid] = utils.getUUID()
                         #   myid = self.updatedids[myid]
                     elif attr.name == "href":
                         myurl = XMLAttrToText(attr.value)
@@ -360,7 +360,7 @@ class ConMan (ConManData):
                     id = string.replace(id, self.namespace, "")
                     id = string.replace(id, "-", "")
                     if len(id) < 32: #Not a UUID, used previous ID system
-                        id = GetUUID()
+                        id = utils.getUUID()
                 elif attr.name == "identifierref":
                     contentid = XMLAttrToText(attr.value)
                     contentid = string.replace(contentid, self.namespace, "")
@@ -543,7 +543,7 @@ class ConNode:
 
     def __init__(self, id, content, parent):
         if id == "":
-            self.id = GetUUID()
+            self.id = utils.getUUID()
         else:
             self.id = id
         #contentid variable makes it possible to have several nodes pointing to the same resource - NYI
@@ -565,7 +565,7 @@ class ConNode:
 
     def AddChild(self, id, content, dir):
         if id == "":
-            id = GetUUID()
+            id = utils.getUUID()
         mynode = ConNode(id, content, self)
         mynode.dir = dir
         self.children.append(mynode)
@@ -612,7 +612,7 @@ class Content(ConManData):
         pass
         
 def CopyContent(oldcontent):
-    newcontent = Content(GetUUID(), "en")
+    newcontent = Content(utils.getUUID(), "en")
     import copy
     newcontent.metadata = copy.copy(oldcontent.metadata)
     return newcontent
@@ -833,7 +833,7 @@ class ContentList(ConManData):
     def AddItem(self, id, lang):
         myitem = None
         if id == "":
-            id = GetUUID()
+            id = utils.getUUID()
         myitem = Content(id, lang)
         self.content.append(myitem)
         return myitem
@@ -845,27 +845,6 @@ class ContentList(ConManData):
             return true
         except:
             return false
-
-def GetUUID():
-    """
-    Function: conman.GetUUID()
-    Last Updated: 9/24/02
-    Description: Generates a UUID using platform specific tools (the built-in GUID generation tools on Windows, and the uuidgen command line utility on Linux/Mac OS X.
-    """
-    id = ""
-    if sys.platform == "win32":
-        id = pythoncom.CreateGuid()
-        id = str(id)
-        id = string.replace(id, "'", "")
-        id = string.replace(id, "{", "")
-        id = string.replace(id, "}", "")
-        id = string.replace(id, "-", "")
-    else:
-        result = os.popen("uuidgen", "r")
-        id = result.read()
-        id = string.replace(id, "-", "")
-        result.close()
-    return id
 
 if __name__ == "__main__":
     mypub = ConMan()
