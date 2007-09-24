@@ -76,9 +76,6 @@ def getToolsMenu():
     ToolsMenu = wx.Menu()
     ToolsMenu.Append(ID_THEME, _("Change Theme"))
     ToolsMenu.Append(ID_LINKCHECK, _("Check Links"))
-    ToolsMenu.Append(ID_CONTACTS, _("Manage Contacts"))
-    ToolsMenu.Append(ID_ERRORLOG, _("Error Viewer"))
-    ToolsMenu.Append(ID_ACTIVITY, _("Activity Monitor"), _("View status of background activties."))
     ToolsMenu.AppendSeparator()
     ToolsMenu.Append(ID_SETTINGS, _("Options"), _("Modify Program Options"))
     
@@ -92,12 +89,21 @@ def getHelpMenu():
     
     return HelpMenu
     
+def getWindowMenu():
+    WindowMenu = wx.Menu()
+    WindowMenu.Append(ID_CONTACTS, _("Contact Manager"))
+    WindowMenu.Append(ID_ERRORLOG, _("Error Viewer"))
+    WindowMenu.Append(ID_ACTIVITY, _("Activity Monitor"), _("View status of background activties."))
+    
+    return WindowMenu
+    
 def getMenuBar():
     menuBar = wx.MenuBar()
     menuBar.Append(getFileMenu(), "&"+ _("File"))
     menuBar.Append(getEditMenu(), _("Edit"))
     menuBar.Append(getPageMenu(), "&" + _("Page"))
     menuBar.Append(getToolsMenu(), "&" + _("Tools"))
+    menuBar.Append(getWindowMenu(), _("Window"))
     menuBar.Append(getHelpMenu(), "&" + _("Help"))
     
     return menuBar
