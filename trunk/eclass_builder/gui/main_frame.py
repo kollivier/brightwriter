@@ -140,7 +140,7 @@ class MainFrame2(sc.SizedFrame):
         self.isNewCourse = False
         self.CurrentItem = None #current node
         self.CurrentTreeItem = None
-        self.imscp = ims.contentpackage.ContentPackage() 
+        self.imscp = None
         #dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
         self.dirtyNodes = []
 
@@ -266,7 +266,6 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_OPEN, self.OnOpen)
         app.AddHandlerForID(ID_SAVE, self.SaveProject)
         #wx.EVT_MENU(self, ID_CLOSE, self.OnClose)
-        #wx.EVT_MENU(self, ID_EXIT, self.TimeToQuit)
         #wx.EVT_MENU(self, ID_PROPS, self.LoadProps)
         #wx.EVT_MENU(self, ID_TREE_REMOVE, self.RemoveItem)
         #wx.EVT_MENU(self, ID_TREE_EDIT, self.EditItem) 
@@ -297,9 +296,43 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_ERRORLOG, self.OnErrorLog)
         app.AddHandlerForID(ID_ACTIVITY, self.OnActivityMonitor)
         app.AddHandlerForID(ID_CONTACTS, self.OnContacts)
+        
+        app.AddUIHandlerForID(ID_SAVE, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_CLOSE, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_PREVIEW, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_REFRESH_THEME, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_PUBLISH_MENU, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_PUBLISH, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_PUBLISH_CD, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_PUBLISH_PDF, self.UpdateProjectCommand)
+        
+        app.AddUIHandlerForID(ID_PROPS, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_THEME, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_LINKCHECK, self.UpdateProjectCommand)
+        
+        app.AddUIHandlerForID(ID_CUT, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_COPY, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_PASTE, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_FIND_IN_PROJECT, self.UpdatePageCommand)
+        
+        app.AddUIHandlerForID(ID_ADD_MENU, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_TREE_REMOVE, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_IMPORT_FILE, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_EDIT_ITEM, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_TREE_MOVEUP, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_TREE_MOVEDOWN, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_UPLOAD_PAGE, self.UpdatePageCommand)
+        app.AddUIHandlerForID(ID_TREE_EDIT, self.UpdatePageCommand)
+        
+        
+
+        app.AddUIHandlerForID(self.GetMenuBar().FindMenu(_("Page")), self.UpdatePageCommand)
+        app.AddUIHandlerForID(self.GetMenuBar().FindMenu(_("Edit")), self.UpdatePageCommand)
         #wx.EVT_MENU(self, ID_FIND_IN_PROJECT, self.OnFindInProject)
 
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        app.AddHandlerForID(ID_EXIT, self.OnCloseWindow)
+        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
+        
         self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
@@ -331,8 +364,8 @@ class MainFrame2(sc.SizedFrame):
         if wx.Platform == '__WXMSW__':
             EVT_CHAR(self.previewbook, self.SkipNotebookEvent)
 
-        if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
-            self.LoadEClass(settings.AppSettings["LastOpened"])
+        #if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
+        #    self.LoadEClass(settings.AppSettings["LastOpened"])
             
         #else:
         #    dlgStartup = StartupDialog(self)
@@ -391,19 +424,6 @@ class MainFrame2(sc.SizedFrame):
         dialog.Destroy()
         
     def OnTreeSelChanged(self, event):
-        self.toolbar.EnableTool(ID_EDIT_ITEM, True)
-        self.toolbar.EnableTool(ID_TREE_EDIT, True)
-        self.toolbar.EnableTool(ID_ADD_MENU, True)
-        pageMenu = self.menuBar.FindMenu(_("Page"))
-        self.menuBar.EnableTop(pageMenu, True)
-
-        if self.CurrentTreeItem == self.projectTree.GetRootItem():
-            self.PopMenu.Enable(ID_TREE_REMOVE, False)
-            self.toolbar.EnableTool(ID_TREE_REMOVE, False)
-        else:
-            self.PopMenu.Enable(ID_TREE_REMOVE, True)
-            self.toolbar.EnableTool(ID_TREE_REMOVE, True)
-
         self.Preview()
         event.Skip()
         
@@ -423,41 +443,19 @@ class MainFrame2(sc.SizedFrame):
         
     def SkipNotebookEvent(self, evt):
         evt.Skip()
-            
-    def UpdateUIState(self):
-        # determine whether or not we have a project file
+        
+    def UpdateProjectCommand(self, event):
         value = not self.imscp is None
+        event.Enable(value)
         
-        menubar = self.GetMenuBar() 
-        menubar.FindItem(ID_SAVE).Enable(value)
-        menubar.FindItem(ID_CLOSE).Enable(value)
-        menubar.FindItem(ID_PREVIEW).Enable(value)
-        menubar.FindItem(ID_REFRESH_THEME).Enable(value)
-        menubar.FindItem(ID_PUBLISH_MENU).Enable(value)
-        menubar.FindItem(ID_PROPS).Enable(value)
+    def UpdatePageCommand(self, event):
+        value = not self.projectTree.GetCurrentTreeItem() is None
+        if event.GetId() == ID_TREE_REMOVE:
+            value = value and not self.projectTree.GetCurrentTreeItem() == self.projectTree.GetRootItem()
 
-        self.toolbar.EnableTool(ID_SAVE, value)
-        self.toolbar.EnableTool(ID_PREVIEW, value)
-        self.toolbar.EnableTool(ID_PUBLISH, value)
-        self.toolbar.EnableTool(ID_PUBLISH_CD, value)
-        if not sys.platform.startswith("darwin"):
-            self.toolbar.EnableTool(ID_PUBLISH_PDF, value)
-        self.toolbar.EnableTool(ID_TREE_ADD_ECLASS, value)
-        self.toolbar.EnableTool(ID_TREE_EDIT, value)
-        self.toolbar.EnableTool(ID_EDIT_ITEM, value)
-        self.toolbar.EnableTool(ID_TREE_REMOVE, value)
-
-        self.menuBar.EnableTop(self.menuBar.FindMenu(_("Edit")), value)
-        # TODO: Only disable items that require a course to be open
-        self.menuBar.EnableTop(self.menuBar.FindMenu(_("Tools")), value)
-        if sys.platform.startswith("darwin"):
-            #still needed?
-            self.menuBar.Refresh()
-        
-        if self.CurrentTreeItem:
-            self.menuBar.EnableTop(self.menuBar.FindMenu(_("Page")), value)
+        event.Enable(value)          
             
-    def OnClose(self, event):
+    def OnCloseWindow(self, event):
         self.ShutDown(event)
 
     def PromptToSaveExistingProject(self):
@@ -474,6 +472,9 @@ class MainFrame2(sc.SizedFrame):
                 return
         
         settings.AppSettings.SaveAsXML(os.path.join(settings.PrefDir,"settings.xml"))
+        
+        # TODO: Make these utility windows and have their state saved and loaded
+        # at app startup, shutdown
         if self.activityMonitor:
             self.activityMonitor.SaveState("ActivityMonitor")
             self.activityMonitor.Destroy()
