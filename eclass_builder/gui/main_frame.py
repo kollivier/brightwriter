@@ -359,13 +359,13 @@ class MainFrame2(sc.SizedFrame):
         self.activityMonitor.LoadState("ActivityMonitor")
         
         self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
-        self.errorViewer.LoadState("ErrorLogViewer")
+        self.errorViewer.LoadState("ErrorLogViewer", dialogIsModal=False)
         
         if wx.Platform == '__WXMSW__':
             EVT_CHAR(self.previewbook, self.SkipNotebookEvent)
 
-        #if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
-        #    self.LoadEClass(settings.AppSettings["LastOpened"])
+        if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
+            self.LoadEClass(settings.AppSettings["LastOpened"])
             
         #else:
         #    dlgStartup = StartupDialog(self)
@@ -649,7 +649,7 @@ class MainFrame2(sc.SizedFrame):
             self.PublishPage(imsitem)
 
             self.Preview()
-            self.dirtyNodes.append(myitem)
+            self.dirtyNodes.append(imsitem)
             if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
                 self.UploadPage()
         except:
