@@ -6,6 +6,11 @@ from xmlutils import *
 import types
 import locale
 import utils
+import conman
+import ims
+import ims.contentpackage
+import eclassutils
+import appdata
 
 pluginList = []
 def LoadPlugins():
@@ -116,24 +121,47 @@ class BaseHTMLPublisher:
         return convert_encoding
 
     def GetCreditString(self):
+        description = ""
+        contributors = []
         if self.node:
-            if self.node.content.metadata.rights.description == "" and len(self.node.content.metadata.lifecycle.contributors) == 0:
+            if isinstance(self.node, conman.conman.ConNode):
+                description = self.node.content.metadata.rights.description 
+                contributors = self.node.content.metadata.lifecycle.contributors
+            
+            elif isinstance(self.node, ims.contentpackage.Item):
+                # FIXME: Address issues with multiple language text
+                lang = self.node.metadata.lom.rights.description.keys()
+                if len(lang) > 0:
+                    description = self.node.metadata.lom.rights.description[lang[0]]
+                contributors = self.node.metadata.lom.lifecycle.contributors
+            
+            if description == "" and len(contributors) == 0:
                 return ""
 
             creditText = ""
             thisauthor = ""
 
-            if self.node.content.metadata.rights.description != "":
-                creditstring = string.replace(self.node.content.metadata.rights.description, "\r\n", "<br>")#mac
+            if description != "":
+                creditstring = string.replace(description, "\r\n", "<br>")#mac
                 creditstring = string.replace(creditstring, "\n", "<br>")#win
                 creditstring = string.replace(creditstring, "\r", "<br>")#unix
                 creditstring = creditstring + "<h5 align=\'center\'>[ <a href=\'javascript:window.close()\'>" + _("Close") + "</a> ]</h5>"
                 creditstring = string.replace(creditstring, "'", "\\'")
                 creditText = """[ <b><a href="javascript:openCredit('newWin','%s')">%s</a></b> ]""" % (TextToHTMLChar(creditstring), _("Credit"))
 
-            for contrib in self.node.content.metadata.lifecycle.contributors:
-                if contrib.role == "Author":
-                    thisauthor = contrib.entity.fname.value
+            for contrib in contributors:
+                role = ""
+                if isinstance(self.node, conman.conman.ConNode):
+                    role = contrib.role
+                    fname = contrib.entity.fname.value
+                elif isinstance(item, ims.contentpackage.Item):
+                    lang = contrib.role.value.keys()
+                    if len(lang) > 0:
+                        role = contrib.role.value[lang[0]]
+                    fname = conman.vcard.VCard().parseString(contrib.centity.text)
+                    
+                if role == "Author":
+                    thisauthor = fname
             creditText = "<h5>" + thisauthor + " " + creditText + "</h5>"
             return creditText
             
@@ -157,14 +185,38 @@ class BaseHTMLPublisher:
         self.parent = parent
         self.node = node
         self.dir = dir
-        self.data['name'] = TextToHTMLChar(node.content.metadata.name)
-        self.data['description'] = TextToXMLAttr(node.content.description)
-        self.data['keywords'] = TextToXMLAttr(node.content.keywords)
-        self.data['URL'] = utils.GetFileLink(node.content.filename)
-        self.data['SourceFile'] = node.content.filename
+        
+        name = ""
+        description = ""
+        keywords = ""
+        filename = ""
+        
+        if isinstance(self.node, conman.conman.ConNode):
+            name = node.content.metadata.name
+            description = node.content.description
+            keywords = node.content.keywords
+            filename = node.content.filename
+            
+        elif isinstance(self.node, ims.contentpackage.Item):
+            #langkeys = self.node.metadata.lom.rights.description.keys()
+            #if len(langkeys) > 0:
+            #    lang = langkeys[0]
+            #    name = self.node.metadata.lom.general.name[lang]
+            #description = self.node.metadata.lom.general.description[lang] 
+            #keywords = self.node.metadata.lom.general.keywords[lang]
+            resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+            filename = eclassutils.getEClassPageForIMSResource(resource)
+            if not filename:
+                filename = self.node.attrs["href"]
+        
+        self.data['name'] = TextToHTMLChar(name)
+        self.data['description'] = TextToXMLAttr(description)
+        self.data['keywords'] = TextToXMLAttr(keywords)
+        self.data['URL'] = utils.GetFileLink(filename)
+        self.data['SourceFile'] = filename
         self.data['credit'] = self.GetCreditString()
-        filename = os.path.join(self.dir, "Text", node.content.filename)
-        filename = self.GetFilename(node.content.filename)
+        filename = os.path.join(self.dir, "Text", filename)
+        filename = self.GetFilename(filename)
         self.GetLinks()
         self.GetData()
         templatefile = os.path.join(settings.AppDir, "themes", self.parent.currentTheme.themename, "default.tpl")
@@ -192,8 +244,15 @@ class BaseHTMLPublisher:
         Retrieve the back and next links for the page.
         """
         self.data['SCORMAction'] = ""
+        
+        isroot = False
+        if isinstance(self.node, conman.conman.ConNode) and self.node.parent:
+            isroot = True
+        elif isinstance(self.node, ims.contentpackage.Item):
+            isroot = (self.node.attrs["identifier"] == appdata.activeFrame.imscp.organizations[0].items[0].attrs["identifierref"]) 
+            
         # Do this only for the first page in the module
-        if not self.node.parent:
+        if isroot:
             self.data['SCORMAction'] = "onload=\"initAPI(window)\""
 
         return 
