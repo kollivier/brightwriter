@@ -265,6 +265,7 @@ class MainFrame2(sc.SizedFrame):
         app = wx.GetApp()
         app.AddHandlerForID(ID_OPEN, self.OnOpen)
         app.AddHandlerForID(ID_SAVE, self.SaveProject)
+        app.AddHandlerForID(ID_CLOSE, self.OnCloseProject)
         #wx.EVT_MENU(self, ID_CLOSE, self.OnClose)
         #wx.EVT_MENU(self, ID_PROPS, self.LoadProps)
         #wx.EVT_MENU(self, ID_TREE_REMOVE, self.RemoveItem)
@@ -398,7 +399,27 @@ class MainFrame2(sc.SizedFrame):
         else:
             if appdata.activeFrame == self:
                 appdata.activeFrame = None
-        
+
+    def OnCloseProject(self, event):
+        if self.isDirty:
+            answer = self.CheckSave()
+            if answer == wx.ID_YES:
+                self.SaveProject(event)
+            elif answer == wx.ID_CANCEL:
+                return
+            else:
+                self.isDirty = False
+
+        self.imscp = None
+        self.projectTree.DeleteAllItems()
+        settings.ProjectDir = ""
+        settings.ProjectSettings = conman.xml_settings.XMLSettings()
+        if sys.platform.startswith("win"):
+            self.ie.Navigate("about:blank")
+            self.mozilla.Navigate("about:blank")
+        else:
+            self.browser.SetPage("<HTML><BODY></BODY></HTML")
+
     def OnOpen(self,event):
         """
         Handler for File-Open
