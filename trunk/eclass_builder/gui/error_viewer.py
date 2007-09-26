@@ -8,8 +8,57 @@ import wxaddons.persistence
 import wxaddons.sized_controls as sc
 import autolist
 import errors
+import traceback
 
 appErrorLog = errors.appErrorLog
+
+class ErrorDialog(sc.SizedDialog):
+    def __init__(self, parent=None):
+        sc.SizedDialog.__init__(self, parent, -1, _("Error log viewer"), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        pane = self.GetContentsPane()
+        
+        wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred"))
+        wx.StaticText(pane, -1, _("If you click on '%s', it will send only the error information\nto the project. This is helpful for us to diagnose any problems that may occur.") % _("Send Error Report"))
+        self.detailsButton = wx.Button(pane, -1, _("Show Details"))
+
+        self.detailsText = wx.TextCtrl(pane, -1, size=(-1,300), style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.detailsText.Show(False)
+        pane.GetSizer().Detach(self.detailsText)
+        
+        line = wx.StaticLine(pane, -1)
+        line.SetSizerProps(expand=True)
+        
+        btnPanel = sc.SizedPanel(pane)
+        btnPanel.SetSizerType("horizontal")
+        btnPanel.SetSizerProps(expand=True, proportion=1)
+        spacer = sc.SizedPanel(btnPanel, -1)
+        spacer.SetSizerProps({"expand":True, "proportion":1})
+        
+        self.sendBtn = wx.Button(btnPanel, -1, _("Send Error Report"))
+        
+        self.Bind(wx.EVT_BUTTON, self.OnPaneChanged, self.detailsButton)
+        
+    def OnPaneChanged(self, event):
+        if not self.detailsText.IsShown(): 
+            self.detailsText.Show()
+            self.detailsButton.SetLabel(_("Hide Details"))
+            self.GetContentsPane().GetSizer().Insert(4, self.detailsText, 0, wx.EXPAND)
+            self.Layout()
+            self.Fit()
+        else:
+            self.detailsText.Show(False)
+            self.detailsButton.SetLabel(_("Show Details"))
+            self.GetContentsPane().GetSizer().Detach(self.detailsText)
+            self.Layout()
+            self.Fit()
+        
+def guiExceptionHook(exctype, value, trace):
+    errorText = errors.exceptionAsString(exctype, value, trace)
+    
+    error = ErrorDialog()
+    error.detailsText.WriteText(errorText)
+    error.Centre()
+    error.ShowModal()
 
 class ErrorLogViewer(sc.SizedDialog):
     def __init__(self, parent=None):
