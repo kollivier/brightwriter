@@ -14,10 +14,10 @@ appErrorLog = errors.appErrorLog
 
 class ErrorDialog(sc.SizedDialog):
     def __init__(self, parent=None):
-        sc.SizedDialog.__init__(self, parent, -1, _("Error log viewer"), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        sc.SizedDialog.__init__(self, parent, -1, _("EClass.Builder Fatal Error"), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
         
-        wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred"))
+        wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in EClass.Builder"))
         wx.StaticText(pane, -1, _("If you click on '%s', it will send only the error information\nto the project. This is helpful for us to diagnose any problems that may occur.") % _("Send Error Report"))
         self.detailsButton = wx.Button(pane, -1, _("Show Details"))
 
@@ -37,6 +37,8 @@ class ErrorDialog(sc.SizedDialog):
         self.sendBtn = wx.Button(btnPanel, -1, _("Send Error Report"))
         
         self.Bind(wx.EVT_BUTTON, self.OnPaneChanged, self.detailsButton)
+        
+        self.Fit()
         
     def OnPaneChanged(self, event):
         if not self.detailsText.IsShown(): 
@@ -59,6 +61,11 @@ def guiExceptionHook(exctype, value, trace):
     error.detailsText.WriteText(errorText)
     error.Centre()
     error.ShowModal()
+    
+    app = wx.GetApp()
+    if app:
+        app.ExitMainLoop()
+    sys.exit(1)
 
 class ErrorLogViewer(sc.SizedDialog):
     def __init__(self, parent=None):
