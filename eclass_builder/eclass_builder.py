@@ -4,6 +4,8 @@ import conman.xml_settings as xml_settings
 import conman.vcard as vcard
 import wx
 import wxaddons.wxblox.events as events
+import gui
+import gui.error_viewer as errors
 
 rootdir = os.path.abspath(sys.path[0])
 # os.path.dirname will chop the last dir if the path is to a directory
@@ -26,6 +28,8 @@ lang_dict = {
 class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def OnInit(self):
         events.AppEventHandlerMixin.__init__(self)
+        sys.excepthook = errors.guiExceptionHook
+        
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
         self.SetAppName("EClass.Builder")
 

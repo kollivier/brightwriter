@@ -2,12 +2,19 @@ import sys, string, os
 import utils
 import settings
 import time
+import traceback
 
 def getTraceback():
 	import traceback
 	type, value, trace = sys.exc_info()
 	list = traceback.format_exception_only(type, value) + ["\n"] + traceback.format_tb(trace)
 	return string.join(list, "")
+	
+def exceptionAsString(exctype, value, trace):
+	return string.join(traceback.format_exception(exctype, value, trace), "\n")
+	
+def exceptionHook(exctype, value, trace):
+    print exceptionAsString(exctype, value, trace)
 	
 class errorCallbacks:
     def displayError(self, message):
