@@ -279,6 +279,25 @@ class LangStringTag(Tag):
     def __getitem__(self, key):
         return self.strings[key]
         
+    def getKeyOrEmptyString(self, key):
+        """
+        Helper method to reduce the need to check if the key exists before
+        retrieving it.
+        """
+        
+        basekey = key.split("-")[0]
+        # for languages, en == en-US, but en-US != en (necessarily), so
+        # we should check if the base language key exists if the specific
+        # dialect/subset we're looking for is not found.
+        if self.strings.has_key(key):
+            return self.strings[key]
+        else:
+            if self.strings.has_key(basekey):
+                return self.strings[basekey]
+            else:
+                return ""
+        
+        
     def __setitem__(self, key, value):
         self._isDirty = True
         self.strings[key] = value
@@ -316,7 +335,7 @@ class LangStringTag(Tag):
                     text = childNode.nodeValue
             
             if text:
-                self.strings[language] = text
+                self.strings[language] = text.strip()
             
         if strictMode and not self.validate():
             raise ValueError
@@ -330,7 +349,8 @@ class LangStringTag(Tag):
         if len(self.strings) > 0:
             node = newXMLNode(doc, self.name, self.text, self.attrs, self.namespace)
             for lang in self.strings:
-                node.appendChild(newXMLNode(doc, "imsmd:langstring", self.strings[lang], 
+                if self.strings[lang].strip() != "":
+                    node.appendChild(newXMLNode(doc, "imsmd:langstring", self.strings[lang], 
                             {"xml:lang": lang}))
         return node
 
