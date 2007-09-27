@@ -4,6 +4,10 @@ import wxaddons.sized_controls as sc
 import wxaddons.persistence
 import settings
 import encrypt
+import conman
+import ims
+import ims.contentpackage
+import appdata
 
 class ProjectPropsDialog(sc.SizedDialog):
     def __init__(self, parent):
@@ -18,10 +22,16 @@ class ProjectPropsDialog(sc.SizedDialog):
         self.parent = parent
         self.searchchanged = False
         
-        self.generalPanel = GeneralPanel(self.notebook, self.parent.pub)
+        self.project = None
+        if "pub" in dir(self.parent):
+            self.project = self.parent.pub
+        elif "imscp" in dir(self.parent):
+            self.project = self.parent.imscp
+        
+        self.generalPanel = GeneralPanel(self.notebook, self.project)
         self.notebook.AddPage(self.generalPanel, _("General"))
         
-        self.searchPanel = SearchPanel(self.notebook, self.parent.pub)
+        self.searchPanel = SearchPanel(self.notebook, self.project)
         self.notebook.AddPage(self.searchPanel, _("Search"))
         
         self.publishPanel = PublishPanel(self.notebook)
@@ -46,9 +56,18 @@ class ProjectPropsDialog(sc.SizedDialog):
         event.Skip()
         
     def btnOKClicked(self, event):
-        self.parent.pub.name = self.generalPanel.txtname.GetValue()
-        self.parent.pub.description = self.generalPanel.txtdescription.GetValue()
-        self.parent.pub.keywords = self.generalPanel.txtkeywords.GetValue()
+    
+        if isinstance(self.project, conman.conman.ConMan):
+            self.project.name = self.generalPanel.txtname.GetValue()
+            self.project.description = self.generalPanel.txtdescription.GetValue()
+            self.project.keywords = self.generalPanel.txtkeywords.GetValue()
+            self.parent.pub.pubid = self.searchPanel.txtpubid.GetValue()
+               
+        elif isinstance(self.project, ims.contentpackage.ContentPackage):
+            lang = appdata.projectLanguage
+            self.project.metadata.lom.general.title[lang] = self.generalPanel.txtname.GetValue()
+            self.project.metadata.lom.general.description[lang] = self.generalPanel.txtdescription.GetValue()
+            self.project.metadata.lom.general.keyword[lang] = self.generalPanel.txtkeywords.GetValue()
 
         settings.ProjectSettings["SearchEnabled"] = int(self.searchPanel.chkSearch.GetValue())
         useswishe = False
@@ -83,29 +102,42 @@ class ProjectPropsDialog(sc.SizedDialog):
 
         settings.ProjectSettings["CDSaveDir"] = self.publishPanel.txtCDDir.GetValue()
 
-        self.parent.pub.pubid = self.searchPanel.txtpubid.GetValue()
         self.parent.isDirty = True
         self.EndModal(wx.ID_OK)
         
 class GeneralPanel(sc.SizedPanel):
-    def __init__(self, parent, pub):
+    def __init__(self, parent, project):
         sc.SizedPanel.__init__(self, parent, -1)
-        self.pub = pub
+        
+        name = ""
+        description = ""
+        keywords = ""
+        if isinstance(project, conman.conman.ConMan):
+            name = project.name
+            description = project.description
+            keywords = project.keywords
+               
+        elif isinstance(project, ims.contentpackage.ContentPackage):
+            lang = appdata.projectLanguage
+            name = project.metadata.lom.general.title.getKeyOrEmptyString(lang)
+            description = project.metadata.lom.general.description.getKeyOrEmptyString(lang)
+            keywords = project.metadata.lom.general.keyword.getKeyOrEmptyString(lang)
+        
         self.SetSizerType("form")
         self.lblname = wx.StaticText(self, -1, _("Name"))
-        self.txtname = wx.TextCtrl(self, -1, pub.name)
+        self.txtname = wx.TextCtrl(self, -1, name)
         self.txtname.SetSizerProp("expand", True)
         self.lbldescription = wx.StaticText(self, -1, _("Description"))
-        self.txtdescription = wx.TextCtrl(self, -1, pub.description, style=wx.TE_MULTILINE)
+        self.txtdescription = wx.TextCtrl(self, -1, description, style=wx.TE_MULTILINE)
         self.txtdescription.SetSizerProps({"expand":True, "proportion":1})
         self.lblkeywords = wx.StaticText(self, -1, _("Keywords"))
-        self.txtkeywords = wx.TextCtrl(self, -1, pub.keywords) 
+        self.txtkeywords = wx.TextCtrl(self, -1, keywords) 
         self.txtkeywords.SetSizerProp("expand", True)
         self.txtname.SetFocus()
         self.txtname.SetSelection(0, -1)
         
 class SearchPanel(sc.SizedPanel):
-    def __init__(self, parent, pub):
+    def __init__(self, parent, project):
         sc.SizedPanel.__init__(self, parent, -1)
         self.chkSearch = wx.CheckBox(self, -1, _("Enable Search Function"))
         
@@ -113,9 +145,12 @@ class SearchPanel(sc.SizedPanel):
         self.whichSearch = wx.RadioBox(self, -1, _("Search Engine"), wx.DefaultPosition, wx.DefaultSize, self.options, 1)
         
         #self.useGSDL = wxRadioBox(panel, -1, )
-        
+        pubid = ""
+        if isinstance(project, conman.conman.ConMan):
+            pubid = project.pubid
+            
         self.lblpubid = wx.StaticText(self, -1, _("Greenstone Collection ID"))
-        self.txtpubid = wx.TextCtrl(self, -1, pub.pubid)
+        self.txtpubid = wx.TextCtrl(self, -1, pubid)
         self.lblpubidhelp = wx.StaticText(self, -1, _("ID must be 8 chars or less, no spaces, all letters\n and/or numbers."))
         
         self.LoadSettings()
