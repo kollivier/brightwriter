@@ -198,12 +198,9 @@ class BaseHTMLPublisher:
             filename = node.content.filename
             
         elif isinstance(self.node, ims.contentpackage.Item):
-            #langkeys = self.node.metadata.lom.rights.description.keys()
-            #if len(langkeys) > 0:
-            #    lang = langkeys[0]
-            #    name = self.node.metadata.lom.general.name[lang]
-            #description = self.node.metadata.lom.general.description[lang] 
-            #keywords = self.node.metadata.lom.general.keywords[lang]
+            lang = appdata.projectLanguage
+            description = self.node.metadata.lom.general.description.getKeyOrEmptyString(lang) 
+            keywords = self.node.metadata.lom.general.keywords.getKeyOrEmptyString(lang)
             resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
             filename = eclassutils.getEClassPageForIMSResource(resource)
             if not filename:

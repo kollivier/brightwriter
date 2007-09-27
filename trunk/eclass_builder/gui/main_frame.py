@@ -266,7 +266,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_OPEN, self.OnOpen)
         app.AddHandlerForID(ID_SAVE, self.SaveProject)
         app.AddHandlerForID(ID_CLOSE, self.OnCloseProject)
-        #wx.EVT_MENU(self, ID_CLOSE, self.OnClose)
+        app.AddHandlerForID(ID_PROPS, self.OnProjectProps)
         #wx.EVT_MENU(self, ID_PROPS, self.LoadProps)
         #wx.EVT_MENU(self, ID_TREE_REMOVE, self.RemoveItem)
         #wx.EVT_MENU(self, ID_TREE_EDIT, self.EditItem) 
@@ -443,6 +443,11 @@ class MainFrame2(sc.SizedFrame):
             self.LoadEClass(dialog.GetPath())
         
         dialog.Destroy()
+
+    def OnProjectProps(self, event):
+        props = ProjectPropsDialog(self)
+        props.ShowModal()
+        props.Destroy()
         
     def OnTreeSelChanged(self, event):
         self.Preview()
