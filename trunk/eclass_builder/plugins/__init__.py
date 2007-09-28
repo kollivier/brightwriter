@@ -199,9 +199,11 @@ class BaseHTMLPublisher:
             
         elif isinstance(self.node, ims.contentpackage.Item):
             lang = appdata.projectLanguage
-            description = self.node.metadata.lom.general.description.getKeyOrEmptyString(lang) 
-            keywords = self.node.metadata.lom.general.keywords.getKeyOrEmptyString(lang)
+            name = self.node.title.text
             resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+            
+            description = resource.metadata.lom.general.description.getKeyOrEmptyString(lang) 
+            keywords = resource.metadata.lom.general.keyword.getKeyOrEmptyString(lang)
             filename = eclassutils.getEClassPageForIMSResource(resource)
             if not filename:
                 filename = self.node.attrs["href"]
