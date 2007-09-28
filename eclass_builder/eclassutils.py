@@ -4,6 +4,7 @@ import constants
 import version
 import unittest
 import shutil
+import plugins
 
 def createEClass(dirname):
     # create the EClass folders
@@ -25,6 +26,27 @@ def getEClassPageForIMSResource(imsresource):
             filename = file.attrs["href"]
     
     return filename
+    
+def setEClassPageForIMSResource(imsresource, filename):
+    # for EClass pages, the source page is listed as a dependency of the generated
+    # HTML page. This is so that tools that do not understand the EClass Page format
+    # can read EClass-created IMS content packages.
+    plugin = plugins.GetPluginForFilename(filename)
+    publisher = plugin.HTMLPublisher()
+    filelink = publisher.GetFileLink(filename)
+            
+    imsresource.attrs["href"] = filelink
+            
+    imsfile = ims.contentpackage.File()
+    imsfile.attrs["href"] = filelink
+    imsresource.files.append(imsfile)
+    
+    # According to the IMS standard, the resource's href must also
+    # be listed as a file reference.
+    
+    imsfile = ims.contentpackage.File()
+    imsfile.attrs["href"] = filename
+    imsresource.files.append(imsfile)
 
 class EClass:
     """ 

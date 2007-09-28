@@ -6,6 +6,7 @@ import conman
 import plugins
 import ims
 import ims.contentpackage
+import eclassutils
 import settings
 
 if not os.path.exists(settings.AppDir):
@@ -94,25 +95,15 @@ class EClassIMSConverter:
             # The main file reference should be the html file it produces
             # EClass will check if there's an EClass page and use that if so.
             if os.path.splitext(resource.filename)[1] == ".ecp":
-                plugin = plugins.GetPluginForFilename(resource.filename)
-                publisher = plugin.HTMLPublisher()
-                filelink = publisher.GetFileLink(resource.filename)
-                
-                imsresource.attrs["href"] = filelink
-                
-                imsfile = ims.contentpackage.File()
-                imsfile.attrs["href"] = filelink
-                imsresource.files.append(imsfile)
-            
+                eclassutils.setEClassPageForIMSResource(imsresource, resource.filename)
             else:
                 imsresource.attrs["href"] = resource.filename
-            
-            
-            # According to the IMS standard, the resource's href must also
-            # be listed as a file reference.
-            imsfile = ims.contentpackage.File()
-            imsfile.attrs["href"] = resource.filename
-            imsresource.files.append(imsfile)
+                        
+                # According to the IMS standard, the resource's href must also
+                # be listed as a file reference.
+                imsfile = ims.contentpackage.File()
+                imsfile.attrs["href"] = resource.filename
+                imsresource.files.append(imsfile)
             
             imsresources.append(imsresource)
             
