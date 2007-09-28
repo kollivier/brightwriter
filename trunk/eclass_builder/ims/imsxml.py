@@ -179,7 +179,7 @@ class TagList:
         self.tags.reverse()
         
     def index(self, *args, **kwargs):
-        self.tags.reverse(*args, **kwargs)
+        return self.tags.index(*args, **kwargs)
         
     def insert(self, *args, **kwargs):
         self.tags.insert(*args, **kwargs)
