@@ -12,6 +12,10 @@ import fileutils
 import utils
 import plugins
 import htmlutils
+import appdata
+import ims
+import ims.contentpackage
+import eclassutils
 
 class PagePropertiesDialog (sc.SizedDialog):
 	"""
@@ -29,7 +33,11 @@ class PagePropertiesDialog (sc.SizedDialog):
 		
 		# Storage for the attribute name/value pair
 		self.node = node
-		self.content = content 
+		self.content = content
+		
+		if isinstance(self.node, ims.contentpackage.Item):
+			self.content = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+		
 		self.parent = parent
 		self.dir = dir
 		self.filename = ""
@@ -40,37 +48,56 @@ class PagePropertiesDialog (sc.SizedDialog):
 		
 		self.notebook.AddPage(self.GeneralPanel(), _("General"))
 		self.notebook.AddPage(self.CreditPanel(), _("Credits"))
-		self.notebook.AddPage(self.ClassificationPanel(), _("Categories"))
+		# For now, we'll only support classification with the old editor
+		if not isinstance(self.node, ims.contentpackage.Item):
+			self.notebook.AddPage(self.ClassificationPanel(), _("Categories"))
 
 		self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
 
 		self.Fit()
 		self.SetMinSize(self.GetSize())
 
-		if self.content.filename != "":
-			filename = self.content.filename
-			self.txtExistingFile.SetValue(filename)
-
 		wx.EVT_BUTTON(self, wx.ID_OK, self.btnOKClicked)	
 
-	def GeneralPanel(self):	
+	def GeneralPanel(self): 
 		mypanel = sc.SizedPanel(self.notebook, -1)
 		mypanel.SetSizerType("form")
 		
+		name = ""
+		description = ""
+		keywords = ""
+		filename = ""
+		
+		if isinstance(self.node, conman.conman.ConNode):
+			name = self.content.metadata.name
+			description = self.content.metadata.description
+			keywords = self.content.metadata.keywords
+			filename = self.content.filename
+			
+		elif isinstance(self.node, ims.contentpackage.Item):
+			lang = appdata.projectLanguage
+			
+			name = self.node.title.text
+			description = self.content.metadata.lom.general.description.getKeyOrEmptyString(lang)
+			keywords = self.content.metadata.lom.general.keyword.getKeyOrEmptyString(lang)
+			filename = eclassutils.getEClassPageForIMSResource(self.content)
+			if not filename:
+				filename = self.node.attrs["href"]
+		
 		wx.StaticText(mypanel, -1, _("Name"))
-		self.txtTitle = wx.TextCtrl(mypanel, -1, self.content.metadata.name)
+		self.txtTitle = wx.TextCtrl(mypanel, -1, name)
 		self.txtTitle.SetSizerProp("expand", True)
 		
 		wx.StaticText(mypanel, -1, _("Description"))
-		self.txtDescription = wx.TextCtrl(mypanel, -1, self.content.metadata.description, style=wx.TE_MULTILINE)
+		self.txtDescription = wx.TextCtrl(mypanel, -1, description, style=wx.TE_MULTILINE)
 		self.txtDescription.SetSizerProp("expand", True)
 		
 		wx.StaticText(mypanel, -1, _("Keywords"))
-		self.txtKeywords = wx.TextCtrl(mypanel, -1, self.content.metadata.keywords, size=wx.Size(160, -1))
+		self.txtKeywords = wx.TextCtrl(mypanel, -1, keywords, size=wx.Size(160, -1))
 		self.txtKeywords.SetSizerProp("expand", True)
 
 		wx.StaticText(mypanel, -1, _("Page Content:"))
-		self.txtExistingFile = picker.SelectBox(mypanel, self.content.filename)
+		self.txtExistingFile = picker.SelectBox(mypanel, filename)
 
 		self.txtTitle.SetFocus()
 		self.txtTitle.SetSelection(-1, -1)
@@ -95,6 +122,13 @@ class PagePropertiesDialog (sc.SizedDialog):
 		return combobox
 
 	def CreditPanel(self):
+		if isinstance(self.node, conman.conman.ConNode):
+			credits = self.content.metadata.rights.description
+			
+		elif isinstance(self.node, ims.contentpackage.Item):
+			lang = appdata.projectLanguage
+			credits = self.content.metadata.lom.rights.description.getKeyOrEmptyString(lang)
+		
 		mypanel = sc.SizedPanel(self.notebook, -1)
 		#mypanel.SetSizerProp("expand", True)
 		
@@ -109,7 +143,7 @@ class PagePropertiesDialog (sc.SizedDialog):
 		self.txtOrganization = self.CreateAuthorBox(mypanel, self.OnLoadContacts)
 
 		wx.StaticText(mypanel, -1, _("Credits"))
-		self.txtCredit = wx.TextCtrl(mypanel, -1, self.content.metadata.rights.description, style=wx.TE_MULTILINE)
+		self.txtCredit = wx.TextCtrl(mypanel, -1, credits, style=wx.TE_MULTILINE)
 		self.txtCredit.SetSizerProp("expand", True)
 
 		self.UpdateAuthorList()
@@ -152,7 +186,7 @@ class PagePropertiesDialog (sc.SizedDialog):
 		selitem = self.lstCategories.GetSelection()
 		if selitem != wx.NOT_FOUND:
 			dialog = wx.TextEntryDialog(self, _("Type the new value for your category here."), 
-			                             _("Edit Category"), self.lstCategories.GetStringSelection())
+										 _("Edit Category"), self.lstCategories.GetStringSelection())
 			if dialog.ShowModal() == wx.ID_OK:
 				value = dialog.GetValue()
 				if value != "":
@@ -170,31 +204,51 @@ class PagePropertiesDialog (sc.SizedDialog):
 	def UpdateAuthorList(self, event=None):
 		oldvalue = self.txtAuthor.GetValue()
 		self.txtAuthor.Clear()
-		for name in self.parent.vcardlist.keys():
-			self.txtAuthor.Append(name, self.parent.vcardlist[name])
+		for name in appdata.vcards.keys():
+			self.txtAuthor.Append(name, appdata.vcards[name])
 
 		oldorg = self.txtOrganization.GetValue()
 		self.txtOrganization.Clear()
-		for name in self.parent.vcardlist.keys():
-			self.txtOrganization.Append(name, self.parent.vcardlist[name])
+		for name in appdata.vcards.keys():
+			self.txtOrganization.Append(name, appdata.vcards[name])
 
 		if oldvalue != "":
 			self.txtAuthor.SetValue(oldvalue)
 		else:
-			for person in self.content.metadata.lifecycle.contributors:
-				if person.role == "Author":
-					self.txtAuthor.SetValue(person.entity.fname.value)
-					if person.date != "":
-						self.txtDate.SetValue(person.date)
-				elif person.role == "Content Provider":
-					self.txtOrganization.SetValue(person.entity.fname.value)
+			if isinstance(self.node, conman.conman.ConNode):
+			    for person in self.content.metadata.lifecycle.contributors:
+				    if person.role == "Author":
+					    self.txtAuthor.SetValue(person.entity.fname.value)
+					    if person.date != "":
+						    self.txtDate.SetValue(person.date)
+				    elif person.role == "Content Provider":
+					    self.txtOrganization.SetValue(person.entity.fname.value)
+
+			elif isinstance(self.node, ims.contentpackage.Item):
+				lang = appdata.projectLanguage
+				for person in self.content.metadata.lom.lifecycle.contributors:
+					if person.role.value.getKeyOrEmptyString(lang) == "Author":
+						vcard = conman.vcard.VCard()
+						vcard.parseString(person.centity.vcard.text)
+						self.txtAuthor.SetValue(vcard.fname.value)
+						if person.date.datetime.text != "":
+						    self.txtDate.SetValue(person.date.datetime.text)
 
 		if oldorg != "":
 			self.txtOrganization.SetValue(oldorg)
 		else:
-			for person in self.content.metadata.lifecycle.contributors:
-				if person.role == "Content Provider":
-					self.txtOrganization.SetValue(person.entity.fname.value)
+			if isinstance(self.node, conman.conman.ConNode):
+				for person in self.content.metadata.lifecycle.contributors:
+					if person.role == "Content Provider":
+						self.txtOrganization.SetValue(person.entity.fname.value)
+
+			elif isinstance(self.node, ims.contentpackage.Item):
+				lang = appdata.projectLanguage
+				for person in self.content.metadata.lom.lifecycle.contributors:
+					if person.role.value.getKeyOrEmptyString(lang) == "Content Provider":
+						vcard = conman.vcard.VCard()
+						vcard.parseString(person.centity.vcard.text)
+						self.txtOrganization.SetValue(vcard.fname.value)
 
 	def CheckAuthor(self, event):
 		text = self.txtAuthor.GetValue()
