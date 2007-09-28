@@ -57,6 +57,8 @@ class ErrorDialog(sc.SizedDialog):
 def guiExceptionHook(exctype, value, trace):
     errorText = errors.exceptionAsString(exctype, value, trace)
     
+    print errorText
+    
     error = ErrorDialog()
     error.detailsText.WriteText(errorText)
     error.Centre()
