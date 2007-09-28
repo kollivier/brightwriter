@@ -214,6 +214,22 @@ class Resource(Tag):
         
         self.children = [self.metadata, self.files, self.dependencies]
         
+    def setFilename(self, filename):
+        self.attrs["href"] = filename
+        
+        hasFile = False
+        
+        for afile in self.files:
+            if afile.attrs["href"] == filename:
+                hasFile = True
+                
+        # According to the IMS standard, the resource's href must also
+        # be listed as a file reference.
+        if not hasFile:
+            imsfile = File()
+            imsfile.attrs["href"] = filename
+            self.files.append(imsfile)
+        
 class Organizations(Container):
     def __init__(self, name="organizations"):
         Container.__init__(self, name, "organization", Organization)

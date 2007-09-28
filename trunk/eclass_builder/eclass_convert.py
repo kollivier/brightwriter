@@ -97,13 +97,7 @@ class EClassIMSConverter:
             if os.path.splitext(resource.filename)[1] == ".ecp":
                 eclassutils.setEClassPageForIMSResource(imsresource, resource.filename)
             else:
-                imsresource.attrs["href"] = resource.filename
-                        
-                # According to the IMS standard, the resource's href must also
-                # be listed as a file reference.
-                imsfile = ims.contentpackage.File()
-                imsfile.attrs["href"] = resource.filename
-                imsresource.files.append(imsfile)
+                imsresource.setFilename(resource.filename)
             
             imsresources.append(imsresource)
             
