@@ -34,16 +34,12 @@ def setEClassPageForIMSResource(imsresource, filename):
     plugin = plugins.GetPluginForFilename(filename)
     publisher = plugin.HTMLPublisher()
     filelink = publisher.GetFileLink(filename)
-            
-    imsresource.attrs["href"] = filelink
-            
-    imsfile = ims.contentpackage.File()
-    imsfile.attrs["href"] = filelink
-    imsresource.files.append(imsfile)
     
-    # According to the IMS standard, the resource's href must also
-    # be listed as a file reference.
+    # Assign the .html page as the page seen by IMS package readers
+    imsresource.setFilename(filelink)
     
+    # Now make the .ecp file a dependency so that EClass knows to
+    # use the .ecp file instead of the .html file
     imsfile = ims.contentpackage.File()
     imsfile.attrs["href"] = filename
     imsresource.files.append(imsfile)
