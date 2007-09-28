@@ -134,12 +134,7 @@ class MainFrame2(sc.SizedFrame):
         if wx.Platform == "__WXMAC__":
             wx.SetDefaultPyEncoding("utf-8")
         
-        #wx.FRAME_EX_UNIFIED = 0x100
-        #self.SetExtraStyle(wx.FRAME_EX_UNIFIED)
         self.isDirty = False
-        self.isNewCourse = False
-        self.CurrentItem = None #current node
-        self.CurrentTreeItem = None
         self.imscp = None
         #dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
         self.dirtyNodes = []
@@ -283,11 +278,11 @@ class MainFrame2(sc.SizedFrame):
         #wx.EVT_MENU(self, ID_TREE_MOVEDOWN, self.MoveItemDown)
         #wx.EVT_MENU(self, ID_HELP, self.OnHelp)
         #wx.EVT_MENU(self, ID_LINKCHECK, self.OnLinkCheck)
-        #wx.EVT_MENU(self, ID_CUT, self.OnCut)
-        #wx.EVT_MENU(self, ID_COPY, self.OnCopy)
-        #wx.EVT_MENU(self, ID_PASTE_BELOW, self.OnPaste)
-        #wx.EVT_MENU(self, ID_PASTE_CHILD, self.OnPaste)
-        #wx.EVT_MENU(self, ID_PASTE, self.OnPaste)
+        app.AddHandlerForID(ID_CUT, self.OnCut)
+        app.AddHandlerForID(ID_COPY, self.OnCopy)
+        app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
+        app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
+        app.AddHandlerForID(ID_PASTE, self.OnPaste)
         #wx.EVT_MENU(self, ID_IMPORT_FILE, self.AddNewItem)
         #wx.EVT_MENU(self, ID_REFRESH_THEME, self.OnRefreshTheme)
         #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
@@ -398,7 +393,84 @@ class MainFrame2(sc.SizedFrame):
     def OnFindInProject(self, evt):
         dlg = pfdlg.ProjectFindDialog(self)
         dlg.Show()
+
+    def OnCut(self, event):
+        sel_item = self.projectTree.GetSelection()
+        self.CutNode = sel_item
+        self.projectTree.SetItemTextColour(sel_item, wx.LIGHT_GREY)
+        if self.CopyNode:
+            self.CopyNode = None
+
+    def OnCopy(self, event):
+        sel_item = self.projectTree.GetSelection()
+        self.CopyNode = sel_item
+        if self.CutNode:
+            self.projectTree.SetItemTextColour(self.CutNode, wx.BLACK)
+            self.CutNode = None #copy automatically cancels a cut operation
+
+    def OnPaste(self, event):
+        dirtyNodes = []
+        sel_item = self.projectTree.GetSelection()
+        pastenode = self.CopyNode
+        if self.CutNode:
+            pastenode = self.CutNode
         
+        import copy
+        pasteitem = copy.copy(self.projectTree.GetPyData(pastenode))
+
+        newparent = None
+
+        newitem = None            
+        if event.GetId() == ID_PASTE_BELOW or event.GetId() == ID_PASTE:
+            newitem = self.projectTree.InsertItem(self.projectTree.GetItemParent(sel_item), 
+                                         sel_item, self.projectTree.GetItemText(pastenode), 
+                                       -1, -1, wx.TreeItemData(self.projectTree.GetPyData(pastenode)))
+            
+            parent = self.projectTree.GetItemParent(sel_item)
+            parentitem = self.projectTree.GetPyData(parent)
+        
+            beforeitem = self.projectTree.GetPyData(sel_item)
+            assert(beforeitem)
+            previndex = parentitem.items.index(beforeitem) + 1
+            parentitem.items.insert(previndex, pasteitem)
+            
+            for item in parentitem.items:
+                print "Title: " + item.title.text
+
+        elif event.GetId() == ID_PASTE_CHILD:
+            newitem = self.projectTree.AppendItem(sel_item, self.projectTree.GetItemText(pastenode), 
+                                                -1, -1, wx.TreeItemData(self.projectTree.GetPyData(pastenode)))
+            
+            parentitem = self.projectTree.GetCurrentTreeItemData()
+            parentitem.children.append(pasteitem)
+        
+        assert(newitem)
+        if not self.projectTree.GetChildrenCount(pastenode, False) == 0:
+            self.CopyChildrenRecursive(pastenode, newitem)
+
+        dirtyNodes.append(pasteitem)
+
+        if self.CutNode:
+            cutparent = self.projectTree.GetItemParent(self.CutNode)
+            cutparentitem = self.projectTree.GetPyData(cutparent)
+            cutparentitem.items.remove(self.projectTree.GetPyData(pastenode))
+
+            self.projectTree.Delete(self.CutNode)
+            self.CutNode = None
+
+        for item in dirtyNodes:
+            self.Update(item)
+
+    def CopyChildrenRecursive(self, sel_item, new_item):
+        thisnode = self.projectTree.GetFirstChild(sel_item)[0]
+        while (thisnode.IsOk()):
+            thisitem = self.projectTree.AppendItem(new_item, self.projectTree.GetItemText(thisnode), 
+                                 -1, -1, wx.TreeItemData(self.projectTree.GetPyData(thisnode)))
+            
+            if not self.projectTree.GetChildrenCount(thisnode, False) == 0:
+                self.CopyChildrenRecursive(thisnode, thisitem)
+            thisnode = self.projectTree.GetNextSibling(thisnode) 
+
     def OnActivate(self, event):
         if event.GetActive():
             appdata.activeFrame = self
