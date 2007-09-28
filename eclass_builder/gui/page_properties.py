@@ -303,37 +303,69 @@ class PagePropertiesDialog (sc.SizedDialog):
             wx.MessageBox(_("Please select a file to provide the content for this page."))
             return 
 
-        self.content.metadata.keywords = self.txtKeywords.GetValue()
-        self.content.metadata.description = self.txtDescription.GetValue()
-        self.content.metadata.name = self.txtTitle.GetValue()
-        self.content.metadata.rights.description = self.txtCredit.GetValue()
+        if isinstance(self.node, conman.conman.ConNode):
+            self.content.metadata.keywords = self.txtKeywords.GetValue()
+            self.content.metadata.description = self.txtDescription.GetValue()
+            self.content.metadata.name = self.txtTitle.GetValue()
+            self.content.metadata.rights.description = self.txtCredit.GetValue()
+
+            if not self.txtDate.GetValue() == "":
+                for person in self.content.metadata.lifecycle.contributors:
+                    if person.role == "Author":
+                        person.date = self.txtDate.GetValue()
+            else:
+                #check if we can remove any empty contact info that might be there
+                for person in self.content.metadata.lifecycle.contributors:
+                    try:
+                        if person.role == "Author" and self.txtAuthor.GetValue() == "":
+                            self.content.metadata.lifecycle.contributors.remove(person)
+                        elif person.role == "Content Provider" and self.txtOrganization.GetValue() == "":
+                            self.content.metadata.lifecycle.contributors.remove(person)
+                    except:
+                        self.parent.log.write(_("Error removing empty contact."))
+        
+            self.content.metadata.classification.categories = []
+            for num in range(0, self.lstCategories.GetCount()):
+                self.content.metadata.classification.categories.append(self.lstCategories.GetString(num))
+    
+            self.content.filename = self.txtExistingFile.GetValue()
+
+        elif isinstance(self.node, ims.contentpackage.Item):
+            lang = appdata.projectLanguage
+            self.node.title.text = self.txtTitle.GetValue()
+            self.content.metadata.lom.general.description[lang] = self.txtDescription.GetValue()
+            self.content.metadata.lom.general.keyword[lang] = self.txtKeywords.GetValue()
+            self.content.metadata.lom.rights.description[lang] = self.txtCredit.GetValue()
+            
+            filename = self.txtExistingFile.GetValue()
+            if os.path.splitext(filename)[1] == ".ecp":
+                eclassutils.setEClassPageForIMSResource(self.content, filename)
+            else:
+                self.content.setFilename(filename)
+                
+            for person in self.content.metadata.lom.lifecycle.contributors:
+                role = person.role.value.getKeyOrEmptyString(lang)
+                if role in ["Author", "Content Provider"]:
+                    if (role == "Author" and self.txtAuthor.GetValue() == "" and self.txtDate.GetValue() == "") \
+                        or (role == "Content Provider" and self.txtOrganization.GetValue() == ""):
+                        self.content.metadata.lom.lifeycle.contributors.remove(person)
+                    else:
+                        vcard = conman.vcard.VCard()
+                        vcard.parseString(person.centity.vcard.text)
+                        if role == "Author":
+                            vcard.fname.value = self.txtAuthor.GetValue()
+                            if self.txtDate.GetValue() != "":
+                                person.date.datetime.text = self.txtDate.GetValue()
+                        else:
+                            vcard.fname.value = self.txtOrganization.GetValue()
+                    
+
         if not self.txtAuthor.GetValue() == "":
             self.UpdateContactInfo(self.txtAuthor.GetValue(), "Author")
 
         if not self.txtOrganization.GetValue() == "":
             self.UpdateContactInfo(self.txtOrganization.GetValue(), "Content Provider")
 
-        if not self.txtDate.GetValue() == "":
-            for person in self.content.metadata.lifecycle.contributors:
-                if person.role == "Author":
-                    person.date = self.txtDate.GetValue()
-        else:
-            #check if we can remove any empty contact info that might be there
-            for person in self.content.metadata.lifecycle.contributors:
-                try:
-                    if person.role == "Author" and self.txtAuthor.GetValue() == "":
-                        self.content.metadata.lifecycle.contributors.remove(person)
-                    elif person.role == "Content Provider" and self.txtOrganization.GetValue() == "":
-                        self.content.metadata.lifecycle.contributors.remove(person)
-                except:
-                    self.parent.log.write(_("Error removing empty contact."))
-
-        
-        self.content.metadata.classification.categories = []
-        for num in range(0, self.lstCategories.GetCount()):
-            self.content.metadata.classification.categories.append(self.lstCategories.GetString(num))
-
-        self.content.filename = self.txtExistingFile.GetValue()
         self.EndModal(wx.ID_OK)
 
     def UpdateContactInfo(self, name, role):
@@ -344,25 +376,26 @@ class PagePropertiesDialog (sc.SizedDialog):
         if role == "":
             role = "Author"
         newcard = None
-        if not name in self.parent.vcardlist.keys():
+        if not name in appdata.vcards.keys():
             newcard = vcard.VCard()
             newcard.fname.value = name
             newcard.filename = os.path.join(settings.PrefDir, "Contacts", MakeFileName2(name) + ".vcf")
             myfile = utils.openFile(newcard.filename, "wb")
             myfile.write(newcard.asString())
             myfile.close()
-            self.parent.vcardlist[newcard.fname.value] = newcard
+            appdata.vcards[newcard.fname.value] = newcard
         else:
-            newcard = self.parent.vcardlist[name]
+            newcard = appdata.vcards[name]
 
-        hasPerson = False
-        for person in self.content.metadata.lifecycle.contributors:
-            if person.role == role:
-                hasPerson = True
-                person.entity = newcard
-
-        if not hasPerson:
-            contrib = conman.Contributor()
-            contrib.role = role
-            contrib.entity = newcard
-            self.content.metadata.lifecycle.contributors.append(contrib)
+        if isinstance(self.node, conman.conman.ConNode):        
+            hasPerson = False
+            for person in self.content.metadata.lifecycle.contributors:
+                if person.role == role:
+                    hasPerson = True
+                    person.entity = newcard
+    
+            if not hasPerson:
+                contrib = conman.Contributor()
+                contrib.role = role
+                contrib.entity = newcard
+                self.content.metadata.lifecycle.contributors.append(contrib)
