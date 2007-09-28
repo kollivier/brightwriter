@@ -267,10 +267,9 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_SAVE, self.SaveProject)
         app.AddHandlerForID(ID_CLOSE, self.OnCloseProject)
         app.AddHandlerForID(ID_PROPS, self.OnProjectProps)
-        #wx.EVT_MENU(self, ID_PROPS, self.LoadProps)
         #wx.EVT_MENU(self, ID_TREE_REMOVE, self.RemoveItem)
-        #wx.EVT_MENU(self, ID_TREE_EDIT, self.EditItem) 
-        #wx.EVT_MENU(self, ID_EDIT_ITEM, self.EditFile) 
+        app.AddHandlerForID(ID_TREE_EDIT, self.EditItemProps) 
+        app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
         #wx.EVT_MENU(self, ID_PREVIEW, self.PublishIt) 
         #wx.EVT_MENU(self, ID_PUBLISH, self.PublishToWeb)
         #wx.EVT_MENU(self, ID_PUBLISH_CD, self.PublishToCD)
@@ -280,10 +279,8 @@ class MainFrame2(sc.SizedFrame):
         #wx.EVT_MENU(self, ID_THEME, self.ManageThemes)
         
         #wx.EVT_MENU(self, ID_ADD_MENU, self.OnNewItem)
-        #wx.EVT_MENU(self, ID_SETTINGS, self.EditPreferences)
         #wx.EVT_MENU(self, ID_TREE_MOVEUP, self.MoveItemUp)
         #wx.EVT_MENU(self, ID_TREE_MOVEDOWN, self.MoveItemDown)
-        #wx.EVT_MENU(self, wx.ID_ABOUT, self.OnAbout)
         #wx.EVT_MENU(self, ID_HELP, self.OnHelp)
         #wx.EVT_MENU(self, ID_LINKCHECK, self.OnLinkCheck)
         #wx.EVT_MENU(self, ID_CUT, self.OnCut)
@@ -297,6 +294,9 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_ERRORLOG, self.OnErrorLog)
         app.AddHandlerForID(ID_ACTIVITY, self.OnActivityMonitor)
         app.AddHandlerForID(ID_CONTACTS, self.OnContacts)
+        
+        app.AddHandlerForID(ID_SETTINGS, self.OnAppPreferences)
+        app.AddHandlerForID(wx.ID_ABOUT, self.OnAbout)
         
         app.AddUIHandlerForID(ID_SAVE, self.UpdateProjectCommand)
         app.AddUIHandlerForID(ID_CLOSE, self.UpdateProjectCommand)
@@ -383,6 +383,12 @@ class MainFrame2(sc.SizedFrame):
     def OnActivityMonitor(self, evt):
         self.activityMonitor.Show()
 
+    def OnAbout(self, event):
+        EClassAboutDialog(self).ShowModal()
+
+    def OnAppPreferences(self, event):
+        PreferencesEditor(self).ShowModal()
+
     def OnContacts(self, event):
         ContactsDialog(self).ShowModal()
 
@@ -457,14 +463,14 @@ class MainFrame2(sc.SizedFrame):
         pt = event.GetPoint()
         item = event.GetItem() 
         if item:
-            self.PopupMenu(self.PopMenu, pt)
+            self.PopupMenu(menus.getPageMenu(), pt)
             
     def OnTreeDoubleClick(self, event):
         pt = event.GetPosition()
         item = self.projectTree.GetCurrentTreeItemData()
 
         if item:
-            self.EditFile(event)
+            self.EditItem(event)
             self.Preview()
         
     def SkipNotebookEvent(self, evt):
@@ -612,7 +618,7 @@ class MainFrame2(sc.SizedFrame):
                     
         return filename
     
-    def EditFile(self, event):
+    def EditItem(self, event):
         try:
             selitem = self.projectTree.GetCurrentTreeItemData()
             filename = self.GetEditableFileForIMSItem(selitem)
@@ -632,6 +638,15 @@ class MainFrame2(sc.SizedFrame):
             self.log.write(message)
             self.errorPrompts.displayError(message + constants.errorInfoMsg)
             raise
+
+    def EditItemProps(self, event):
+        selitem = self.projectTree.GetCurrentTreeItemData()
+        seltreeitem = self.projectTree.GetCurrentTreeItem()
+        if selitem:
+            result = PagePropertiesDialog(self, selitem, None, os.path.join(settings.ProjectDir, "Text")).ShowModal()
+            self.projectTree.SetItemText(seltreeitem, selitem.title.text)
+            self.Update()
+            self.isDirty = True
             
     def Preview(self):
         imsitem = self.projectTree.GetCurrentTreeItemData()
