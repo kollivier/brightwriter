@@ -267,7 +267,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_TREE_REMOVE, self.RemoveItem)
         app.AddHandlerForID(ID_TREE_EDIT, self.EditItemProps) 
         app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
-        #wx.EVT_MENU(self, ID_PREVIEW, self.PublishIt) 
+        app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
         #wx.EVT_MENU(self, ID_PUBLISH, self.PublishToWeb)
         #wx.EVT_MENU(self, ID_PUBLISH_CD, self.PublishToCD)
         #wx.EVT_MENU(self, ID_PUBLISH_PDF, self.PublishToPDF)
@@ -279,7 +279,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_TREE_MOVEUP, self.OnMoveItemUp)
         app.AddHandlerForID(ID_TREE_MOVEDOWN, self.OnMoveItemDown)
         app.AddHandlerForID(ID_HELP, self.OnHelp)
-        #wx.EVT_MENU(self, ID_LINKCHECK, self.OnLinkCheck)
+        app.AddHandlerForID(ID_LINKCHECK, self.OnLinkCheck)
         app.AddHandlerForID(ID_CUT, self.OnCut)
         app.AddHandlerForID(ID_COPY, self.OnCopy)
         app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
@@ -416,6 +416,9 @@ class MainFrame2(sc.SizedFrame):
         if self.CutNode:
             self.projectTree.SetItemTextColour(self.CutNode, wx.BLACK)
             self.CutNode = None #copy automatically cancels a cut operation
+
+    def OnLinkCheck(self, event):
+        LinkChecker(self).ShowModal()
 
     def OnPaste(self, event):
         dirtyNodes = []
@@ -575,6 +578,11 @@ class MainFrame2(sc.SizedFrame):
             self.LoadEClass(dialog.GetPath())
         
         dialog.Destroy()
+
+    def OnPreviewEClass(self, event):
+        self.UpdateEClassDataFiles()
+        import webbrowser
+        webbrowser.open_new("file://" + os.path.join(settings.ProjectDir, "index.htm")) 
 
     def OnProjectProps(self, event):
         props = ProjectPropsDialog(self)
@@ -862,3 +870,22 @@ class MainFrame2(sc.SizedFrame):
                  #catch
         if self.statusBar:
             self.statusBar.SetStatusText("")
+            
+    def UpdateEClassDataFiles(self, pubid=""):
+        result = False
+        busy = wx.BusyCursor()
+        wx.Yield()
+        #self.CreateDocumancerBook()
+        #self.CreateDevHelpBook()
+        utils.CreateJoustJavascript(self.imscp.organizations[0].items[0])
+        index_config_file = os.path.join(settings.ProjectDir, "index_settings.cfg")
+        # if an index settings file doesn't exist, create one with some common defaults
+        if not os.path.exists(index_config_file):
+            import ConfigParser
+            config = ConfigParser.ConfigParser()
+            config.add_section("Settings")
+            config.set("Settings", "IgnoreFileTypes", "ecp,quiz,gif,jpg,png,bmp,swf,avi,mov,wmv,rm,wav,mp3")
+            config.write(utils.openFile(index_config_file, "w"))
+        del busy
+
+        return True
