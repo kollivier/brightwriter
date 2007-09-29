@@ -8,7 +8,7 @@ class EClassAboutDialog(wx.Dialog):
 		wx.Dialog.__init__ (self, parent, -1, _("About EClass.Builder"), wx.Point(100,100),wx.Size(460,400), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE)
 		self.parent = parent
 		self.browser = wxbrowser.wxBrowser(self, -1)
-		self.browser.LoadPage(os.path.join(settings.AppDir,"about", parent.langdir, "about_eclass.html"))
+		self.browser.LoadPage(os.path.join(settings.AppDir,"about", settings.LangDirName, "about_eclass.html"))
 		
 		self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
 		self.btnOK.SetDefault()
@@ -20,7 +20,7 @@ class EClassAboutDialog(wx.Dialog):
 		self.SetSizer(self.mysizer)
 		self.Layout()
 
-		EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)	
+		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)	
 
 	def btnOKClicked(self, event):
 		self.EndModal(wx.ID_OK)

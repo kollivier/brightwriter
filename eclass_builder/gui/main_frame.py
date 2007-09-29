@@ -140,6 +140,8 @@ class MainFrame2(sc.SizedFrame):
         self.dirtyNodes = []
 
         settings.ThirdPartyDir = os.path.join(settings.AppDir, "3rdparty", utils.getPlatformName())
+        langdict = {"English":"en", "Espanol": "sp", "Francais":"fr"}
+        settings.LangDirName = langdict[settings.AppSettings["Language"]]
         self.errorPrompts = prompts.errorPrompts
 
         # These are used for copy and paste, and drag and drop
@@ -262,7 +264,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_SAVE, self.SaveProject)
         app.AddHandlerForID(ID_CLOSE, self.OnCloseProject)
         app.AddHandlerForID(ID_PROPS, self.OnProjectProps)
-        #wx.EVT_MENU(self, ID_TREE_REMOVE, self.RemoveItem)
+        app.AddHandlerForID(ID_TREE_REMOVE, self.RemoveItem)
         app.AddHandlerForID(ID_TREE_EDIT, self.EditItemProps) 
         app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
         #wx.EVT_MENU(self, ID_PREVIEW, self.PublishIt) 
@@ -270,13 +272,13 @@ class MainFrame2(sc.SizedFrame):
         #wx.EVT_MENU(self, ID_PUBLISH_CD, self.PublishToCD)
         #wx.EVT_MENU(self, ID_PUBLISH_PDF, self.PublishToPDF)
         #wx.EVT_MENU(self, ID_PUBLISH_IMS, self.PublishToIMS)
-        #wx.EVT_MENU(self, ID_BUG, self.ReportBug)
+        app.AddHandlerForID(ID_BUG, self.OnReportBug)
         #wx.EVT_MENU(self, ID_THEME, self.ManageThemes)
         
         #wx.EVT_MENU(self, ID_ADD_MENU, self.OnNewItem)
-        #wx.EVT_MENU(self, ID_TREE_MOVEUP, self.MoveItemUp)
-        #wx.EVT_MENU(self, ID_TREE_MOVEDOWN, self.MoveItemDown)
-        #wx.EVT_MENU(self, ID_HELP, self.OnHelp)
+        app.AddHandlerForID(ID_TREE_MOVEUP, self.OnMoveItemUp)
+        app.AddHandlerForID(ID_TREE_MOVEDOWN, self.OnMoveItemDown)
+        app.AddHandlerForID(ID_HELP, self.OnHelp)
         #wx.EVT_MENU(self, ID_LINKCHECK, self.OnLinkCheck)
         app.AddHandlerForID(ID_CUT, self.OnCut)
         app.AddHandlerForID(ID_COPY, self.OnCopy)
@@ -380,6 +382,13 @@ class MainFrame2(sc.SizedFrame):
 
     def OnAbout(self, event):
         EClassAboutDialog(self).ShowModal()
+
+    def OnHelp(self, event):
+        import webbrowser
+        url = os.path.join(settings.AppDir, "docs", settings.LangDirName, "index.htm")
+        if not os.path.exists(url):
+            url = os.path.join(settings.AppDir, "docs", "en", "manual", "index.htm")
+        webbrowser.open_new("file://" + url)
 
     def OnAppPreferences(self, event):
         PreferencesEditor(self).ShowModal()
@@ -498,6 +507,51 @@ class MainFrame2(sc.SizedFrame):
         else:
             self.browser.SetPage("<HTML><BODY></BODY></HTML")
 
+    def OnMoveItemUp(self, event):
+        selection = self.projectTree.GetCurrentTreeItem()
+        selitem = self.projectTree.GetCurrentTreeItemData()
+        parent = self.projectTree.GetItemParent(selection)
+        parentitem = self.projectTree.GetPyData(parent)
+        
+        index = parentitem.items.index(selitem)
+        if index > 0:
+            parentitem.items.remove(selitem)
+            parentitem.items.insert(index - 1, selitem)
+
+            haschild = self.projectTree.ItemHasChildren(selection)
+            prevsibling = self.projectTree.GetPrevSibling(selection)
+            insertafter = self.projectTree.GetPrevSibling(prevsibling)
+            
+            self.projectTree.Delete(selection)
+            newitem = self.projectTree.InsertItem(parent, insertafter, 
+                                     selitem.title.text,-1,-1,wx.TreeItemData(selitem))
+            if haschild:
+                self.AddIMSChildItemsToTree(selection, selitem.items)
+            self.projectTree.SelectItem(newitem)
+            self.Update()
+                
+    def OnMoveItemDown(self, event):
+        selection = self.projectTree.GetCurrentTreeItem()
+        selitem = self.projectTree.GetCurrentTreeItemData()
+        parent = self.projectTree.GetItemParent(selection)
+        parentitem = self.projectTree.GetPyData(parent)
+        
+        index = parentitem.items.index(selitem)
+        if index > 0:
+            parentitem.items.remove(selitem)
+            parentitem.items.insert(index + 1, selitem)
+
+            insertafter = self.projectTree.GetNextSibling(selection)
+            haschild = self.projectTree.ItemHasChildren(selection)
+            
+            self.projectTree.Delete(selection)
+            newitem = self.projectTree.InsertItem(parent, insertafter, 
+                                     selitem.title.text,-1,-1,wx.TreeItemData(selitem))
+            if haschild:
+                self.AddIMSChildItemsToTree(selection, selitem.items)
+            self.projectTree.SelectItem(newitem)
+            self.Update()
+
     def OnOpen(self,event):
         """
         Handler for File-Open
@@ -526,6 +580,10 @@ class MainFrame2(sc.SizedFrame):
         props = ProjectPropsDialog(self)
         props.ShowModal()
         props.Destroy()
+        
+    def OnReportBug(self, event):
+        import webbrowser
+        webbrowser.open_new("http://sourceforge.net/tracker/?group_id=67634")
         
     def OnTreeSelChanged(self, event):
         self.Preview()
@@ -719,7 +777,25 @@ class MainFrame2(sc.SizedFrame):
             self.projectTree.SetItemText(seltreeitem, selitem.title.text)
             self.Update()
             self.isDirty = True
-            
+
+    def RemoveItem(self, event):
+        selection = self.projectTree.GetCurrentTreeItem()
+        selitem = self.projectTree.GetCurrentTreeItemData()
+        if selection:
+            mydialog = wx.MessageDialog(self, _("Are you sure you want to delete this page? Deleting this page also deletes any sub-pages or terms assigned to this page."), 
+                                             _("Delete Page?"), wx.YES_NO)
+
+            if mydialog.ShowModal() == wx.ID_YES:
+                parent = self.projectTree.GetItemParent(selection)
+                parentitem = self.projectTree.GetPyData(parent)
+                
+                parentitem.items.remove(selitem)
+                
+                self.projectTree.Delete(selection)
+                self.UpdateContents()
+                self.Update()
+                self.isDirty = True
+
     def Preview(self):
         imsitem = self.projectTree.GetCurrentTreeItemData()
         if imsitem:

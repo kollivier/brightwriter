@@ -1,6 +1,7 @@
 AppDir = ""
 ThirdPartyDir = ""
 ProjectDir = ""
+LangDirName = "en"
 Project = None
 AppSettings = {}
 ProjectSettings = {}
