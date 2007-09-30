@@ -41,7 +41,7 @@ class BaseHTMLPublisher:
 
 	def __init__(self, parent=None, dir=""):
 		self.parent = parent
-		self.pub = parent.pub
+		#self.pub = parent.pub
 		self.dir = dir
 		# be backwards compatible
 		if self.dir == "":
@@ -67,9 +67,9 @@ class BaseHTMLPublisher:
 			if isinstance(self.parent, wx.Frame):
 				self.progress = wx.ProgressDialog(_("Updating EClass"), _("Preparing to update EClass..."), self.parent.projectTree.GetCount() + 1, None, wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_CAN_ABORT)
 			self.CopySupportFiles()
-			self.CreateTOC()
-			self.counter = 1
-			self.PublishPages(self.pub.nodes[0])
+			#self.CreateTOC()
+			#self.counter = 1
+			#self.PublishPages(self.pub.nodes[0])
 		except:
 			if self.progress:
 				self.progress.Destroy()
@@ -81,7 +81,9 @@ class BaseHTMLPublisher:
 		return not self.cancelled
 	
 	def CopySupportFiles(self):
-		fileutils.CopyFiles(os.path.join(self.themedir, "Files"), self.dir, 1)
+	    filesdir = os.path.join(self.themedir, "Files")
+	    if os.path.exists(filesdir):
+		    fileutils.CopyFiles(filesdir, self.dir, 1)
 
 	def CreateTOC(self):
 		filename = utils.GetFileLink(self.pub.nodes[0].content.filename)
@@ -89,22 +91,22 @@ class BaseHTMLPublisher:
 		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
 		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
 		searchenabled = False
-		if self.pub.settings["SearchEnabled"] != "":
-			searchenabled = int(self.pub.settings["SearchEnabled"])
+		#if self.pub.settings["SearchEnabled"] != "":
+		#	searchenabled = int(self.pub.settings["SearchEnabled"])
 
-		if searchenabled:
-			if self.pub.settings["SearchProgram"] == "Swish-e":
-				searchscript = "../cgi-bin/search.py"
-				text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", searchscript)
-			elif self.pub.settings["SearchProgram"] == "Greenstone" and self.pub.pubid != "":
-				text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", "../gsdl?site=127.0.0.1&a=p&p=about&c=" + self.pub.pubid + "&ct=0")
-		file = open(os.path.join(self.themedir,"eclassNodes.js"), "r")
-		data = file.read()
-		file.close()
-		file = open(os.path.join(self.dir, "eclassNodes.js"), "w")
-		data = string.replace(data, "<!-- INSERT MENU ITEMS HERE -->", text)
-		file.write(data)
-		file.close()
+		#if searchenabled:
+		#	if self.pub.settings["SearchProgram"] == "Swish-e":
+		#		searchscript = "../cgi-bin/search.py"
+		#		text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", searchscript)
+		#	elif self.pub.settings["SearchProgram"] == "Greenstone" and self.pub.pubid != "":
+		#		text = text + """searchID = insDoc(foldersTree, gLnk('S',"%s", "%s"))\n""" % ("Search", "../gsdl?site=127.0.0.1&a=p&p=about&c=" + self.pub.pubid + "&ct=0")
+		#file = open(os.path.join(self.themedir,"eclassNodes.js"), "r")
+		#data = file.read()
+		#file.close()
+		#file = open(os.path.join(self.dir, "eclassNodes.js"), "w")
+		#data = string.replace(data, "<!-- INSERT MENU ITEMS HERE -->", text)
+		#file.write(data)
+		#file.close()
 
 		file = open(os.path.join(self.themedir,"index.tpl"), "r")
 		data = file.read()

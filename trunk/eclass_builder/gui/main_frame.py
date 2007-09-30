@@ -269,11 +269,11 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
         app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
         #wx.EVT_MENU(self, ID_PUBLISH, self.PublishToWeb)
-        #wx.EVT_MENU(self, ID_PUBLISH_CD, self.PublishToCD)
+        app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
         #wx.EVT_MENU(self, ID_PUBLISH_PDF, self.PublishToPDF)
-        #wx.EVT_MENU(self, ID_PUBLISH_IMS, self.PublishToIMS)
+        app.AddHandlerForID(ID_PUBLISH_IMS, self.PublishToIMS)
         app.AddHandlerForID(ID_BUG, self.OnReportBug)
-        #wx.EVT_MENU(self, ID_THEME, self.ManageThemes)
+        app.AddHandlerForID(ID_THEME, self.OnManageThemes)
         
         #wx.EVT_MENU(self, ID_ADD_MENU, self.OnNewItem)
         app.AddHandlerForID(ID_TREE_MOVEUP, self.OnMoveItemUp)
@@ -510,6 +510,9 @@ class MainFrame2(sc.SizedFrame):
         else:
             self.browser.SetPage("<HTML><BODY></BODY></HTML")
 
+    def OnManageThemes(self, event):
+        ThemeManager(self).ShowModal()
+
     def OnMoveItemUp(self, event):
         selection = self.projectTree.GetCurrentTreeItem()
         selitem = self.projectTree.GetCurrentTreeItemData()
@@ -632,6 +635,72 @@ class MainFrame2(sc.SizedFrame):
         msg = wx.MessageDialog(self, _("Would you like to save the current project before continuing?"),
                                         _("Save Project?"), wx.YES_NO | wx.CANCEL)
         return msg.ShowModal()
+
+    def PublishToCD(self,event):
+        folder = settings.ProjectDir
+        if settings.ProjectSettings["CDSaveDir"] == "":
+            result = wx.MessageDialog(self, _("You need to specify a directory in which to store the CD files for burning.\nWould you like to do so now?"), _("Specify CD Save Directory?"), wx.YES_NO).ShowModal()
+            if result == wx.ID_YES:
+                dialog = wx.DirDialog(self, _("Choose a folder to store CD files."), style=wx.DD_NEW_DIR_BUTTON)
+                if dialog.ShowModal() == wx.ID_OK:
+                    folder = settings.ProjectSettings["CDSaveDir"] = dialog.GetPath()
+            else:
+                return
+        else:
+            folder = settings.ProjectSettings["CDSaveDir"]
+
+        self.UpdateContents()
+        self.UpdateEClassDataFiles()
+        #self.UpdateTextIndex()
+        self.CopyCDFiles()
+        message = _("A window will now appear with all files that must be published to CD-ROM. Start your CD-Recording program and copy all files in this window to that program, and your CD will be ready for burning.")
+        dialog = wx.MessageBox(message, _("Export to CD Finished"))
+
+        #Open the explorer/finder window
+        if sys.platform.startswith("win"):
+            if settings.ProjectSettings["SearchProgram"] == "Greenstone":
+                folder = os.path.join(settings.AppSettings["GSDL"], "tmp", "exported_collections")
+        
+        guiutils.openFolderInGUI(folder)
+
+    def OnFileChanged(self, filename):
+        self.filesCopied += 1
+        self.keepCopying = self.dialog.Update(self.filesCopied, "Copying: " + filename)
+
+    def CopyCDFiles(self):
+        #cleanup after old EClass versions
+        fileutils.DeleteFiles(os.path.join(settings.ProjectDir, "*.pyd"))
+        fileutils.DeleteFiles(os.path.join(settings.ProjectDir, "*.dll"))
+        fileutils.DeleteFiles(os.path.join(settings.ProjectDir, "*.exe"))
+
+        pubdir = settings.ProjectDir
+        if settings.ProjectSettings["CDSaveDir"] != "":
+            pubdir = settings.ProjectSettings["CDSaveDir"]
+
+        if pubdir != settings.ProjectDir:
+            callback = GUIFileCopyCallback(self)
+            maxfiles = fileutils.getNumFiles(settings.ProjectDir) + 1
+            self.filesCopied = 0
+            self.dialog = wx.ProgressDialog(_("Copying CD Files"), _("Preparing to copy CD files...") + "                            ", maxfiles, style=wx.PD_APP_MODAL)
+
+            fileutils.CopyFiles(settings.ProjectDir, pubdir, 1, callback)
+
+            self.dialog.Destroy()
+            self.dialog = None
+        # copy the server program
+        if settings.ProjectSettings["SearchProgram"] != "Greenstone":
+            fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
+            fileutils.CopyFile("loader.exe", os.path.join(settings.AppDir, "autorun"),pubdir)
+
+        if settings.ProjectSettings["SearchProgram"] == "Greenstone":
+            cddir = os.path.join(settings.AppSettings["GSDL"], "tmp", "exported_collections")
+            if not os.path.exists(os.path.join(cddir, "gsdl", "eclass")):
+                os.mkdir(os.path.join(cddir, "gsdl", "eclass"))
+            fileutils.CopyFiles(settings.ProjectDir, os.path.join(cddir, "gsdl", "eclass"), True)
+            fileutils.CopyFile("home.dm", os.path.join(settings.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
+            fileutils.CopyFile("style.dm", os.path.join(settings.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
+        elif settings.ProjectSettings["SearchProgram"] == "Lucene":
+            pass
 
     def ShutDown(self, event):
         if self.isDirty:
@@ -889,3 +958,44 @@ class MainFrame2(sc.SizedFrame):
         del busy
 
         return True
+
+    def PublishToIMS(self, event):
+        import zipfile
+        import tempfile
+        #zipname = os.path.join(settings.ProjectDir, "myzip.zip")
+        deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".zip"
+        dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.SAVE)
+        if dialog.ShowModal() == wx.ID_OK: 
+            tempdir = tempfile.mkdtemp()
+            imsdir = os.path.dirname(os.path.join(tempdir, "IMSPackage"))
+            if not os.path.exists(imsdir):
+                os.makedirs(imsdir)
+            imstheme = self.themes.FindTheme("IMS Package")
+            publisher = imstheme.HTMLPublisher(self, imsdir)
+            publisher.Publish()
+            fileutils.CopyFiles(os.path.join(settings.ProjectDir, "File"), os.path.join(imsdir, "File"), 1)
+
+            handle, zipname = tempfile.mkstemp()
+            os.close(handle)
+            if os.path.exists(dialog.GetPath()):
+                result = wx.MessageBox(_("The file %s already exists in this directory. Do you want to overwrite this file?") % dialog.GetFilename(), 
+                            _("Overwrite file?"), wx.YES_NO | wx.CANCEL | wx.ICON_WARNING)
+                
+                if not result == wx.ID_YES:
+                    return
+                    
+                os.remove(dialog.GetPath())
+        
+            assert(self.imscp.filename)
+            import zipfile
+            import tempfile
+            
+            myzip = zipfile.ZipFile(zipname, "w")
+            import utils.zip
+            utils.zip.dirToZipFile("", myzip, os.path.dirname(self.imscp.filename), excludeFiles=["imsmanifest.xml"], 
+                            excludeDirs=["installers", "cgi-bin"], ignoreHidden=True)
+
+            myzip.close()
+            os.rename(zipname, dialog.GetPath())
+
+        wx.MessageBox("Finished exporting!")    

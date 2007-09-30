@@ -28,26 +28,12 @@ class ThemeManager(sc.SizedDialog):
 		wx.StaticText(previewPane, -1, _("Installed Themes"))
 		wx.StaticText(previewPane, -1, _("Theme Preview"))
 
-		self.lstThemeList = wx.ListBox(previewPane, -1, choices=self.parent.themes.GetPublicThemeNames())
-		self.lstThemeList.SetSizerProps({"expand":True, "proportion":1})
+		self.lstThemeList = wx.ListBox(previewPane, -1, size=(200, -1), choices=self.parent.themes.GetPublicThemeNames())
+		self.lstThemeList.SetSizerProps(expand=True)
 		self.lstThemeList.SetSelection(0)
 		
-		#if sys.platform.startswith("darwin"):
-		#	self.browser = browser.wxHtmlBrowser(previewPane, -1)
-		#	print "name:" + self.browser.name
-		
-		
-		if sys.platform.startswith("darwin"):
-			self.browser = wxbrowser.wxBrowser(self, -1)
-			previewPane.GetSizer().Add(self.browser.browser, 1, wx.ALL|wx.EXPAND, self.browser.browser.GetDefaultBorder())
-			pos = self.browser.browser.GetPosition()
-		else:
-			self.browser = wxbrowser.wxBrowser(previewPane, -1)
-			self.browser.browser.SetSizerProps({"expand":True, "proportion":1})
-		
-		#import wxbrowser
-		#self.browser = wxbrowser.wxBrowser(previewPane, -1)
-		#self.browser.browser.SetSizerProps({"expand":True, "proportion":1})
+        self.browser = wxbrowser.wxBrowser(previewPane, -1)
+        self.browser.browser.SetSizerProps(expand=True, proportion=1)
 
 		icnNewTheme = wx.Bitmap(os.path.join(settings.AppDir, "icons", "plus16.gif"), wx.BITMAP_TYPE_GIF)
 		icnCopyTheme = wx.Bitmap(os.path.join(settings.AppDir, "icons", "copy16.gif"), wx.BITMAP_TYPE_GIF)
