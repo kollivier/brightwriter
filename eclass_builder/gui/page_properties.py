@@ -259,38 +259,9 @@ class PagePropertiesDialog (sc.SizedDialog):
             self.txtAuthor.SetSelection(len(text), len(name))
 
     def btnSelectFileClicked(self, event):
-        dir = os.path.dirname(event.filename)
-        basename = os.path.basename(event.filename)
-        filename = event.filename
         isEClassPluginPage = False
 
-        if basename == "imsmanifest.xml": #another publication
-            self.node = conman.ConMan()
-            self.node.LoadFromXML(os.path.join(filename))
-            self.filename = filename
-        else:
-            plugin = plugins.GetPluginForFilename(filename)
-            copyfile = False 
-            destdir = os.path.join(settings.ProjectDir, plugin.plugin_info["Directory"])
-            # Don't do anything if the user selected the same file
-            destfile = os.path.join(destdir, basename) 
-            if destfile == filename:
-                pass
-            elif os.path.exists(destfile):
-                msg = wx.MessageDialog(self, _("The file %(filename)s already exists. Do you want to overwrite this file?") % {"filename": self.content.filename},
-                                           _("Overwrite File?"), wx.YES_NO)
-                answer = msg.ShowModal()
-                msg.Destroy()
-                if answer == wx.ID_YES:
-                    copyfile = True
-            else:
-                copyfile = True
-                
-            if copyfile:
-                fileutils.CopyFile(basename, dir, destdir)
-                if os.path.splitext(basename)[1] in [".htm", ".html"]:
-                    htmlutils.copyDependentFilesAndUpdateLinks(filename, os.path.join(destdir, basename))
-            self.filename = os.path.join(plugin.plugin_info["Directory"], basename)
+        self.filename = guiutils.importFile(event.filename)
         
         self.txtExistingFile.SetValue(self.filename)
 

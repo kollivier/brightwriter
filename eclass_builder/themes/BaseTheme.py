@@ -12,6 +12,7 @@ import plugins
 import utils
 import settings
 import constants
+import conman
 
 isPublic = True
 from StringIO import StringIO
@@ -41,7 +42,7 @@ class BaseHTMLPublisher:
 
 	def __init__(self, parent=None, dir=""):
 		self.parent = parent
-		#self.pub = parent.pub
+		self.pub = parent.pub
 		self.dir = dir
 		# be backwards compatible
 		if self.dir == "":
@@ -69,7 +70,8 @@ class BaseHTMLPublisher:
 			self.CopySupportFiles()
 			#self.CreateTOC()
 			#self.counter = 1
-			#self.PublishPages(self.pub.nodes[0])
+			if isinstance(self.pub, conman.conman.ConMan):
+				self.PublishPages(self.pub.nodes[0])
 		except:
 			if self.progress:
 				self.progress.Destroy()
@@ -159,6 +161,7 @@ class BaseHTMLPublisher:
 		return link
 
 	def PublishPages(self, node):
+		print "In publish..."
 		page = ""
 		if self.cancelled:
 			return

@@ -1,7 +1,11 @@
 import sys, os, string
 import settings
 import utils
+import fileutils
+import htmlutils
 import wx
+import plugins
+
 try:
 	import win32api
 except:
@@ -13,6 +17,34 @@ def getOpenCommandForFilename(filename):
 		return aFileType.GetOpenCommand(filename)
 
 	return ""
+	
+def importFile(filename):
+    dir = os.path.dirname(filename)
+    basename = os.path.basename(filename)
+        
+    plugin = plugins.GetPluginForFilename(filename)
+    copyfile = False 
+    destdir = os.path.join(settings.ProjectDir, plugin.plugin_info["Directory"])
+    # Don't do anything if the user selected the same file
+    destfile = os.path.join(destdir, basename) 
+    if destfile == filename:
+        pass
+    elif os.path.exists(destfile):
+        msg = wx.MessageDialog(None, _("The file %(filename)s already exists. Do you want to overwrite this file?") % {"filename": destfile},
+                                   _("Overwrite File?"), wx.YES_NO)
+        answer = msg.ShowModal()
+        msg.Destroy()
+        if answer == wx.ID_YES:
+            copyfile = True
+    else:
+        copyfile = True
+        
+    if copyfile:
+        fileutils.CopyFile(basename, dir, destdir)
+        if os.path.splitext(basename)[1] in [".htm", ".html"]:
+            htmlutils.copyDependentFilesAndUpdateLinks(filename, os.path.join(destdir, basename))
+
+    return os.path.join(plugin.plugin_info["Directory"], basename)
 	
 def openInHTMLEditor(filename):
     htmleditor = settings.AppSettings["HTMLEditor"]

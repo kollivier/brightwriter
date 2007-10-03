@@ -265,7 +265,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_CLOSE, self.OnCloseProject)
         app.AddHandlerForID(ID_PROPS, self.OnProjectProps)
         app.AddHandlerForID(ID_TREE_REMOVE, self.RemoveItem)
-        app.AddHandlerForID(ID_TREE_EDIT, self.EditItemProps) 
+        app.AddHandlerForID(ID_TREE_EDIT, self.OnEditItemProps) 
         app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
         app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
         #wx.EVT_MENU(self, ID_PUBLISH, self.PublishToWeb)
@@ -275,7 +275,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_BUG, self.OnReportBug)
         app.AddHandlerForID(ID_THEME, self.OnManageThemes)
         
-        #wx.EVT_MENU(self, ID_ADD_MENU, self.OnNewItem)
+        app.AddHandlerForID(ID_ADD_MENU, self.OnNewItem)
         app.AddHandlerForID(ID_TREE_MOVEUP, self.OnMoveItemUp)
         app.AddHandlerForID(ID_TREE_MOVEDOWN, self.OnMoveItemDown)
         app.AddHandlerForID(ID_HELP, self.OnHelp)
@@ -285,7 +285,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
         app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
         app.AddHandlerForID(ID_PASTE, self.OnPaste)
-        #wx.EVT_MENU(self, ID_IMPORT_FILE, self.AddNewItem)
+        app.AddHandlerForID(ID_IMPORT_FILE, self.OnImportFile)
         #wx.EVT_MENU(self, ID_REFRESH_THEME, self.OnRefreshTheme)
         #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
         app.AddHandlerForID(ID_ERRORLOG, self.OnErrorLog)
@@ -396,12 +396,42 @@ class MainFrame2(sc.SizedFrame):
     def OnContacts(self, event):
         ContactsDialog(self).ShowModal()
 
+    def OnEditItemProps(self, event):
+        self.EditItemProps()
+        
     def OnErrorLog(self, evt):
         self.errorViewer.Show()
 
     def OnFindInProject(self, evt):
         dlg = pfdlg.ProjectFindDialog(self)
         dlg.Show()
+
+    def OnImportFile(self, event):
+        parent = self.projectTree.GetCurrentTreeItem()
+        if parent:
+            parentitem = self.projectTree.GetCurrentTreeItemData()
+            
+            dialog = wx.FileDialog(self)
+            if dialog.ShowModal() == wx.ID_OK:
+                packagefile = guiutils.importFile(dialog.GetPath())
+                
+                newresource = ims.contentpackage.Resource()
+                newresource.setFilename(packagefile)
+                newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+                
+                self.imscp.resources.append(newresource)
+                
+                newitem = ims.contentpackage.Item()
+                newitem.title.text = os.path.basename(packagefile)
+                newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+                newitem.attrs["identifierref"] = newresource.attrs["identifier"]
+                
+                parentitem.items.append(newitem)
+                self.projectTree.AddIMSItemUnderCurrentItem(newitem)
+                
+                self.EditItemProps()
+                
+                
 
     def OnCut(self, event):
         sel_item = self.projectTree.GetSelection()
@@ -667,6 +697,57 @@ class MainFrame2(sc.SizedFrame):
         self.filesCopied += 1
         self.keepCopying = self.dialog.Update(self.filesCopied, "Copying: " + filename)
 
+    def OnNewItem(self, event):
+        self.CreateIMSResource()
+    
+    def CreateIMSResource(self, name=None, isroot=False):
+        dialog = NewPageDialog(self)
+        if name:
+            dialog.txtTitle.SetValue(name)
+
+        if dialog.ShowModal() == wx.ID_OK:
+            pluginName = dialog.cmbType.GetStringSelection()
+            plugin = plugins.GetPlugin(pluginName)
+            if plugin:
+                filename = os.path.join(plugin.plugin_info["Directory"], dialog.txtFilename.GetValue())
+                    
+                created = plugin.CreateNewFile(dialog.txtTitle.GetValue(), os.path.join(settings.ProjectDir, filename))
+                if created:
+                    newresource = ims.contentpackage.Resource()
+
+                    if os.path.splitext(filename)[1] == ".ecp":
+                        eclassutils.setEClassPageForIMSResource(newresource, filename)
+                    else:
+                        newresource.setFilename(filename)
+                    
+                    newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+                    
+                    self.imscp.resources.append(newresource)
+                    
+                    newitem = ims.contentpackage.Item()
+                    newitem.title.text = dialog.txtTitle.GetValue()
+                    newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+                    newitem.attrs["identifierref"] = newresource.attrs["identifier"]
+                    
+                    parentitem = self.projectTree.GetCurrentTreeItemData()
+                    parentitem.items.append(newitem)
+                    
+                    self.imscp.resources.append(newresource)
+                    
+                    
+                    newtreeitem = self.projectTree.AddIMSItemUnderCurrentItem(newitem)
+                        
+                    if not self.projectTree.IsExpanded(self.projectTree.GetCurrentTreeItem()):
+                            self.projectTree.Expand(self.projectTree.GetCurrentTreeItem())
+                    
+                    self.projectTree.SelectItem(newtreeitem)
+
+                    self.EditItem(None)
+                    self.UpdateContents()
+    
+                self.isNewCourse = False
+            dialog.Destroy()
+            
     def CopyCDFiles(self):
         #cleanup after old EClass versions
         fileutils.DeleteFiles(os.path.join(settings.ProjectDir, "*.pyd"))
@@ -845,8 +926,8 @@ class MainFrame2(sc.SizedFrame):
             self.log.write(message)
             self.errorPrompts.displayError(message + constants.errorInfoMsg)
             raise
-
-    def EditItemProps(self, event):
+        
+    def EditItemProps(self):
         selitem = self.projectTree.GetCurrentTreeItemData()
         seltreeitem = self.projectTree.GetCurrentTreeItem()
         if selitem:
