@@ -206,7 +206,7 @@ class BaseHTMLPublisher:
             keywords = resource.metadata.lom.general.keyword.getKeyOrEmptyString(lang)
             filename = eclassutils.getEClassPageForIMSResource(resource)
             if not filename:
-                filename = self.node.attrs["href"]
+                filename = resource.attrs["href"]
         
         self.data['name'] = TextToHTMLChar(name)
         self.data['description'] = TextToXMLAttr(description)

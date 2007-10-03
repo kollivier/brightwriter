@@ -4,13 +4,18 @@ import os
 #import conman.conman as conman
 import locale
 import re
-if __name__ != "__main__":
-	import conman
-	from xmlutils import *
-	from htmlutils import *
-	from fileutils import *
-	import plugins
-	from mmedia import HTMLTemplates
+import settings
+import eclassutils
+import ims
+import ims.contentpackage
+import appdata
+
+import conman
+from xmlutils import *
+from htmlutils import *
+from fileutils import *
+import plugins
+from mmedia import HTMLTemplates
 	#from conman.colorbutton import *
 
 mozilla_available = False
@@ -140,7 +145,17 @@ if __name__ != "__main__":
 			return "pub/" + os.path.basename(self.GetFilename(filename))
 
 		def GetData(self):
-			filename = os.path.join(settings.ProjectDir, self.node.content.filename)
+			if isinstance(self.node, conman.conman.ConNode):
+				filename = self.node.content.filename
+			
+			elif isinstance(self.node, ims.contentpackage.Item):
+				resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+				filename = eclassutils.getEClassPageForIMSResource(resource)
+				if not filename:
+					filename = resource.attrs["href"]
+			
+			filename = os.path.join(settings.ProjectDir, filename)
+			
 			if os.path.exists(filename):
 				myfile = None
 				myfile = utils.openFile(filename, 'r')
@@ -1520,12 +1535,21 @@ class CreateTableDialog(wxDialog):
 
 if __name__ != "__main__":
 	class EditorDialog:
-		def __init__(self, parent, currentItem):
+		def __init__(self, parent, node):
 			self.parent = parent
-			self.currentItem = currentItem
+			self.node = node
 	
 		def ShowModal(self):
-			self.filename = os.path.join(self.parent.pub.directory, self.currentItem.content.filename)
+			if isinstance(self.node, conman.conman.ConNode):
+				filename = self.node.content.filename
+			
+			elif isinstance(self.node, ims.contentpackage.Item):
+				resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+				filename = eclassutils.getEClassPageForIMSResource(resource)
+				if not filename:
+					filename = resource.attrs["href"]
+
+			self.filename = os.path.join(settings.ProjectDir, filename)
 			if not os.path.exists(self.filename):
 				global htmlpage
 				file = utils.openFile(self.filename, "w")

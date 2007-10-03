@@ -5,6 +5,7 @@ import version
 import unittest
 import shutil
 import plugins
+import utils
 
 def createEClass(dirname):
     # create the EClass folders
@@ -43,6 +44,12 @@ def setEClassPageForIMSResource(imsresource, filename):
     imsfile = ims.contentpackage.File()
     imsfile.attrs["href"] = filename
     imsresource.files.append(imsfile)
+
+def getResourceNamespace():
+    return u"URN:IMS-PLIRID-V0:"
+
+def getItemUUIDWithNamespace():
+    return getResourceNamespace() + utils.getUUID()
 
 class EClass:
     """ 

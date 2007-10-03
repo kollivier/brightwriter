@@ -20,7 +20,7 @@ if not os.path.exists(settings.AppDir):
 class EClassIMSConverter:
     def __init__(self, filename):
         self.filename=filename
-        self.id_namespace = u"URN:IMS-PLIRID-V0:"
+        self.id_namespace = eclassutils.getResourceNamespace()
         
     def IsEClass(self):
         myfile = utils.openFile(self.filename)
