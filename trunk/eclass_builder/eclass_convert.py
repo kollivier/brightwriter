@@ -87,7 +87,14 @@ class EClassIMSConverter:
         imsresources = []
         for resource in resources:
             imsresource = ims.contentpackage.Resource()
-            imsresource.attrs["type"] = resource.type
+            plugin = plugins.GetPluginForFilename(resource.filename)
+            # In older versions of EClass, the type was hardcoded to 'webcontent' 
+            # for all files, but for quizzes this is wrong, so use the right value
+            # if possible.
+            if plugin: 
+                imsresource.attrs["type"] = plugin.plugin_info["IMS Type"]
+            else:
+                imsresource.attrs["type"] = resource.type
             imsresource.attrs["identifier"] = self.id_namespace + resource.id
             self._convertEClassMetadata(resource, imsresource, language)
             

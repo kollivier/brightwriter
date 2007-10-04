@@ -48,6 +48,7 @@ plugin_info = { "Name":"eclass",
                 "Directory":"EClass", 
                 "Extension":["ecp"], 
                 "Mime Type": "",
+                "IMS Type": "webcontent",
                 "Requires":"", 
                 "CanCreateNew":True}
 

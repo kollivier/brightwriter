@@ -106,6 +106,7 @@ plugin_info = {	"Name":"html",
 				"Directory": "Text", 
 				"Extension": ["htm", "html"], 
 				"Mime Type": "text/html",
+				"IMS Type": "webcontent",
 				"Requires":"", 
 				"CanCreateNew":True}
 
