@@ -269,6 +269,10 @@ class ContentPackage(Tag):
         myfile.write(codecs.BOM_UTF8)
         myfile.write(data)
         myfile.close()
+        
+        self.filename = filename
+        
+        self.clearDirtyBit()
 
     def loadFromXML(self, filename, strictMode=False):
         assert(os.path.exists(filename))
