@@ -13,6 +13,11 @@ from fileutils import *
 from StringIO import StringIO
 import utils 
 import settings
+import conman
+import appdata
+import ims
+import ims.contentpackage
+import eclassutils
 
 USE_MINIDOM=0
 try:
@@ -473,7 +478,16 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
     def GetData(self):
         self.quiz = QuizPage()
-        self.quiz.LoadPage(os.path.join(settings.ProjectDir, self.node.content.filename))
+        filename = ""
+        if isinstance(self.node, conman.conman.ConMan):
+            filename = self.node.content.filename
+        else:
+            self.content = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+            filename = eclassutils.getEClassPageForIMSResource(self.content)
+            if not filename:
+                filename = self.content.attrs["href"]
+        
+        self.quiz.LoadPage(os.path.join(settings.ProjectDir, filename))
 
         self.data['content'] = self._ItemsAsHTML()
         #self.data['credit'] = ""
@@ -666,12 +680,21 @@ class EditorDialog(sc.SizedDialog):
         self.btnEdit = wx.Button(btnPane, -1, _("Edit"))
         self.btnRemove = wx.Button(btnPane, -1, _("Remove"))
         
-        if len(self.item.content.filename) > 0: 
-            filename = os.path.join(settings.ProjectDir, self.item.content.filename)
+        filename = None
+        if isinstance(self.item, conman.conman.ConMan):
+            filename = self.node.content.filename
+        else:
+            self.content = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.item)
+            filename = eclassutils.getEClassPageForIMSResource(self.content)
+            if not filename:
+                filename = self.content.attrs["href"]
+                
+        if filename: 
+            self.filename = os.path.join(settings.ProjectDir, filename)
             try:
-                self.quiz.LoadPage(filename)
+                self.quiz.LoadPage(self.filename)
             except IOError, msg:
-                message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": filename})
+                message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": self.filename})
                 global log
                 log.write(message)
                 wx.MessageBox(message, _("Unable to create file."), wxICON_ERROR)
@@ -692,12 +715,11 @@ class EditorDialog(sc.SizedDialog):
         wx.EVT_LEFT_DCLICK(self.lstQuestions, self.btnEditClicked)
 
     def btnOKClicked(self, event):
-        filename = os.path.join(settings.ProjectDir, self.item.content.filename)
         try:
-            self.quiz.SaveAsXML(filename)
+            self.quiz.SaveAsXML(self.filename)
             self.EndModal(wx.ID_OK)
         except IOError:
-            message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
+            message = utils.getStdErrorMessage("IOError", {"filename":self.filename, "type":"write"})
             global log
             log.write(message)
             wx.MessageBox(message, _("Cannot Save File"), wxICON_ERROR)
@@ -722,7 +744,7 @@ class EditorDialog(sc.SizedDialog):
 class QuestionEditor(sc.SizedDialog):
     def __init__(self, parent, question=None):
         sc.SizedDialog.__init__(self, parent, -1, _("Question Editor"), wx.Point(100, 100),
-                                  style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                                  style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.STAY_ON_TOP)
         pane = self.GetContentsPane()
 
         wx.StaticText(pane, -1, _("Question:"))

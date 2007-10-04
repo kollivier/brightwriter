@@ -336,10 +336,6 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
         self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
-
-        #wx.EVT_RIGHT_DOWN(self.projectTree, self.OnTreeRightClick)
-        #self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
-        #wx.EVT_LEFT_DCLICK(self.projectTree, self.OnTreeDoubleClick)
         
         self.SetMinSize(self.GetSizer().GetMinSize())
 
@@ -907,25 +903,19 @@ class MainFrame2(sc.SizedFrame):
         return filename
     
     def EditItem(self, event):
-        try:
-            selitem = self.projectTree.GetCurrentTreeItemData()
-            filename = self.GetEditableFileForIMSItem(selitem)
-            isplugin = False
-            result = wx.ID_CANCEL
-            plugin = plugins.GetPluginForFilename(filename)
-            if plugin:
-                mydialog = plugin.EditorDialog(self, selitem)
-                result = mydialog.ShowModal()
-    
-            if result == wx.ID_OK:
-                self.Update()
-                self.projectTree.SetItemText(self.projectTree.GetCurrentTreeItem(), selitem.title.text)
-                self.isDirty = True
-        except:
-            message = _("There was an unknown error when attempting to start the page editor.")
-            self.log.write(message)
-            self.errorPrompts.displayError(message + constants.errorInfoMsg)
-            raise
+        selitem = self.projectTree.GetCurrentTreeItemData()
+        filename = self.GetEditableFileForIMSItem(selitem)
+        isplugin = False
+        result = wx.ID_CANCEL
+        plugin = plugins.GetPluginForFilename(filename)
+        if plugin:
+            mydialog = plugin.EditorDialog(self, selitem)
+            result = mydialog.ShowModal()
+
+        if result == wx.ID_OK:
+            self.Update()
+            self.projectTree.SetItemText(self.projectTree.GetCurrentTreeItem(), selitem.title.text)
+            self.isDirty = True
         
     def EditItemProps(self):
         selitem = self.projectTree.GetCurrentTreeItemData()
