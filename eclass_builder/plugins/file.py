@@ -6,6 +6,7 @@ plugin_info = {	"Name":"file",
 				"Directory":"File", 
 				"Extension":["*"], 
 				"Mime Type": "",
+				"IMS Type": "webcontent",
 				"Requires":"",
 				"CanCreateNew":False}
 

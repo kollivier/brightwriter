@@ -414,6 +414,8 @@ class MainFrame2(sc.SizedFrame):
                 newresource = ims.contentpackage.Resource()
                 newresource.setFilename(packagefile)
                 newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+                plugin = plugins.GetPluginForFilename(packagefile)
+                newresource.attrs["type"] = plugin.plugin_info["IMS Type"]
                 
                 self.imscp.resources.append(newresource)
                 
@@ -720,6 +722,7 @@ class MainFrame2(sc.SizedFrame):
                         newresource.setFilename(filename)
                     
                     newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+                    newresource.attrs["type"] = plugin.plugin_info["IMS Type"]
                     
                     self.imscp.resources.append(newresource)
                     
@@ -981,17 +984,18 @@ class MainFrame2(sc.SizedFrame):
                 self.Update()
 
     def Preview(self):
+        filename = None
         imsitem = self.projectTree.GetCurrentTreeItemData()
         if imsitem:
             import ims.utils
             resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
-            if resource:
+            if resource and resource.attrs["type"] == "webcontent":
                 filename = resource.attrs["href"]
         
         if filename:
-            publisher = plugins.GetPublisherForFilename(filename)
-            filelink = publisher.GetFileLink(filename).replace("/", os.sep)
-            filename = os.path.join(settings.ProjectDir, filelink)
+            #publisher = plugins.GetPublisherForFilename(filename)
+            #filelink = publisher.GetFileLink(filename).replace("/", os.sep)
+            filename = os.path.join(settings.ProjectDir, filename)
     
             #we shouldn't preview files that EClass can't view
             ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
@@ -999,12 +1003,12 @@ class MainFrame2(sc.SizedFrame):
                 ok_fileTypes.append("pdf")
     
             if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
-                for browser in self.browsers:
-                    self.browsers[browser].LoadPage(filename)
+                self.browser.LoadPage(filename)
             else:
-                #self.status.SetStatusText("Cannot find file: "+ filename)
-                for browser in self.browsers:
-                    self.browsers[browser].SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the file to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
+                self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
+                    
+        else:
+            self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("This page cannot be previewed inside EClass. Double-click on the page to view or edit it.") + "</p>"))
 
     def PublishPage(self, imsitem):
         if imsitem != None:
