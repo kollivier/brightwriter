@@ -14,7 +14,7 @@ appErrorLog = errors.appErrorLog
 
 class ErrorDialog(sc.SizedDialog):
     def __init__(self, parent=None):
-        sc.SizedDialog.__init__(self, parent, -1, _("EClass.Builder Fatal Error"), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        sc.SizedDialog.__init__(self, parent, -1, _("EClass.Builder Fatal Error"), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.STAY_ON_TOP)
         pane = self.GetContentsPane()
         
         wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in EClass.Builder"))
