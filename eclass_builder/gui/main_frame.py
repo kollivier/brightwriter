@@ -134,7 +134,6 @@ class MainFrame2(sc.SizedFrame):
         if wx.Platform == "__WXMAC__":
             wx.SetDefaultPyEncoding("utf-8")
         
-        self.isDirty = False
         self.imscp = None
         #dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
         self.dirtyNodes = []
@@ -258,8 +257,9 @@ class MainFrame2(sc.SizedFrame):
         
         self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
-        #wx.EVT_MENU(self, ID_NEW, self.NewProject)
+        #wx.EVT_MENU(self, 
         app = wx.GetApp()
+        app.AddHandlerForID(ID_NEW, self.OnNewContentPackage)
         app.AddHandlerForID(ID_OPEN, self.OnOpen)
         app.AddHandlerForID(ID_SAVE, self.SaveProject)
         app.AddHandlerForID(ID_CLOSE, self.OnCloseProject)
@@ -517,14 +517,14 @@ class MainFrame2(sc.SizedFrame):
                 appdata.activeFrame = None
 
     def OnCloseProject(self, event):
-        if self.isDirty:
-            answer = self.CheckSave()
+        if self.imscp and self.imscp.isDirty():
+            answer = self.PromptToSaveExistingProject()
             if answer == wx.ID_YES:
                 self.SaveProject(event)
             elif answer == wx.ID_CANCEL:
                 return
             else:
-                self.isDirty = False
+                self.imscp.clearDirtyBit()
 
         self.imscp = None
         self.projectTree.DeleteAllItems()
@@ -589,14 +589,14 @@ class MainFrame2(sc.SizedFrame):
         Handler for File-Open
         """
         
-        if self.isDirty:
-            answer = self.CheckSave()
+        if self.imscp and self.imscp.isDirty():
+            answer = self.PromptToSaveExistingProject()
             if answer == wx.ID_YES:
                 self.SaveProject(event)
             elif answer == wx.ID_CANCEL:
                 return
             else:
-                self.isDirty = False
+                self.ismcp.clearDirtyBit()
         
         defaultdir = ""
         if settings.AppSettings["CourseFolder"] != "" and os.path.exists(settings.AppSettings["CourseFolder"]):
@@ -607,6 +607,9 @@ class MainFrame2(sc.SizedFrame):
             self.LoadEClass(dialog.GetPath())
         
         dialog.Destroy()
+
+    def OnNewContentPackage(self, event):
+        self.NewContentPackage()
 
     def OnPreviewEClass(self, event):
         self.UpdateEClassDataFiles()
@@ -696,7 +699,7 @@ class MainFrame2(sc.SizedFrame):
     def OnNewItem(self, event):
         self.CreateIMSResource()
     
-    def CreateIMSResource(self, name=None, isroot=False):
+    def CreateIMSResource(self, name=None):
         dialog = NewPageDialog(self)
         if name:
             dialog.txtTitle.SetValue(name)
@@ -726,17 +729,16 @@ class MainFrame2(sc.SizedFrame):
                     newitem.attrs["identifierref"] = newresource.attrs["identifier"]
                     
                     parentitem = self.projectTree.GetCurrentTreeItemData()
-                    parentitem.items.append(newitem)
-                    
-                    self.imscp.resources.append(newresource)
-                    
-                    
-                    newtreeitem = self.projectTree.AddIMSItemUnderCurrentItem(newitem)
+                    if parentitem:
+                        parentitem.items.append(newitem)
+                        newtreeitem = self.projectTree.AddIMSItemUnderCurrentItem(newitem)
+                        
+                    else: 
+                        self.imscp.organizations[0].items.append(newitem)
+                        self.projectTree.AddIMSItemsToTree(newitem)
                         
                     if not self.projectTree.IsExpanded(self.projectTree.GetCurrentTreeItem()):
                             self.projectTree.Expand(self.projectTree.GetCurrentTreeItem())
-                    
-                    self.projectTree.SelectItem(newtreeitem)
 
                     self.EditItem(None)
                     self.UpdateContents()
@@ -780,7 +782,7 @@ class MainFrame2(sc.SizedFrame):
             pass
 
     def ShutDown(self, event):
-        if self.isDirty:
+        if self.imscp and self.imscp.isDirty():
             answer = self.PromptToSaveExistingProject()
             if answer == wx.ID_YES:
                 self.SaveProject(event)
@@ -812,19 +814,58 @@ class MainFrame2(sc.SizedFrame):
             f = wx.FileDialog(self, _("Select a file"), defaultdir, "", "XML Files (*.xml)|*.xml", wx.SAVE)
             if f.ShowModal() == wx.ID_OK:
                 filename = f.GetPath()
-                self.isDirty = False
             f.Destroy()
         
         #self.CreateDocumancerBook()
         #self.CreateDevHelpBook()
 
-        try:
-            self.imscp.saveAsXML(filename)
-            self.isDirty = False
-        except IOError, e:
-            message = _("Could not save EClass project file. Error Message is:")
-            self.log.write(message)
-            wx.MessageBox(message + str(e), _("Could Not Save File"))
+        if os.path.exists(filename):
+            try:
+                self.imscp.saveAsXML(filename)
+            except IOError, e:
+                message = _("Could not save EClass project file. Error Message is:")
+                self.log.write(message)
+                wx.MessageBox(message + str(e), _("Could Not Save File"))
+        
+    def NewContentPackage(self):
+        """
+        Routine to create a new project. 
+        """
+        if self.imscp and self.imscp.isDirty():
+            answer = self.PromptToSaveExistingProject()
+            if answer == wx.ID_YES:
+                self.SaveProject(event)
+            elif answer == wx.ID_CANCEL:
+                return
+
+        defaultdir = ""
+        if settings.AppSettings["CourseFolder"] == "" or not os.path.exists(settings.AppSettings["CourseFolder"]):
+            msg = wx.MessageBox(_("You need to specify a folder to store your course packages. To do so, select Options->Preferences from the main menu."),_("Course Folder not specified"))
+            return
+        else:
+            newdialog = NewPubDialog(self)
+            result = newdialog.ShowModal()
+            if result == wx.ID_OK:
+                self.imscp = ims.contentpackage.ContentPackage() # conman.ConMan()
+                self.projectTree.DeleteAllItems()
+                self.browser.LoadPage("about:blank")
+        
+                settings.ProjectDir = newdialog.eclassdir
+                import eclass
+                eclass.createEClass(settings.ProjectDir)
+                
+                filename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
+                self.imscp.metadata.lom.general.title = newdialog.txtTitle.GetValue()
+                self.imscp.metadata.lom.general.description = newdialog.txtDescription.GetValue()
+                self.imscp.metadata.lom.general.keyword = newdialog.txtKeywords.GetValue()
+                
+                self.imscp.organizations.append(ims.contentpackage.Organization())
+                self.CreateIMSResource(self.imscp.metadata.lom.general.title)
+                
+                self.imscp.saveAsXML(filename)
+                settings.AppSettings["LastOpened"] = filename
+
+            newdialog.Destroy()
         
     def LoadEClass(self, filename):
         busy = wx.BusyCursor()
@@ -867,8 +908,6 @@ class MainFrame2(sc.SizedFrame):
                 if settings.ProjectSettings["SearchProgram"] == "Swish-e":
                     settings.ProjectSettings["SearchProgram"] = "Lucene"
                     self.errorPrompts.displayError(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
-    
-                self.isDirty = False
                 
                 self.SetFocus()
                 # self.SwitchMenus(True)
@@ -915,7 +954,6 @@ class MainFrame2(sc.SizedFrame):
         if result == wx.ID_OK:
             self.Update()
             self.projectTree.SetItemText(self.projectTree.GetCurrentTreeItem(), selitem.title.text)
-            self.isDirty = True
         
     def EditItemProps(self):
         selitem = self.projectTree.GetCurrentTreeItemData()
@@ -924,7 +962,6 @@ class MainFrame2(sc.SizedFrame):
             result = PagePropertiesDialog(self, selitem, None, os.path.join(settings.ProjectDir, "Text")).ShowModal()
             self.projectTree.SetItemText(seltreeitem, selitem.title.text)
             self.Update()
-            self.isDirty = True
 
     def RemoveItem(self, event):
         selection = self.projectTree.GetCurrentTreeItem()
@@ -942,7 +979,6 @@ class MainFrame2(sc.SizedFrame):
                 self.projectTree.Delete(selection)
                 self.UpdateContents()
                 self.Update()
-                self.isDirty = True
 
     def Preview(self):
         imsitem = self.projectTree.GetCurrentTreeItemData()
