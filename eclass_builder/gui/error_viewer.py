@@ -59,6 +59,10 @@ def guiExceptionHook(exctype, value, trace):
     
     print errorText
     
+    if not wx.GetApp():
+        app = wx.PySimpleApp()
+        app.MainLoop()
+    
     error = ErrorDialog()
     error.detailsText.WriteText(errorText)
     error.Centre()
