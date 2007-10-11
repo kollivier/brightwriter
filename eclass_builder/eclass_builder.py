@@ -22,11 +22,11 @@ sys.excepthook = errors.guiExceptionHook
 import settings, guiutils, appdata, errors
 import conman.xml_settings as xml_settings
 import conman.vcard as vcard
-import wxaddons.wxblox.events as events
+import wxblox.events as events
 import gui
 
 settings.AppDir = rootdir
-test_new_editor = False
+new_editor = True
         
 class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def OnInit(self):
@@ -44,7 +44,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
 
         global test_new_editor
         
-        if test_new_editor:
+        if new_editor:
             import gui.main_frame
             self.frame = gui.main_frame.MainFrame2(None, -1, "EClass.Builder")
         else:
@@ -141,8 +141,8 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
 for arg in sys.argv:
     if arg == "--debug":
         debug = 1
-    elif arg == "--new-editor":
-        test_new_editor = True
+    elif arg == "--old-editor":
+        new_editor = False
 
 app = BuilderApp(0)
 app.MainLoop()
