@@ -55,6 +55,7 @@ Section "Program Files" SecCopyUI
   File /r "..\Greenstone"
   File /r "..\docs"
   File /r "..\icons"
+  File /r "..\ims"
   File /r "librarian-win32"
   File /r "..\library"
   ;File /r "..\installers"
