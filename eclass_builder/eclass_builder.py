@@ -18,8 +18,7 @@ lang_dict = {
 import wx
 import gui.error_viewer as errors
 sys.excepthook = errors.guiExceptionHook
-        
-import fudgalicious
+
 import settings, guiutils, appdata, errors
 import conman.xml_settings as xml_settings
 import conman.vcard as vcard
