@@ -1,20 +1,10 @@
 import string, sys, os, shutil, glob
-import settings, guiutils, appdata, errors
-import conman.xml_settings as xml_settings
-import conman.vcard as vcard
-import wx
-import wxaddons.wxblox.events as events
-import gui
-import gui.error_viewer as errors
 
 rootdir = os.path.abspath(sys.path[0])
 # os.path.dirname will chop the last dir if the path is to a directory
 if not os.path.isdir(rootdir):
     rootdir = os.path.dirname(rootdir)
-
-settings.AppDir = rootdir
-test_new_editor = False
-
+    
 # do this first because other modules may rely on _()
 localedir = os.path.join(rootdir, 'locale')
 import gettext
@@ -23,12 +13,25 @@ lang_dict = {
             "en": gettext.translation('eclass', localedir, languages=['en']), 
             "es": gettext.translation('eclass', localedir, languages=['es']),
             "fr": gettext.translation('eclass', localedir, languages=['fr'])
-            }  
+            }
+
+import wx
+import gui.error_viewer as errors
+sys.excepthook = errors.guiExceptionHook
+        
+import fudgalicious
+import settings, guiutils, appdata, errors
+import conman.xml_settings as xml_settings
+import conman.vcard as vcard
+import wxaddons.wxblox.events as events
+import gui
+
+settings.AppDir = rootdir
+test_new_editor = False
         
 class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def OnInit(self):
         events.AppEventHandlerMixin.__init__(self)
-        sys.excepthook = errors.guiExceptionHook
         
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
         self.SetAppName("EClass.Builder")
