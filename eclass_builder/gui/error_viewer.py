@@ -9,6 +9,8 @@ import wxaddons.sized_controls as sc
 import autolist
 import errors
 import traceback
+import xmlrpc
+import version
 
 appErrorLog = errors.appErrorLog
 
@@ -37,9 +39,19 @@ class ErrorDialog(sc.SizedDialog):
         self.sendBtn = wx.Button(btnPanel, -1, _("Send Error Report"))
         
         self.Bind(wx.EVT_BUTTON, self.OnPaneChanged, self.detailsButton)
+        self.Bind(wx.EVT_BUTTON, self.OnSubmitReport, self.sendBtn)
         
         self.Fit()
         
+    def OnSubmitReport(self, event):
+        server = xmlrpc.getEClassXMLRPCServer()
+        result = server.sendError("Anonymous", "", "", self.detailsText.GetValue(), version.asString())
+        if result == "success":
+            wx.MessageBox(_("Error report sent successfully! Thanks!"))
+            self.Destroy()
+        else:
+            wx.MessageBox(_("Unable to send error report. Error details can also be emailed to kevino@tulane.edu."))
+            
     def OnPaneChanged(self, event):
         if not self.detailsText.IsShown(): 
             self.detailsText.Show()
