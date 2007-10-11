@@ -66,6 +66,7 @@ Section "Program Files" SecCopyUI
   File /r "..\gui"
   File /r "..\mmedia"
   File /r "..\utils"
+  File /r "..\wxblox"
 
   SetOutPath "$INSTDIR\autorun"
   File "..\autorun\autorun.inf"
