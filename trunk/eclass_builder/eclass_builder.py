@@ -24,6 +24,7 @@ import conman.xml_settings as xml_settings
 import conman.vcard as vcard
 import wxblox.events as events
 import gui
+import fileutils
 
 settings.AppDir = rootdir
 new_editor = True
