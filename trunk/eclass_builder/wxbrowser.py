@@ -1,4 +1,4 @@
-from wxPython.wx import *
+import wx
 import sys, string
 import utils
 
