@@ -42,7 +42,6 @@ import constants
 import mmedia
 import analyzer
 import eclass_convert
-import eclass
 import appdata
 
 # Import the gui dialogs. They used to be embedded in editor.py
