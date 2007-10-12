@@ -1,4 +1,5 @@
-from wxPython.wx import *
+import wx
+import wx.stc
 import string
 import os
 #import conman.conman as conman
@@ -19,12 +20,6 @@ from mmedia import HTMLTemplates
 	#from conman.colorbutton import *
 
 mozilla_available = False
-try:
-	from wxPython.mozilla import *
-	from wxPython.stc import *
-	mozilla_available = True
-except:
-	pass
 
 from StringIO import StringIO
 from threading import *
@@ -32,68 +27,68 @@ import traceback
 import sys
 import utils, guiutils, settings
 
-ID_NEW = wxNewId()
-ID_OPEN = wxNewId()
-ID_SAVE = wxNewId()
-ID_QUIT = wxNewId()
+ID_NEW = wx.NewId()
+ID_OPEN = wx.NewId()
+ID_SAVE = wx.NewId()
+ID_QUIT = wx.NewId()
 
-ID_BOLD = wxNewId()
-ID_ITALIC = wxNewId()
-ID_UNDERLINE = wxNewId()
+ID_BOLD = wx.NewId()
+ID_ITALIC = wx.NewId()
+ID_UNDERLINE = wx.NewId()
 
-ID_ALIGN_LEFT = wxNewId()
-ID_ALIGN_CENTER = wxNewId()
-ID_ALIGN_RIGHT = wxNewId()
-ID_ALIGN_JUSTIFY = wxNewId()
+ID_ALIGN_LEFT = wx.NewId()
+ID_ALIGN_CENTER = wx.NewId()
+ID_ALIGN_RIGHT = wx.NewId()
+ID_ALIGN_JUSTIFY = wx.NewId()
 
-ID_INDENT = wxNewId()
-ID_DEDENT = wxNewId()
+ID_INDENT = wx.NewId()
+ID_DEDENT = wx.NewId()
 
-ID_INCREASE_FONT = wxNewId()
-ID_DECREASE_FONT = wxNewId()
+ID_INCREASE_FONT = wx.NewId()
+ID_DECREASE_FONT = wx.NewId()
 
-ID_BULLETS = wxNewId()
-ID_NUMBERING = wxNewId()
+ID_BULLETS = wx.NewId()
+ID_NUMBERING = wx.NewId()
 
-ID_EDITOL = wxNewId()
+ID_EDITOL = wx.NewId()
 
-ID_FONT_COLOR = wxNewId()
+ID_FONT_COLOR = wx.NewId()
 
-ID_INSERT_IMAGE = wxNewId()
-ID_INSERT_LINK = wxNewId()
-ID_INSERT_HR = wxNewId()
-ID_INSERT_TABLE = wxNewId()
-ID_INSERT_BOOKMARK = wxNewId()
-ID_INSERT_FLASH = wxNewId()
+ID_INSERT_IMAGE = wx.NewId()
+ID_INSERT_LINK = wx.NewId()
+ID_INSERT_HR = wx.NewId()
+ID_INSERT_TABLE = wx.NewId()
+ID_INSERT_BOOKMARK = wx.NewId()
+ID_INSERT_FLASH = wx.NewId()
 
-ID_EDITIMAGE = wxNewId()
-ID_EDITLINK = wxNewId()
-ID_EDITTABLE = wxNewId()
-ID_EDITROW = wxNewId()
-ID_EDITCOL = wxNewId()
-ID_EDITCELL = wxNewId()
-ID_EDITBOOKMARK = wxNewId()
+ID_EDITIMAGE = wx.NewId()
+ID_EDITLINK = wx.NewId()
+ID_EDITTABLE = wx.NewId()
+ID_EDITROW = wx.NewId()
+ID_EDITCOL = wx.NewId()
+ID_EDITCELL = wx.NewId()
+ID_EDITBOOKMARK = wx.NewId()
 
-ID_UNDO = wxNewId()
-ID_REDO = wxNewId()
-ID_REMOVE_LINK = wxNewId()
+ID_UNDO = wx.NewId()
+ID_REDO = wx.NewId()
+ID_REMOVE_LINK = wx.NewId()
 
-ID_FIND = wxNewId()
-ID_FIND_NEXT = wxNewId()
+ID_FIND = wx.NewId()
+ID_FIND_NEXT = wx.NewId()
 
-ID_CUT = wxNewId()
-ID_COPY = wxNewId()
-ID_PASTE = wxNewId()
+ID_CUT = wx.NewId()
+ID_COPY = wx.NewId()
+ID_PASTE = wx.NewId()
 
-ID_SPELLCHECK = wxNewId()
-ID_SELECTALL = wxNewId()
-ID_SELECTNONE = wxNewId()
+ID_SPELLCHECK = wx.NewId()
+ID_SELECTALL = wx.NewId()
+ID_SELECTNONE = wx.NewId()
 
-ID_TEXT_SUP = wxNewId()
-ID_TEXT_SUB = wxNewId()
-ID_TEXT_CODE = wxNewId()
-ID_TEXT_CITATION = wxNewId()
-ID_TEXT_REMOVE_STYLES = wxNewId()
+ID_TEXT_SUP = wx.NewId()
+ID_TEXT_SUB = wx.NewId()
+ID_TEXT_CODE = wx.NewId()
+ID_TEXT_CITATION = wx.NewId()
+ID_TEXT_REMOVE_STYLES = wx.NewId()
 import errors
 log = errors.appErrorLog
 
@@ -173,22 +168,22 @@ if __name__ != "__main__":
 
 #-------------------------- EDITOR INTERFACE ----------------------------------------
 
-class EditorFrame (wxFrame):
+class EditorFrame (wx.Frame):
 	def __init__(self, parent):
 		self.running = true
-		wxFrame.__init__(self,NULL, -1, "Document Editor")
+		wx.Frame.__init__(self,NULL, -1, "Document Editor")
 		self.current = "about:blank"
 		self.parent = parent
 		self.currentItem = None #conman.ConNode("ID", conman.Content("ID2", "English"), None)
 		self.findtext = ""
 		#self.filename = self.currentItem.content.filename
-		self.menu = wxMenuBar()
-		self.filemenu = wxMenu()
+		self.menu = wx.MenuBar()
+		self.filemenu = wx.Menu()
 		self.filemenu.Append(ID_NEW, _("New"))
 		self.filemenu.Append(ID_OPEN, _("Open"))
 		self.filemenu.Append(ID_SAVE, _("Save") +"\tCTRL+S")
 		self.filemenu.Append(ID_QUIT, _("Exit") +"\tCTRL+Q")
-		self.editmenu = wxMenu()
+		self.editmenu = wx.Menu()
 		self.editmenu.Append(ID_UNDO, _("Undo") + "\tCTRL+Z")
 		self.editmenu.Append(ID_REDO, _("Redo") + "\tCTRL+Y")
 		self.editmenu.AppendSeparator()
@@ -200,22 +195,22 @@ class EditorFrame (wxFrame):
 		self.editmenu.Append(ID_SELECTNONE, _("Select None"))
 		self.editmenu.AppendSeparator()
 		self.editmenu.Append(ID_FIND, _("Find") + "\tCTRL+F")
-		if wxPlatform == "__WXMAC__":
+		if wx.Platform == "__WXMAC__":
 			self.editmenu.Append(ID_FIND_NEXT, _("Find Next") + "\tF3")
 		else:
 			self.editmenu.Append(ID_FIND_NEXT, _("Find Next") + "\tCTRL+G")
 		self.editmenu.AppendSeparator()
 		self.editmenu.Append(ID_REMOVE_LINK, _("Remove Link"))
 
-		self.insertmenu = wxMenu()
+		self.insertmenu = wx.Menu()
 		self.insertmenu.Append(ID_INSERT_LINK, _("Hyperlink") + "\tCTRL+L")
 		self.insertmenu.Append(ID_INSERT_BOOKMARK, _("Bookmark"))
 		self.insertmenu.AppendSeparator()
 		self.insertmenu.Append(ID_INSERT_IMAGE, _("Image..."))
 		self.insertmenu.Append(ID_INSERT_FLASH, _("Flash Animation..."))
 
-		self.formatmenu = wxMenu()
-		textstylemenu = wxMenu()
+		self.formatmenu = wx.Menu()
+		textstylemenu = wx.Menu()
 		textstylemenu.Append(ID_BOLD, _("Bold") + "\tCTRL+B")
 		textstylemenu.Append(ID_ITALIC, _("Italic") + "\tCTRL+I")
 		textstylemenu.Append(ID_UNDERLINE, _("Underline") + "\tCTRL+U")
@@ -227,12 +222,12 @@ class EditorFrame (wxFrame):
 		textstylemenu.AppendSeparator()
 		textstylemenu.Append(ID_TEXT_REMOVE_STYLES, _("Clear Text Styles"))
 
-		self.formatmenu.AppendMenu(wxNewId(), _("Text Style"), textstylemenu)
+		self.formatmenu.AppendMenu(wx.NewId(), _("Text Style"), textstylemenu)
 		
-		self.tablemenu = wxMenu()
+		self.tablemenu = wx.Menu()
 		self.tablemenu.Append(ID_INSERT_TABLE, _("Insert Table"))
 
-		#self.toolmenu = wxMenu()
+		#self.toolmenu = wx.Menu()
 		#self.toolmenu.Append(ID_SPELLCHECK, _("Check Spelling"))
 
 		self.menu.Append(self.filemenu, _("File"))
@@ -242,44 +237,44 @@ class EditorFrame (wxFrame):
 		self.menu.Append(self.tablemenu, _("Table"))
 		#self.menu.Append(self.toolmenu, _("Tools"))
 		self.SetMenuBar(self.menu)
-		sizer = wxBoxSizer(wxVERTICAL)
-		btnSizer = wxBoxSizer(wxHORIZONTAL)
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		btnSizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.dirty = false
 
 		#load icons
-		icnSave = wxBitmap(os.path.join(self.parent.AppDir, "icons", "save16.gif"), wxBITMAP_TYPE_GIF)
-		icnBold = wxBitmap(os.path.join(self.parent.AppDir, "icons", "bold_blue16.gif"), wxBITMAP_TYPE_GIF)
-		icnItalic = wxBitmap(os.path.join(self.parent.AppDir, "icons", "italic_blue16.gif"), wxBITMAP_TYPE_GIF)	 
-		icnUnderline = wxBitmap(os.path.join(self.parent.AppDir, "icons", "underline_blue16.gif"), wxBITMAP_TYPE_GIF)
+		icnSave = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "save16.gif"), wx.BITMAP_TYPE_GIF)
+		icnBold = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "bold_blue16.gif"), wx.BITMAP_TYPE_GIF)
+		icnItalic = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "italic_blue16.gif"), wx.BITMAP_TYPE_GIF)	 
+		icnUnderline = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "underline_blue16.gif"), wx.BITMAP_TYPE_GIF)
 
-		icnCut = wxBitmap(os.path.join(self.parent.AppDir, "icons", "cut16.gif"), wxBITMAP_TYPE_GIF)
-		icnCopy = wxBitmap(os.path.join(self.parent.AppDir, "icons", "copy16.gif"), wxBITMAP_TYPE_GIF)
-		icnPaste = wxBitmap(os.path.join(self.parent.AppDir, "icons", "paste16.gif"), wxBITMAP_TYPE_GIF)
+		icnCut = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "cut16.gif"), wx.BITMAP_TYPE_GIF)
+		icnCopy = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "copy16.gif"), wx.BITMAP_TYPE_GIF)
+		icnPaste = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "paste16.gif"), wx.BITMAP_TYPE_GIF)
 		
-		icnAlignLeft = wxBitmap(os.path.join(self.parent.AppDir, "icons", "align_left16.gif"), wxBITMAP_TYPE_GIF) 
-		icnAlignCenter = wxBitmap(os.path.join(self.parent.AppDir, "icons", "align_centre16.gif"), wxBITMAP_TYPE_GIF)
-		icnAlignRight = wxBitmap(os.path.join(self.parent.AppDir, "icons", "align_right16.gif"), wxBITMAP_TYPE_GIF) 
-		icnAlignJustify = wxBitmap(os.path.join(self.parent.AppDir, "icons", "align_justify16.gif"), wxBITMAP_TYPE_GIF)
+		icnAlignLeft = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "align_left16.gif"), wx.BITMAP_TYPE_GIF) 
+		icnAlignCenter = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "align_centre16.gif"), wx.BITMAP_TYPE_GIF)
+		icnAlignRight = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "align_right16.gif"), wx.BITMAP_TYPE_GIF) 
+		icnAlignJustify = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "align_justify16.gif"), wx.BITMAP_TYPE_GIF)
 
-		icnIncreaseFont = wxBitmap(os.path.join(self.parent.AppDir, "icons", "arrowup_blue16.gif"), wxBITMAP_TYPE_GIF)
-		icnDecreaseFont = wxBitmap(os.path.join(self.parent.AppDir, "icons", "arrowdown_blue16.gif"), wxBITMAP_TYPE_GIF)
+		icnIncreaseFont = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "arrowup_blue16.gif"), wx.BITMAP_TYPE_GIF)
+		icnDecreaseFont = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "arrowdown_blue16.gif"), wx.BITMAP_TYPE_GIF)
 
-		icnIndent = wxBitmap(os.path.join(self.parent.AppDir, "icons", "increase_indent16.gif"), wxBITMAP_TYPE_GIF) 
-		icnDedent = wxBitmap(os.path.join(self.parent.AppDir, "icons", "decrease_indent16.gif"), wxBITMAP_TYPE_GIF)
-		icnBullets = wxBitmap(os.path.join(self.parent.AppDir, "icons", "bullets16.gif"), wxBITMAP_TYPE_GIF)
-		icnNumbering = wxBitmap(os.path.join(self.parent.AppDir, "icons", "numbering16.gif"), wxBITMAP_TYPE_GIF)
+		icnIndent = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "increase_indent16.gif"), wx.BITMAP_TYPE_GIF) 
+		icnDedent = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "decrease_indent16.gif"), wx.BITMAP_TYPE_GIF)
+		icnBullets = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "bullets16.gif"), wx.BITMAP_TYPE_GIF)
+		icnNumbering = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "numbering16.gif"), wx.BITMAP_TYPE_GIF)
 
-		icnColour = wxBitmap(os.path.join(self.parent.AppDir, "icons", "colour16.gif"), wxBITMAP_TYPE_GIF)
+		icnColour = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "colour16.gif"), wx.BITMAP_TYPE_GIF)
 
-		icnLink = wxBitmap(os.path.join(self.parent.AppDir, "icons", "insert_hyperlink16.gif"), wxBITMAP_TYPE_GIF)
-		icnImage = wxBitmap(os.path.join(self.parent.AppDir, "icons", "image16.gif"), wxBITMAP_TYPE_GIF) 
-		icnHR = wxBitmap(os.path.join(self.parent.AppDir, "icons", "horizontal_line16.gif"), wxBITMAP_TYPE_GIF)
+		icnLink = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "insert_hyperlink16.gif"), wx.BITMAP_TYPE_GIF)
+		icnImage = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "image16.gif"), wx.BITMAP_TYPE_GIF) 
+		icnHR = wx.Bitmap(os.path.join(self.parent.AppDir, "icons", "horizontal_line16.gif"), wx.BITMAP_TYPE_GIF)
 		#create toolbar
 
 		self.fonts = ["Times New Roman, Times, serif", "Helvetica, Arial, sans-serif", "Courier New, Courier, monospace"]
 
-		#self.toolbar = self.CreateToolBar(wxTB_HORIZONTAL | wxNO_BORDER | wxTB_FLAT)
-		self.toolbar = wxToolBar(self, -1, size=(26,26))
+		#self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
+		self.toolbar = wx.ToolBar(self, -1, size=(26,26))
 		self.toolbar.AddSimpleTool(ID_SAVE, icnSave, _("Save"), _("Save File to Disk"))
 		self.toolbar.AddSeparator()
 		self.toolbar.AddSimpleTool(ID_CUT, icnCut, _("Cut"))
@@ -291,18 +286,18 @@ class EditorFrame (wxFrame):
 		self.toolbar.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
 		self.toolbar.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
 		self.toolbar.AddSimpleTool(ID_INSERT_HR, icnHR, _("Insert Horizontal Line"), _("Insert Horizontal Line"))
-		self.toolbar.SetToolBitmapSize(wxSize(16,16))
+		self.toolbar.SetToolBitmapSize(wx.Size(16,16))
 		self.toolbar.Realize()
 
-		self.toolbar2 = wxToolBar(self, -1, size=(30,30))
-		self.fontlist = wxComboBox(self.toolbar2, wxNewId(), self.fonts[0], choices=self.fonts,style=wxCB_DROPDOWN|wxPROCESS_ENTER)
+		self.toolbar2 = wx.ToolBar(self, -1, size=(30,30))
+		self.fontlist = wx.ComboBox(self.toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
 		#self.headings = ["None", "Heading 1", "Heading 2", "Heading 3", "Heading 4", "Heading 5", "Heading 6"]
-		#self.headinglist = wxChoice(self.toolbar2, wxNewId(), choices=self.headings)
+		#self.headinglist = wx.Choice(self.toolbar2, wx.NewId(), choices=self.headings)
 		#if self.headinglist.GetCount() > 0:
 		#	self.headinglist.SetSelection(0)
 
 		self.fontsizes = ["1", "2", "3", "4", "5", "6", "7"]
-		self.fontsizelist = wxChoice(self.toolbar2, wxNewId(), choices=self.fontsizes)
+		self.fontsizelist = wx.Choice(self.toolbar2, wx.NewId(), choices=self.fontsizes)
 		if self.fontsizelist.GetCount() > 0:
 			self.fontsizelist.SetSelection(0)
 
@@ -328,45 +323,45 @@ class EditorFrame (wxFrame):
 		self.toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
 		self.toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
 		self.toolbar2.AddSeparator()
-		self.toolbar2.SetToolBitmapSize(wxSize(16,16))
+		self.toolbar2.SetToolBitmapSize(wx.Size(16,16))
 		self.toolbar2.Realize()
 
-		#wxMessageBox("Loading wxMozilla...")
-		self.notebook = wxNotebook(self, -1)
-		notebooksizer = wxBoxSizer(wxVERTICAL)
-		notebooksizer.Add(self.notebook, 1, wxEXPAND, wxALL, 4)
-		mozillapanel = wxPanel(self.notebook, -1)
+		#wx.MessageBox("Loading wx.Mozilla...")
+		self.notebook = wx.Notebook(self, -1)
+		notebooksizer = wx.BoxSizer(wx.VERTICAL)
+		notebooksizer.Add(self.notebook, 1, wx.EXPAND, wx.ALL, 4)
+		mozillapanel = wx.Panel(self.notebook, -1)
 		self.notebook.AddPage(mozillapanel, "Edit")
-		self.mozilla = wxMozillaBrowser(mozillapanel, -1, style = wxNO_FULL_REPAINT_ON_RESIZE)
-		mozpanelsizer = wxBoxSizer(wxHORIZONTAL)
-		mozpanelsizer.Add(self.mozilla, 1, wxEXPAND)
+		self.mozilla = wx.MozillaBrowser(mozillapanel, -1, style = wx.NO_FULL_REPAINT_ON_RESIZE)
+		mozpanelsizer = wx.BoxSizer(wx.HORIZONTAL)
+		mozpanelsizer.Add(self.mozilla, 1, wx.EXPAND)
 		mozillapanel.SetAutoLayout(True)
 		mozillapanel.SetSizerAndFit(mozpanelsizer)
 
 		self.mozilla.MakeEditable()
-		sourcepanel = wxPanel(self.notebook, -1)
+		sourcepanel = wx.Panel(self.notebook, -1)
 		self.notebook.AddPage(sourcepanel, "HTML")
 
-		self.source = wxStyledTextCtrl(sourcepanel, -1)
-		sourcepanelsizer = wxBoxSizer(wxHORIZONTAL)
-		sourcepanelsizer.Add(self.source, 1, wxEXPAND)
+		self.source = wx.stc.StyledTextCtrl(sourcepanel, -1)
+		sourcepanelsizer = wx.BoxSizer(wx.HORIZONTAL)
+		sourcepanelsizer.Add(self.source, 1, wx.EXPAND)
 		sourcepanel.SetAutoLayout(True)
 		sourcepanel.SetSizerAndFit(sourcepanelsizer)
 
-		self.source.SetLexer(wxSTC_LEX_HTML)
-		#self.source.SetCodePage(wxSTC_CP_DBCS)
+		self.source.SetLexer(wx.STC_LEX_HTML)
+		#self.source.SetCodePage(wx.STC_CP_DBCS)
 		#self.source.StyleClearAll()
-		self.source.StyleSetSpec(wxSTC_STYLE_DEFAULT, "fore:#000000,size:12,face:Arial")
-		self.source.StyleSetSpec(wxSTC_STYLE_LINENUMBER, "fore:#000000")
-		self.source.StyleSetSpec(wxSTC_H_TAG, "fore:#000099")
-		self.source.StyleSetSpec(wxSTC_H_ATTRIBUTE, "fore:#009900")
-		self.source.StyleSetSpec(wxSTC_H_VALUE, "fore:#009900")
+		self.source.StyleSetSpec(wx.STC_STYLE_DEFAULT, "fore:#000000,size:12,face:Arial")
+		self.source.StyleSetSpec(wx.STC_STYLE_LINENUMBER, "fore:#000000")
+		self.source.StyleSetSpec(wx.STC_H_TAG, "fore:#000099")
+		self.source.StyleSetSpec(wx.STC_H_ATTRIBUTE, "fore:#009900")
+		self.source.StyleSetSpec(wx.STC_H_VALUE, "fore:#009900")
 		self.source.SetProperty("fold.html", "1")
 
 		self.SetAutoLayout(True)
 		self.SetSizer(notebooksizer)
 
-		accelerators = wxAcceleratorTable([(wxACCEL_CTRL, ord('B'), ID_BOLD),(wxACCEL_CTRL, ord('I'), ID_ITALIC), (wxACCEL_CTRL, ord('U'), ID_UNDERLINE), (wxACCEL_CTRL, ord('S'), ID_SAVE)]) 
+		accelerators = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('B'), ID_BOLD),(wx.ACCEL_CTRL, ord('I'), ID_ITALIC), (wx.ACCEL_CTRL, ord('U'), ID_UNDERLINE), (wx.ACCEL_CTRL, ord('S'), ID_SAVE)]) 
 		self.SetAcceleratorTable(accelerators)
 
 		EVT_COMBOBOX(self, self.fontlist.GetId(), self.OnFontSelect)
@@ -437,10 +432,10 @@ class EditorFrame (wxFrame):
 		#EVT_MOZILLA_LOAD_COMPLETE(self.mozilla, self.mozilla.GetId(), self.OnLoadComplete)
 		EVT_MOUSE_EVENTS(self.mozilla, self.UpdateStatus)
 
-		#btnSizer.Add(self.location, 1, wxEXPAND|wxALL, 2)
-		sizer.Add(self.toolbar, 0, wxEXPAND)
-		sizer.Add(self.toolbar2, 0, wxEXPAND)
-		sizer.Add(self.notebook, 1, wxEXPAND)
+		#btnSizer.Add(self.location, 1, wx.EXPAND|wx.ALL, 2)
+		sizer.Add(self.toolbar, 0, wx.EXPAND)
+		sizer.Add(self.toolbar2, 0, wx.EXPAND)
+		sizer.Add(self.notebook, 1, wx.EXPAND)
 		#self.mozilla.EditCommand("cmd_fontFace", self.fonts[0])
 		#self.location.Append(self.current)
 
@@ -453,7 +448,7 @@ class EditorFrame (wxFrame):
 		EVT_CLOSE(self, self.OnQuit)
 
 		EVT_NOTEBOOK_PAGE_CHANGING(self.notebook, self.notebook.GetId(), self.OnPageChanging)
-		if wxPlatform == '__WXMSW__':
+		if wx.Platform == '__WXMSW__':
 			EVT_CHAR(self.notebook, self.SkipNotebookEvent)
 
 	def SkipNotebookEvent(self, evt):
@@ -476,7 +471,7 @@ class EditorFrame (wxFrame):
 
 	def OnSpellCheck(self, evt):
 		self.mozilla.StartSpellCheck()
-		#wxMessageBox(self.mozilla.GetNextMisspelledWord())
+		#wx.MessageBox(self.mozilla.GetNextMisspelledWord())
 		self.mozilla.StopSpellChecker()
 
 	def OnLoadComplete(self, evt):
@@ -503,7 +498,7 @@ class EditorFrame (wxFrame):
 	def OnTableButton(self, evt):
 		tableProps = []
 		mydialog = CreateTableDialog(self)
-		if mydialog.ShowModal() == wxID_OK:
+		if mydialog.ShowModal() == wx.ID_OK:
 			tablehtml = """<table border="%s" width="%s" height="%s">""" % ("1", mydialog.twidth, mydialog.theight)
 			for counter in range(0, int(mydialog.trows)):
 				tablehtml = tablehtml + "<tr>"
@@ -525,7 +520,7 @@ class EditorFrame (wxFrame):
 			tableProps.append(self.mozilla.GetElementAttribute("table", "cellspacing"))
 			tableProps.append(self.mozilla.GetElementAttribute("table", "cellpadding"))
 			mydialog = TablePropsDialog(self, tableProps)
-			if mydialog.ShowModal() == wxID_OK:
+			if mydialog.ShowModal() == wx.ID_OK:
 				self.mozilla.SetElementAttribute("width", mydialog.tableProps[0])
 				self.mozilla.SetElementAttribute("height", mydialog.tableProps[1])
 				self.mozilla.SetElementAttribute("align", mydialog.tableProps[2])
@@ -544,7 +539,7 @@ class EditorFrame (wxFrame):
 			rowProps.append(self.mozilla.GetElementAttribute("tr", "valign"))
 			mydialog = CellPropsDialog(self, rowProps)
 			mydialog.SetTitle("Row Properties")
-			if mydialog.ShowModal() == wxID_OK:
+			if mydialog.ShowModal() == wx.ID_OK:
 				self.mozilla.SetElementAttribute("width", mydialog.rowProps[0])
 				self.mozilla.SetElementAttribute("height", mydialog.rowProps[1])
 				self.mozilla.SetElementAttribute("align", mydialog.rowProps[2])
@@ -561,7 +556,7 @@ class EditorFrame (wxFrame):
 			rowProps.append(self.mozilla.GetElementAttribute("td", "valign"))
 			mydialog = CellPropsDialog(self, rowProps)
 			mydialog.SetTitle("Cell Properties")
-			if mydialog.ShowModal() == wxID_OK:
+			if mydialog.ShowModal() == wx.ID_OK:
 				self.mozilla.SetElementAttribute("width", mydialog.rowProps[0])
 				self.mozilla.SetElementAttribute("height", mydialog.rowProps[1])
 				self.mozilla.SetElementAttribute("align", mydialog.rowProps[2])
@@ -578,7 +573,7 @@ class EditorFrame (wxFrame):
 			imageProps.append(self.mozilla.GetElementAttribute("img", "height"))
 			imageProps.append(self.mozilla.GetElementAttribute("img", "align"))
 		mydialog = ImagePropsDialog(self, imageProps)
-		if mydialog.ShowModal() == wxID_OK:
+		if mydialog.ShowModal() == wx.ID_OK:
 			self.mozilla.SetElementAttribute("src", mydialog.imageProps[0])
 			self.mozilla.SetElementAttribute("alt", mydialog.imageProps[1])
 			if not mydialog.imageProps[2] == "":
@@ -597,7 +592,7 @@ class EditorFrame (wxFrame):
 				linkProps.append(self.mozilla.GetElementAttribute("a", "href"))
 				linkProps.append(self.mozilla.GetElementAttribute("a", "target"))
 				mydialog = LinkPropsDialog(self, linkProps)
-				if mydialog.ShowModal() == wxID_OK:
+				if mydialog.ShowModal() == wx.ID_OK:
 					self.mozilla.SetElementAttribute("href", mydialog.linkProps[0])
 					self.mozilla.SetElementAttribute("target", mydialog.linkProps[1])
 					self.dirty = true
@@ -605,7 +600,7 @@ class EditorFrame (wxFrame):
 			elif self.mozilla.GetElementAttribute("a", "name") != "":
 				linkProps.append(self.mozilla.GetElementAttribute("a", "name"))
 				mydialog = BookmarkPropsDialog(self, linkProps)
-				if mydialog.ShowModal() == wxID_OK:
+				if mydialog.ShowModal() == wx.ID_OK:
 					self.mozilla.SetElementAttribute("href", mydialog.linkProps[0])
 					self.dirty = true
 				mydialog.Destroy()
@@ -616,7 +611,7 @@ class EditorFrame (wxFrame):
 			listProps.append(self.mozilla.GetElementAttribute("ol", "type"))
 			listProps.append(self.mozilla.GetElementAttribute("ol", "start"))
 			mydialog = OLPropsDialog(self, listProps)
-			if mydialog.ShowModal() == wxID_OK:
+			if mydialog.ShowModal() == wx.ID_OK:
 				self.mozilla.SetElementAttribute("type", mydialog.listProps[0])
 				self.mozilla.SetElementAttribute("start", mydialog.listProps[1])
 				self.dirty = true
@@ -624,7 +619,7 @@ class EditorFrame (wxFrame):
 		if self.mozilla.IsElementInSelection("ul"):
 			listProps.append(self.mozilla.GetElementAttribute("ul", "type"))
 			mydialog = ULPropsDialog(self, listProps)
-			if mydialog.ShowModal() == wxID_OK:
+			if mydialog.ShowModal() == wx.ID_OK:
 				self.mozilla.SetElementAttribute("type", mydialog.listProps[0])
 				self.dirty = true
 			mydialog.Destroy()
@@ -633,11 +628,11 @@ class EditorFrame (wxFrame):
 		try:
 			self.running = false
 			if self.dirty == true:
-				dlg = wxMessageDialog(self, _("Your file contains unsaved changes. Would you like to save now?"), _("Save File?"), wxYES_NO)
+				dlg = wx.MessageDialog(self, _("Your file contains unsaved changes. Would you like to save now?"), _("Save File?"), wx.YES_NO)
 				result = dlg.ShowModal()
-				if result == wxID_YES:
+				if result == wx.ID_YES:
 					self.OnSave(evt)
-				elif result == wxID_CANCEL:
+				elif result == wx.ID_CANCEL:
 					return
 			self.MakeModal(False)
 			self.Show(False)
@@ -647,10 +642,10 @@ class EditorFrame (wxFrame):
 			global log
 			message = utils.getStdErrorMessage("UnknownError")
 			log.write(message)
-			wxMessageBox(message, _("Unknown Error Occurred"), wxICON_ERROR)
+			wx.MessageBox(message, _("Unknown Error Occurred"), wx.ICON_ERROR)
 			
 	def OnRightClick(self, evt):
-		popupmenu = wxMenu()
+		popupmenu = wx.Menu()
 		if evt.GetImageSrc() != "" and self.mozilla.IsElementInSelection("img"):
 			popupmenu.Append(ID_EDITIMAGE, "Image Properties")
 		if evt.GetLink() != "" and self.mozilla.IsElementInSelection("href"):
@@ -685,8 +680,8 @@ class EditorFrame (wxFrame):
 		self.UpdateStatus(evt)
 
 	def OnFind(self, evt):
-		data = wxFindReplaceData()
-		dlg = wxFindReplaceDialog(self, data, "Find")
+		data = wx.FindReplaceData()
+		dlg = wx.FindReplaceDialog(self, data, "Find")
 		dlg.Show()
 
 	def OnFindClicked(self, evt):
@@ -696,11 +691,11 @@ class EditorFrame (wxFrame):
 		searchBackwards = false
 
 		flags = evt.GetFlags()
-		if flags and wxFR_MATCHCASE:
+		if flags and wx.FR_MATCHCASE:
 			matchCase = true
-		if flags and wxFR_WHOLEWORD:
+		if flags and wx.FR_WHOLEWORD:
 			matchWholeWord = true
-		if flags and wxFR_DOWN:
+		if flags and wx.FR_DOWN:
 			searchBackwards = false
 		else:
 			searchBackwards = true
@@ -841,7 +836,7 @@ class EditorFrame (wxFrame):
 		linkProps.append("")
 		linkProps.append("")
 		mydialog = LinkPropsDialog(self, linkProps)
-		if mydialog.ShowModal() == wxID_OK:
+		if mydialog.ShowModal() == wx.ID_OK:
 			self.mozilla.EditCommand("cmd_insertLinkNoUI", mydialog.linkProps[0])
 			if self.mozilla.IsElementInSelection("a"):
 				#self.mozilla.SelectElement("a")
@@ -851,17 +846,17 @@ class EditorFrame (wxFrame):
 	def OnBookmarkButton(self, evt):	
 		dialog = BookmarkPropsDialog(self, [""])
 		result = dialog.ShowModal()
-		if result == wxID_OK:
+		if result == wx.ID_OK:
 			#html = "<a href='' name='" + dialog.bookmarkProps[0] + "'></a>"
 			html = "<a name=\"" + dialog.bookmarkProps[0] + "\"></a>"
-			#wxMessageBox(html)
+			#wx.MessageBox(html)
 			self.mozilla.InsertHTML(html)
 			self.dirty = true
 		dialog.Destroy()
 
 	def OnFlashButton(self, evt):
-		dialog = wxFileDialog(self, _("Choose a file"), "", "", _("Macromedia Flash Files") + " (*.swf)|*.swf", wxOPEN)
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.FileDialog(self, _("Choose a file"), "", "", _("Macromedia Flash Files") + " (*.swf)|*.swf", wx.OPEN)
+		if dialog.ShowModal() == wx.ID_OK:
 			if os.path.exists(dialog.GetPath()):
 				CopyFile(dialog.GetFilename(), dialog.GetDirectory(), os.path.join(self.parent.pub.directory, "File"))
 			code = HTMLTemplates.flashTemp
@@ -872,8 +867,8 @@ class EditorFrame (wxFrame):
 
 	def OnImageButton(self, evt):
 		imageFormats = _("Image files") +"|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
-		dialog = wxFileDialog(self, _("Select an image"), "","", imageFormats, wxOPEN)
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.FileDialog(self, _("Select an image"), "","", imageFormats, wx.OPEN)
+		if dialog.ShowModal() == wx.ID_OK:
 			if os.path.exists(dialog.GetPath()):
 				CopyFile(dialog.GetFilename(), dialog.GetDirectory(), os.path.join(self.parent.pub.directory, "Graphics"))
 			self.mozilla.EditCommand("cmd_insertImageNoUI", "../Graphics/" + dialog.GetFilename())
@@ -892,9 +887,9 @@ class EditorFrame (wxFrame):
 		self.dirty = true
 
 	def OnFontColorButton(self, evt):
-		dlg = wxColourDialog(self)
+		dlg = wx.ColourDialog(self)
 		dlg.GetColourData().SetChooseFull(true)
-		if dlg.ShowModal() == wxID_OK:
+		if dlg.ShowModal() == wx.ID_OK:
 			data = dlg.GetColourData().GetColour().Get() #RGB tuple
 			red = string.replace(str(hex(data[0])), "0x", "")
 			if len(red) == 1:
@@ -968,12 +963,12 @@ class EditorFrame (wxFrame):
 		self.mozilla.LoadURL("about:blank")
 
 	def OnOpen(self, event):
-		dlg = wxFileDialog(self, _("Select a file"), "", "", _("Web Pages") + "(*.htm,*.html)|*.html;*.htm", wxOPEN)
+		dlg = wx.FileDialog(self, _("Select a file"), "", "", _("Web Pages") + "(*.htm,*.html)|*.html;*.htm", wx.OPEN)
 		dlg.CentreOnParent()
-		if dlg.ShowModal() == wxID_OK:
+		if dlg.ShowModal() == wx.ID_OK:
 			self.current = dlg.GetPath()
 			if (self.current != self.filename):
-				wxMessageBox(self.current + "\n" + self.filename)
+				wx.MessageBox(self.current + "\n" + self.filename)
 			self.mozilla.LoadURL(self.current)
 		dlg.Destroy()
 
@@ -990,12 +985,12 @@ class EditorFrame (wxFrame):
 				self.dirty = False
 			else:
 				message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
-				wxMessageBox(message, _("Unable to Save File"), wxICON_ERROR)
+				wx.MessageBox(message, _("Unable to Save File"), wx.ICON_ERROR)
 		except IOError:
 			message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
 			global log
 			log.write(message)
-			wxMessageBox(message, _("Unable to Save File"), wxICON_ERROR)
+			wx.MessageBox(message, _("Unable to Save File"), wx.ICON_ERROR)
 
 	def logEvt(self, name, event):
 		self.log.write('%s: %s\n' %
@@ -1011,43 +1006,43 @@ class EditorFrame (wxFrame):
 def strict(char):
 	print "Unicode Error on character: " + chr(char)
 
-class LinkPropsDialog(wxDialog):
+class LinkPropsDialog(wx.Dialog):
 	def __init__(self, parent, linkProps):
-		wxDialog.__init__ (self, parent, -1, _("Link Properties"), wxDefaultPosition,wxSize(400,200))
+		wx.Dialog.__init__ (self, parent, -1, _("Link Properties"), wx.DefaultPosition,wx.Size(400,200))
 		self.parent = parent
 		self.linkProps = linkProps
 
-		self.lblURL = wxStaticText(self, -1, _("Location:"))
-		self.cmbURL = wxComboBox(self, -1, linkProps[0], style=wxCB_DROPDOWN)
-		self.btnURL = wxButton(self, -1, _("Select File..."))
-		#self.lblPage = wxStaticText(self, -1, _("Link to Page"))
-		#self.cmbPage = wxChoice(self, -1)
+		self.lblURL = wx.StaticText(self, -1, _("Location:"))
+		self.cmbURL = wx.ComboBox(self, -1, linkProps[0], style=wx.CB_DROPDOWN)
+		self.btnURL = wx.Button(self, -1, _("Select File..."))
+		#self.lblPage = wx.StaticText(self, -1, _("Link to Page"))
+		#self.cmbPage = wx.Choice(self, -1)
 		self.LoadPages(self.parent.parent.pub.nodes)
-		self.chkNewWindow = wxCheckBox(self, -1, _("Open in new window"))
+		self.chkNewWindow = wx.CheckBox(self, -1, _("Open in new window"))
 		if linkProps[1] == "_blank":
 			self.chkNewWindow.SetValue(1)
 		else:
 			self.chkNewWindow.SetValue(0)
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
+		self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
 		self.btnOK.SetDefault()
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
 
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.sizer.Add(self.lblURL, 0, wxALL, 4)
-		urlsizer = wxBoxSizer(wxHORIZONTAL)
-		urlsizer.Add(self.cmbURL, 0, wxEXPAND | wxRIGHT | wxTOP | wxBOTTOM, 4)
-		urlsizer.Add(self.btnURL, 0, wxALIGN_RIGHT | wxALL, 4)
-		self.sizer.Add(urlsizer, 0, wxALL, 4)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.lblURL, 0, wx.ALL, 4)
+		urlsizer = wx.BoxSizer(wx.HORIZONTAL)
+		urlsizer.Add(self.cmbURL, 0, wx.EXPAND | wx.RIGHT | wx.TOP | wx.BOTTOM, 4)
+		urlsizer.Add(self.btnURL, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
+		self.sizer.Add(urlsizer, 0, wx.ALL, 4)
 		#self.sizer.Add(self.lblPage, 0)
-		#self.sizer.Add(self.cmbPage, 0, wxEXPAND)
+		#self.sizer.Add(self.cmbPage, 0, wx.EXPAND)
 		self.sizer.Add(self.chkNewWindow)
 
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add((100, 25), 1, wxEXPAND)
+		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnsizer.Add((100, 25), 1, wx.EXPAND)
 		btnsizer.Add(self.btnOK)
 		btnsizer.Add(self.btnCancel)
 
-		self.sizer.Add(btnsizer, 0, wxEXPAND)
+		self.sizer.Add(btnsizer, 0, wx.EXPAND)
 		self.SetSizerAndFit(self.sizer)
 		self.Layout()
 
@@ -1073,7 +1068,7 @@ class LinkPropsDialog(wxDialog):
 			self.linkProps[1] = "_blank"
 		else:
 			self.linkProps[1] = ""
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
 	def OnSelectPage(self, evt):
 		page = self.cmbURL.GetClientData(evt.GetSelection())
@@ -1083,8 +1078,8 @@ class LinkPropsDialog(wxDialog):
 			self.cmbURL.SetValue("../File/" + page.content.filename)
 
 	def OnSelectFile(self, evt):
-		dialog = wxFileDialog(self, _("Select a file"), "","", _("All files") + "|*.*", wxOPEN)
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.FileDialog(self, _("Select a file"), "","", _("All files") + "|*.*", wx.OPEN)
+		if dialog.ShowModal() == wx.ID_OK:
 			filedir = os.path.join(self.parent.parent.pub.directory, "File")
 			if os.path.exists(dialog.GetPath()):
 				if dialog.GetDirectory() != filedir:
@@ -1092,25 +1087,25 @@ class LinkPropsDialog(wxDialog):
 				self.cmbURL.SetValue("../File/" + dialog.GetFilename())
 		dialog.Destroy()
 
-class BookmarkPropsDialog(wxDialog):
+class BookmarkPropsDialog(wx.Dialog):
 	def __init__(self, parent, bookmarkProps):
-		wxDialog.__init__ (self, parent, -1, _("Bookmark Properties"), wxDefaultPosition,wxSize(300,200))
+		wx.Dialog.__init__ (self, parent, -1, _("Bookmark Properties"), wx.DefaultPosition,wx.Size(300,200))
 		self.parent = parent
 		self.bookmarkProps = bookmarkProps
 
-		self.lblName = wxStaticText(self, -1, _("Name"))
-		self.txtName = wxTextCtrl(self, -1, bookmarkProps[0])
+		self.lblName = wx.StaticText(self, -1, _("Name"))
+		self.txtName = wx.TextCtrl(self, -1, bookmarkProps[0])
 
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
+		self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
 		self.btnOK.SetDefault()
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
 
-		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.lblName)
-		self.sizer.Add(self.txtName, 1, wxEXPAND)
+		self.sizer.Add(self.txtName, 1, wx.EXPAND)
 
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add((1, 1), 1, wxEXPAND)
+		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnsizer.Add((1, 1), 1, wx.EXPAND)
 		btnsizer.Add(self.btnOK)
 		btnsizer.Add(self.btnCancel)
 
@@ -1122,26 +1117,26 @@ class BookmarkPropsDialog(wxDialog):
 
 	def OnOK(self, event):
 		self.bookmarkProps[0] = self.txtName.GetValue()
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
-class OLPropsDialog(wxDialog):
+class OLPropsDialog(wx.Dialog):
 	def __init__(self, parent, listProps):
-		wxDialog.__init__ (self, parent, -1, _("Bullets and Numbering"), wxDefaultPosition,wxSize(300,200))
+		wx.Dialog.__init__ (self, parent, -1, _("Bullets and Numbering"), wx.DefaultPosition,wx.Size(300,200))
 		self.parent = parent
 		self.listProps = listProps
 
-		self.lblListType = wxStaticText(self, -1, _("List Type:"))
-		self.lstListType = wxListBox(self, -1)
+		self.lblListType = wx.StaticText(self, -1, _("List Type:"))
+		self.lstListType = wx.ListBox(self, -1)
 
 		listTypes = ["1", "i", "I", "a", "A"]
 		for type in listTypes:
 			self.lstListType.Append(type)
 			if type == listProps[0]:
 				self.lstListType.SetStringSelection(type)
-		self.lblStartNum = wxStaticText(self, -1, _("Start at: "))
-		self.txtStartNum = wxTextCtrl(self, -1, "")
+		self.lblStartNum = wx.StaticText(self, -1, _("Start at: "))
+		self.txtStartNum = wx.TextCtrl(self, -1, "")
 		h = self.txtStartNum.GetSize().height
-		self.spnStartNum = wxSpinButton(self, -1,size=(h,h), style=wxSP_VERTICAL)
+		self.spnStartNum = wx.SpinButton(self, -1,size=(h,h), style=wx.SP_VERTICAL)
 		self.spnStartNum.SetRange(1, 100)
 		startnum = listProps[1]
 		if startnum != "":
@@ -1151,20 +1146,20 @@ class OLPropsDialog(wxDialog):
 
 		self.txtStartNum.SetValue(str(self.spnStartNum.GetValue()))
 		
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
+		self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
 
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.sizer.Add(self.lblListType, 0, wxLEFT, 4)
-		self.sizer.Add(self.lstListType, 1, wxEXPAND | wxALL, 4)
-		self.sizer.Add(self.lblStartNum, 0, wxLEFT, 4)
-		spinsizer = wxBoxSizer(wxHORIZONTAL)
-		spinsizer.Add(self.txtStartNum, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL | wxALL, 4)
-		spinsizer.Add(self.spnStartNum, 0, wxALL, 4)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.lblListType, 0, wx.LEFT, 4)
+		self.sizer.Add(self.lstListType, 1, wx.EXPAND | wx.ALL, 4)
+		self.sizer.Add(self.lblStartNum, 0, wx.LEFT, 4)
+		spinsizer = wx.BoxSizer(wx.HORIZONTAL)
+		spinsizer.Add(self.txtStartNum, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
+		spinsizer.Add(self.spnStartNum, 0, wx.ALL, 4)
 		self.sizer.Add(spinsizer)
 
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add((1, 1), 1, wxEXPAND)
+		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnsizer.Add((1, 1), 1, wx.EXPAND)
 		btnsizer.Add(self.btnOK)
 		btnsizer.Add(self.btnCancel)
 
@@ -1179,19 +1174,19 @@ class OLPropsDialog(wxDialog):
 	def OnOKClicked(self, evt):
 		self.listProps[0] = self.lstListType.GetStringSelection()
 		self.listProps[1] = `self.txtStartNum.GetValue()`
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
 	def OnSpin(self, evt):
 		self.txtStartNum.SetValue(str(evt.GetPosition()))
 
-class ULPropsDialog(wxDialog):
+class ULPropsDialog(wx.Dialog):
 	def __init__(self, parent, listProps):
-		wxDialog.__init__ (self, parent, -1, _("Bullets and Numbering"), wxDefaultPosition,wxSize(300,200))
+		wx.Dialog.__init__ (self, parent, -1, _("Bullets and Numbering"), wx.DefaultPosition,wx.Size(300,200))
 		self.parent = parent
 		self.listProps = listProps
 
-		self.lblListType = wxStaticText(self, -1, _("List Type:"))
-		self.lstListType = wxListBox(self, -1)
+		self.lblListType = wx.StaticText(self, -1, _("List Type:"))
+		self.lstListType = wx.ListBox(self, -1)
 
 		listTypes = ["circle", "diamond", "square"]
 		for type in listTypes:
@@ -1199,15 +1194,15 @@ class ULPropsDialog(wxDialog):
 			if type == listProps[0]:
 				self.lstListType.SetStringSelection(type)
 		
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
+		self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
 
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.sizer.Add(self.lblListType, 0, wxLEFT, 4)
-		self.sizer.Add(self.lstListType, 1, wxEXPAND | wxALL, 4)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.lblListType, 0, wx.LEFT, 4)
+		self.sizer.Add(self.lstListType, 1, wx.EXPAND | wx.ALL, 4)
 
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add((1, 1), 1, wxEXPAND)
+		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnsizer.Add((1, 1), 1, wx.EXPAND)
 		btnsizer.Add(self.btnOK)
 		btnsizer.Add(self.btnCancel)
 
@@ -1223,49 +1218,49 @@ class ULPropsDialog(wxDialog):
 		self.listProps[0] = self.lstListType.GetStringSelection()
 		if self.listProps[0] == "diamond":
 			self.listProps[0] = "disc"
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
 	def OnSpin(self, evt):
 		self.txtStartNum.SetValue(str(evt.GetPosition()))
 
-class ImagePropsDialog(wxDialog):
+class ImagePropsDialog(wx.Dialog):
 	def __init__(self, parent, imageProps):
-		wxDialog.__init__ (self, parent, -1, _("Image Properties"), wxDefaultPosition,wxSize(300,300))
+		wx.Dialog.__init__ (self, parent, -1, _("Image Properties"), wx.DefaultPosition,wx.Size(300,300))
 		height = 20
-		if wxPlatform == "__WXMAC__":
+		if wx.Platform == "__WXMAC__":
 			height = 25
 		self.parent = parent
 		self.imageProps = imageProps
 		self.alignments = {"": _("Default"), "left": _("Left"), "right": _("Right"), "top": _("Top"), "middle": _("Middle"), "bottom": _("Bottom")}
 
-		self.lblImageSrc = wxStaticText(self, -1, _("Image Location:"))
-		self.txtImageSrc = wxTextCtrl(self, -1, imageProps[0])
-		self.btnImageSrc = wxButton(self, -1, _("Select Image..."))
-		self.lblDescription = wxStaticText(self, -1, _("Text Description:"))
-		self.txtDescription = wxTextCtrl(self, -1, imageProps[1])
-		self.lblAlign = wxStaticText(self, -1, _("Image Alignment..."))
-		self.chAlign = wxChoice(self, -1, choices=self.alignments.values())
+		self.lblImageSrc = wx.StaticText(self, -1, _("Image Location:"))
+		self.txtImageSrc = wx.TextCtrl(self, -1, imageProps[0])
+		self.btnImageSrc = wx.Button(self, -1, _("Select Image..."))
+		self.lblDescription = wx.StaticText(self, -1, _("Text Description:"))
+		self.txtDescription = wx.TextCtrl(self, -1, imageProps[1])
+		self.lblAlign = wx.StaticText(self, -1, _("Image Alignment..."))
+		self.chAlign = wx.Choice(self, -1, choices=self.alignments.values())
 		if imageProps[4] in self.alignments.keys():
 			self.chAlign.SetStringSelection(self.alignments[imageProps[4]])
 
-		self.sizebox = wxStaticBox(self, -1, _("Size"))
-		#self.radOriginalSize = wxRadioBox(self, -1, _("Actual size"))
-		#self.radResizeImage = wxRadioBox(self, -1, _("Custom size"))
-		self.lblWidth = wxStaticText(self, -1, _("Width:"))
-		self.txtWidth = wxTextCtrl(self, -1, imageProps[2])
-		self.lblHeight = wxStaticText(self, -1, _("Height:"))
-		self.txtHeight = wxTextCtrl(self, -1, imageProps[3])
+		self.sizebox = wx.StaticBox(self, -1, _("Size"))
+		#self.radOriginalSize = wx.RadioBox(self, -1, _("Actual size"))
+		#self.radResizeImage = wx.RadioBox(self, -1, _("Custom size"))
+		self.lblWidth = wx.StaticText(self, -1, _("Width:"))
+		self.txtWidth = wx.TextCtrl(self, -1, imageProps[2])
+		self.lblHeight = wx.StaticText(self, -1, _("Height:"))
+		self.txtHeight = wx.TextCtrl(self, -1, imageProps[3])
 
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
+		self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
 		self.btnOK.SetDefault()
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.sizer.Add(self.lblImageSrc, 0, wxALL, 4)
-		self.sizer.Add(self.txtImageSrc, 0, wxALL | wxEXPAND, 4)
-		self.sizer.Add(self.btnImageSrc, 0, wxALIGN_RIGHT | wxALL, 4)
-		self.sizer.Add(self.lblDescription, 0, wxALL, 4)
-		self.sizer.Add(self.txtDescription, 0, wxALL | wxEXPAND, 4)
-		boxsizer = wxStaticBoxSizer(self.sizebox, wxVERTICAL)
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.lblImageSrc, 0, wx.ALL, 4)
+		self.sizer.Add(self.txtImageSrc, 0, wx.ALL | wx.EXPAND, 4)
+		self.sizer.Add(self.btnImageSrc, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
+		self.sizer.Add(self.lblDescription, 0, wx.ALL, 4)
+		self.sizer.Add(self.txtDescription, 0, wx.ALL | wx.EXPAND, 4)
+		boxsizer = wx.StaticBoxSizer(self.sizebox, wx.VERTICAL)
 		#boxsizer.Add(self.radOriginalSize, 0)
 		#boxsizer.Add(self.radResizeImage, 0)
 		boxsizer.Add(self.lblWidth, 0)
@@ -1275,11 +1270,11 @@ class ImagePropsDialog(wxDialog):
 		self.sizer.Add(boxsizer)
 		self.sizer.Add(self.lblAlign)
 		self.sizer.Add(self.chAlign)
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add((100, 25), 1, wxEXPAND | wxALL, 4)
-		btnsizer.Add(self.btnOK, 0, wxALL, 4)
-		btnsizer.Add(self.btnCancel, 0, wxALL, 4)
-		self.sizer.Add(btnsizer, 0, wxEXPAND, 4)
+		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnsizer.Add((100, 25), 1, wx.EXPAND | wx.ALL, 4)
+		btnsizer.Add(self.btnOK, 0, wx.ALL, 4)
+		btnsizer.Add(self.btnCancel, 0, wx.ALL, 4)
+		self.sizer.Add(btnsizer, 0, wx.EXPAND, 4)
 		self.SetSizerAndFit(self.sizer)
 		self.Layout()
 
@@ -1296,12 +1291,12 @@ class ImagePropsDialog(wxDialog):
 			if align == self.alignments[item]:
 				self.imageProps[4] = item
 
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
  
 	def OnSelectImage(self, evt):
 		imageFormats = _("Image files") + "|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
-		dialog = wxFileDialog(self, _("Select an image"), "","", imageFormats, wxOPEN)
-		if dialog.ShowModal() == wxID_OK:
+		dialog = wx.FileDialog(self, _("Select an image"), "","", imageFormats, wx.OPEN)
+		if dialog.ShowModal() == wx.ID_OK:
 			graphicsdir = os.path.join(self.parent.parent.pub.directory, "Graphics")
 			if os.path.exists(dialog.GetPath()):
 				if dialog.GetDirectory() != graphicsdir:
@@ -1309,59 +1304,59 @@ class ImagePropsDialog(wxDialog):
 				self.txtImageSrc.SetValue("../Graphics/" + dialog.GetFilename())
 		dialog.Destroy()
 
-class CellPropsDialog(wxDialog):
+class CellPropsDialog(wx.Dialog):
 	def __init__(self, parent, rowProps):
-		wxDialog.__init__ (self, parent, -1, _("Cell Properties"), wxDefaultPosition,wxSize(300,300))
+		wx.Dialog.__init__ (self, parent, -1, _("Cell Properties"), wx.DefaultPosition,wx.Size(300,300))
 		height = 20
-		if wxPlatform == "__WXMAC__":
+		if wx.Platform == "__WXMAC__":
 			height = 25
 		self.parent = parent
 		self.rowProps = rowProps
 
-		self.sizebox = wxStaticBox(self, -1, _("Size"))
-		#self.radOriginalSize = wxRadioBox(self, -1, _("Actual size"))
-		#self.radResizeImage = wxRadioBox(self, -1, _("Custom size"))
-		self.lblWidth = wxStaticText(self, -1, _("Width:"))
-		self.txtWidth = wxTextCtrl(self, -1, rowProps[0])
-		self.lblHeight = wxStaticText(self, -1, _("Height:"))
-		self.txtHeight = wxTextCtrl(self, -1, rowProps[1])
+		self.sizebox = wx.StaticBox(self, -1, _("Size"))
+		#self.radOriginalSize = wx.RadioBox(self, -1, _("Actual size"))
+		#self.radResizeImage = wx.RadioBox(self, -1, _("Custom size"))
+		self.lblWidth = wx.StaticText(self, -1, _("Width:"))
+		self.txtWidth = wx.TextCtrl(self, -1, rowProps[0])
+		self.lblHeight = wx.StaticText(self, -1, _("Height:"))
+		self.txtHeight = wx.TextCtrl(self, -1, rowProps[1])
 
-		self.alignbox = wxStaticBox(self, -1, _("Layout and Borders"))
-		self.lblAlign = wxStaticText(self, -1, _("Horizontal Alignment:"))
-		self.cmbAlign = wxChoice(self, -1, choices=["left", "center", "right", "justify"])
+		self.alignbox = wx.StaticBox(self, -1, _("Layout and Borders"))
+		self.lblAlign = wx.StaticText(self, -1, _("Horizontal Alignment:"))
+		self.cmbAlign = wx.Choice(self, -1, choices=["left", "center", "right", "justify"])
 		if rowProps[2] != "":
 			self.cmbAlign.SetStringSelection(string.lower(rowProps[2]))
 		else:
 			self.cmbAlign.SetSelection(0)
 	
-		self.lblVAlign = wxStaticText(self, -1, _("Vertical Alignment:"))
-		self.cmbVAlign = wxChoice(self, -1, choices=["top", "middle", "bottom"])
+		self.lblVAlign = wx.StaticText(self, -1, _("Vertical Alignment:"))
+		self.cmbVAlign = wx.Choice(self, -1, choices=["top", "middle", "bottom"])
 		if rowProps[3] != "":
 			self.cmbVAlign.SetStringSelection(string.lower(rowProps[3]))
 		else:
 			self.cmbVAlign.SetSelection(0)
 
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
+		self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
 		self.btnOK.SetDefault()
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		boxsizer = wxStaticBoxSizer(self.sizebox, wxVERTICAL)
-		sizegridsizer = wxFlexGridSizer(2, 2, 4, 4)
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		boxsizer = wx.StaticBoxSizer(self.sizebox, wx.VERTICAL)
+		sizegridsizer = wx.FlexGridSizer(2, 2, 4, 4)
 		sizegridsizer.AddMany([(self.lblWidth, 0), (self.txtWidth, 0), (self.lblHeight, 0), (self.txtHeight, 0)])
-		boxsizer.Add(sizegridsizer, 1, wxEXPAND)
+		boxsizer.Add(sizegridsizer, 1, wx.EXPAND)
 
-		alignsizer = wxStaticBoxSizer(self.alignbox, wxVERTICAL)
-		aligngridsizer = wxFlexGridSizer(2, 2, 4, 4)
+		alignsizer = wx.StaticBoxSizer(self.alignbox, wx.VERTICAL)
+		aligngridsizer = wx.FlexGridSizer(2, 2, 4, 4)
 		aligngridsizer.AddMany([(self.lblAlign, 0), (self.cmbAlign, 0), (self.lblVAlign,0), (self.cmbVAlign, 0)])
-		alignsizer.Add(aligngridsizer, 1, wxEXPAND)
-		self.sizer.Add(boxsizer, 0, wxEXPAND | wxALL, 4)
-		self.sizer.Add(alignsizer, 0, wxEXPAND | wxALL, 4)
+		alignsizer.Add(aligngridsizer, 1, wx.EXPAND)
+		self.sizer.Add(boxsizer, 0, wx.EXPAND | wx.ALL, 4)
+		self.sizer.Add(alignsizer, 0, wx.EXPAND | wx.ALL, 4)
 
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add((100, 25), 1, wxEXPAND | wxALL, 4)
-		btnsizer.Add(self.btnOK, 0, wxALL, 4)
-		btnsizer.Add(self.btnCancel, 0, wxALL, 4)
-		self.sizer.Add(btnsizer, 0, wxEXPAND, 4)
+		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnsizer.Add((100, 25), 1, wx.EXPAND | wx.ALL, 4)
+		btnsizer.Add(self.btnOK, 0, wx.ALL, 4)
+		btnsizer.Add(self.btnCancel, 0, wx.ALL, 4)
+		self.sizer.Add(btnsizer, 0, wx.EXPAND, 4)
 		self.SetSizerAndFit(self.sizer)
 		self.Layout()
 
@@ -1372,80 +1367,80 @@ class CellPropsDialog(wxDialog):
 		self.rowProps[1] = self.txtHeight.GetValue()
 		self.rowProps[2] = self.cmbAlign.GetStringSelection()
 		self.rowProps[3] = self.cmbVAlign.GetStringSelection()
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
-class TablePropsDialog(wxDialog):
+class TablePropsDialog(wx.Dialog):
 	def __init__(self, parent, tableProps):
-		wxDialog.__init__ (self, parent, -1, _("Table Properties"), wxDefaultPosition,wxSize(300,300))
+		wx.Dialog.__init__ (self, parent, -1, _("Table Properties"), wx.DefaultPosition,wx.Size(300,300))
 		height = 20
-		if wxPlatform == "__WXMAC__":
+		if wx.Platform == "__WXMAC__":
 			height = 25
 		self.parent = parent
 		self.tableProps = tableProps
 
 		#sizing options
-		self.sizebox = wxStaticBox(self, -1, _("Size"))
-		#self.radOriginalSize = wxRadioBox(self, -1, _("Actual size"))
-		#self.radResizeImage = wxRadioBox(self, -1, _("Custom size"))
-		self.lblWidth = wxStaticText(self, -1, _("Width:"))
-		self.txtWidth = wxTextCtrl(self, -1, tableProps[0])
-		self.lblHeight = wxStaticText(self, -1, _("Height:"))
-		self.txtHeight = wxTextCtrl(self, -1, tableProps[1])
+		self.sizebox = wx.StaticBox(self, -1, _("Size"))
+		#self.radOriginalSize = wx.RadioBox(self, -1, _("Actual size"))
+		#self.radResizeImage = wx.RadioBox(self, -1, _("Custom size"))
+		self.lblWidth = wx.StaticText(self, -1, _("Width:"))
+		self.txtWidth = wx.TextCtrl(self, -1, tableProps[0])
+		self.lblHeight = wx.StaticText(self, -1, _("Height:"))
+		self.txtHeight = wx.TextCtrl(self, -1, tableProps[1])
 
 		#alignment options
-		self.alignbox = wxStaticBox(self, -1, _("Layout and Borders"))
-		self.lblAlign = wxStaticText(self, -1, _("Table Alignment:"))
-		self.cmbAlign = wxChoice(self, -1, choices=["Default", "Left", "Center", "Right", "Justify"])
+		self.alignbox = wx.StaticBox(self, -1, _("Layout and Borders"))
+		self.lblAlign = wx.StaticText(self, -1, _("Table Alignment:"))
+		self.cmbAlign = wx.Choice(self, -1, choices=["Default", "Left", "Center", "Right", "Justify"])
 		if tableProps[2] != "":
 			self.cmbAlign.SetStringSelection(tableProps[2])
 		else:
 			self.cmbAlign.SetSelection(0)
 
-		self.lblBorder = wxStaticText(self, -1, _("Border:"))
+		self.lblBorder = wx.StaticText(self, -1, _("Border:"))
 		value = "0"
 		if tableProps[3] != "":
 			value = tableProps[3]
-		self.spnBorder = wxSpinCtrl(self, -1, value)
-		self.lblSpacing = wxStaticText(self, -1, _("Spacing:"))
+		self.spnBorder = wx.SpinCtrl(self, -1, value)
+		self.lblSpacing = wx.StaticText(self, -1, _("Spacing:"))
 		value = "0"
 		if tableProps[4] != "":
 			value = tableProps[4]
-		self.spnSpacing = wxSpinCtrl(self, -1, value)
-		self.lblPadding = wxStaticText(self, -1, _("Padding:"))
+		self.spnSpacing = wx.SpinCtrl(self, -1, value)
+		self.lblPadding = wx.StaticText(self, -1, _("Padding:"))
 		value = "0"
 		if tableProps[5] != "":
 			value = tableProps[5]
-		self.spnPadding = wxSpinCtrl(self, -1, value)
+		self.spnPadding = wx.SpinCtrl(self, -1, value)
 
 		#background color 
-		#self.lblBackColor = wxStaticText(self, -1, _("Background Color:"))
-		#self.btnBackColor = wxColorButton(self, -1)
+		#self.lblBackColor = wx.StaticText(self, -1, _("Background Color:"))
+		#self.btnBackColor = wx.ColorButton(self, -1)
 
-		self.btnOK = wxButton(self, wxID_OK, "OK")
+		self.btnOK = wx.Button(self, wx.ID_OK, "OK")
 		self.btnOK.SetDefault()
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		boxsizer = wxStaticBoxSizer(self.sizebox, wxVERTICAL)
-		sizegridsizer = wxFlexGridSizer(2, 2, 4, 4)
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		boxsizer = wx.StaticBoxSizer(self.sizebox, wx.VERTICAL)
+		sizegridsizer = wx.FlexGridSizer(2, 2, 4, 4)
 		sizegridsizer.AddMany([(self.lblWidth, 0), (self.txtWidth, 0), (self.lblHeight, 0), (self.txtHeight, 0)])
-		boxsizer.Add(sizegridsizer, 1, wxEXPAND)
-		alignsizer = wxStaticBoxSizer(self.alignbox, wxVERTICAL)
-		aligngridsizer = wxFlexGridSizer(2, 2, 4, 4)
+		boxsizer.Add(sizegridsizer, 1, wx.EXPAND)
+		alignsizer = wx.StaticBoxSizer(self.alignbox, wx.VERTICAL)
+		aligngridsizer = wx.FlexGridSizer(2, 2, 4, 4)
 		aligngridsizer.AddMany([(self.lblAlign, 0), (self.cmbAlign, 0), (self.lblBorder,0), (self.spnBorder, 0), 
 						(self.lblSpacing,0), (self.spnSpacing, 0), (self.lblPadding,0), (self.spnPadding, 0)])
-		alignsizer.Add(aligngridsizer, 1, wxEXPAND)
-		topsizer = wxBoxSizer(wxHORIZONTAL)		
-		self.sizer.Add(boxsizer, 0, wxEXPAND | wxALL, 4)
-		self.sizer.Add(alignsizer, 0, wxEXPAND | wxALL, 4)
-		#colorsizer = wxBoxSizer(wxHORIZONTAL)
+		alignsizer.Add(aligngridsizer, 1, wx.EXPAND)
+		topsizer = wx.BoxSizer(wx.HORIZONTAL)		
+		self.sizer.Add(boxsizer, 0, wx.EXPAND | wx.ALL, 4)
+		self.sizer.Add(alignsizer, 0, wx.EXPAND | wx.ALL, 4)
+		#colorsizer = wx.BoxSizer(wx.HORIZONTAL)
 		#colorsizer.AddMany([(self.lblBackColor),(self.btnBackColor)])
-		#self.sizer.Add(colorsizer, 0, wxALL, 4)
+		#self.sizer.Add(colorsizer, 0, wx.ALL, 4)
 
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add((100, 25), 1, wxEXPAND | wxALL, 4)
-		btnsizer.Add(self.btnOK, 0, wxALL, 4)
-		btnsizer.Add(self.btnCancel, 0, wxALL, 4)
-		self.sizer.Add(btnsizer, 0, wxEXPAND, 4)
+		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnsizer.Add((100, 25), 1, wx.EXPAND | wx.ALL, 4)
+		btnsizer.Add(self.btnOK, 0, wx.ALL, 4)
+		btnsizer.Add(self.btnCancel, 0, wx.ALL, 4)
+		self.sizer.Add(btnsizer, 0, wx.EXPAND, 4)
 		self.SetSizerAndFit(self.sizer)
 		self.Layout()
 
@@ -1461,13 +1456,13 @@ class TablePropsDialog(wxDialog):
 		self.tableProps[3] = `self.spnBorder.GetValue()`
 		self.tableProps[4] = `self.spnSpacing.GetValue()`
 		self.tableProps[5] = `self.spnPadding.GetValue()`
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
-class CreateTableDialog(wxDialog):
+class CreateTableDialog(wx.Dialog):
 	def __init__(self, parent):
-		wxDialog.__init__ (self, parent, -1, _("Table Properties"))
+		wx.Dialog.__init__ (self, parent, -1, _("Table Properties"))
 		height = 20
-		if wxPlatform == "__WXMAC__":
+		if wx.Platform == "__WXMAC__":
 			height = 25
 		self.parent = parent
 		self.trows = "1"
@@ -1475,34 +1470,34 @@ class CreateTableDialog(wxDialog):
 		self.twidth= "100"
 		self.theight = "100"
 
-		self.lblRows = wxStaticText(self, -1, _("Rows:"))
-		self.txtRows = wxTextCtrl(self, -1, "1")
-		self.lblColumns = wxStaticText(self, -1, _("Columns:"))
-		self.txtColumns = wxTextCtrl(self, -1, "1")
+		self.lblRows = wx.StaticText(self, -1, _("Rows:"))
+		self.txtRows = wx.TextCtrl(self, -1, "1")
+		self.lblColumns = wx.StaticText(self, -1, _("Columns:"))
+		self.txtColumns = wx.TextCtrl(self, -1, "1")
 
-		self.sizebox = wxStaticBox(self, -1, "Size")
-		#self.radOriginalSize = wxRadioBox(self, -1, _("Actual size"))
-		#self.radResizeImage = wxRadioBox(self, -1, _("Custom size"))
-		self.lblWidth = wxStaticText(self, -1, _("Width:"))
-		self.txtWidth = wxTextCtrl(self, -1, "100")
-		self.cmbWidthType = wxChoice(self, -1, choices=[_("Percent"), _("Pixels")])
+		self.sizebox = wx.StaticBox(self, -1, "Size")
+		#self.radOriginalSize = wx.RadioBox(self, -1, _("Actual size"))
+		#self.radResizeImage = wx.RadioBox(self, -1, _("Custom size"))
+		self.lblWidth = wx.StaticText(self, -1, _("Width:"))
+		self.txtWidth = wx.TextCtrl(self, -1, "100")
+		self.cmbWidthType = wx.Choice(self, -1, choices=[_("Percent"), _("Pixels")])
 		self.cmbWidthType.SetStringSelection(_("Percent"))
-		self.lblHeight = wxStaticText(self, -1, _("Height:"))
-		self.txtHeight = wxTextCtrl(self, -1, "100")
-		self.cmbHeightType = wxChoice(self, -1, choices=[_("Percent"), _("Pixels")])
+		self.lblHeight = wx.StaticText(self, -1, _("Height:"))
+		self.txtHeight = wx.TextCtrl(self, -1, "100")
+		self.cmbHeightType = wx.Choice(self, -1, choices=[_("Percent"), _("Pixels")])
 		self.cmbHeightType.SetStringSelection(_("Percent"))
 
-		self.btnOK = wxButton(self, wxID_OK, _("OK"))
-		self.btnCancel = wxButton(self, wxID_CANCEL, _("Cancel"))
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.sizer.Add(self.lblRows, 0, wxALL, 4)
-		self.sizer.Add(self.txtRows, 0, wxALL, 4)
-		self.sizer.Add(self.lblColumns, 0, wxALL, 4)
-		self.sizer.Add(self.txtColumns, 0, wxALL, 4)
-		boxsizer = wxStaticBoxSizer(self.sizebox, wxVERTICAL)
+		self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
+		self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.lblRows, 0, wx.ALL, 4)
+		self.sizer.Add(self.txtRows, 0, wx.ALL, 4)
+		self.sizer.Add(self.lblColumns, 0, wx.ALL, 4)
+		self.sizer.Add(self.txtColumns, 0, wx.ALL, 4)
+		boxsizer = wx.StaticBoxSizer(self.sizebox, wx.VERTICAL)
 		#boxsizer.Add(self.radOriginalSize, 0)
 		#boxsizer.Add(self.radResizeImage, 0)
-		size_sizer = wxGridSizer(2, 3, 3, 3)
+		size_sizer = wx.GridSizer(2, 3, 3, 3)
 		size_sizer.Add(self.lblWidth, 0)
 		size_sizer.Add(self.txtWidth, 0)
 		size_sizer.Add(self.cmbWidthType, 0)
@@ -1512,11 +1507,11 @@ class CreateTableDialog(wxDialog):
 		boxsizer.Add(size_sizer)
 		self.sizer.Add(boxsizer, 0)
 
-		btnsizer = wxBoxSizer(wxHORIZONTAL)
-		btnsizer.Add((100, 25), 1, wxEXPAND | wxALL, 4)
-		btnsizer.Add(self.btnOK, 0, wxALL, 4)
-		btnsizer.Add(self.btnCancel, 0, wxALL, 4)
-		self.sizer.Add(btnsizer, 0, wxALL, 4)
+		btnsizer = wx.BoxSizer(wx.HORIZONTAL)
+		btnsizer.Add((100, 25), 1, wx.EXPAND | wx.ALL, 4)
+		btnsizer.Add(self.btnOK, 0, wx.ALL, 4)
+		btnsizer.Add(self.btnCancel, 0, wx.ALL, 4)
+		self.sizer.Add(btnsizer, 0, wx.ALL, 4)
 		self.SetSizerAndFit(self.sizer)
 		self.Layout()
 
@@ -1532,7 +1527,7 @@ class CreateTableDialog(wxDialog):
 		self.theight = self.txtHeight.GetValue()
 		if self.cmbHeightType.GetStringSelection() == _("Percent"):
 			self.theight = self.theight + "%"
-		self.EndModal(wxID_OK)
+		self.EndModal(wx.ID_OK)
 
 if __name__ != "__main__":
 	class EditorDialog:
@@ -1562,7 +1557,7 @@ if __name__ != "__main__":
 			if settings.AppSettings["HTMLEditor"] != "":
 				started_app = guiutils.sendCommandToApplication(self.filename, "edit", settings.AppSettings["HTMLEditor"])
 				if not started_app:
-					wxMessageBox(_("The HTML editing application could not be started. Please check to ensure the program exists and that you have permissions to run it. The built-in HTML editor will be used instead."))
+					wx.MessageBox(_("The HTML editing application could not be started. Please check to ensure the program exists and that you have permissions to run it. The built-in HTML editor will be used instead."))
 					use_builtin = True
 			else:
 				use_builtin = True
@@ -1578,11 +1573,11 @@ if __name__ != "__main__":
 					self.frame.Show()
 				else:
 					message = _("This page cannot be opened for editing because no HTML editor is configured. Please specify one in Tools->Options.")
-					wxMessageBox(message)
+					wx.MessageBox(message)
 
-			return wxID_OK
+			return wx.ID_OK
 
-class MyApp(wxApp):
+class MyApp(wx.App):
 	def OnInit(self):
 		self.frame = EditorFrame(None)
 		self.frame.Show(True)
