@@ -69,11 +69,8 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
 
         # Move old AppDataDir if it exists.
         if oldprefdir and os.path.exists(oldprefdir) and not oldprefdir == settings.PrefDir:
-            try:
-                fileutils.CopyFiles(oldprefdir, settings.PrefDir, 1)
-                shutil.rmtree(oldprefdir)
-            except:
-                self.log.write(_("Error moving preferences."))
+            fileutils.CopyFiles(oldprefdir, settings.PrefDir, 1)
+            shutil.rmtree(oldprefdir)
 
         settings.AppSettings = xml_settings.XMLSettings()
         if os.path.exists(os.path.join(settings.PrefDir, "settings.xml")):
