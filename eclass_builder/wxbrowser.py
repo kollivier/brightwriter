@@ -5,27 +5,21 @@ import utils
 browserlist = []
 
 try:
-	from wxPython.mozilla import *
-	browserlist.append("mozilla")
-except:
-	pass 
-
-try:
 	if sys.platform == "win32": 
-		from wx.lib.iewin import *
+		import wx.lib.iewin
 		browserlist.append("ie")
 except:
 	pass
 
 try: 
-	from wxPython.html import wxHtmlWindow
+	import wx.html
 	browserlist.append("htmlwindow")
 except:
 	pass
 
 try:
 	if sys.platform == "darwin": 
-		from wxPython.webkit import *
+		import wx.webkit
 		browserlist.append("webkit")
 except:
 	pass
@@ -59,10 +53,7 @@ class wxBrowser:
 		self.OnProgress = lambda x: x
 
 		if preferredBrowser != "":
-			if string.lower(preferredBrowser) == "mozilla":
-				if self._LoadMozilla():
-					return
-			elif string.lower(preferredBrowser) == "ie":
+			if string.lower(preferredBrowser) == "ie":
 				if self._LoadIE():
 					return 
 			elif string.lower(preferredBrowser) == "webkit":
@@ -129,9 +120,7 @@ class wxBrowser:
 			self.browser.SetPage(text)
 
 	def GetBrowserName(self):
-		if self.engine == "mozilla":
-			return "Mozilla/Netscape"
-		elif self.engine == "webkit":
+		if self.engine == "webkit":
 			return "Safari"
 		elif self.engine == "ie":
 			return "Internet Explorer"
@@ -146,54 +135,13 @@ class wxBrowser:
 		else:
 			self.browser.LoadPage(self.currenturl)
 
-	def _LoadMozilla(self):
-		try:
-			global browserlist
-			if not "mozilla" in browserlist:
-				return False
-
-			self.browser = wxMozillaBrowser(self.parent, self.id)
-			self.engine = "mozilla"
-
-			def __OnUrlChanged(self, event):
-				self.currenturl = event.GetNewURL()
-				self.OnPageChanged(self.currenturl) 
-
-			def __OnStatusChanged(self, event):
-				self.OnStatusChanged(event.GetStatusText(), event.IsBusy())
-
-			def __OnTitleChanged(self, event):
-				self.OnTitleChanged(event.GetTitle())
-
-			def __OnProgress(self, event):
-				if event.GetTotalMaxProgress() != -1:
-					self.OnProgress(float(event.GetTotalCurrentProgress()) /
-									float(event.GetTotalMaxProgress()))
-				elif event.GetSelfMaxProgress() != -1:
-					self.OnProgress(float(event.GetSelfCurrentProgress()) /
-									float(event.GetSelfMaxProgress()))
-
-			#EVT_MOZILLA_URL_CHANGED(self.browser, -1, self.__OnUrlChanged)
-			#EVT_MOZILLA_STATUS_CHANGED(self.browser, -1, self.__OnStatusChanged)
-			#EVT_MOZILLA_TITLE_CHANGED(self.browser, -1, self.__OnTitleChanged)
-			#EVT_MOZILLA_PROGRESS(self.browser, -1, self.__OnProgress)
-
-			return True
-		except:
-			if self.browser:
-				self.browser.Destroy()
-
-			import traceback
-			print traceback.print_exc()
-			return False
-
 	def _LoadIE(self):
 		try:
 			global browserlist
 			if not "ie" in browserlist:
 				return False
 
-			self.browser = IEHtmlWindow(self.parent, self.id)
+			self.browser = wx.lib.iewin.IEHtmlWindow(self.parent, self.id)
 			self.engine = "ie"
 			return True
 		except:
@@ -205,7 +153,7 @@ class wxBrowser:
 			if not "htmlwindow" in browserlist:
 				return False
 
-			self.browser = wxHtmlWindow(self.parent, self.id)
+			self.browser = wx.html.HtmlWindow(self.parent, self.id)
 			self.engine = "htmlwindow"
 			return True
 		except:
@@ -217,7 +165,7 @@ class wxBrowser:
 			if not "webkit" in browserlist:
 				return False 
 
-			self.browser = wxWebKitCtrl(self.parent, self.id)
+			self.browser = wx.webkit.WebKitCtrl(self.parent, self.id)
 			self.engine = "webkit"
 			return True
 		except:
