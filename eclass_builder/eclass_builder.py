@@ -30,6 +30,7 @@ import fileutils
 if sys.platform.startswith("win"):
     import ctypes
     import ctypes.wintypes
+    import wx.stc
 
 settings.AppDir = rootdir
 new_editor = True
