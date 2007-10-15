@@ -16,7 +16,7 @@ import settings
 import plugins.html as html
 
 import wx
-import wxaddons.persistence
+import persistence
 import wxaddons.sized_controls as sc
 import gui.select_box as picker
 import appdata

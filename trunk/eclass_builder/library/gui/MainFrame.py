@@ -3,7 +3,7 @@ import sys, os, shutil
 import wx
 import wx.aui
 import wxaddons.sized_controls as sc
-import wxaddons.persistence
+import persistence
 
 import index, index_manager
 import gui.autolist as autolist

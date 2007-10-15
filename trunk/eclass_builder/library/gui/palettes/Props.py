@@ -1,7 +1,7 @@
 import types, string
 import wx
 import wx.grid
-import wxaddons.persistence
+import persistence
 import wxaddons.sized_controls as sc
 import index
 

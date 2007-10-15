@@ -4,7 +4,7 @@ import guiutils
 import time
 
 import wx
-import wxaddons.persistence
+import persistence
 import wxaddons.sized_controls as sc
 import errors
 import settings

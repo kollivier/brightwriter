@@ -1,6 +1,6 @@
 import wx
 import wxaddons.sized_controls as sc
-import wxaddons.persistence
+import persistence
 
 def getName():
     return _("Field Editor")
