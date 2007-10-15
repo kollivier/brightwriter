@@ -29,6 +29,7 @@ import fileutils
 #imports for packaging tools
 if sys.platform.startswith("win"):
     import ctypes
+    import ctypes.wintypes
 
 settings.AppDir = rootdir
 new_editor = True
