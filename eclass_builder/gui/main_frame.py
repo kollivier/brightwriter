@@ -139,7 +139,7 @@ class MainFrame2(sc.SizedFrame):
 
         settings.ThirdPartyDir = os.path.join(settings.AppDir, "3rdparty", utils.getPlatformName())
         langdict = {"English":"en", "Espanol": "sp", "Francais":"fr"}
-        lang = "en"
+        lang = "English"
         if settings.AppSettings["Language"] in langdict:
             lang = settings.AppSettings["Language"]
         settings.LangDirName = langdict[lang]
