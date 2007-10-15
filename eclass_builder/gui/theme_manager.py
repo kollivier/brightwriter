@@ -3,7 +3,7 @@ import shutil
 
 import wx
 import wxaddons.sized_controls as sc
-import wxaddons.persistence
+import persistence
 import wxbrowser
 
 import conman

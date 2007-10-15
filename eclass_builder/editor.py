@@ -5,7 +5,7 @@ import string, time, cStringIO, os, re, glob, csv, shutil
 
 import wx
 import wxaddons
-import wxaddons.persistence
+import persistence
 import wxaddons.sized_controls as sc
 import time
 

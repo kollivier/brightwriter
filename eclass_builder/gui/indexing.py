@@ -1,7 +1,7 @@
 import string, sys, os
 import wx
 import wxaddons.sized_controls as sc
-import wxaddons.persistence
+import persistence
 import settings
 import threading
 
