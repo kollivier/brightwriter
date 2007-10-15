@@ -139,7 +139,10 @@ class MainFrame2(sc.SizedFrame):
 
         settings.ThirdPartyDir = os.path.join(settings.AppDir, "3rdparty", utils.getPlatformName())
         langdict = {"English":"en", "Espanol": "sp", "Francais":"fr"}
-        settings.LangDirName = langdict[settings.AppSettings["Language"]]
+        lang = "en"
+        if settings.AppSettings["Language"] in langdict:
+            lang = settings.AppSettings["Language"]
+        settings.LangDirName = langdict[lang]
         self.errorPrompts = prompts.errorPrompts
 
         # These are used for copy and paste, and drag and drop
