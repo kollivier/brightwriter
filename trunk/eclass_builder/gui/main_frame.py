@@ -356,9 +356,6 @@ class MainFrame2(sc.SizedFrame):
         
         self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
         self.errorViewer.LoadState("ErrorLogViewer", dialogIsModal=False)
-        
-        if wx.Platform == '__WXMSW__':
-            EVT_CHAR(self.previewbook, self.SkipNotebookEvent)
 
         if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
             self.LoadEClass(settings.AppSettings["LastOpened"])
