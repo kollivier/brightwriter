@@ -926,6 +926,7 @@ class MainFrame2(sc.SizedFrame):
                         os.rename(auddir, os.path.join(settings.ProjectDir, "pub", "Audio"))
                     #self.PublishPageAndChildren(self.pub.nodes[0])
                     
+                self.projectTree.SelectItem(self.projectTree.GetRootItem())
                 self.Preview()
         
         except:

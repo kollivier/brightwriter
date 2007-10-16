@@ -19,7 +19,6 @@ class IMSCPTreeControl(wx.TreeCtrl):
         if len(root.items) > 0:
             self.AddIMSChildItemsToTree(node, root.items)
         self.Expand(node)
-        self.SelectItem(node)
         
     def AddIMSChildItemsToTree(self, node, imsitems):
         """
