@@ -854,7 +854,7 @@ class MainFrame2(sc.SizedFrame):
         
                 settings.ProjectDir = newdialog.eclassdir
                 import eclass
-                eclass.createEClass(settings.ProjectDir)
+                eclassutils.createEClass(settings.ProjectDir)
                 
                 filename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
                 self.imscp.metadata.lom.general.title = newdialog.txtTitle.GetValue()
@@ -943,7 +943,7 @@ class MainFrame2(sc.SizedFrame):
             selresource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
             if selresource:
                 filename = selresource.attrs["href"]
-                eclasspage = eclass.getEClassPageForIMSResource(selresource)
+                eclasspage = eclassutils.getEClassPageForIMSResource(selresource)
                 if eclasspage:
                     filename = eclasspage
                     
