@@ -900,7 +900,6 @@ class MainFrame2(sc.SizedFrame):
     
                 if len(self.imscp.organizations) > 0:
                     self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0].items[0])
-                    self.Preview()
                 
                 mytheme = settings.ProjectSettings["Theme"]
                 self.currentTheme = self.themes.FindTheme(mytheme)
@@ -920,9 +919,15 @@ class MainFrame2(sc.SizedFrame):
                 
                 if os.path.exists(viddir) or os.path.exists(auddir):
                     self.errorPrompts.displayInformation(_("Due to new security restrictions in some media players, video and audio files need to be moved underneath of the 'pub' directory. EClass will now do this automatically and update your pages. Sorry for any inconvenience!"), _("Moving media files"))
-                    os.rename(viddir, os.path.join(settings.ProjectDir, "pub", "Video"))
-                    os.rename(auddir, os.path.join(settings.ProjectDir, "pub", "Audio"))
+                    if os.path.exists(viddir):
+                        os.rename(viddir, os.path.join(settings.ProjectDir, "pub", "Video"))
+                    
+                    if os.path.exists(auddir):
+                        os.rename(auddir, os.path.join(settings.ProjectDir, "pub", "Audio"))
                     #self.PublishPageAndChildren(self.pub.nodes[0])
+                    
+                self.Preview()
+        
         except:
             del busy
             raise
