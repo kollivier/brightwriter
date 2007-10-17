@@ -851,7 +851,6 @@ class MainFrame2(sc.SizedFrame):
                 self.browser.LoadPage("about:blank")
         
                 settings.ProjectDir = newdialog.eclassdir
-                import eclass
                 eclassutils.createEClass(settings.ProjectDir)
                 
                 filename = os.path.join(settings.ProjectDir, "imsmanifest.xml")

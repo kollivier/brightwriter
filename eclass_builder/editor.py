@@ -696,7 +696,6 @@ class MainFrame2(sc.SizedFrame):
             result = newdialog.ShowModal()
             if result == wx.ID_OK:
                 settings.ProjectDir = self.pub.directory = newdialog.eclassdir
-                import eclass
                 eclassutils.createEClass(settings.ProjectDir)
                 
                 self.pub.filename = os.path.join(self.pub.directory, "imsmanifest.xml")
