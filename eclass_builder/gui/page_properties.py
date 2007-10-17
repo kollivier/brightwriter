@@ -82,7 +82,7 @@ class PagePropertiesDialog (sc.SizedDialog):
             keywords = self.content.metadata.lom.general.keyword.getKeyOrEmptyString(lang)
             filename = eclassutils.getEClassPageForIMSResource(self.content)
             if not filename:
-                filename = self.content.attrs["href"]
+                filename = self.content.getFilename()
         
         wx.StaticText(mypanel, -1, _("Name"))
         self.txtTitle = wx.TextCtrl(mypanel, -1, name)

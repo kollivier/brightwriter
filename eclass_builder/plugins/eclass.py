@@ -639,7 +639,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             imageHTML = "<IMG src='../Graphics/%s'>" % (mypage.media.image)
         
         videofile = os.path.join(settings.ProjectDir, "pub", "Video", mypage.media.video)
-        if len(mypage.media.video) > 0 and os.path.exists(videofile):
+        if os.path.exists(videofile):
             url = "Video/" + mypage.media.video
             videoHTML = mmedia.getHTMLTemplate(videofile, url, isVideo=True, 
                             autoStart=mypage.media.videoautostart)

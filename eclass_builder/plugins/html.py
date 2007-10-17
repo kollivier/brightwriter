@@ -148,7 +148,7 @@ if __name__ != "__main__":
 				resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
 				filename = eclassutils.getEClassPageForIMSResource(resource)
 				if not filename:
-					filename = resource.attrs["href"]
+					filename = resource.getFilename()
 			
 			filename = os.path.join(settings.ProjectDir, filename)
 			
@@ -1543,7 +1543,7 @@ if __name__ != "__main__":
 				resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
 				filename = eclassutils.getEClassPageForIMSResource(resource)
 				if not filename:
-					filename = resource.attrs["href"]
+					filename = resource.getFilename()
 
 			self.filename = os.path.join(settings.ProjectDir, filename)
 			if not os.path.exists(self.filename):

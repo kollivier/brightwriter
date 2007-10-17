@@ -13,12 +13,11 @@ class IMSCPTreeControl(wx.TreeCtrl):
         #self.AssignImageList(treeimages)
         self.DeleteAllItems()
         node = self.AddRoot(
-            root.title.text,
+            "",
             -1,-1,
             wx.TreeItemData(root))
         if len(root.items) > 0:
             self.AddIMSChildItemsToTree(node, root.items)
-        self.Expand(node)
         
     def AddIMSChildItemsToTree(self, node, imsitems):
         """
@@ -41,9 +40,6 @@ class IMSCPTreeControl(wx.TreeCtrl):
             # fallback, in case there is no selection
             if self.GetRootItem():
                 selitem = self.GetLastChild(self.GetRootItem())
-        
-                if not selitem.IsOk():
-                    return self.GetRootItem()
                     
         if selitem.IsOk():
             return selitem

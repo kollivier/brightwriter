@@ -83,7 +83,7 @@ def CreateJoustJavascript(pub):
         resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, pub)
         filename = eclassutils.getEClassPageForIMSResource(resource)
         if not filename:
-            filename = resource.attrs["href"]
+            filename = resource.getFilename()
     text = u"""
 function addJoustItems(theMenu){
 var level1ID = -1;
@@ -117,7 +117,7 @@ def AddJoustItems(nodes, level):
             resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, root)
             filename = eclassutils.getEClassPageForIMSResource(resource)
             if not filename:
-                filename = resource.attrs["href"]
+                filename = resource.getFilename()
 
         if isinstance(root, conman.conman.ConNode) and len(root.children) > 0 \
             or isinstance(root, ims.contentpackage.Item) and len(root.items) > 0:
