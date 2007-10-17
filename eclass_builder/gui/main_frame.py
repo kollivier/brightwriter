@@ -735,10 +735,7 @@ class MainFrame2(sc.SizedFrame):
                         
                     else: 
                         self.imscp.organizations[0].items.append(newitem)
-                        self.projectTree.AddIMSItemsToTree(newitem)
-                        
-                    if not self.projectTree.IsExpanded(self.projectTree.GetCurrentTreeItem()):
-                            self.projectTree.Expand(self.projectTree.GetCurrentTreeItem())
+                        self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0])
 
                     self.EditItem(None)
                     self.UpdateContents()
@@ -941,19 +938,20 @@ class MainFrame2(sc.SizedFrame):
                     
         return filename
     
-    def EditItem(self, event):
+    def EditItem(self, event=None):
         selitem = self.projectTree.GetCurrentTreeItemData()
-        filename = self.GetEditableFileForIMSItem(selitem)
-        isplugin = False
-        result = wx.ID_CANCEL
-        plugin = plugins.GetPluginForFilename(filename)
-        if plugin:
-            mydialog = plugin.EditorDialog(self, selitem)
-            result = mydialog.ShowModal()
-
-        if result == wx.ID_OK:
-            self.Update()
-            self.projectTree.SetItemText(self.projectTree.GetCurrentTreeItem(), selitem.title.text)
+        if selitem:
+            filename = self.GetEditableFileForIMSItem(selitem)
+            isplugin = False
+            result = wx.ID_CANCEL
+            plugin = plugins.GetPluginForFilename(filename)
+            if plugin:
+                mydialog = plugin.EditorDialog(self, selitem)
+                result = mydialog.ShowModal()
+    
+            if result == wx.ID_OK:
+                self.Update()
+                self.projectTree.SetItemText(self.projectTree.GetCurrentTreeItem(), selitem.title.text)
         
     def EditItemProps(self):
         selitem = self.projectTree.GetCurrentTreeItemData()
