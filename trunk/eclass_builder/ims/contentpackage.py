@@ -214,6 +214,13 @@ class Resource(Tag):
         
         self.children = [self.metadata, self.files, self.dependencies]
         
+    def getFilename(self):
+        if "href" in self.attrs:
+            return self.attrs["href"]
+            
+        elif len(self.files) > 0:
+            return self.files[0].attrs["href"]
+            
     def setFilename(self, filename):
         self.attrs["href"] = filename
         

@@ -486,7 +486,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             self.content = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
             filename = eclassutils.getEClassPageForIMSResource(self.content)
             if not filename:
-                filename = self.content.attrs["href"]
+                filename = self.content.getFilename()
         
         self.quiz.LoadPage(os.path.join(settings.ProjectDir, filename))
 
@@ -688,7 +688,7 @@ class EditorDialog(sc.SizedDialog):
             self.content = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.item)
             filename = eclassutils.getEClassPageForIMSResource(self.content)
             if not filename:
-                filename = self.content.attrs["href"]
+                filename = self.content.getFilename()
                 
         if filename: 
             self.filename = os.path.join(settings.ProjectDir, filename)

@@ -222,7 +222,7 @@ class MainFrame2(sc.SizedFrame):
         # Tree Control for the XML hierachy
         self.projectTree = gui.imstree.IMSCPTreeControl(self.splitter1,
                     -1 ,
-                    style=wx.TR_HAS_BUTTONS | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER)
+                    style=wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER)
 
         #self.projectTree.SetImageList(self.treeimages)
 
@@ -653,8 +653,6 @@ class MainFrame2(sc.SizedFrame):
         
     def UpdatePageCommand(self, event):
         value = not self.projectTree.GetCurrentTreeItem() is None
-        if event.GetId() == ID_TREE_REMOVE:
-            value = value and not self.projectTree.GetCurrentTreeItem() == self.projectTree.GetRootItem()
 
         event.Enable(value)          
             
@@ -899,7 +897,7 @@ class MainFrame2(sc.SizedFrame):
                     os.rename(pylucenedir, os.path.join(settings.ProjectDir, "index.lucene"))
     
                 if len(self.imscp.organizations) > 0:
-                    self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0].items[0])
+                    self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0])
                 
                 mytheme = settings.ProjectSettings["Theme"]
                 self.currentTheme = self.themes.FindTheme(mytheme)
@@ -911,7 +909,6 @@ class MainFrame2(sc.SizedFrame):
                     self.errorPrompts.displayError(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
                 
                 self.SetFocus()
-                # self.SwitchMenus(True)
                 settings.AppSettings["LastOpened"] = filename
                 settings.ProjectSettings = settings.ProjectSettings
                 viddir = os.path.join(settings.ProjectDir, "Video")
@@ -923,11 +920,7 @@ class MainFrame2(sc.SizedFrame):
                         os.rename(viddir, os.path.join(settings.ProjectDir, "pub", "Video"))
                     
                     if os.path.exists(auddir):
-                        os.rename(auddir, os.path.join(settings.ProjectDir, "pub", "Audio"))
-                    #self.PublishPageAndChildren(self.pub.nodes[0])
-                    
-                self.projectTree.SelectItem(self.projectTree.GetRootItem())
-                self.Preview()
+                        os.rename(auddir, os.path.join(settings.ProjectDir, "pub", "Audio"))                  
         
         except:
             del busy
@@ -942,7 +935,7 @@ class MainFrame2(sc.SizedFrame):
             import ims.utils
             selresource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
             if selresource:
-                filename = selresource.attrs["href"]
+                filename = selresource.getFilename()
                 eclasspage = eclassutils.getEClassPageForIMSResource(selresource)
                 if eclasspage:
                     filename = eclasspage
@@ -994,8 +987,8 @@ class MainFrame2(sc.SizedFrame):
         if imsitem:
             import ims.utils
             resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
-            if resource and resource.attrs["type"] == "webcontent":
-                filename = resource.attrs["href"]
+            if resource:
+                filename = resource.getFilename()
         
         if filename:
             #publisher = plugins.GetPublisherForFilename(filename)
@@ -1027,16 +1020,12 @@ class MainFrame2(sc.SizedFrame):
             imsitem = self.projectTree.GetCurrentTreeItemData()
             
         self.UpdateContents()
-        try:
-            self.PublishPage(imsitem)
+        self.PublishPage(imsitem)
 
-            self.Preview()
-            self.dirtyNodes.append(imsitem)
-            if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
-                self.UploadPage()
-        except:
-            message = _("Error updating page. ") + constants.errorInfoMsg
-            self.errorPrompts.displayError(message)
+        self.Preview()
+        self.dirtyNodes.append(imsitem)
+        if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
+            self.UploadPage()
             
     def UpdateContents(self):
         if self.statusBar:

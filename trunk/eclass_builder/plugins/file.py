@@ -1,5 +1,10 @@
 import string, sys, os
 import plugins
+import settings
+import ims
+import ims.utils
+import appdata
+import conman
 
 plugin_info = { "Name":"file", 
                 "FullName":"File", 
@@ -15,6 +20,9 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
     def GetData(self):
         return None
+        
+    def Publish(self, parent=None, node=None, dir=None):
+        return
 
 
 class EditorDialog:
@@ -24,10 +32,21 @@ class EditorDialog:
 
     def ShowModal(self):
         import guiutils
-        myFilename = os.path.join(settings.ProjectDir, self.item.content.filename)
+        filename = None
+        if isinstance(self.item, conman.conman.ConNode):
+            filename = self.item.content.filename
+            
+        elif isinstance(self.item, ims.contentpackage.Item):
+            resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.item)
+            if resource:
+                filename = resource.getFilename()
+            
+        myFilename = os.path.join(settings.ProjectDir, filename)
         result = False
 
+        print myFilename
         if os.path.exists(myFilename):
+            print "File exists!"
             result = guiutils.sendCommandToApplication(myFilename, "open")
 
         if not result:

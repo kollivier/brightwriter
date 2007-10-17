@@ -97,6 +97,7 @@ class Tag:
                 self.text = childNode.nodeValue.strip()
             elif childNode.nodeType == childNode.ELEMENT_NODE:
                 for child in self.children:
+                    
                     if childNode.nodeName == child.name:
                         child.fromXML(childNode, strictMode)
                         break
