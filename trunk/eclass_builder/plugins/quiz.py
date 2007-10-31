@@ -745,7 +745,7 @@ class EditorDialog(sc.SizedDialog):
 class QuestionEditor(sc.SizedDialog):
     def __init__(self, parent, question=None):
         sc.SizedDialog.__init__(self, parent, -1, _("Question Editor"), wx.Point(100, 100),
-                                  style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.STAY_ON_TOP)
+                                  style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
 
         wx.StaticText(pane, -1, _("Question:"))
@@ -846,7 +846,7 @@ class QuestionEditor(sc.SizedDialog):
                 numAnswers = numAnswers + 1
 
         if self.question.presentation.text == "":
-            wxMessageBox(_("Please enter a question."))
+            wx.MessageBox(_("Please enter a question."))
             return False
 
         if not correctAnswer:
