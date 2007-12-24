@@ -222,7 +222,7 @@ class MainFrame2(sc.SizedFrame):
         # Tree Control for the XML hierachy
         self.projectTree = gui.imstree.IMSCPTreeControl(self.splitter1,
                     -1 ,
-                    style=wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER)
+                    style=wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER | wx.TR_EDIT_LABELS)
 
         #self.projectTree.SetImageList(self.treeimages)
 
@@ -336,6 +336,7 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
+        self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
         self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
         
@@ -645,6 +646,10 @@ class MainFrame2(sc.SizedFrame):
         item = event.GetItem() 
         if item:
             self.PopupMenu(menus.getPageMenu(), pt)
+            
+    def OnTreeLabelChanged(self, event):
+        item = self.projectTree.GetCurrentTreeItemData()
+        item.title.text = event.GetLabel()
             
     def OnTreeDoubleClick(self, event):
         pt = event.GetPosition()
