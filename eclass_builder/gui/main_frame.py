@@ -431,6 +431,10 @@ class MainFrame2(sc.SizedFrame):
                 
 
     def OnCut(self, event):
+        if not wx.Window.FindFocus() == self.projectTree:
+            event.Skip()
+            return
+            
         sel_item = self.projectTree.GetSelection()
         self.CutNode = sel_item
         self.projectTree.SetItemTextColour(sel_item, wx.LIGHT_GREY)
@@ -438,6 +442,9 @@ class MainFrame2(sc.SizedFrame):
             self.CopyNode = None
 
     def OnCopy(self, event):
+        if not wx.Window.FindFocus() == self.projectTree:
+            event.Skip()
+            return
         sel_item = self.projectTree.GetSelection()
         self.CopyNode = sel_item
         if self.CutNode:
@@ -448,6 +455,9 @@ class MainFrame2(sc.SizedFrame):
         LinkChecker(self).ShowModal()
 
     def OnPaste(self, event):
+        if not wx.Window.FindFocus() == self.projectTree:
+            event.Skip()
+            return
         dirtyNodes = []
         sel_item = self.projectTree.GetSelection()
         pastenode = self.CopyNode
