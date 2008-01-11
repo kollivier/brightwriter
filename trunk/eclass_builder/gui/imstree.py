@@ -25,8 +25,11 @@ class IMSCPTreeControl(wx.TreeCtrl):
         using an xTree
         """
         for child in imsitems:
+            text = child.title.text
+            if not text:
+                text = ""
             childnode = self.AppendItem(node,
-                    child.title.text,
+                    text,
                     -1,-1,
                     wx.TreeItemData(child))
             # Recurisive call to insert children of each child
