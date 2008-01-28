@@ -156,10 +156,6 @@ class NewPageDialog(sc.SizedDialog):
 
 
 	def btnCancelClicked(self, event):
-		if self.parent.isNewCourse:
-			wx.MessageBox(_("You must create a root page for this course."))
-			return
-
 		self.EndModal(wx.ID_CANCEL)
 
 	def btnOKClicked(self, event):
