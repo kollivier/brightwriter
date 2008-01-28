@@ -53,11 +53,11 @@ def getPageMenu():
     PageMenu.AppendSeparator()
     PageMenu.Append(ID_IMPORT_FILE, _("Import file..."))
     PageMenu.AppendSeparator()
-    PageMenu.Append(ID_CUT, _("Cut"))
-    PageMenu.Append(ID_COPY, _("Copy"))
+    PageMenu.Append(ID_CUT, _("Cut")+"\tCTRL+X")
+    PageMenu.Append(ID_COPY, _("Copy")+"\tCTRL+C")
     
     PasteMenu2 = wx.Menu()
-    PasteMenu2.Append(ID_PASTE_BELOW, _("Paste Below")+"\tCTRL+V")
+    PasteMenu2.Append(ID_PASTE_BELOW, _("Paste After")+"\tCTRL+V")
     PasteMenu2.Append(ID_PASTE_CHILD, _("Paste As Child"))
     PageMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu2)
     
