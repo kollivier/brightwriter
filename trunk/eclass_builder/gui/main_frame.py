@@ -656,8 +656,10 @@ class MainFrame2(sc.SizedFrame):
         item = self.projectTree.GetCurrentTreeItemData()
 
         if item:
-            self.EditItem(event)
-            self.Preview()
+            # use wx.CallAfter because otherwise on OS X a tree control label edit event will get fired.
+            wx.CallAfter(self.EditItem, event)
+        
+        event.Skip()
         
     def SkipNotebookEvent(self, evt):
         evt.Skip()
@@ -834,6 +836,8 @@ class MainFrame2(sc.SizedFrame):
         if os.path.exists(filename):
             try:
                 self.imscp.saveAsXML(filename)
+                if settings.ProjectSettings:
+                    settings.ProjectSettings.SaveAsXML(os.path.join(settings.ProjectDir, "settings.xml"))
             except IOError, e:
                 message = _("Could not save EClass project file. Error Message is:")
                 self.log.write(message)
