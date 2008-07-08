@@ -14,7 +14,8 @@ rootdir = "../"
 py2app_options = dict(
 	iconfile=rootdir + "icons/eclass_builder.icns", 
     argv_emulation=True,
-    plist=myplist
+    plist=myplist,
+    optimize=2
 )
 
 setup(
