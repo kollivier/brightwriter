@@ -49,14 +49,8 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         self.CreateAppDirsIfNeeded()
         self.LoadVCards()
 
-        global test_new_editor
-        
-        if new_editor:
-            import gui.main_frame
-            self.frame = gui.main_frame.MainFrame2(None, -1, "EClass.Builder")
-        else:
-            import editor
-            self.frame = editor.MainFrame2(None, -1, "EClass.Builder")
+        import gui.main_frame
+        self.frame = gui.main_frame.MainFrame2(None, -1, "EClass.Builder")
                 
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
