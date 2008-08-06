@@ -50,6 +50,7 @@ import appdata
 # examine the code to find module dependencies.
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
+import wx.lib.sized_controls
 
 try:
     import taskrunner
