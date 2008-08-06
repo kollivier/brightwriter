@@ -1,7 +1,7 @@
 import sys, os, string
 import settings
 import wx
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 
 class EditListBox(sc.SizedPanel):
     def __init__(self, *args, **kwargs):

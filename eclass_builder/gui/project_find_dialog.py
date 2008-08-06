@@ -5,7 +5,7 @@ import time
 
 import wx
 import persistence
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 import errors
 import settings
 import autolist
