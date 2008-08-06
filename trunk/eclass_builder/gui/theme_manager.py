@@ -2,7 +2,7 @@ import string, sys, os
 import shutil
 
 import wx
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 import persistence
 import wxbrowser
 

@@ -5,7 +5,7 @@ import time
 
 import wx
 import persistence
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 import autolist
 import errors
 import traceback
@@ -16,10 +16,10 @@ appErrorLog = errors.appErrorLog
 
 class ErrorDialog(sc.SizedDialog):
     def __init__(self, parent=None):
-        sc.SizedDialog.__init__(self, parent, -1, _("EClass.Builder Fatal Error"), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        sc.SizedDialog.__init__(self, parent, -1, _("%s Fatal Error" % wx.GetApp().GetAppName()), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
         
-        wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in EClass.Builder"))
+        wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in %s" % wx.GetApp().GetAppName()))
         wx.StaticText(pane, -1, _("If you click on '%s', it will send only the error information\nto the project. This is helpful for us to diagnose any problems that may occur.") % _("Send Error Report"))
         self.detailsButton = wx.Button(pane, -1, _("Show Details"))
 

@@ -2,7 +2,7 @@
 import os
 import wx
 import wx.lib.newevent as newevent
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 import settings
 import constants 
 
