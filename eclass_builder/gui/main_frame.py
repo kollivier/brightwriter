@@ -6,7 +6,7 @@ import string, time, cStringIO, os, re, glob, csv, shutil
 import wx
 import wxaddons
 import persistence
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 import time
 
 wx.SystemOptions.SetOptionInt("mac.textcontrol-use-mlte", 1)
@@ -70,18 +70,11 @@ from gui.indexing import *
 from gui.project_props import *
 from gui.activity_monitor import *
 import gui.error_viewer
-import gui.project_find_dialog as pfdlg
+#simport gui.project_find_dialog as pfdlg
 import gui.media_convert
 import gui.prompts as prompts
 import gui.imstree
 import gui.menus as menus
-
-try:
-    import win32process, win32con
-    # for the module detection script
-    import wx.lib.iewin
-except:
-    pass
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
 import plugins
@@ -92,16 +85,13 @@ settings.plugins = plugins.pluginList
 from constants import *
 from gui.ids import *
 
-try:
+if sys.platform.startswith("win"):
     import win32api
     import win32pipe
-except:
-    pass
-
-try:
     import pythoncom
-except:
-    pass
+    import win32process, win32con
+    # for the module detection script
+    import wx.lib.iewin
 
 class GUIIndexingCallback:
     def __init__(self, parent):
