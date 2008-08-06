@@ -1,7 +1,7 @@
 import wx
 import wx.lib.filebrowsebutton as filebrowse
 import persistence
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 
 class LibSettingsPanel(sc.SizedPanel):
     def __init__(self, *args, **kwargs):
