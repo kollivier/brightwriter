@@ -2,7 +2,7 @@ import sys, os, shutil
 
 import wx
 import wx.aui
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 import persistence
 
 import index, index_manager

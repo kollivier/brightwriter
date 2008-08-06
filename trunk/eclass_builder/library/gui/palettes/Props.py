@@ -2,7 +2,7 @@ import types, string
 import wx
 import wx.grid
 import persistence
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 import index
 
 # I'd like to move towards making these more dynamic, to reduce hardcoded

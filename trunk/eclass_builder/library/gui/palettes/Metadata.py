@@ -1,5 +1,5 @@
 import wx
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 import persistence
 
 def getName():
