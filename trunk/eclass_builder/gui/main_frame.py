@@ -4,7 +4,6 @@ import sys, urllib2, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
 
 import wx
-import wxaddons
 import persistence
 import wx.lib.sized_controls as sc
 import time
