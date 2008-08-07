@@ -147,6 +147,11 @@ if sys.platform == "win32":
 
 for filename in deps:
     destfilename = string.replace(filename, sys.prefix, mpdir)
+    # we need to copy the .tlb file along with the activex file.
+    if os.path.basename(filename) == "activex.py":
+        tlbfile = "myole4ax.tlb"
+        shutil.copyfile(os.path.join(os.path.dirname(filename), tlbfile), os.path.join(os.path.dirname(destfilename), tlbfile))
+
     makedir(os.path.dirname(destfilename))
     shutil.copyfile(filename, destfilename)
     if os.path.splitext(filename)[1] == ".pyd":
