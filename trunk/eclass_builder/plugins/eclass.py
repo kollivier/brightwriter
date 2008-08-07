@@ -551,7 +551,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             objtext = objtext + "</ul><hr>"
 
         #try:
-        bjtext = utils.makeUnicode(objtext)
+        objtext = utils.makeUnicode(objtext)
         myhtml = self._AddMedia(mypage) + objtext + utils.makeUnicode(myhtml)
 
         self.data['content'] = myhtml
