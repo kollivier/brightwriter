@@ -579,10 +579,12 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         
     def _ConvertFile(self, filename):
         myfilename = filename
+        myhtml = ""
         if wx.Platform == "__WXMSW__":
             import win32api
             myfilename = win32api.GetShortPathName(filename)
 
+        message = _("Unable to convert file %(filename)s") % {"filename": filename}
         try:
             import converter
             wx.BeginBusyCursor()
@@ -595,10 +597,11 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             myhtml = GetBody(utils.openFile(thefilename, "rb"))
         except:
             wx.EndBusyCursor()
-            message = _("Unable to convert file %(filename)s") % {"filename": filename}
             global log
             log.write(message)
             return ""
+        
+        return myhtml
 
     def _InsertTerms(self, myhtml, termlist):
         for term in termlist:   
