@@ -67,7 +67,7 @@ class ErrorDialog(sc.SizedDialog):
             self.Fit()
         
 def guiExceptionHook(exctype, value, trace):
-    errorText = errors.exceptionAsString(exctype, value, trace)
+    errorText = errors.print_exc_plus(exctype, value, trace)
     
     print errorText
     
