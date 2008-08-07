@@ -236,21 +236,7 @@ def getPlatformName():
         
 def getUUID():
     """
-    Function: getUUID()
-    Last Updated: 9/24/02
-    Description: Generates a UUID using platform specific tools (the built-in GUID generation tools on Windows, and the uuidgen command line utility on Linux/Mac OS X.
+    Generates and returns a random UUID as a unicode text object.
     """
-    id = ""
-    if sys.platform == "win32":
-        id = pythoncom.CreateGuid()
-        id = str(id)
-        id = string.replace(id, "'", "")
-        id = string.replace(id, "{", "")
-        id = string.replace(id, "}", "")
-        id = string.replace(id, "-", "")
-    else:
-        result = os.popen("uuidgen", "r")
-        id = result.read()
-        id = string.replace(id, "-", "")
-        result.close()
-    return id
+    import uuid
+    return unicode(uuid.uuid4())
