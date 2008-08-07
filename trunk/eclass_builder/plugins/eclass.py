@@ -586,7 +586,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         try:
             import converter
             wx.BeginBusyCursor()
-            myconverter = converter.DocConverter(self.parent)
+            myconverter = converter.DocConverter()
             thefilename = myconverter.ConvertFile(myfilename, "html", "ms_office")[0]
             wx.EndBusyCursor()
             if thefilename == "":
