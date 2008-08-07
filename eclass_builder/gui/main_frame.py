@@ -43,19 +43,20 @@ import analyzer
 import eclass_convert
 import appdata
 
-# Import the gui dialogs. They used to be embedded in editor.py
-# so we will just import their contents for now to avoid conflicts.
-# In the future, I'd like to not do things this way so that we can
-# examine the code to find module dependencies.
+
+import xmlrpclib
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
-import wx.lib.sized_controls
 
 try:
     import taskrunner
 except:
     pass
 
+# Import the gui dialogs. They used to be embedded in editor.py
+# so we will just import their contents for now to avoid conflicts.
+# In the future, I'd like to not do things this way so that we can
+# examine the code to find module dependencies.
 from gui.theme_manager import *
 from gui.link_manager import *
 from gui.startup import *
@@ -92,6 +93,7 @@ if sys.platform.startswith("win"):
     import win32process, win32con
     # for the module detection script
     import wx.lib.iewin
+    import comtypes
 
 class GUIIndexingCallback:
     def __init__(self, parent):
