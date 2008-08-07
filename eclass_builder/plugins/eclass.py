@@ -583,7 +583,6 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             import win32api
             myfilename = win32api.GetShortPathName(filename)
 
-        message = _("Unable to convert file %(filename)s") % {"filename": mypage.media.text}
         try:
             import converter
             wx.BeginBusyCursor()
@@ -596,6 +595,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             myhtml = GetBody(utils.openFile(thefilename, "rb"))
         except:
             wx.EndBusyCursor()
+            message = _("Unable to convert file %(filename)s") % {"filename": filename}
             global log
             log.write(message)
             return ""
