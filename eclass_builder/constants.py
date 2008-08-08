@@ -1,4 +1,5 @@
 # constants.py - often used constant values
+import os
 
 eclassdirs = ["EClass", "Text", "pub", os.path.join("pub", "audio"), os.path.join("pub", "video"), "Graphics", "File", "Present"]
 
