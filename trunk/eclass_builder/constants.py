@@ -1,6 +1,6 @@
 # constants.py - often used constant values
 
-eclassdirs = ["EClass", "Text", "pub", "Graphics", "File", "Present"]
+eclassdirs = ["EClass", "Text", "pub", os.path.join("pub", "audio"), os.path.join("pub", "video"), "Graphics", "File", "Present"]
 
 if not "_" in dir():
     def _(text):
