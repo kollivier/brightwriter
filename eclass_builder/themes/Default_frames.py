@@ -15,7 +15,7 @@ class HTMLPublisher(BaseHTMLPublisher):
 
     def CopySupportFiles(self):
         BaseHTMLPublisher.CopySupportFiles(self)
-        fileutils.CopyFile("navbuttons.htm", os.path.join(settings.AppDir, "web"), self.dir)
+        fileutils.CopyFiles(os.path.join(settings.AppDir, "web"), self.dir, recurse=True)
         
     def CreateTOC(self):
         filename = rootdir + utils.GetFileLink(self.pub.nodes[0].content.filename)
