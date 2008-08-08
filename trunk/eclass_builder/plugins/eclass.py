@@ -872,7 +872,7 @@ class EditorDialog (sc.SizedDialog):
                 self.page = item.page
                 self.isHotword = True
                 
-            if len(self.filename) > 0:
+            if self.filename and len(self.filename) > 0:
                 self.page.LoadPage(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
         except RuntimeError, e:
             global log
