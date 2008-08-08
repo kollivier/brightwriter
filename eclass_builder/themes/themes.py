@@ -35,8 +35,10 @@ class ThemeList:
 
 		return result
 
-	def FindTheme(self, themename):
+	def FindTheme(self, themename, returnDefault=True):
 		if themename in self.themes.keys():
 			return self.themes[themename]
+		elif returnDefault:
+			return self.themes["Default (frames)"]
 		else:
 			return None
