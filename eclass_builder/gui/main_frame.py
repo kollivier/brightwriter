@@ -43,7 +43,8 @@ import analyzer
 import eclass_convert
 import appdata
 
-
+# modules that don't get picked up elsewhere...
+import uuid
 import xmlrpclib
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
@@ -262,9 +263,9 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_TREE_EDIT, self.OnEditItemProps) 
         app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
         app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
-        #wx.EVT_MENU(self, ID_PUBLISH, self.PublishToWeb)
+        #app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
-        #wx.EVT_MENU(self, ID_PUBLISH_PDF, self.PublishToPDF)
+        #app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
         app.AddHandlerForID(ID_PUBLISH_IMS, self.PublishToIMS)
         app.AddHandlerForID(ID_BUG, self.OnReportBug)
         app.AddHandlerForID(ID_THEME, self.OnManageThemes)
@@ -280,7 +281,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
         app.AddHandlerForID(ID_PASTE, self.OnPaste)
         app.AddHandlerForID(ID_IMPORT_FILE, self.OnImportFile)
-        #wx.EVT_MENU(self, ID_REFRESH_THEME, self.OnRefreshTheme)
+        app.AddHandlerForID(ID_REFRESH_THEME, self.OnRefreshTheme)
         #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
         app.AddHandlerForID(ID_ERRORLOG, self.OnErrorLog)
         app.AddHandlerForID(ID_ACTIVITY, self.OnActivityMonitor)
@@ -393,6 +394,10 @@ class MainFrame2(sc.SizedFrame):
     def OnFindInProject(self, evt):
         dlg = pfdlg.ProjectFindDialog(self)
         dlg.Show()
+
+    def OnRefreshTheme(self, event):
+        publisher = self.currentTheme.HTMLPublisher(self)
+        result = publisher.Publish()
 
     def OnImportFile(self, event):
         parent = self.projectTree.GetCurrentTreeItem()
@@ -686,7 +691,6 @@ class MainFrame2(sc.SizedFrame):
         else:
             folder = settings.ProjectSettings["CDSaveDir"]
 
-        self.UpdateContents()
         self.UpdateEClassDataFiles()
         #self.UpdateTextIndex()
         self.CopyCDFiles()
@@ -747,7 +751,7 @@ class MainFrame2(sc.SizedFrame):
                         self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0])
 
                     self.EditItem(None)
-                    self.UpdateContents()
+                    self.UpdateEClassDataFiles()
     
                 self.isNewCourse = False
             dialog.Destroy()
@@ -906,10 +910,7 @@ class MainFrame2(sc.SizedFrame):
                 if len(self.imscp.organizations) > 0:
                     self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0])
                 
-                mytheme = settings.ProjectSettings["Theme"]
-                self.currentTheme = self.themes.FindTheme(mytheme)
-                if not self.currentTheme:
-                    self.currentTheme = self.themes.FindTheme("Default (frames)")
+                self.currentTheme = self.themes.FindTheme(settings.ProjectSettings["Theme"])
     
                 if settings.ProjectSettings["SearchProgram"] == "Swish-e":
                     settings.ProjectSettings["SearchProgram"] = "Lucene"
@@ -986,7 +987,7 @@ class MainFrame2(sc.SizedFrame):
                 parentitem.items.remove(selitem)
                 
                 self.projectTree.Delete(selection)
-                self.UpdateContents()
+                self.UpdateEClassDataFiles()
                 self.Update()
 
     def Preview(self):
@@ -1027,7 +1028,7 @@ class MainFrame2(sc.SizedFrame):
         if imsitem == None:
             imsitem = self.projectTree.GetCurrentTreeItemData()
             
-        self.UpdateContents()
+        self.UpdateEClassDataFiles()
         self.PublishPage(imsitem)
 
         self.Preview()
@@ -1035,31 +1036,17 @@ class MainFrame2(sc.SizedFrame):
         if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
             self.UploadPage()
             
-    def UpdateContents(self):
-        if self.statusBar:
-            self.statusBar.SetStatusText(_("Updating table of contents..."))
-        
-        if not self.currentTheme:
-            self.currentTheme = self.themes.FindTheme("Default (frames)")
-        try:
-            publisher = self.currentTheme.HTMLPublisher(self)
-            result = publisher.CreateTOC()
-        except IOError, e:
-            message = utils.getStdErrorMessage("IOError", {"filename": e.filename, "type":"write"})
-            self.errorPrompts.displayError(message, _("Could Not Save File"))
-        except:
-            pass #we shouldn't do this, but there may be non-fatal errors we shouldn't
-                 #catch
-        if self.statusBar:
-            self.statusBar.SetStatusText("")
-            
-    def UpdateEClassDataFiles(self, pubid=""):
+    def UpdateEClassDataFiles(self):
         result = False
         busy = wx.BusyCursor()
         wx.Yield()
         #self.CreateDocumancerBook()
         #self.CreateDevHelpBook()
         utils.CreateJoustJavascript(self.imscp.organizations[0].items[0])
+        self.currentTheme = self.themes.FindTheme(settings.ProjectSettings["Theme"])
+        if self.currentTheme:
+            self.currentTheme.HTMLPublisher(self).CopySupportFiles()
+            
         index_config_file = os.path.join(settings.ProjectDir, "index_settings.cfg")
         # if an index settings file doesn't exist, create one with some common defaults
         if not os.path.exists(index_config_file):
