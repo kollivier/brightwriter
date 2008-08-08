@@ -87,6 +87,7 @@ libdir = os.path.join(sys.prefix, "lib")
 deps.append(os.path.join(libdir, "site.py"))
 deps.append(os.path.join(libdir, "locale.py"))
 deps.append(os.path.join(libdir, "codecs.py"))
+deps.append(os.path.join(libdir, "uuid.py"))
 
 #these are for indexer.py
 deps.append(os.path.join(libdir, "HTMLParser.py"))
