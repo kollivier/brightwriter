@@ -536,8 +536,6 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
                 convert = True
                 
                 myhtml = self._ConvertFile(sourcefile)
-                if myhtml == "":
-                    return ""
 
         else:
             myhtml = ""
