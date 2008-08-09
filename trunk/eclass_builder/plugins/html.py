@@ -116,7 +116,7 @@ htmlpage = """
 	</html>
 """
 
-def CreateNewFile(name, filename):
+def CreateNewFile(filename, name="New Page"):
 	try:
 		if os.path.exists(filename):
 			return False
