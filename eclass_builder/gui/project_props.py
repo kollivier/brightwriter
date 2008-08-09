@@ -141,9 +141,7 @@ class SearchPanel(sc.SizedPanel):
         sc.SizedPanel.__init__(self, parent, -1)
         self.chkSearch = wx.CheckBox(self, -1, _("Enable Search Function"))
         
-        try:
-            import PyLucene
-        except:
+        if not appdata.hasPyLucene:
             self.chkSearch.Enable(False)
         
         #self.options = [_("Use Lucene for searching (Default)"), _("Use Greenstone for searching")]
