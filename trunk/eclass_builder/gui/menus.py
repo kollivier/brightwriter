@@ -74,7 +74,7 @@ def getPageMenu():
     
 def getToolsMenu():
     ToolsMenu = wx.Menu()
-    ToolsMenu.Append(ID_THEME, _("Change Theme"))
+    #ToolsMenu.Append(ID_THEME, _("Change Theme"))
     ToolsMenu.Append(ID_LINKCHECK, _("Check Links"))
     ToolsMenu.AppendSeparator()
     ToolsMenu.Append(ID_SETTINGS, _("Options"), _("Modify Program Options"))
