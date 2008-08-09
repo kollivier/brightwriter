@@ -81,7 +81,7 @@ def CreateJoustJavascript(pub):
         filename = GetFileLink(pub.content.filename)
     elif isinstance(pub, ims.contentpackage.Item):
         name = pub.title.text
-        resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, pub)
+        resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, pub)
         filename = eclassutils.getEClassPageForIMSResource(resource)
         if not filename:
             filename = resource.getFilename()
@@ -116,7 +116,7 @@ def AddJoustItems(nodes, level):
             name = root.content.metadata.name
         elif isinstance(root, ims.contentpackage.Item):
             name = root.title.text
-            resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, root)
+            resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, root)
             filename = eclassutils.getEClassPageForIMSResource(resource)
             if not filename:
                 filename = resource.getFilename()

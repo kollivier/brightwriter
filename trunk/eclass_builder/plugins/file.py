@@ -37,7 +37,7 @@ class EditorDialog:
             filename = self.item.content.filename
             
         elif isinstance(self.item, ims.contentpackage.Item):
-            resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.item)
+            resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.item)
             if resource:
                 filename = resource.getFilename()
             

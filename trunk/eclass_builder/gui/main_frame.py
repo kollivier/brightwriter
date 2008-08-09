@@ -520,10 +520,7 @@ class MainFrame2(sc.SizedFrame):
 
     def OnActivate(self, event):
         if event.GetActive():
-            appdata.activeFrame = self
-        else:
-            if appdata.activeFrame == self:
-                appdata.activeFrame = None
+            appdata.currentPackage = self.imscp
 
     def OnCloseProject(self, event):
         if self.imscp and self.imscp.isDirty():

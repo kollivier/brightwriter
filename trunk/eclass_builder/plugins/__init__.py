@@ -200,7 +200,7 @@ class BaseHTMLPublisher:
         elif isinstance(self.node, ims.contentpackage.Item):
             lang = appdata.projectLanguage
             name = self.node.title.text
-            resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+            resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
             
             description = resource.metadata.lom.general.description.getKeyOrEmptyString(lang) 
             keywords = resource.metadata.lom.general.keyword.getKeyOrEmptyString(lang)
@@ -248,7 +248,7 @@ class BaseHTMLPublisher:
         if isinstance(self.node, conman.conman.ConNode) and self.node.parent:
             isroot = True
         elif isinstance(self.node, ims.contentpackage.Item):
-            isroot = (self.node.attrs["identifier"] == appdata.activeFrame.imscp.organizations[0].items[0].attrs["identifierref"]) 
+            isroot = (self.node.attrs["identifier"] == appdata.currentPackage.organizations[0].items[0].attrs["identifierref"]) 
             
         # Do this only for the first page in the module
         if isroot:
