@@ -8,7 +8,7 @@ SRC_DIR="$PWD"
 if [ "$OSTYPE" = "cygwin" ]; then
     DEST_DIR="$DEST_DIR/win32"
 elif [ "${OSTYPE:0:6}" = "darwin" ]; then
-    DEST_DIR="$DEST_DIR/mac"
+    DEST_DIR="$DEST_DIR/mac-intel"
 else
     DEST_DIR="$DEST_DIR/linux"
 fi
