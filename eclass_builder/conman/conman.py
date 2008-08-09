@@ -19,12 +19,6 @@ except:
 if USE_MINIDOM:
     from xml.dom import minidom
 
-try:
-    import pythoncom
-except:
-    pass
-
-
 class ConManData:
     def __init__(self):
         self.encoding = utils.getCurrentEncoding()
