@@ -76,49 +76,47 @@ print "Build getting started at: ", time.ctime(start_time)
 tr = TaskRunner(setup_tasks)
 rc = tr.run()
 
-if rc != 0:
+if "--strict" in sys.argv and rc != 0:
     sys.exit(1)
     
-wintasks = TaskRunner( Task([ Job("win_tarball", "./build-windows.sh", env=config_env), ]) )
+tasks = {}
+wintasks = TaskRunner( Task([ Job("win", "./build-windows.sh", env=config_env), ]) )
+tasks['win'] = wintasks
 
-linuxtasks = TaskRunner( Task([ Job("lin_tarball", "./build-linux.sh", env=config_env), ]) )
-               
-mactasks = TaskRunner( Task([ Job("mac_tarball", "./build-mac.sh", env=config_env), ]) )
+linuxtasks = TaskRunner( Task([ Job("linux", "./build-linux.sh", env=config_env), ]) )
+tasks['linux'] = linuxtasks
+
+mactasks = TaskRunner( Task([ Job("mac", "./build-mac.sh", env=config_env), ]) )
+tasks['mac'] = mactasks
 
 intel_config = config_env.copy()
 intel_config.update({"IS_INTEL":"yes"})
 
-mactasks_intel = TaskRunner( Task([ Job("mac_tarball_intel", "./build-mac.sh", env=intel_config), ]) )
+mactasks_intel = TaskRunner( Task([ Job("mac_intel", "./build-mac.sh", env=intel_config), ]) )
+tasks['mac_intel'] = mactasks_intel
 
-winthread = TaskRunnerThread(wintasks)
-winthread.start()
+runtasks = ["win", "mac", "mac_intel"]
 
-linuxthread = TaskRunnerThread(linuxtasks)
-linuxthread.start()
+threads = []
+for task in runtasks:
+    newthread = TaskRunnerThread(tasks[task])
+    newthread.start()
+    threads.append(newthread)
 
-macthread = TaskRunnerThread(mactasks)
-macthread.start()
+isalive = True
+for thread in threads:
+    while isalive:
+        isalive = False
+        for thread in threads:
+            if thread.isAlive():
+                isalive=True
+        time.sleep(1)
 
-macthread_intel = TaskRunnerThread(mactasks_intel)
-macthread_intel.start()
-
-while winthread.isAlive() or macthread.isAlive() or macthread_intel.isAlive() or linuxthread.isAlive():
-    time.sleep(1)
-
-errorOccurred = (wintasks.errorOccurred() or mactasks.errorOccurred() or linuxtasks.errorOccurred() or mactasks_intel.errorOccurred())
-
-if errorOccurred:
-    if wintasks.rc != 0:
-        print "Error occurred during Windows build tasks. Please check the error log."
-        
-    if linuxtasks.rc != 0:
-        print "Error occurred during Linux build tasks. Please check the error log."
-        
-    if mactasks.rc != 0:
-        print "Error occurred during Mac (PPC) build tasks. Please check the error log."
-
-    if mactasks_intel.rc != 0:
-        print "Error occurred during Mac (Intel) build tasks. Please check the error log."
+errorOccurred = False
+for task in tasks:
+    if tasks[task].rc != 0:
+        print "Error occured during %s build tasks. Please check the error log." % task
+        errorOccurred = True
 
 if not errorOccurred and "upload" in sys.argv:
     releasefiles = getDistribFiles()
@@ -137,8 +135,10 @@ if not errorOccurred and "upload" in sys.argv:
         print "Error occurred during upload tasks. Please check the error log."
 
 if not errorOccurred and config.delete_temps == "yes":
-    shutil.rmtree(config.TEMP_DIR)
-    shutil.rmtree(config.STAGING_DIR)
+    if os.path.exists(config.TEMP_DIR):
+        shutil.rmtree(config.TEMP_DIR)
+    if os.path.exists(config.STAGING_DIR):
+        shutil.rmtree(config.STAGING_DIR)
 
 # cleanup the DAILY_BUILD file
 if config.KIND == "daily":
