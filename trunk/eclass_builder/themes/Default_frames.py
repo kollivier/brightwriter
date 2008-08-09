@@ -19,7 +19,3 @@ class HTMLPublisher(BaseHTMLPublisher):
         
     def CreateTOC(self):
         pass
-        
-    def GetContentsPage(self):
-        if os.path.exists(os.path.join(self.themedir,"frame.tpl")):
-            return "index.htm"
