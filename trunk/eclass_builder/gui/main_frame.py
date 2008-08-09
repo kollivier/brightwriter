@@ -23,11 +23,10 @@ import wxbrowser
 import ims
 import ims.contentpackage
 
-hasLucene = False
 try:
     import PyLucene
     import indexer
-    hasLucene = True
+    appdata.hasPyLucene = True
 except:
     import traceback
     print `traceback.print_exc()`
