@@ -42,7 +42,6 @@ class BaseHTMLPublisher:
 
     def __init__(self, parent=None, dir=""):
         self.parent = parent
-        self.pub = parent.pub
         self.dir = dir
         # be backwards compatible
         if self.dir == "":
@@ -59,19 +58,16 @@ class BaseHTMLPublisher:
 
     def Publish(self):
         self.progress = None
+        if not self.parent or not self.parent.imscp:
+            return
+            
         try:
-            #delete old HTML files in case we've switched themes, etc.
-            #files.DeleteFiles(os.path.join(self.dir, "*.htm"))
-            #files.DeleteFiles(os.path.join(self.dir, "*.html"))
-            #files.DeleteFiles(os.path.join(self.dir, "pub", "*.*"))
-
             if isinstance(self.parent, wx.Frame):
                 self.progress = wx.ProgressDialog(_("Updating EClass"), _("Preparing to update EClass..."), self.parent.projectTree.GetCount() + 1, None, wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_CAN_ABORT)
             self.CopySupportFiles()
-            #self.CreateTOC()
-            #self.counter = 1
-            if isinstance(self.pub, conman.conman.ConMan):
-                self.PublishPages(self.pub.nodes[0])
+            self.CreateTOC()
+            
+            self.PublishPages(self.parent.imscp.organizations[0].items[0])
         except:
             if self.progress:
                 self.progress.Destroy()
@@ -88,11 +84,7 @@ class BaseHTMLPublisher:
             fileutils.CopyFiles(filesdir, self.dir, 1)
 
     def CreateTOC(self):
-        pass              
-
-    def GetContentsPage(self):
-        if os.path.exists(os.path.join(self.themedir,"eclassNodes.js")):
-            return "eclassNodes.js"
+        pass
             
     def GetSearchPageLink(self):
         link = ""
@@ -105,13 +97,12 @@ class BaseHTMLPublisher:
         return link
 
     def PublishPages(self, node):
-        print "In publish..."
         page = ""
         if self.cancelled:
             return
         keepgoing = True #assuming no dialog to cancel, this must always be the case
         if self.progress:
-            keepgoing = self.progress.Update(self.counter, _("Updating page %(page)s") % {"page":node.content.metadata.name})
+            keepgoing = self.progress.Update(self.counter, _("Updating page %(page)s") % {"page":node.title.text})
         if not keepgoing:
             result = wx.MessageDialog(self.parent, "Are you sure you want to cancel publishing this EClass?", "Cancel Publishing?", wx.YES_NO).ShowModal()
             if result == wx.ID_NO:
@@ -121,18 +112,9 @@ class BaseHTMLPublisher:
                 self.cancelled = true
                 return
         self.counter = self.counter + 1
-        if string.find(node.content.filename, "imsmanifest.xml") != -1:
-            node = node.pub.nodes[0]
 
-        try:
-            publisher = plugins.GetPluginForFilename(node.content.filename).HTMLPublisher()
-            publisher.Publish(self.parent, node, self.dir)
-        except:
-            print "Could not publish page " + os.path.join(self.dir, "pub", node.content.filename)
-            import traceback
-            print "Traceback is:\n" 
-            traceback.print_exc()
+        self.parent.PublishPage(node)
             
-        if len(node.children) > 0:
-                for child in node.children:
-                    self.PublishPages(child)
+        if len(node.items) > 0:
+            for child in node.items:
+                self.PublishPages(child)
