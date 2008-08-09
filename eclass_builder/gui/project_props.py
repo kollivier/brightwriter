@@ -141,23 +141,28 @@ class SearchPanel(sc.SizedPanel):
         sc.SizedPanel.__init__(self, parent, -1)
         self.chkSearch = wx.CheckBox(self, -1, _("Enable Search Function"))
         
-        self.options = [_("Use Lucene for searching (Default)"), _("Use Greenstone for searching")]
-        self.whichSearch = wx.RadioBox(self, -1, _("Search Engine"), wx.DefaultPosition, wx.DefaultSize, self.options, 1)
+        try:
+            import PyLucene
+        except:
+            self.chkSearch.Enable(False)
+        
+        #self.options = [_("Use Lucene for searching (Default)"), _("Use Greenstone for searching")]
+        #self.whichSearch = wx.RadioBox(self, -1, _("Search Engine"), wx.DefaultPosition, wx.DefaultSize, self.options, 1)
         
         #self.useGSDL = wxRadioBox(panel, -1, )
-        pubid = ""
-        if isinstance(project, conman.conman.ConMan):
-            pubid = project.pubid
+        #pubid = ""
+        #if isinstance(project, conman.conman.ConMan):
+        #    pubid = project.pubid
             
-        self.lblpubid = wx.StaticText(self, -1, _("Greenstone Collection ID"))
-        self.txtpubid = wx.TextCtrl(self, -1, pubid)
-        self.lblpubidhelp = wx.StaticText(self, -1, _("ID must be 8 chars or less, no spaces, all letters\n and/or numbers."))
+        #self.lblpubid = wx.StaticText(self, -1, _("Greenstone Collection ID"))
+        #self.txtpubid = wx.TextCtrl(self, -1, pubid)
+        #self.lblpubidhelp = wx.StaticText(self, -1, _("ID must be 8 chars or less, no spaces, all letters\n and/or numbers."))
         
         self.LoadSettings()
-        self.updatePubIdState()
+        #self.updatePubIdState()
 
         wx.EVT_CHECKBOX(self, self.chkSearch.GetId(), self.chkSearchClicked)
-        wx.EVT_RADIOBOX(self, self.whichSearch.GetId(), self.whichSearchClicked)
+        #wx.EVT_RADIOBOX(self, self.whichSearch.GetId(), self.whichSearchClicked)
         
     def whichSearchClicked(self, event):
         self.updatePubIdState()
@@ -185,20 +190,20 @@ class SearchPanel(sc.SizedPanel):
                 searchbool = 0
 
             self.chkSearch.SetValue(searchbool)
-            if searchbool:
-                searchtool = settings.ProjectSettings["SearchProgram"]
-                if searchtool == "": #since there wasn't an option selected, must be Greenstone
-                    searchtool = "Greenstone"
+        #    if searchbool:
+        #        searchtool = settings.ProjectSettings["SearchProgram"]
+        #        if searchtool == "": #since there wasn't an option selected, must be Greenstone
+        #            searchtool = "Greenstone"
                     
-        if searchtool == "Greenstone":
-            self.whichSearch.SetStringSelection(self.options[1])
-        elif searchtool == "Lucene":
-            self.whichSearch.SetStringSelection(self.options[0])
+        #if searchtool == "Greenstone":
+        #    self.whichSearch.SetStringSelection(self.options[1])
+        #elif searchtool == "Lucene":
+        #    self.whichSearch.SetStringSelection(self.options[0])
             
         value = self.chkSearch.GetValue()
-        self.lblpubid.Enable(value)
-        self.txtpubid.Enable(value)
-        self.lblpubidhelp.Enable(value)
+        #self.lblpubid.Enable(value)
+        #self.txtpubid.Enable(value)
+        #self.lblpubidhelp.Enable(value)
         
 class PublishPanel(sc.SizedPanel):
     def __init__(self, parent):
