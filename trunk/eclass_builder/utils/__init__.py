@@ -14,6 +14,7 @@ import ims.utils
 import conman
 import appdata
 import eclassutils
+import uuid
 
 filenameRestrictedChars = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
 
@@ -84,6 +85,7 @@ def CreateJoustJavascript(pub):
         filename = eclassutils.getEClassPageForIMSResource(resource)
         if not filename:
             filename = resource.getFilename()
+        filename = GetFileLink(filename)
     text = u"""
 function addJoustItems(theMenu){
 var level1ID = -1;
@@ -118,6 +120,7 @@ def AddJoustItems(nodes, level):
             filename = eclassutils.getEClassPageForIMSResource(resource)
             if not filename:
                 filename = resource.getFilename()
+            filename = GetFileLink(filename)
 
         if isinstance(root, conman.conman.ConNode) and len(root.children) > 0 \
             or isinstance(root, ims.contentpackage.Item) and len(root.items) > 0:
@@ -137,7 +140,7 @@ def GetFileLink(filename):
         filename = publisher.GetFileLink(filename)
     except: 
         filename = string.replace(filename, "\\", "/")
-        
+
     return filename
 
 def getCurrentEncoding():
@@ -238,5 +241,4 @@ def getUUID():
     """
     Generates and returns a random UUID as a unicode text object.
     """
-    import uuid
     return unicode(uuid.uuid4())
