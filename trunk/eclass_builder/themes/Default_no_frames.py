@@ -16,10 +16,6 @@ class HTMLPublisher(BaseHTMLPublisher):
 		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
 		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
 
-		searchlink = self.GetSearchPageLink()
-		if searchlink != "":
-			text = text + """searchID = theMenu.addEntry(-1, "Document", "%s", "%s", "%s");\n""" % ("Search", rootdir + searchlink, "Search")
-
 		file = open(os.path.join(self.themedir,"eclassNodes.js"), "r")
 		data = file.read()
 		file.close()
