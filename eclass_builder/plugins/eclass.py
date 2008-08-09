@@ -24,6 +24,8 @@ import eclassutils
 import ims.contentpackage
 import ims.utils
 
+import externals.BeautifulSoup as BeautifulSoup
+
 USE_MINIDOM=0
 try:
     from xml.dom.ext.reader.Sax import FromXmlFile
@@ -496,7 +498,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             filename = self.node.content.filename
                
         elif isinstance(self.node, ims.contentpackage.Item):
-            resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+            resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
             filename = eclassutils.getEClassPageForIMSResource(resource)
         
         filename = os.path.join(settings.ProjectDir, filename)
@@ -602,28 +604,15 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         return myhtml
 
     def _InsertTerms(self, myhtml, termlist):
-        for term in termlist:   
-            regexterm = string.replace(term[0], "(", "\(")
-            regexterm = TextToXMLChar(regexterm)
-            regexterm = string.replace(regexterm, ")", "\)")
-            regexterm = string.replace(regexterm, "'", "\'")
-            regexterm = string.replace(regexterm, "?", "\?")
-            regexterm = string.replace(regexterm, ".", "\.")
-            regexterm = string.replace(regexterm, "*", "\*")
-            regexterm = string.replace(regexterm, "$", "\$")
-            regexterm = string.replace(regexterm, " ", "[\s&nbsp;]+")
-            regexterm = string.replace(regexterm, "\"", "&quot;")
-            #print "Regex term = " + regexterm
-            myterm = re.compile("(<[^>]*>[^<]*)(" + regexterm  +")(.*<[^>]*>)", re.IGNORECASE|re.DOTALL)
-            #myterm = re.compile("([^<\w]*)(" + regexterm +")([^<\w]*)", re.IGNORECASE|re.DOTALL)
+        soup = BeautifulSoup.BeautifulSoup(myhtml)
+        for term in termlist:
+            results = soup.findAll(text=re.compile(term[0]))
+            for result in results:
+                newelement = result.replace(term[0], """<a href="%s" target=_blank>%s</a>""" % (term[1], term[0]))
+                result.replaceWith(newelement)
+                
+        return soup.prettify()
 
-            mymatch = myterm.match(myhtml)
-            #if mymatch:
-            #   print "Match: " + mymatch.group(0)
-            #else:
-            #   print "Match not found."
-            myhtml = myterm.sub("\\1<a href=\"" + term[1] + "\" target=_blank>\\2</a>\\3", myhtml)
-        return myhtml
 
     def _AddMedia(self, mypage):
         """Appends media files specified in the EClassPage to the current HTML page."""
@@ -864,7 +853,7 @@ class EditorDialog (sc.SizedDialog):
                 
             elif isinstance(item, ims.contentpackage.Item):
                 import ims.utils
-                resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, item)
+                resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, item)
                 self.filename = eclassutils.getEClassPageForIMSResource(resource)
                 self.page.name = item.title.text
     
@@ -1110,6 +1099,8 @@ class EditorDialog (sc.SizedDialog):
                 answer = msg.ShowModal()
                 if answer == wx.ID_YES:
                     savefile = True
+                    if filename.find(".htm") == -1:
+                        filename += ".html"
             else:
                 savefile = True
 
@@ -1117,9 +1108,12 @@ class EditorDialog (sc.SizedDialog):
                 try: 
                     created = html.CreateNewFile(filename)
                     if created:
-                        self.selectText.SetValue(f.GetFilename())
+                        self.selectText.SetValue(os.path.basename(filename))
+                except IOError, e:
+                    wx.MessageBox(`e`)
                 except:
-                    pass
+                    raise
+                    
         f.Destroy()
 
     def LoadTerms(self):
@@ -1155,6 +1149,9 @@ class EditorDialog (sc.SizedDialog):
         self.EditTerm()
 
     def btnEditObjectiveClicked(self,event):
+        if self.lstObjectives.GetSelection() == -1:
+            return
+            
         index = self.page.objectives.index(self.lstObjectives.GetStringSelection())
         self.CurrentObj = self.page.objectives[index]
         result = EClassObjectiveEditorDialog(self).GetReturnCode()
@@ -1165,6 +1162,9 @@ class EditorDialog (sc.SizedDialog):
             print "Error: result =", result
 
     def EditTerm(self):
+        if self.lstTerms.GetSelection() == -1:
+            return
+            
         myterm = self.lstTerms.GetClientData(self.lstTerms.GetSelection())
         if myterm.type == "URL":
             EClassHyperlinkEditorDialog(self, myterm)
@@ -1174,6 +1174,9 @@ class EditorDialog (sc.SizedDialog):
         self.LoadTerms()
 
     def btnRemoveTermClicked(self,event):   
+        if self.lstTerms.GetSelection() == -1:
+            return
+            
         myterm = self.lstTerms.GetClientData(self.lstTerms.GetSelection())
         result = wx.MessageDialog(self, _("Are you sure you want to delete the term '%(term)s'?") % {"term":myterm.name}, _("Delete Term?"), wx.YES_NO).ShowModal()  
         if result == wx.ID_YES:
@@ -1181,6 +1184,8 @@ class EditorDialog (sc.SizedDialog):
             self.LoadTerms()
 
     def btnRemoveObjectiveClicked(self,event):  
+        if self.lstObjectives.GetSelection() == -1:
+            return
         index = self.page.objectives.index(self.lstObjectives.GetStringSelection())
         obj = self.page.objectives[index]
         result = wx.MessageDialog(self, _("Are you sure you want to delete the objective '%(objective)s'?") % {"objective":obj}, _("Delete Objective?"), wx.YES_NO).ShowModal()  

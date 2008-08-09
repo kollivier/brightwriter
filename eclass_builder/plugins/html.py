@@ -145,7 +145,7 @@ if __name__ != "__main__":
 				filename = self.node.content.filename
 			
 			elif isinstance(self.node, ims.contentpackage.Item):
-				resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+				resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
 				filename = eclassutils.getEClassPageForIMSResource(resource)
 				if not filename:
 					filename = resource.getFilename()
@@ -1540,7 +1540,7 @@ if __name__ != "__main__":
 				filename = self.node.content.filename
 			
 			elif isinstance(self.node, ims.contentpackage.Item):
-				resource = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+				resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
 				filename = eclassutils.getEClassPageForIMSResource(resource)
 				if not filename:
 					filename = resource.getFilename()

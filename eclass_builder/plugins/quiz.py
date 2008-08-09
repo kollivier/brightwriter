@@ -483,7 +483,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         if isinstance(self.node, conman.conman.ConMan):
             filename = self.node.content.filename
         else:
-            self.content = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+            self.content = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
             filename = eclassutils.getEClassPageForIMSResource(self.content)
             if not filename:
                 filename = self.content.getFilename()
@@ -685,7 +685,7 @@ class EditorDialog(sc.SizedDialog):
         if isinstance(self.item, conman.conman.ConMan):
             filename = self.node.content.filename
         else:
-            self.content = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.item)
+            self.content = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.item)
             filename = eclassutils.getEClassPageForIMSResource(self.content)
             if not filename:
                 filename = self.content.getFilename()

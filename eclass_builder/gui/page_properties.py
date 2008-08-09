@@ -36,7 +36,7 @@ class PagePropertiesDialog (sc.SizedDialog):
         self.content = content
         
         if isinstance(self.node, ims.contentpackage.Item):
-            self.content = ims.utils.getIMSResourceForIMSItem(appdata.activeFrame.imscp, self.node)
+            self.content = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
         
         self.parent = parent
         self.dir = dir
@@ -231,7 +231,7 @@ class PagePropertiesDialog (sc.SizedDialog):
                         vcard = conman.vcard.VCard()
                         vcard.parseString(person.centity.vcard.text)
                         self.txtAuthor.SetValue(vcard.fname.value)
-                        if person.date.datetime.text != "":
+                        if person.date.datetime.text and person.date.datetime.text != "":
                             self.txtDate.SetValue(person.date.datetime.text)
 
         if oldorg != "":
@@ -319,7 +319,7 @@ class PagePropertiesDialog (sc.SizedDialog):
                 if role in ["Author", "Content Provider"]:
                     if (role == "Author" and self.txtAuthor.GetValue() == "" and self.txtDate.GetValue() == "") \
                         or (role == "Content Provider" and self.txtOrganization.GetValue() == ""):
-                        self.content.metadata.lom.lifeycle.contributors.remove(person)
+                        self.content.metadata.lom.lifecycle.contributors.remove(person)
                     else:
                         vcard = conman.vcard.VCard()
                         vcard.parseString(person.centity.vcard.text)
