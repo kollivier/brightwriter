@@ -2,6 +2,7 @@
 import sys, os
 import settings
 import appdata
+import ims
 
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
