@@ -1,6 +1,7 @@
 # Script for publishing EClass from the command line.
 import sys, os
 import settings
+import appdata
 
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
@@ -24,8 +25,9 @@ import themes.themes as themes
 	
 class EClassPublisher:
     def __init__(self, eclass, pubdir, format="html"):
-        self.pub = conman.ConMan()
-        self.pub.LoadFromXML(eclass)
+        self.imscp = ims.contentpackage.ContentPackage()
+        self.imscp.loadFromXML(filename)
+        appdata.currentPackage = self.imscp
         
         theme = self.pub.settings["Theme"]
         if theme == "":
