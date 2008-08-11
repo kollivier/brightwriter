@@ -108,10 +108,9 @@ class GUIFileCopyCallback:
         
     def fileChanged(self, filename):
         wx.CallAfter(self.parent.OnFileChanged, filename)
-        # TODO: Fix this very nasty hack. What we really need is a threaded
-        # system which fires an event when finished.
-        if wx.Platform == "__WXMAC__":
-            wx.Yield()
+        # This is needed because for smaller packages, the copy dialog may be destroyed before
+        # this event fires.
+        wx.Yield()
         
 #----------------------------- MainFrame Class ----------------------------------------------
 
@@ -719,7 +718,8 @@ class MainFrame2(sc.SizedFrame):
 
     def OnFileChanged(self, filename):
         self.filesCopied += 1
-        self.keepCopying = self.dialog.Update(self.filesCopied, "Copying: " + filename)
+        if self.dialog:
+            self.keepCopying = self.dialog.Update(self.filesCopied, "Copying: " + filename)
 
     def OnNewItem(self, event):
         self.CreateIMSResource()
