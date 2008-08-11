@@ -11,6 +11,7 @@ import tempfile
 import shutil
 import utils
 import constants
+import appdata
 
 import wx
 
@@ -47,11 +48,9 @@ class PDFPublisher:
 
 	def __init__(self, parent=None):
 		self.parent = parent
-		self.pub = parent.pub
 		self.dir = settings.ProjectDir
 		#if sys.platform != "win32":
 		#	self.dir = string.replace(self.dir, " ", "\\ ")
-		Title = self.pub.nodes[0].content.metadata.name
 		self.counter = 1
 
 		self.themedir = os.path.join(settings.AppDir, "themes", themename)
@@ -60,7 +59,9 @@ class PDFPublisher:
 		self.progress = None
 		self.pdffile = ""
 		self.pdfdir = ""
-		self.tempdir = os.path.join(self.dir, "temp")#tempfile.mkdtemp()
+		self.tempdir = tempfile.mkdtemp()
+		if not os.path.exists(self.tempdir):
+		    os.makedirs(self.tempdir)
 		self.files = []
 
 	def Publish(self):
@@ -72,22 +73,23 @@ class PDFPublisher:
 			except:
 				log.write(_("Could not remove directory '%(dir)s'.") % {"dir": self.tempdir})
 
-		try:
-			if not os.path.exists(self.tempdir):
-				os.mkdir(self.tempdir)
-			if isinstance(self.parent, wx.Frame):
-				self.progress = wx.ProgressDialog("Publishing PDF", "Publishing PDF", 
-				                self.parent.projectTree.GetCount() + 1, None, 
-				                wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_CAN_ABORT)
-			self.counter = 1
-			self.PublishPages(self.pub.nodes[0])
-		except:
-			if self.progress:
-				self.progress.Destroy()
-			raise
-		
+# 		try:
+# 			if not os.path.exists(self.tempdir):
+# 				os.mkdir(self.tempdir)
+# 			if isinstance(self.parent, wx.Frame):
+# 				self.progress = wx.ProgressDialog("Publishing PDF", "Publishing PDF", 
+# 				                self.parent.projectTree.GetCount() + 1, None, 
+# 				                wx.PD_APP_MODAL | wx.PD_AUTO_HIDE | wx.PD_CAN_ABORT)
+# 			self.counter = 1
+# 			self.PublishPages(appdata.currentPackage.organizations[0].items[0])
+# 		except:
+# 			if self.progress:
+# 				self.progress.Destroy()
+# 			raise
+# 		
 		#self.myfile.close()
-		self.pdffile = os.path.join(self.pdfdir, MakeFileName2(self.pub.nodes[0].content.metadata.name + ".pdf"))
+		lang = appdata.projectLanguage
+		self.pdffile = os.path.join(self.pdfdir, MakeFileName2(appdata.currentPackage.metadata.lom.general.title[lang] + ".pdf"))
 		bookfile = "#HTMLDOC\n"
 		pdffile = self.pdffile
 		if sys.platform == "win32":
@@ -99,11 +101,14 @@ class PDFPublisher:
 					afile = afile.replace("\\", "/")
 				bookfile = bookfile + afile + "\n"
 
-		bookpath = os.path.join(self.tempdir, "eclass.book")
+		handle, bookpath = tempfile.mkstemp() #os.path.join(self.tempdir, "eclass.book")
+		os.close(handle)
+		
 		try:
 			book = utils.openFile(bookpath, "w")
 			book.write(bookfile)
 			book.close()
+			os.rename(bookpath, bookpath + ".book")
 		except:
 			message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":bookpath})
 			log.write(message)
@@ -150,55 +155,55 @@ class PDFPublisher:
 	def AddTOCItems(self, nodes, level):
 		pass				
 
-	def PublishPages(self, node):
-		page = ""
-		if self.cancelled:
-			return
-		keepgoing = True #assuming no dialog to cancel, this must always be the case
-		if self.progress:
-			keepgoing = self.progress.Update(self.counter, _("Updating ") + node.content.metadata.name)
-		if not keepgoing:
-			result = wx.MessageDialog(self.parent, _("Are you sure you want to cancel publishing this EClass?"), 
-			                             _("Cancel Publishing?"), wx.YES_NO).ShowModal()
-			if result == wx.ID_NO:
-				self.cancelled = False
-				self.progress.Resume()
-			else:
-				self.cancelled = True
-				return
-		self.counter = self.counter + 1
-		if string.find(node.content.filename, "imsmanifest.xml") != -1:
-			node = node.pub.nodes[0]
-
-		if 1: 
-			plugin = plugins.GetPluginForFilename(node.content.filename)
-			if plugin:
-				publisher = plugin.HTMLPublisher(self.parent, node, self.dir)
-			if publisher: 
-				try:
-					filename = publisher.GetFilename(node.content.filename)
-					publisher.data['name'] = TextToHTMLChar(node.content.metadata.name)
-					publisher.GetData()
-					templatefile = os.path.join(settings.AppDir, "convert", "PDF.tpl")
-					publisher.data['charset'] = publisher.GetConverterEncoding()
-			
-					myhtml = publisher.ApplyTemplate(templatefile, publisher.data)
-					
-					myhtml = publisher.EncodeHTMLToCharset(myhtml, publisher.data['charset'])
-					
-					#myhtml = publisher.Publish(self.parent, node, self.dir)
-					#myhtml = GetBody(StringIO(myhtml))
-					#print "in PDF plugin, myhtml = " + myhtml[:100]
-					if not myhtml == "":
-						myfile = utils.openFile(os.path.join(self.tempdir, filename), "w")
-						myfile.write(myhtml)
-						myfile.close()
-						self.files.append(os.path.join(self.tempdir, filename))
-				except:
-					message = _("Could not publish page '%(page)s'") % {"page": os.path.join(self.tempdir, filename)}
-					global log
-					log.write(message)
-        	
-		if len(node.children) > 0:
-        		for child in node.children:
-        			self.PublishPages(child)
+# 	def PublishPages(self, node):
+# 		page = ""
+# 		if self.cancelled:
+# 			return
+# 		keepgoing = True #assuming no dialog to cancel, this must always be the case
+# 		if self.progress:
+# 			keepgoing = self.progress.Update(self.counter, _("Updating ") + node.content.metadata.name)
+# 		if not keepgoing:
+# 			result = wx.MessageDialog(self.parent, _("Are you sure you want to cancel publishing this EClass?"), 
+# 			                             _("Cancel Publishing?"), wx.YES_NO).ShowModal()
+# 			if result == wx.ID_NO:
+# 				self.cancelled = False
+# 				self.progress.Resume()
+# 			else:
+# 				self.cancelled = True
+# 				return
+# 		self.counter = self.counter + 1
+# 		if string.find(node.content.filename, "imsmanifest.xml") != -1:
+# 			node = node.pub.nodes[0]
+# 
+# 		if 1: 
+# 			plugin = plugins.GetPluginForFilename(node.content.filename)
+# 			if plugin:
+# 				publisher = plugin.HTMLPublisher(self.parent, node, self.dir)
+# 			if publisher: 
+# 				try:
+# 					filename = publisher.GetFilename(node.content.filename)
+# 					publisher.data['name'] = TextToHTMLChar(node.content.metadata.name)
+# 					publisher.GetData()
+# 					templatefile = os.path.join(settings.AppDir, "convert", "PDF.tpl")
+# 					publisher.data['charset'] = publisher.GetConverterEncoding()
+# 			
+# 					myhtml = publisher.ApplyTemplate(templatefile, publisher.data)
+# 					
+# 					myhtml = publisher.EncodeHTMLToCharset(myhtml, publisher.data['charset'])
+# 					
+# 					#myhtml = publisher.Publish(self.parent, node, self.dir)
+# 					#myhtml = GetBody(StringIO(myhtml))
+# 					#print "in PDF plugin, myhtml = " + myhtml[:100]
+# 					if not myhtml == "":
+# 						myfile = utils.openFile(os.path.join(self.tempdir, filename), "w")
+# 						myfile.write(myhtml)
+# 						myfile.close()
+# 						self.files.append(os.path.join(self.tempdir, filename))
+# 				except:
+# 					message = _("Could not publish page '%(page)s'") % {"page": os.path.join(self.tempdir, filename)}
+# 					global log
+# 					log.write(message)
+#         	
+# 		if len(node.children) > 0:
+#         		for child in node.children:
+#         			self.PublishPages(child)
