@@ -49,24 +49,31 @@ def importFile(filename):
 def openInHTMLEditor(filename):
     htmleditor = settings.AppSettings["HTMLEditor"]
     if htmleditor == "":
-        wx.MessageDialog(self, _("To edit the page, EClass needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wx.OK).ShowModal()
+        wx.MessageBox(_("To edit the page, EClass needs to know what HTML Editor you would like to use. To specify a HTML Editor, select 'Preferences' from the 'Options' menu."), _("Cannot Edit Page"), wx.OK)
     else:
         if not os.path.exists(filename):
             return 
             
-        if wx.Platform == "__WXMSW__":
-            import win32api
-            editor = "\"" + htmleditor + "\""
-            if not string.find(string.lower(editor), "mozilla") == -1:
-                editor = editor + " -edit" 
-            win32api.WinExec(editor + " \"" + filename + "\"")
-                
-        else:
-            editor = htmleditor 
-            if wx.Platform == "__WXMAC__":
-                editor = "open -a '" + editor + "'"
-            path = editor + " \"" + filename + "\""
-            os.system(path)
+        success = True
+        try:
+            if wx.Platform == "__WXMSW__":
+                import win32api
+                editor = "\"" + htmleditor + "\""
+                if not string.find(string.lower(editor), "mozilla") == -1:
+                    editor = editor + " -edit" 
+                win32api.WinExec(editor + " \"" + filename + "\"")
+                    
+            else:
+                editor = htmleditor 
+                if wx.Platform == "__WXMAC__":
+                    editor = "open -a '" + editor + "'"
+                path = editor + " \"" + filename + "\""
+                success = not os.system(path)
+        except:
+            success = False
+            
+        if not success:
+            wx.MessageBox(_("The HTML Editor '%s' cannot be started. Make sure the program exists and can be accessed, or choose another HTML Editor.") % htmleditor, _("Cannot Start Editor"), wx.OK)
 
 def sendCommandToApplication(filename, action="open", application=""):
 	command = ""
