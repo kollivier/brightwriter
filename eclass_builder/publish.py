@@ -4,6 +4,9 @@ import settings
 import conman.xml_settings as xml_settings
 import appdata
 import ims
+import ims.utils
+import eclassutils
+import eclass_convert
 
 rootdir = os.path.abspath(sys.path[0])
 if not os.path.isdir(rootdir):
@@ -26,12 +29,19 @@ plugins.LoadPlugins()
 import themes.themes as themes
 	
 class EClassPublisher:
-    def __init__(self, eclass, pubdir, format="html"):
-        self.imscp = ims.contentpackage.ContentPackage()
-        self.imscp.loadFromXML(eclass)
+    def __init__(self, filename, pubdir, format="html"):
+        converter = eclass_convert.EClassIMSConverter(filename)
+        self.imscp = None
+        if converter.IsEClass():
+            # TODO: detect if there are non-ascii characters,
+            # and prompt the user for language to convert from
+            self.imscp = converter.ConvertToIMSContentPackage()
+        else:
+            self.imscp = ims.contentpackage.ContentPackage()
+            self.imscp.loadFromXML(filename)
         appdata.currentPackage = self.imscp
         
-        settings.ProjectDir = os.path.dirname(eclass)
+        settings.ProjectDir = os.path.dirname(filename)
         # TODO: We should store the project as a global rather than its settings
         settings.ProjectSettings = xml_settings.XMLSettings()
         settingsfile = os.path.join(settings.ProjectDir, "settings.xml")
@@ -46,9 +56,16 @@ class EClassPublisher:
         
         themeList = themes.ThemeList(os.path.join(rootdir, "themes"))
         self.currentTheme = themeList.FindTheme(theme)
-        settings.ProjectDir = os.path.dirname(eclass)
+        settings.ProjectDir = os.path.dirname(filename)
         publisher = self.currentTheme.HTMLPublisher(self, dir=pubdir)
         publisher.Publish()
+        
+    def PublishPage(self, imsitem):
+        if imsitem != None:
+            filename = eclassutils.getEditableFileForIMSItem(self.imscp, imsitem)
+            publisher = plugins.GetPublisherForFilename(filename)
+            if publisher:
+                publisher.Publish(self, imsitem, settings.ProjectDir)
     
 if __name__ == "__main__":
     if len(sys.argv) < 2:
