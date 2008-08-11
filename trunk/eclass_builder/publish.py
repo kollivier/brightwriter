@@ -30,7 +30,16 @@ class EClassPublisher:
         self.imscp.loadFromXML(eclass)
         appdata.currentPackage = self.imscp
         
-        theme = self.pub.settings["Theme"]
+        settings.ProjectDir = os.path.dirname(eclass)
+        # TODO: We should store the project as a global rather than its settings
+        settings.ProjectSettings = xml_settings.XMLSettings()
+        settingsfile = os.path.join(settings.ProjectDir, "settings.xml")
+        theme = ""
+        if os.path.exists(settingsfile):
+            settings.ProjectSettings.LoadFromXML(settingsfile)
+                    
+            theme = settings.ProjectSettings["Theme"]
+
         if theme == "":
             theme = "Simple"
         
