@@ -27,7 +27,7 @@ import themes.themes as themes
 class EClassPublisher:
     def __init__(self, eclass, pubdir, format="html"):
         self.imscp = ims.contentpackage.ContentPackage()
-        self.imscp.loadFromXML(filename)
+        self.imscp.loadFromXML(eclass)
         appdata.currentPackage = self.imscp
         
         theme = self.pub.settings["Theme"]
