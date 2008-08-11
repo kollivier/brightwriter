@@ -2,6 +2,9 @@ from BaseTheme import *
 themename = "Default (no frames)"
 import utils
 import settings
+import ims
+import appdata
+import eclassutils
 
 rootdir = "../"
 
@@ -11,10 +14,16 @@ class HTMLPublisher(BaseHTMLPublisher):
 		self.themedir = os.path.join(settings.AppDir, "themes", themename)
 
 	def CreateTOC(self):
-		filename = rootdir + utils.GetFileLink(self.pub.nodes[0].content.filename)
+		node = self.parent.imscp.organizations[0].items[0]
+	
+		resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, node)
+		filename = eclassutils.getEClassPageForIMSResource(resource)
+		if not filename:
+			filename = resource.getFilename()
+		filename = utils.GetFileLink(filename)
 
-		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(self.pub.nodes[0].content.metadata.name, "\"", "\\\""), filename)
-		text = text + self.AddTOCItems(self.pub.nodes[0], 1)
+		text = """foldersTree = gFld("%s", "%s")\n""" % (string.replace(node.title.text, "\"", "\\\""), filename)
+		text = text + self.AddTOCItems(node, 1)
 
 		file = open(os.path.join(self.themedir,"eclassNodes.js"), "r")
 		data = file.read()
@@ -28,34 +37,34 @@ class HTMLPublisher(BaseHTMLPublisher):
 		data = file.read()
 		file.close()
 		file = open(os.path.join(self.dir, "index.htm"),"w")
-		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", utils.GetFileLink(self.pub.nodes[0].content.filename))
+		data = string.replace(data, "<!-- INSERT FIRST PAGE HERE -->", utils.GetFileLink(filename))
 		file.write(data.encode("utf-8"))
 		file.close()
 
-	def AddTOCItems(self, nodes, level):
+	def AddTOCItems(self, node, level):
 		text = ""
-		for root in nodes.children:
+		for root in node.items:
 			filename = ""
-			if string.find(root.content.filename, "imsmanifest.xml") != -1:
-					root = root.pub.nodes[0]
 
-			filename = rootdir + utils.GetFileLink(root.content.filename) 
+			resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, root)
+			filename = eclassutils.getEClassPageForIMSResource(resource)
+			if not filename:
+				filename = resource.getFilename()
+			filename =	rootdir + utils.GetFileLink(filename)
 
-			if not root.content.public == "false":
-				nodeName = "foldersTree"
-				if (level > 1):
-					nodeName = "level" + `level` + "Node"
-				if len(root.children) > 0:
-					nodeType = rootdir + "Graphics/menu/win/chapter.gif"
-				else:
-					nodeType = rootdir + "Graphics/menu/win/page.gif"
-				self.counter = self.counter + 1                            
-			
-				if len(root.children) > 0:
-					text = text + """level%sNode = insFld(%s, gFld("%s", "%s"))\n""" % (level + 1, nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
-					text = text + self.AddTOCItems(root, level + 1)
-				else:
-					text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.content.metadata.name, "\"", "\\\""), filename)
+			nodeName = "foldersTree"
+			if (level > 1):
+				nodeName = "level" + `level` + "Node"
+			if len(root.items) > 0:
+				nodeType = rootdir + "Graphics/menu/win/chapter.gif"
 			else:
-				print "Item " + root.content.metadata.name + " is marked private and was not published."
+				nodeType = rootdir + "Graphics/menu/win/page.gif"
+			self.counter = self.counter + 1							   
+		
+			if len(root.children) > 0:
+				text = text + """level%sNode = insFld(%s, gFld("%s", "%s"))\n""" % (level + 1, nodeName, string.replace(root.title.text, "\"", "\\\""), filename)
+				text = text + self.AddTOCItems(root, level + 1)
+			else:
+				text = text + """insDoc(%s, gLnk('S', "%s", "%s"))\n""" % (nodeName, string.replace(root.title.text, "\"", "\\\""), filename)
+
 		return text
