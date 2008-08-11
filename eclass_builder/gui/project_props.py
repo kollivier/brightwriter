@@ -72,14 +72,14 @@ class ProjectPropsDialog(sc.SizedDialog):
         settings.ProjectSettings["SearchEnabled"] = int(self.searchPanel.chkSearch.GetValue())
         useswishe = False
         updatetheme = False
-        if self.searchPanel.whichSearch.GetStringSelection() == self.searchPanel.options[0]:
-            settings.ProjectSettings["SearchProgram"] = "Lucene"
-            useswishe = True
-        elif self.searchPanel.whichSearch.GetStringSelection() == self.self.searchPanel.options[1]:
-            settings.ProjectSettings["SearchProgram"] = "Greenstone"
+        #if self.searchPanel.whichSearch.GetStringSelection() == self.searchPanel.options[0]:
+        #    settings.ProjectSettings["SearchProgram"] = "Lucene"
+        #    useswishe = True
+        #elif self.searchPanel.whichSearch.GetStringSelection() == self.self.searchPanel.options[1]:
+        #    settings.ProjectSettings["SearchProgram"] = "Greenstone"
 
-        if self.searchchanged:
-            self.parent.Update()
+        #if self.searchchanged:
+        #    self.parent.Update()
         if self.publishPanel.chkFilename.GetValue() == True:
             settings.ProjectSettings["ShortenFilenames"] = "Yes"
         else:
