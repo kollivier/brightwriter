@@ -1,5 +1,6 @@
 import string, sys, os
 import ims.contentpackage
+import ims.utils
 import constants
 import version
 import unittest
@@ -26,6 +27,18 @@ def getEClassPageForIMSResource(imsresource):
         if "href" in file.attrs and os.path.splitext(file.attrs["href"])[1] == ".ecp":
             filename = file.attrs["href"]
     
+    return filename
+    
+def getEditableFileForIMSItem(imscp, imsitem):
+    filename = None
+    if imsitem:
+        selresource = ims.utils.getIMSResourceForIMSItem(imscp, imsitem)
+        if selresource:
+            filename = selresource.getFilename()
+            eclasspage = getEClassPageForIMSResource(selresource)
+            if eclasspage:
+                filename = eclasspage
+                
     return filename
     
 def setEClassPageForIMSResource(imsresource, filename):
