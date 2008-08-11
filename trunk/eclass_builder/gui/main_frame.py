@@ -764,6 +764,7 @@ class MainFrame2(sc.SizedFrame):
                         self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0])
 
                     self.EditItem(None)
+                    self.PublishPage(newitem)
                     self.UpdateEClassDataFiles()
     
                 self.isNewCourse = False
@@ -879,12 +880,14 @@ class MainFrame2(sc.SizedFrame):
                 eclassutils.createEClass(settings.ProjectDir)
                 
                 filename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
-                self.imscp.metadata.lom.general.title = newdialog.txtTitle.GetValue()
-                self.imscp.metadata.lom.general.description = newdialog.txtDescription.GetValue()
-                self.imscp.metadata.lom.general.keyword = newdialog.txtKeywords.GetValue()
+                lang = appdata.projectLanguage = "en-US"
+                
+                self.imscp.metadata.lom.general.title[lang] = newdialog.txtTitle.GetValue()
+                self.imscp.metadata.lom.general.description[lang] = newdialog.txtDescription.GetValue()
+                self.imscp.metadata.lom.general.keyword[lang] = newdialog.txtKeywords.GetValue()
                 
                 self.imscp.organizations.append(ims.contentpackage.Organization())
-                self.CreateIMSResource(self.imscp.metadata.lom.general.title)
+                self.CreateIMSResource(self.imscp.metadata.lom.general.title[lang])
                 
                 self.imscp.saveAsXML(filename)
                 settings.AppSettings["LastOpened"] = filename
