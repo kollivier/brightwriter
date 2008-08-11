@@ -1,6 +1,7 @@
 # Script for publishing EClass from the command line.
 import sys, os
 import settings
+import xml_settings
 import appdata
 import ims
 
