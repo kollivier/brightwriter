@@ -264,7 +264,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
         #app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
-        #app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
+        app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
         app.AddHandlerForID(ID_PUBLISH_IMS, self.PublishToIMS)
         app.AddHandlerForID(ID_BUG, self.OnReportBug)
         app.AddHandlerForID(ID_THEME, self.OnManageThemes)
@@ -700,6 +700,23 @@ class MainFrame2(sc.SizedFrame):
         
         guiutils.openFolderInGUI(folder)
 
+    def PublishToPDF(self, event):
+        myPublisher = PDFPublisher(self)
+        myPublisher.Publish()
+        command = ""
+        if os.path.exists(myPublisher.pdffile):
+            command = guiutils.getOpenCommandForFilename(myPublisher.pdffile)
+        else:
+            wx.MessageBox(_("There was an error publishing to PDF."))
+            return
+        
+        if command and command != "":
+            mydialog = wx.MessageDialog(self, _("Publishing complete. A PDF version of your EClass can be found at %(pdffile)s. Would you like to preview it now?") % {"pdffile": myPublisher.pdffile}, _("Preview PDF?"), wx.YES_NO)
+            if mydialog.ShowModal() == wx.ID_YES:
+                wx.Execute(command)
+        else:
+            wx.MessageBox(_("Publishing complete. A PDF version of your EClass can be found at %(pdffile)s.") % {"pdffile": myPublisher.pdffile}, _("Publishing Complete."))
+
     def OnFileChanged(self, filename):
         self.filesCopied += 1
         self.keepCopying = self.dialog.Update(self.filesCopied, "Copying: " + filename)
@@ -931,25 +948,11 @@ class MainFrame2(sc.SizedFrame):
             raise
             
         del busy
-
-    # FIXME: Determine the best place to put this function
-    def GetEditableFileForIMSItem(self, imsitem):
-        filename = None
-        if imsitem:
-            import ims.utils
-            selresource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
-            if selresource:
-                filename = selresource.getFilename()
-                eclasspage = eclassutils.getEClassPageForIMSResource(selresource)
-                if eclasspage:
-                    filename = eclasspage
-                    
-        return filename
     
     def EditItem(self, event=None):
         selitem = self.projectTree.GetCurrentTreeItemData()
         if selitem:
-            filename = self.GetEditableFileForIMSItem(selitem)
+            filename = eclassutils.getEditableFileForIMSItem(self.imscp, selitem)
             isplugin = False
             result = wx.ID_CANCEL
             plugin = plugins.GetPluginForFilename(filename)
@@ -1015,7 +1018,7 @@ class MainFrame2(sc.SizedFrame):
 
     def PublishPage(self, imsitem):
         if imsitem != None:
-            filename = self.GetEditableFileForIMSItem(imsitem)
+            filename = eclassutils.getEditableFileForIMSItem(self.imscp, imsitem)
             publisher = plugins.GetPublisherForFilename(filename)
             if publisher:
                 publisher.Publish(self, imsitem, settings.ProjectDir)
