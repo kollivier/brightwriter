@@ -14,6 +14,7 @@ hasmozilla = False
 
 import xml.dom.minidom
 
+import appdata
 import ftplib
 import themes.themes as themes
 import conman.xml_settings as xml_settings
@@ -40,7 +41,6 @@ import constants
 import mmedia
 import analyzer
 import eclass_convert
-import appdata
 
 # modules that don't get picked up elsewhere...
 import uuid
