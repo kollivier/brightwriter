@@ -606,7 +606,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
     def _InsertTerms(self, myhtml, termlist):
         soup = BeautifulSoup.BeautifulSoup(myhtml)
         for term in termlist:
-            results = soup.findAll(text=re.compile(term[0]))
+            results = soup.findAll(text=re.compile(re.escape(term[0])))
             for result in results:
                 newelement = result.replace(term[0], """<a href="%s" target=_blank>%s</a>""" % (term[1], term[0]))
                 result.replaceWith(newelement)
