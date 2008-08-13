@@ -16,7 +16,7 @@ appErrorLog = errors.appErrorLog
 
 class ErrorDialog(sc.SizedDialog):
     def __init__(self, parent=None):
-        sc.SizedDialog.__init__(self, parent, -1, _("%s Fatal Error" % wx.GetApp().GetAppName()), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        sc.SizedDialog.__init__(self, parent, -1, _("%s - Error Occurred" % wx.GetApp().GetAppName()), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
         
         wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in %s" % wx.GetApp().GetAppName()))
@@ -79,11 +79,6 @@ def guiExceptionHook(exctype, value, trace):
     error.detailsText.WriteText(errorText)
     error.Centre()
     error.ShowModal()
-    
-    app = wx.GetApp()
-    if app:
-        app.ExitMainLoop()
-    sys.exit(1)
 
 class ErrorLogViewer(sc.SizedDialog):
     def __init__(self, parent=None):
