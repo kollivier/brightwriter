@@ -140,6 +140,7 @@ class MainFrame2(sc.SizedFrame):
         self.DragItem = None
         self.CutNode = None
         self.CopyNode = None
+        self.inLabelEdit = False
         
         self.themes = themes.ThemeList(os.path.join(settings.AppDir, "themes"))
         self.currentTheme = self.themes.FindTheme("Default (no frames)")
@@ -190,7 +191,7 @@ class MainFrame2(sc.SizedFrame):
         self.toolbar.AddSimpleTool(ID_PREVIEW, icnPreview, _("Preview EClass"), _("Preview EClass in Browser"))
         self.toolbar.AddSimpleTool(ID_PUBLISH_CD, icnPublishCD, _("Publish to CD-ROM"), _("Publish to CD-ROM"))
         self.toolbar.AddSimpleTool(ID_PUBLISH, icnPublishWeb, _("Publish to web site"), _("Publish to web site"))
-        self.toolbar.AddSimpleTool(ID_PUBLISH_PDF, icnPublishPDF, _("Publish to PDF"), _("Publish to PDF"))
+        #self.toolbar.AddSimpleTool(ID_PUBLISH_PDF, icnPublishPDF, _("Publish to PDF"), _("Publish to PDF"))
         self.toolbar.AddSeparator()
         self.toolbar.AddSimpleTool(ID_HELP, icnHelp, _("View Help"), _("View Help File"))
 
@@ -263,7 +264,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
         #app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
-        app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
+        #app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
         app.AddHandlerForID(ID_PUBLISH_IMS, self.PublishToIMS)
         app.AddHandlerForID(ID_BUG, self.OnReportBug)
         app.AddHandlerForID(ID_THEME, self.OnManageThemes)
@@ -295,7 +296,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddUIHandlerForID(ID_PUBLISH_MENU, self.UpdateProjectCommand)
         app.AddUIHandlerForID(ID_PUBLISH, self.UpdateProjectCommand)
         app.AddUIHandlerForID(ID_PUBLISH_CD, self.UpdateProjectCommand)
-        app.AddUIHandlerForID(ID_PUBLISH_PDF, self.UpdateProjectCommand)
+        #app.AddUIHandlerForID(ID_PUBLISH_PDF, self.UpdateProjectCommand)
         
         app.AddUIHandlerForID(ID_PROPS, self.UpdateProjectCommand)
         app.AddUIHandlerForID(ID_THEME, self.UpdateProjectCommand)
@@ -327,6 +328,7 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
+        self.Bind(wx.EVT_TREE_BEGIN_LABEL_EDIT, self.OnTreeLabelWillChange, self.projectTree)
         self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
         self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
@@ -639,17 +641,26 @@ class MainFrame2(sc.SizedFrame):
         if item:
             self.PopupMenu(menus.getPageMenu(), pt)
             
+    def OnTreeLabelWillChange(self, event):
+        # If you click at just the right speed, wx.TreeCtrl will fire both a edit label event and a
+        # double-click event. Unfortunately, my double-click handler brings up a new dialog, which
+        # causes the label edit event to lose the label and then finish with an empty label. So we
+        # keep track of whether or not we're in a label edit event to avoid this problem.
+        self.inLabelEdit = True
+        
     def OnTreeLabelChanged(self, event):
         item = self.projectTree.GetCurrentTreeItemData()
         item.title.text = event.GetLabel()
+        self.inLabelEdit = False
             
     def OnTreeDoubleClick(self, event):
-        pt = event.GetPosition()
-        item = self.projectTree.GetCurrentTreeItemData()
+        if not self.inLabelEdit:
+            pt = event.GetPosition()
+            item = self.projectTree.GetCurrentTreeItemData()
 
-        if item:
+            if item:
             # use wx.CallAfter because otherwise on OS X a tree control label edit event will get fired.
-            wx.CallAfter(self.EditItem, event)
+                wx.CallAfter(self.EditItem, event)
         
         event.Skip()
         
