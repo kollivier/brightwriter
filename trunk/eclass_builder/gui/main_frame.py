@@ -976,7 +976,10 @@ class MainFrame2(sc.SizedFrame):
     
             if result == wx.ID_OK:
                 self.Update()
-                self.projectTree.SetItemText(self.projectTree.GetCurrentTreeItem(), selitem.title.text)
+                # FIXME: Need to remove the ability to set the page name from EClass in the next
+                # build.
+                if plugin == plugins.GetPlugin("eclass"):
+                    self.projectTree.SetItemText(self.projectTree.GetCurrentTreeItem(), selitem.title.text)
         
     def EditItemProps(self):
         selitem = self.projectTree.GetCurrentTreeItemData()
