@@ -732,11 +732,15 @@ class EditorDialog(sc.SizedDialog):
             self.lstQuestions.Append(editor.question.presentation.text, editor.question)
 
     def btnEditClicked(self, event):
+        if self.lstQuestions.GetSelection() == -1:
+            return
         myitem = self.lstQuestions.GetClientData(self.lstQuestions.GetSelection())
         editor = QuestionEditor(self, myitem)
         editor.ShowModal()
 
     def btnRemoveClicked(self, event):
+        if self.lstQuestions.GetSelection() == -1:
+            return
         myitem = self.lstQuestions.GetClientData(self.lstQuestions.GetSelection())
         self.lstQuestions.Delete(self.lstQuestions.GetSelection())
         self.quiz.items.remove(myitem)
