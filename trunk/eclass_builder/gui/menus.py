@@ -20,7 +20,7 @@ def getFileMenu():
     PubMenu = wx.Menu()
     PubMenu.Append(ID_PUBLISH, _("To web site"), _("Publish EClass to a web server"))
     PubMenu.Append(ID_PUBLISH_CD, _("To CD-ROM"), _("Publish EClass to a CD-ROM"))
-    PubMenu.Append(ID_PUBLISH_PDF, _("To PDF"))
+    #PubMenu.Append(ID_PUBLISH_PDF, _("To PDF"))
     PubMenu.Append(ID_PUBLISH_IMS, _("IMS Package"))
     FileMenu.AppendMenu(ID_PUBLISH_MENU, "&" + _("Publish"), PubMenu, "")
     
