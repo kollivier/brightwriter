@@ -1555,7 +1555,7 @@ if __name__ != "__main__":
             #until we get editing fixed...
             use_builtin = False
             if settings.AppSettings["HTMLEditor"] != "":
-                guiutils.openInHTMLEditor(os.path.join(settings.ProjectDir, "Text", self.selectText.GetValue()))
+                guiutils.openInHTMLEditor(self.filename)
                 use_builtin = True
             else:
                 use_builtin = True
