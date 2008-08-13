@@ -1555,10 +1555,8 @@ if __name__ != "__main__":
             #until we get editing fixed...
             use_builtin = False
             if settings.AppSettings["HTMLEditor"] != "":
-                started_app = guiutils.sendCommandToApplication(self.filename, "edit", settings.AppSettings["HTMLEditor"])
-                if not started_app:
-                    wx.MessageBox(_("The HTML editing application could not be started. Please check to ensure the program exists and that you have permissions to run it. The built-in HTML editor will be used instead."))
-                    use_builtin = True
+                guiutils.openInHTMLEditor(os.path.join(settings.ProjectDir, "Text", self.selectText.GetValue()))
+                use_builtin = True
             else:
                 use_builtin = True
 
@@ -1571,10 +1569,6 @@ if __name__ != "__main__":
                     self.frame.mozilla.LoadURL(self.filename)
                     self.frame.MakeModal(True)
                     self.frame.Show()
-                else:
-                    message = _("This page cannot be opened for editing because no HTML editor is configured. Please specify one in Tools->Options.")
-                    wx.MessageBox(message)
-
             return wx.ID_OK
 
 class MyApp(wx.App):
