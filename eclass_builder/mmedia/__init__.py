@@ -128,6 +128,8 @@ def getHTMLTemplate(filename, url, isVideo=True, autoStart=False):
         html = HTMLTemplates.mp3Temp
     elif ext.lower() == ".mp4":
         html = HTMLTemplates.mp4Temp
+    elif ext.lower() == ".mov":
+        html = HTMLTemplates.qtTemp
     elif ext.lower() == ".flv":
         html = HTMLTemplates.flvTemp
         width, height = flvreader.getFlvDimensions(filename)
