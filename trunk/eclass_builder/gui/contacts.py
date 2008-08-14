@@ -31,14 +31,19 @@ class ContactsDialog(sc.SizedDialog):
 		self.btnAdd = wx.Button(btnPane, -1, _("Add"))
 		self.btnEdit = wx.Button(btnPane, -1, _("Edit"))
 		self.btnRemove = wx.Button(btnPane, -1, _("Remove"))
+		
+		self.btnEdit.Enable(False)
+		self.btnRemove.Enable(False)
 
 		wx.EVT_BUTTON(self.btnAdd, self.btnAdd.GetId(), self.OnAdd)
 		wx.EVT_BUTTON(self.btnImport, self.btnImport.GetId(), self.OnImport)
 		wx.EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.OnEdit)
+		wx.EVT_LISTBOX(self.lstContacts, self.lstContacts.GetId(), self.OnSelection)
 		wx.EVT_LISTBOX_DCLICK(self.lstContacts, self.lstContacts.GetId(), self.OnEdit)
 		wx.EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.OnRemove)
 
 		self.LoadContacts()
+		self.lstContacts.
 		self.Fit()
 		self.SetMinSize(self.GetSize())
 
@@ -47,6 +52,10 @@ class ContactsDialog(sc.SizedDialog):
 		for name in appdata.vcards.keys():
 			if not string.strip(name) == "":
 				self.lstContacts.Append(name, appdata.vcards[name])
+
+    def OnSelection(self, event):
+        self.btnEdit.Enable(True)
+        self.btnRemove.Enable(True)
 
 	def OnAdd(self, event):
 		thisvcard = vcard.VCard()
