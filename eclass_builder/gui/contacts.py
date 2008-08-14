@@ -43,7 +43,6 @@ class ContactsDialog(sc.SizedDialog):
 		wx.EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.OnRemove)
 
 		self.LoadContacts()
-		self.lstContacts.
 		self.Fit()
 		self.SetMinSize(self.GetSize())
 
