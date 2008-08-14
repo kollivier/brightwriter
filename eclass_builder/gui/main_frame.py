@@ -262,7 +262,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_TREE_EDIT, self.OnEditItemProps) 
         app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
         app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
-        #app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
+        app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
         #app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
         app.AddHandlerForID(ID_PUBLISH_IMS, self.PublishToIMS)
@@ -521,6 +521,8 @@ class MainFrame2(sc.SizedFrame):
     def OnActivate(self, event):
         if event.GetActive():
             appdata.currentPackage = self.imscp
+            
+        self.Preview()
 
     def OnCloseProject(self, event):
         if self.imscp and self.imscp.isDirty():
