@@ -518,7 +518,6 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             if term.type == "Page":
                 myfilename = string.replace(os.path.basename(filename), ".ecp", "")
                 myfilename = myfilename + "hw" + `counter` + ".htm"
-                self.data['backlink'] = "<a href=\"javascript:window.close()\">" + _("Close") + "</a>"
                 html = self._CreateEClassPage(term.page, myfilename, True)
             elif term.type == "URL":
                 myfilename = term.url
@@ -557,9 +556,11 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         self.data['content'] = myhtml
         
         if not ishotword:
-            self.data['credit'] = self.GetCreditString() 
+            self.data['credit'] = self.GetCreditString()
             
         else: #ugly hack for now...
+            self.data['backlink'] = "<a href=\"javascript:window.close()\">" + _("Close") + "</a>"
+            
             try:
                 myhtml = self.ApplyTemplate(data=self.data)
             except UnicodeError:
