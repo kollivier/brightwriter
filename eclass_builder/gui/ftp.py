@@ -407,7 +407,6 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		self.txtTotalProg.SetLabel(_("Created Directory: ") + dirname)
 
 	def OnUploadFinished(self):
-		self.parent.SetStatusText(_("Finished uploading."))
 		self.projGauge.SetValue(0)
 		self.btnOK.SetLabel(_("Upload"))
 
@@ -497,10 +496,10 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		self.LoadFileList()
 		self.txtTotalProg.SetLabel(_("Total Progress: "))
 		self.mythread = threading.Thread(None, self.UploadFiles)
-		try:
-			self.mythread.start()
-		except:
-			self.handleError()
+		#try:
+		self.mythread.start()
+		#except:
+		#	self.handleError()
 		return
 
 	def handleError(self):

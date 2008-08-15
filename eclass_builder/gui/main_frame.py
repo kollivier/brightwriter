@@ -686,6 +686,12 @@ class MainFrame2(sc.SizedFrame):
                                         _("Save Project?"), wx.YES_NO | wx.CANCEL)
         return msg.ShowModal()
 
+    def PublishToWeb(self, event):
+        # Turn off search features before uploading.
+        mydialog = FTPUploadDialog(self)
+        mydialog.ShowModal()
+        mydialog.Destroy()
+
     def PublishToCD(self,event):
         folder = settings.ProjectDir
         if settings.ProjectSettings["CDSaveDir"] == "":
