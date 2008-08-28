@@ -1077,7 +1077,7 @@ class EditorDialog (sc.SizedDialog):
             newfile = fileutils.getShortenedFilename(filename)
             os.rename(filename, newfile)
             filename = newfile
-        if type.lower() == "text":
+        if type.lower() == "text" and os.path.splitext(event.filename)[1].find(".htm") != -1:
             copyDependentFilesAndUpdateLinks(event.filename, filename)
             
         event.sender.SetValue(os.path.basename(filename))
