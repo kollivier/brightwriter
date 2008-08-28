@@ -149,6 +149,7 @@ class CommandLineDocConverter:
         #we ignore outformat for command line tools and just use HTML
         import tempfile
         handle, htmlfile = tempfile.mkstemp()
+        htmlfile = htmlfile.encode( utils.getCurrentEncoding() )
         os.close(handle)
         thirdpartydir = settings.ThirdPartyDir
         ext = string.lower(os.path.splitext(filename)[1])
@@ -156,20 +157,22 @@ class CommandLineDocConverter:
         command = ""
         html = ""
         env = None
+        use_stdout = True
         outformat = "html"
 
         if os.name == "nt":
             thirdpartydir = win32api.GetShortPathName(thirdpartydir)
             filename = win32api.GetShortPathName(filename)
 
-        #filename = utils.escapeFilename(filename)
+        if sys.platform.startswith("darwin") and ext in [".doc", ".docx", ".rtf", ".rtfd"]:
+            command = "textutil"
+            args = ["-convert", "html", "-output", htmlfile, filename]
+            use_stdout = False
 
-        if ext == ".doc":
+        elif ext == ".doc":
             path = os.path.join(thirdpartydir, "wv")
             command = "wvWare"
-            if sys.platform.startswith("darwin"):
-                env = {"DYLD_LIBRARY_PATH": "../lib"}
-            elif not sys.platform.startswith("win"):
+            if not sys.platform.startswith("win"):
                 env = {"LD_LIBRARY_PATH": "../lib"}
             args = ["--config " + os.path.join("..", "share", "wv", "wvHtml.xml")]
             args.append(filename)
@@ -199,12 +202,13 @@ class CommandLineDocConverter:
         if os.path.exists( os.path.join(path, "bin") ):
             path = os.path.join(path, "bin")
             
-        if not sys.platform.startswith("win"):
-            command = "./" + command
+            if not sys.platform.startswith("win"):
+                command = "./" + command
 
         try:
             oldcwd = os.getcwd()
-            os.chdir(path)
+            if os.path.exists(path):
+                os.chdir(path)
             #print "working directory is %s" % path
             #Let's check for hung programs
             seconds = 0.0
@@ -216,7 +220,6 @@ class CommandLineDocConverter:
                 htmlfile = win32api.GetShortPathName(htmlfile)
 
             command = command.encode( utils.getCurrentEncoding() )
-            htmlfile = htmlfile.encode( utils.getCurrentEncoding() )
             
             mycommand = [command] + args
             print "Running command: '%s'" % string.join(mycommand, " ")
@@ -233,11 +236,13 @@ class CommandLineDocConverter:
                     killed = True
                     break
             
-            if not killed:
-                html = myprocess.stdout.read()
-            output = utils.openFile(htmlfile, "wb")
-            output.write(html) 
-            output.close()
+            if use_stdout:
+                if not killed:
+                    html = myprocess.stdout.read()
+                    
+                output = utils.openFile(htmlfile, "wb")
+                output.write(html) 
+                output.close()
 
             #some utilities assume their own path for extracted images
             self._CleanupTempFiles(path)
