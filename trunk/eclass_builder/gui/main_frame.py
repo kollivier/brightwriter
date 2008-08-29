@@ -907,7 +907,7 @@ class MainFrame2(sc.SizedFrame):
                 
                 self.imscp.organizations.append(ims.contentpackage.Organization())
                 self.CreateIMSResource(self.imscp.metadata.lom.general.title[lang])
-                
+                settings.ProjectSettings["Theme"] = "Default (frames)"
                 self.imscp.saveAsXML(filename)
                 settings.AppSettings["LastOpened"] = filename
 
