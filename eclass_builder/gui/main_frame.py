@@ -522,7 +522,8 @@ class MainFrame2(sc.SizedFrame):
         if event.GetActive():
             appdata.currentPackage = self.imscp
             
-        self.Preview()
+        if not self.IsBeingDeleted():
+            self.Preview()
 
     def OnCloseProject(self, event):
         if self.imscp and self.imscp.isDirty():
@@ -1016,30 +1017,31 @@ class MainFrame2(sc.SizedFrame):
 
     def Preview(self):
         filename = None
-        imsitem = self.projectTree.GetCurrentTreeItemData()
-        if imsitem:
-            import ims.utils
-            resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
-            if resource:
-                filename = resource.getFilename()
+        if self.projectTree:
+            imsitem = self.projectTree.GetCurrentTreeItemData()
+            if imsitem:
+                import ims.utils
+                resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
+                if resource:
+                    filename = resource.getFilename()
+            
+            if filename:
+                #publisher = plugins.GetPublisherForFilename(filename)
+                #filelink = publisher.GetFileLink(filename).replace("/", os.sep)
+                filename = os.path.join(settings.ProjectDir, filename)
         
-        if filename:
-            #publisher = plugins.GetPublisherForFilename(filename)
-            #filelink = publisher.GetFileLink(filename).replace("/", os.sep)
-            filename = os.path.join(settings.ProjectDir, filename)
-    
-            #we shouldn't preview files that EClass can't view
-            ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
-            if sys.platform == "win32":
-                ok_fileTypes.append("pdf")
-    
-            if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
-                self.browser.LoadPage(filename)
+                #we shouldn't preview files that EClass can't view
+                ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
+                if sys.platform == "win32":
+                    ok_fileTypes.append("pdf")
+        
+                if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
+                    self.browser.LoadPage(filename)
+                else:
+                    self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
+                        
             else:
-                self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
-                    
-        else:
-            self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("This page cannot be previewed inside EClass. Double-click on the page to view or edit it.") + "</p>"))
+                self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("This page cannot be previewed inside EClass. Double-click on the page to view or edit it.") + "</p>"))
 
     def PublishPage(self, imsitem):
         if imsitem != None:
