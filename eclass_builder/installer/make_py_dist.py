@@ -58,9 +58,10 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "..
 modfinder = modulefinder.ModuleFinder(excludes=["Tkinter"])
 modulefinder.ReplacePackage("xml", "_xmlplus")
 modfinder.add_module("site")
-modfinder.add_module("pythoncom")
 
 scripts = [os.path.join("..", "eclass_builder.py"), os.path.join("..", "gui", "main_frame.py"), os.path.join("..", "converter.py"), os.path.join("..", "externals", "BeautifulSoup.py")]
+if sys.platform.startswith("win"):
+    scripts.append(os.path.join("windeps.py"))
 deps = []
 
 for script in scripts:
