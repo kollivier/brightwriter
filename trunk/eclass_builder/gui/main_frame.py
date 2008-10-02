@@ -865,7 +865,9 @@ class MainFrame2(sc.SizedFrame):
 
         if os.path.exists(filename):
             try:
-                self.imscp.saveAsXML(filename)
+                if not self.imscp.saveAsXML(filename):
+                    wx.MessageBox(_("Unable to save project file. Make sure you have permission to write to the project directory."))
+                
                 if settings.ProjectSettings:
                     settings.ProjectSettings.SaveAsXML(os.path.join(settings.ProjectDir, "settings.xml"))
             except IOError, e:
@@ -909,7 +911,9 @@ class MainFrame2(sc.SizedFrame):
                 self.imscp.organizations.append(ims.contentpackage.Organization())
                 self.CreateIMSResource(self.imscp.metadata.lom.general.title[lang])
                 settings.ProjectSettings["Theme"] = "Default (frames)"
-                self.imscp.saveAsXML(filename)
+                if not self.imscp.saveAsXML(filename):
+                    wx.MessageBox(_("Unable to save project file. Make sure you have permission to write to the project directory."))
+                
                 settings.AppSettings["LastOpened"] = filename
 
             newdialog.Destroy()
