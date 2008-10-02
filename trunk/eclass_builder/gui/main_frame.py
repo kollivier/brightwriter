@@ -86,15 +86,6 @@ settings.plugins = plugins.pluginList
 from constants import *
 from gui.ids import *
 
-if sys.platform.startswith("win"):
-    import win32api
-    import win32pipe
-    import pythoncom
-    import win32process, win32con
-    # for the module detection script
-    import wx.lib.iewin
-    import comtypes
-
 class GUIIndexingCallback:
     def __init__(self, parent):
         self.parent = parent
