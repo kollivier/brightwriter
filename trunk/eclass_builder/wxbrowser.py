@@ -66,9 +66,6 @@ class wxBrowser:
 		#default order - WebKit (on Mac), Mozilla, IE, HTMLWindow
 		if self._LoadWebKitWindow():
 			return
-
-		if self._LoadMozilla():
-			return 
 		
 		if self._LoadIE():
 			return 
