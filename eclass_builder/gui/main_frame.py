@@ -959,7 +959,13 @@ class MainFrame2(sc.SizedFrame):
                         os.rename(viddir, os.path.join(settings.ProjectDir, "pub", "Video"))
                     
                     if os.path.exists(auddir):
-                        os.rename(auddir, os.path.join(settings.ProjectDir, "pub", "Audio"))                  
+                        os.rename(auddir, os.path.join(settings.ProjectDir, "pub", "Audio"))
+                        
+                if self.projectTree.GetCount() > 0:
+                    self.projectTree.SetFocus()
+                    firstItem = self.projectTree.GetFirstChild(self.projectTree.GetRootItem())[0]
+                    self.projectTree.Expand(firstItem)
+                    self.projectTree.SelectItem(firstItem, True)
         
         except:
             del busy
