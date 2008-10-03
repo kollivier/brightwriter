@@ -3,11 +3,8 @@
 
 import sys, os, string, shutil, glob, modulefinder, re
 import wxversion
-flavor = "ansi"
 wx_version = "2.8"
-if len(sys.argv) > 1:
-    if sys.argv[1] == "--unicode":
-        flavor = "unicode"
+flavor = "unicode"
 
 wxversion.select(wx_version + "-" + flavor)
 
@@ -68,8 +65,8 @@ for script in scripts:
     modfinder.run_script(script)
     for item in modfinder.modules.items():
         filename = item[1].__file__
-    #print filename
-        if filename and string.find(filename, sys.prefix) != -1:
+        
+        if filename and filename.lower().find(sys.prefix.lower()) != -1 and not filename in deps:
             deps.append(filename)
 
 mpdir = "minipython"
@@ -150,7 +147,7 @@ if sys.platform == "win32":
         sys.exit(1)
 
 for filename in deps:
-    destfilename = string.replace(filename, sys.prefix, mpdir)
+    destfilename = filename.lower().replace(sys.prefix.lower(), mpdir)
     # we need to copy the .tlb file along with the activex file.
     if os.path.basename(filename) == "activex.py":
         tlbfile = "myole4ax.tlb"
