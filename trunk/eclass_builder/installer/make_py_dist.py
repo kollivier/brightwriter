@@ -148,7 +148,7 @@ if sys.platform == "win32":
 
 for filename in deps:
 
-    destfilename = mpdir + filename[len(sys.prefix)-1:]
+    destfilename = mpdir + filename[len(sys.prefix):]
     # we need to copy the .tlb file along with the activex file.
     if os.path.basename(filename) == "activex.py":
         tlbfile = "myole4ax.tlb"
