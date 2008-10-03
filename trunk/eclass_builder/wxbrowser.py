@@ -4,12 +4,10 @@ import utils
 
 browserlist = []
 
-try:
-	if sys.platform == "win32": 
-		import wx.lib.iewin
-		browserlist.append("ie")
-except:
-	pass
+if sys.platform == "win32": 
+	import wx.lib.iewin
+	browserlist.append("ie")
+
 
 try: 
 	import wx.html
@@ -17,13 +15,9 @@ try:
 except:
 	pass
 
-try:
-	if sys.platform == "darwin": 
-		import wx.webkit
-		browserlist.append("webkit")
-except:
-	pass
-
+if sys.platform == "darwin": 
+	import wx.webkit
+	browserlist.append("webkit")
 
 class wxBrowser:
 	"""
