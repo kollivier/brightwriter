@@ -277,9 +277,14 @@ class ContentPackage(Tag):
         myfile.write(data)
         myfile.close()
         
+        if not os.path.exists(filename):
+            return False
+        
         self.filename = filename
         
         self.clearDirtyBit()
+        
+        return True
 
     def loadFromXML(self, filename, strictMode=False):
         assert(os.path.exists(filename))
