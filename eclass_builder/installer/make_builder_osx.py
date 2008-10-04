@@ -26,6 +26,7 @@ setup(
     						glob.glob(rootdir + 'autorun') +
     						glob.glob(rootdir + 'convert') +
     						glob.glob(rootdir + 'docs') +
+    						glob.glob(rootdir + 'externals') +
     						glob.glob(rootdir + 'greenstone') +
     						glob.glob(rootdir + 'icons') +
     						glob.glob(rootdir + 'locale') +
