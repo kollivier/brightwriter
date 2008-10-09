@@ -20,7 +20,7 @@ py2app_options = dict(
 
 setup(
     name="EClass.Builder",
-    app=[rootdir + 'eclass_builder.py', rootdir + "externals/BeautifulSoup.py"],
+    app=[rootdir + 'eclass_builder.py'],
     data_files=[('', 	glob.glob(rootdir + '3rdparty') + 
     						glob.glob(rootdir + 'about') +
     						glob.glob(rootdir + 'autorun') +
