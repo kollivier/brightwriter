@@ -25,6 +25,7 @@ import conman.vcard as vcard
 import wxblox.events as events
 import gui
 import fileutils
+import externals.BeautifulSoup
 
 #imports for packaging tools
 if sys.platform.startswith("win"):
