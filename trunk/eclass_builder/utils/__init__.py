@@ -31,9 +31,12 @@ class LogFile:
     def write(self, message):
         if message == None:
             return
-        myfile = open(self.filename, "ab")
-        myfile.write(message.encode("utf-8") + "\n")
-        myfile.close()
+        try:
+            myfile = open(self.filename, "ab")
+            myfile.write(message.encode("utf-8") + "\n")
+            myfile.close()
+        except IOError:
+            print "WARNING: Unable to write to %s" % self.filename
 
     def clear(self):
         os.remove(self.filename)
@@ -74,6 +77,9 @@ def isReadOnly(filename):
         return (fileattr & win32file.FILE_ATTRIBUTE_READONLY)
     else:
         return not (os.stat(filename)[stat.ST_MODE] & stat.S_IWUSR)
+
+def CreateiPhoneNavigation(package):
+    pass
 
 def CreateJoustJavascript(pub):
     if isinstance(pub, conman.conman.ConNode):
