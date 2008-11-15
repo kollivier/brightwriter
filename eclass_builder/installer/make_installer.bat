@@ -1,4 +1,4 @@
-call "%VS71COMNTOOLS%vsvars32.bat"
+call "%VS90COMNTOOLS%vsvars32.bat"
 C:\Python26\python ..\updateVersion.py %1
 C:\Python26\python make_py_dist.py --unicode
 C:\Python26\Scripts\cxfreeze --exclude-modules=wx --install-dir librarian-win32 ../librarian.py
