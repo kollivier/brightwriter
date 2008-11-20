@@ -1,1 +1,1 @@
-python -v publish.py $PWD/docs/en/manual
+python publish.py $PWD/docs/en/manual
