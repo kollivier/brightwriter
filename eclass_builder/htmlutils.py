@@ -57,11 +57,41 @@ def copyDependentFilesAndUpdateLinks(oldfile, filename):
     output.write(html.encode(encoding))
     output.close()
 
+def convNotSoSmartQuotesToHtmlEntity(x):
+    """
+    Found at http://myzope.kedai.com.my/blogs/kedai/128
+    """ 
+    d =      {  "\xc2\x82":"&sbquo;",
+                "\xc2\x83":"&fnof;",
+                "\xc2\x84":"&bdquo;",
+                "\xc2\x85":"&hellip;",
+                "\xc2\x86":"&dagger;",
+                "\xc2\x87":"&Dagger;",
+                "\xc2\x88":"&circ;",
+                "\xc2\x89":"&permil;",
+                "\xc2\x8A":"&Scaron;",
+                "\xc2\x8B":"&lsaquo;",
+                "\xc2\x8C":"&OElig;",
+                "\xc2\x91":"&lsquo;",
+                "\xc2\x92":"&rsquo;",
+                "\xc2\x93":"&ldquo;",
+                "\xc2\x94":"&rdquo;",
+                "\xc2\x95":"&bull;",
+                "\xc2\x96":"&ndash;",
+                "\xc2\x97":"&mdash;",
+                "\xc2\x98":"&tilde;",
+                "\xc2\x99":"&trade;",
+                "\xc2\x9A":"&scaron;",
+                "\xc2\x9B":"&rsaquo;",
+                "\xc2\x9C":"&oelig;"}
+    for i in d.keys():
+        x=x.replace(i,d[i])
+    return x
 
 def GetEncoding(myhtml):
 	"""Checks for document HTML encoding and returns it if found."""
 	import re
-	match = re.search("""<meta\s+http-equiv="Content-Type"\s+content="text/html;\s*charset=([^\"]*)">""", myhtml, re.IGNORECASE)
+	match = re.search("""<meta\s+http-equiv=["]?Content-Type["]?\s+content=["]?text/html;\s*charset=([^\"]*)["]?>""", myhtml, re.IGNORECASE)
 	if match:
 		return match.group(1).lower() #python encodings always in lowercase
 	else:
@@ -88,7 +118,7 @@ def GetBody(myhtml):
 	encoding = None
 	html = myhtml.readline()
 	while not html == "":
-		if not encoding and string.find(html.lower(), "<meta"):
+		if not encoding and string.find(html.lower(), "<meta") != -1:
 			encoding = GetEncoding(html)
 		#if we're inside a script, mark it so that we can test if body tag is inside the script
 		scriptstart = string.find(html, "<SCRIPT")
@@ -141,6 +171,9 @@ def GetBody(myhtml):
 				text = text + html 
 		html = myhtml.readline()
 	
+	if encoding and encoding in ["windows-1252", "iso-8859-1", "iso-8859-2"]:
+		text = convNotSoSmartQuotesToHtmlEntity(text)
+	    
 	if not encoding:
 	    encoding = ""
 	    
