@@ -559,6 +559,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             self.data['credit'] = self.GetCreditString()
             
         else: #ugly hack for now...
+            self.data['name'] = mypage.name
             self.data['backlink'] = "<a href=\"javascript:window.close()\">" + _("Close") + "</a>"
             
             try:
@@ -634,6 +635,9 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             url = "Video/" + mypage.media.video
             videoHTML = mmedia.getHTMLTemplate(videofile, url, isVideo=True, 
                             autoStart=mypage.media.videoautostart)
+            basename, ext = os.path.splitext(url) 
+            if ext.find("flv") != -1:
+                fileutils.CopyFile("flvplayer.swf", os.path.join(settings.ThirdPartyDir, "..", "bin"), os.path.join(settings.ProjectDir, "pub"))
 
         audiofile = os.path.join(settings.ProjectDir, "pub", "Audio", mypage.media.audio)
         if len(mypage.media.audio) > 0 and os.path.exists(audiofile):
