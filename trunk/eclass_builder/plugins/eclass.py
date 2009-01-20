@@ -554,12 +554,12 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         myhtml = self._AddMedia(mypage) + objtext + utils.makeUnicode(myhtml)
 
         self.data['content'] = myhtml
+        self.data['name'] = mypage.name
         
         if not ishotword:
             self.data['credit'] = self.GetCreditString()
             
         else: #ugly hack for now...
-            self.data['name'] = mypage.name
             self.data['backlink'] = "<a href=\"javascript:window.close()\">" + _("Close") + "</a>"
             
             try:
@@ -569,9 +569,10 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
             try:        
                 myfile = utils.openFile(os.path.join(self.dir, "pub",filename), "w")
-                myfile.write(myhtml)
+                myfile.write(myhtml.encode("utf8"))
                 myfile.close()
             except:
+                traceback.print_exc()
                 message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
                 global log
                 log.write(message)
@@ -729,6 +730,8 @@ class EClassObjectiveEditorDialog(sc.SizedDialog):
         self.Fit()
         self.SetMinSize(self.GetSize())
 
+        self.CentreOnParent()
+        
         wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 
         self.ShowModal()
@@ -800,6 +803,8 @@ class EClassHyperlinkEditorDialog(sc.SizedDialog):
         self.SetMinSize(self.GetSize())
 
         wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+
+        self.CentreOnParent()
 
         self.ShowModal()
 
@@ -1039,6 +1044,8 @@ class EditorDialog (sc.SizedDialog):
         picker.EVT_FILE_SELECTED(self.selectVideo, self.OnFileSelected)
         picker.EVT_FILE_SELECTED(self.selectText, self.OnFileSelected)
         picker.EVT_FILE_SELECTED(self.selectPowerPoint, self.OnFileSelected)
+
+        self.CentreOnParent()
 
         del busy
         
