@@ -52,7 +52,8 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
 
         import gui.main_frame
         self.frame = gui.main_frame.MainFrame2(None, -1, "EClass.Builder")
-                
+        self.frame.CentreOnScreen()
+
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
         return True
