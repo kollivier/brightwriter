@@ -78,8 +78,74 @@ def isReadOnly(filename):
     else:
         return not (os.stat(filename)[stat.ST_MODE] & stat.S_IWUSR)
 
-def CreateiPhoneNavigation(package):
-    pass
+def AddiPhoneItems(node, isroot=False):
+    links = ""
+    pages = ""
+    children = node.items
+    
+    childLinks = ""
+    for root in children:
+        filename = ""
+
+        name = root.title.text        
+        childLinks += "<li><a href=\"#%s\">%s</a></li>\n" % (name.replace(" ", ""), name)
+        if len(root.children) > 0:
+            newlinks, newpages = AddiPhoneItems(root)
+            links += newlinks
+            pages += newpages
+
+    name = node.title.text
+
+    selectedText = ""
+    
+    if isroot:
+        selectedText = """ selected="true" """
+    
+    if len(node.items) > 0:
+        links += """
+<ul id="%s"%s>
+    <li><a href="#%s">Intro</a></li>
+    %s
+</ul>""" % (node.title.text.replace(" ", ""), selectedText, name.replace(" ", "") + "_content", childLinks)
+    else:
+        resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, node)
+        filename = eclassutils.getEClassPageForIMSResource(resource)
+        if not filename:
+            filename = resource.getFilename()
+        filename = GetFileLink(filename)
+        pages += """<iframe id="%s" frameborder="0" width="100%%" height="95%%" src="%s"></iframe>""" % (name.replace(" ", ""), filename)
+    return links, pages
+
+def CreateiPhoneNavigation(rootItem):
+    html = """
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>%s</title>
+<meta name="viewport" content="width=320; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
+<style type="text/css" media="screen">@import "iui/iui/iui.css";</style>
+<script type="application/x-javascript" src="iui/iui/iui.js"></script>
+</head>
+<body>
+    <div class="toolbar">
+        <h1 id="pageTitle"></h1>
+        <a id="backButton" class="button" href="#"></a>
+    </div>
+""" % rootItem.title.text
+
+    links, pages = AddiPhoneItems(rootItem, isroot=True)
+    html += links + pages
+
+    html += """</body>
+</html>
+"""
+    
+    afile = open(os.path.join(settings.ProjectDir, "iPhone.html"), "w")
+    afile.write(html.encode("utf-8"))
+    afile.close()
+    
 
 def CreateJoustJavascript(pub):
     if isinstance(pub, conman.conman.ConNode):
@@ -133,7 +199,7 @@ def AddJoustItems(nodes, level):
             nodeType = "Book"
         else:
             nodeType = "Document"
-        text = text + u"""level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, string.replace(name, '"', '\\"'), filename, string.replace(name, '"', '\\"'))
+        text = text + u"""level%sID = theMenu.addChild(level%sID,"%s", "%s", "%s", "%s");\n""" % (level + 1, level, nodeType, name.replace('"', '\\"'), filename, name.replace('"', '\\"'))
 
         if len(root.children) > 0:
             text = text + AddJoustItems(root, level + 1)

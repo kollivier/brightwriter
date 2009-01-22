@@ -52,6 +52,15 @@ try:
     import taskrunner
 except:
     pass
+    
+    
+EXPERIMENTAL_WXWEBKIT = False
+
+try:
+    import webview
+    EXPERIMENTAL_WXWEBKIT = True
+except:
+    pass
 
 # Import the gui dialogs. They used to be embedded in editor.py
 # so we will just import their contents for now to avoid conflicts.
@@ -218,27 +227,22 @@ class MainFrame2(sc.SizedFrame):
         # TODO: This really needs fixed once webkit issues are worked out
         self.browsers = {}
         browsers = wxbrowser.browserlist
-        #if len(browsers) == 1 and browsers[0] == "htmlwindow":
-        #   self.browsers["htmlwin"] = self.browser = wx.HtmlWindow(self.previewbook, -1)
-        #   self.previewbook.AddPage(self.browser, _("HTML Preview"))
-        #else:
-        if 1:
-            #if "htmlwindow" in browsers:
-            #   browsers.remove("htmlwindow")
-            default = "htmlwindow"
-            if sys.platform.startswith("win") and "ie" in browsers:
-                default = "ie"
-            elif sys.platform.startswith("darwin") and "webkit" in browsers:
-                default = "webkit"
-            elif "mozilla" in browsers:
-                default = "mozilla"
+
+        default = "htmlwindow"
+        if sys.platform.startswith("win") and "ie" in browsers:
+            default = "ie"
+        elif sys.platform.startswith("darwin") and "webkit" in browsers:
+            default = "webkit"
+        elif "mozilla" in browsers:
+            default = "mozilla"
+        if not EXPERIMENTAL_WXWEBKIT:
             self.browser = wxbrowser.wxBrowser(self.splitter1, -1, default)
-            self.browsers[default] = self.browser
-            #for browser in browsers:
-                #panel = sc.SizedPanel(self.previewbook, -1)
-                #self.browser = self.browsers[browser] = wxbrowser.wxBrowser(self.previewbook, -1, browser)
-                #self.browser.browser.SetSizerProps({"expand": True, "proportion":1})
-                #self.previewbook.AddPage(self.browser.browser, self.browsers[browser].GetBrowserName())
+        else:
+            self.browser = webview.WebView(self.splitter1, -1, size=(200,200))
+            self.browser.LoadPage = self.browser.LoadURL
+            self.browser.SetPage = self.browser.SetPageSource
+            self.browser.browser = self.browser
+        self.browsers[default] = self.browser
         
         self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
@@ -344,18 +348,6 @@ class MainFrame2(sc.SizedFrame):
 
         if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
             self.LoadEClass(settings.AppSettings["LastOpened"])
-            
-        #else:
-        #    dlgStartup = StartupDialog(self)
-        #    result = dlgStartup.ShowModal()
-        #    dlgStartup.Destroy()
-            
-        #    if result == 0:
-        #        self.NewProject(None)
-        #    if result == 1:
-        #        self.OnOpen(None)
-        #    if result == 2:
-        #        self.OnHelp(None)
                 
     def OnActivityMonitor(self, evt):
         self.activityMonitor.Show()
@@ -408,6 +400,7 @@ class MainFrame2(sc.SizedFrame):
                 self.imscp.resources.append(newresource)
                 
                 newitem = ims.contentpackage.Item()
+                assert os.path.basename(packagefile) is not None and os.path.basename(packagefile) != "" 
                 newitem.title.text = os.path.basename(packagefile)
                 newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
                 newitem.attrs["identifierref"] = newresource.attrs["identifier"]
@@ -644,8 +637,11 @@ class MainFrame2(sc.SizedFrame):
         
     def OnTreeLabelChanged(self, event):
         item = self.projectTree.GetCurrentTreeItemData()
-        item.title.text = event.GetLabel()
-        self.inLabelEdit = False
+        if not event.IsEditCancelled():
+            label = event.GetLabel()
+            assert label is not None and label != ""
+            item.title.text = event.GetLabel()
+            self.inLabelEdit = False
             
     def OnTreeDoubleClick(self, event):
         if not self.inLabelEdit:
@@ -761,7 +757,9 @@ class MainFrame2(sc.SizedFrame):
                     self.imscp.resources.append(newresource)
                     
                     newitem = ims.contentpackage.Item()
-                    newitem.title.text = dialog.txtTitle.GetValue()
+                    title = dialog.txtTitle.GetValue()
+                    assert title is not None and title != ""
+                    newitem.title.text = title
                     newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
                     newitem.attrs["identifierref"] = newresource.attrs["identifier"]
                     
@@ -943,10 +941,6 @@ class MainFrame2(sc.SizedFrame):
                 
                 self.currentTheme = self.themes.FindTheme(settings.ProjectSettings["Theme"])
     
-                if settings.ProjectSettings["SearchProgram"] == "Swish-e":
-                    settings.ProjectSettings["SearchProgram"] = "Lucene"
-                    self.errorPrompts.displayError(_("The SWISH-E search program is no longer supported. This project has been updated to use the Lucene search engine instead. Run the Publish to CD function to update the index."))
-                
                 self.SetFocus()
                 settings.AppSettings["LastOpened"] = filename
                 settings.ProjectSettings = settings.ProjectSettings
@@ -1070,6 +1064,7 @@ class MainFrame2(sc.SizedFrame):
         #self.CreateDocumancerBook()
         #self.CreateDevHelpBook()
         utils.CreateJoustJavascript(self.imscp.organizations[0].items[0])
+        utils.CreateiPhoneNavigation(self.imscp.organizations[0].items[0])
         self.currentTheme = self.themes.FindTheme(settings.ProjectSettings["Theme"])
         if self.currentTheme:
             self.currentTheme.HTMLPublisher(self).CopySupportFiles()
