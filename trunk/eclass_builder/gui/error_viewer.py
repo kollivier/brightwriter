@@ -75,10 +75,17 @@ def guiExceptionHook(exctype, value, trace):
         app = wx.PySimpleApp()
         app.MainLoop()
     
-    error = ErrorDialog()
-    error.detailsText.WriteText(errorText)
-    error.Centre()
-    error.ShowModal()
+    errorShowing = False
+    for win in wx.GetTopLevelWindows():
+        if isinstance(win, ErrorDialog):
+            errorShowing = True
+    
+    if not errorShowing:
+        error = ErrorDialog()
+        error.detailsText.WriteText(errorText)
+        error.Centre()
+        error.ShowModal()
+        error.Destroy()
 
 class ErrorLogViewer(sc.SizedDialog):
     def __init__(self, parent=None):
