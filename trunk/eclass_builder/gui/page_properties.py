@@ -303,6 +303,8 @@ class PagePropertiesDialog (sc.SizedDialog):
 
         elif isinstance(self.node, ims.contentpackage.Item):
             lang = appdata.projectLanguage
+            
+            assert self.txtTitle.GetValue() is not None and self.txtTitle.GetValue() != ""
             self.node.title.text = self.txtTitle.GetValue()
             self.content.metadata.lom.general.description[lang] = self.txtDescription.GetValue()
             self.content.metadata.lom.general.keyword[lang] = self.txtKeywords.GetValue()
