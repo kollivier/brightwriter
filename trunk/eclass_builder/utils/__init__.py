@@ -6,6 +6,7 @@
 
 import sys, os, string
 import settings
+import shutil
 import plugins
 import constants
 import ims
@@ -102,18 +103,20 @@ def AddiPhoneItems(node, isroot=False):
         selectedText = """ selected="true" """
     
     if len(node.items) > 0:
+        name = name + "_content"
         links += """
 <ul id="%s"%s>
     <li><a href="#%s">Intro</a></li>
     %s
-</ul>""" % (node.title.text.replace(" ", ""), selectedText, name.replace(" ", "") + "_content", childLinks)
-    else:
-        resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, node)
-        filename = eclassutils.getEClassPageForIMSResource(resource)
-        if not filename:
-            filename = resource.getFilename()
-        filename = GetFileLink(filename)
-        pages += """<iframe id="%s" frameborder="0" width="100%%" height="95%%" src="%s"></iframe>""" % (name.replace(" ", ""), filename)
+</ul>""" % (node.title.text.replace(" ", ""), selectedText, name.replace(" ", ""), childLinks)
+
+
+    resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, node)
+    filename = eclassutils.getEClassPageForIMSResource(resource)
+    if not filename:
+        filename = resource.getFilename()
+    filename = GetFileLink(filename)
+    pages += """<iframe id="%s" frameborder="0" width="100%%" height="95%%" src="%s"></iframe>""" % (name.replace(" ", ""), filename)
     return links, pages
 
 def CreateiPhoneNavigation(rootItem):
@@ -125,15 +128,15 @@ def CreateiPhoneNavigation(rootItem):
 <head>
 <title>%s</title>
 <meta name="viewport" content="width=320; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
-<style type="text/css" media="screen">@import "iui/iui/iui.css";</style>
-<script type="application/x-javascript" src="iui/iui/iui.js"></script>
+<style type="text/css" media="screen">@import "pub/iui/iui.css";</style>
+<script type="application/x-javascript" src="pub/iui/iui.js"></script>
 </head>
 <body>
     <div class="toolbar">
-        <h1 id="pageTitle"></h1>
+        <h1 id="pageTitle">%s</h1>
         <a id="backButton" class="button" href="#"></a>
     </div>
-""" % rootItem.title.text
+""" % (rootItem.title.text, rootItem.title.text)
 
     links, pages = AddiPhoneItems(rootItem, isroot=True)
     html += links + pages
@@ -146,6 +149,10 @@ def CreateiPhoneNavigation(rootItem):
     afile.write(html.encode("utf-8"))
     afile.close()
     
+    destdir = os.path.join(settings.ProjectDir, "pub", "iui")
+    if os.path.exists(destdir):
+        shutil.rmtree(destdir)
+    shutil.copytree(os.path.join(settings.AppDir, "externals", "iui-0.13", "iui"), destdir)
 
 def CreateJoustJavascript(pub):
     if isinstance(pub, conman.conman.ConNode):
