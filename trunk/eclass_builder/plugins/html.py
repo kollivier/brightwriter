@@ -24,10 +24,9 @@ from mmedia import HTMLTemplates
 try:
     import webview
     webkit_available = True
+    from htmleditor import *
 except:
     webkit_available = False
-    
-from htmleditor import *
 
 from StringIO import StringIO
 from threading import *
