@@ -86,9 +86,6 @@ tasks['win'] = wintasks
 linuxtasks = TaskRunner( Task([ Job("linux", "./build-linux.sh", env=config_env), ]) )
 tasks['linux'] = linuxtasks
 
-mactasks = TaskRunner( Task([ Job("mac", "./build-mac.sh", env=config_env), ]) )
-tasks['mac'] = mactasks
-
 intel_config = config_env.copy()
 intel_config.update({"IS_INTEL":"yes"})
 

@@ -29,7 +29,7 @@ if [ "$skipmac" != "yes" ]; then
      #    exit 1 
      #fi
 
-     cmd="export PYTHONPATH=..:/Users/kevino/wxpython-2.8/wxPython/wx-2.8-mac-unicode && $PYTHON make-installer.py --no-strip" # && $PYTHON make_library_osx.py py2app --no-strip"
+     cmd="export PYTHONPATH=..:/Users/kevino/wxpython-2.8/wxPython/wx-2.8-mac-unicode && $PYTHON make-installer.py"
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
 
      mkdir -p $DIST_DIR/dmg_files-$BUILD_TYPE
