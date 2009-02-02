@@ -294,6 +294,8 @@ class EClassPage(plugins.PluginData):
         Return values:
         Returns an error string if failed, or an empty string if successful.
         """
+        
+        global log
         if filename == "":
             filename = self.filename
         else:
@@ -303,7 +305,6 @@ class EClassPage(plugins.PluginData):
             myxml = """<?xml version="1.0"?>%s""" % (self.WriteDoc())
         except:
             message = _("There was an error updating the file '%(filename)s'. Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.") % {"filename": filename}
-            global log
             log.write(message)
             raise IOError, message
         try:
@@ -319,7 +320,6 @@ class EClassPage(plugins.PluginData):
             myfile.close()
         except:
             message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
-            global log
             log.write(message)
             raise IOError, message
 
