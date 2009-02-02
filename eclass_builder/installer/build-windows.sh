@@ -30,7 +30,7 @@ if [ $skipwin != yes ]; then
      ssh $WIN_HOST "rm -rf $dir/installer/*.exe && cd $dir/installer && $cmd"
 
      echo "Fetching the results..."
-     scp "$WIN_HOST:$dir/installer/eclass-builder-$BUILD_VERSION-unicode.exe "  $DIST_DIR
+     scp "$WIN_HOST:$dir/installer/eclass-builder-$BUILD_VERSION.exe "  $DIST_DIR
 
      echo "Done!"
 fi
