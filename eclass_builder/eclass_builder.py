@@ -147,20 +147,3 @@ for arg in sys.argv:
 
 app = BuilderApp(0)
 app.MainLoop()
-
-
-import unittest
-
-class UITests(unittest.TestCase):
-    def setUp(self):
-        self.app = BuilderApp(0)
-        
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
-        
-
-def getTestSuite():
-    return unittest.makeSuite(IndexingTests)
-
-if __name__ == '__main__':
-    unittest.main()
