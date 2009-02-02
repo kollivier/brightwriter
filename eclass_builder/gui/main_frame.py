@@ -23,14 +23,6 @@ from convert.PDF import PDFPublisher
 import wxbrowser
 import ims
 import ims.contentpackage
-
-try:
-    import PyLucene
-    import indexer
-    appdata.hasPyLucene = True
-except:
-    import traceback
-    print `traceback.print_exc()`
     
 import conman
 import version
