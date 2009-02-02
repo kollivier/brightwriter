@@ -28,6 +28,7 @@ import fileutils
 import externals.BeautifulSoup
 
 #imports for packaging tools
+import htmleditor
 if sys.platform.startswith("win"):
     import ctypes
     import ctypes.wintypes
