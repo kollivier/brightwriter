@@ -4,11 +4,12 @@ from distutils.core import setup
 
 import os
 import sys
+sys.path.append("..")
 platform = None
 if sys.platform.startswith("win"):
     import py2exe
     sys.argv.append("py2exe")
-    platform = "win"
+    platform = "win32"
 elif sys.platform.startswith("darwin"):
     import py2app
     sys.argv.append("py2app")
@@ -58,6 +59,7 @@ for subdir in subdirs:
 setup(
     name="EClass.Builder",
     app=[rootdir + 'eclass_builder.py'],
+    windows=[rootdir + 'eclass_builder.py'],
     data_files=source_files,
     options=dict(py2exe=py2exe_options, py2app=py2app_options),
 )
