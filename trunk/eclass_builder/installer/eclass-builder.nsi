@@ -42,65 +42,9 @@ Section "Program Files" SecCopyUI
   WriteRegStr HKLM SOFTWARE\EClass\Builder\${MUI_VERSION} "Path" "$INSTDIR"
   SetOutPath "$INSTDIR"
   ;File /r "..\3rdparty\win32\gre\*"
-  File /r "minipython\*"
-  File "eclass_builder.exe"
+  File /r "dist\*"
   File "eclass_builder.exe.manifest"
-  File "eclass_library.exe"
-  File "eclass_library.exe.manifest"
-  File "..\*.py"
-  File "..\bookfile.book.in"
-  File /r "..\conman"
-  File /r "..\convert"
-  File /r "..\about"
-  File /r "..\Greenstone"
-  File /r "..\docs"
-  File /r "..\icons"
-  File /r "..\ims"
-  ;File /r "librarian-win32"
-  File /r "..\library"
-  ;File /r "..\installers"
-  File /r "..\license"
-  File /r "..\locale"
-  File /r "..\cgi-bin"
-  File /r "..\web"
-  File /r "..\gui"
-  File /r "..\mmedia"
-  File /r "..\utils"
-  File /r "..\wxblox"
-  File /r "..\externals"
 
-  SetOutPath "$INSTDIR\autorun"
-  File "..\autorun\autorun.inf"
-  File "..\autorun\loader\Release\loader.exe"
-
-  SetOutPath "$INSTDIR\plugins"
-  File "..\plugins\__init__.py"
-  File "..\plugins\eclass.py"
-  File "..\plugins\quiz.py"
-  File "..\plugins\html.py"
-  File "..\plugins\file.py"
-  File /r "..\plugins\Quiz"
-
-  SetOutPath "$INSTDIR\themes"
-  File "..\themes\__init__.py"
-  File "..\themes\themes.py"
-  File "..\themes\BaseTheme.py"
-  File "..\themes\Default_frames.py"
-  File "..\themes\Default_no_frames.py"
-  File "..\themes\IMS_Package.py"
-  File /r "..\themes\Default (Frames)"
-  File /r "..\themes\Default (No Frames)"
-  File /r "..\themes\ThemePreview"
-  File /r "..\themes\IMS Package"
-
-  SetOutPath "$INSTDIR\3rdparty\win32"
-  File "C:\Python24\w9xpopen.exe"
-  File /r "..\3rdparty\win32\pdftohtml"
-  File /r "..\3rdparty\win32\Karrigell"
-  File /r "..\3rdparty\win32\xlHtml"
-  File /r "..\3rdparty\win32\wv"
-  File /r "..\3rdparty\win32\unrtf"
-  File /r "..\3rdparty\win32\htmldoc"
   CreateDirectory "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}"
   SetOutPath $INSTDIR ; for working directory
   CreateShortCut "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}\Uninstall ${MUI_PRODUCT} ${MUI_VERSION}.lnk" "$INSTDIR\Uninstall.exe"
@@ -113,16 +57,6 @@ Section "Program Files" SecCopyUI
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${MUI_PRODUCT} ${MUI_VERSION}" "DisplayName" "${MUI_PRODUCT} ${MUI_VERSION} (remove only)"
 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${MUI_PRODUCT} ${MUI_VERSION}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
-
-  EnumRegKey $hasDM HKLM "Software\Vaclav Slavik\Documancer" 0
-  StrCmp "$hasDM" "" CheckHKCU CheckForDM
-CheckHKCU:
-  EnumRegKey $hasDM HKCU "Software\Vaclav Slavik\Documancer" 0
-  StrCmp "$hasDM" "" InstallDM CheckForDM
-CheckForDM:
-  StrCmp "$hasDM" "0.2.6" Finished InstallDM  
-InstallDM:
-  Exec $INSTDIR\installers\documancer-0.2.6-setup.exe
 
 Finished:
 SectionEnd

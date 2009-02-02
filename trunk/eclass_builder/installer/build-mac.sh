@@ -29,17 +29,8 @@ if [ "$skipmac" != "yes" ]; then
      #    exit 1 
      #fi
 
-     cmd="export PYTHONPATH=..:/Users/kevino/wxpython-2.8/wxPython/wx-2.8-mac-unicode && $PYTHON make_builder_osx.py py2app --no-strip" # && $PYTHON make_library_osx.py py2app --no-strip"
+     cmd="export PYTHONPATH=..:/Users/kevino/wxpython-2.8/wxPython/wx-2.8-mac-unicode && $PYTHON make-installer.py --no-strip" # && $PYTHON make_library_osx.py py2app --no-strip"
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
-
-     # now it's time for 'fun fixing the PyXML hacks!'
-     #OLDDIR=$PWD
-     APP_PYDIR=$dir/installer/dist/EClass.Builder.app/Contents/Resources/lib/python2.4
-     #if [ "$IS_INTEL" != "yes" ]; then
-     #    ssh $MAC_HOST "cd $APP_PYDIR && mv lib-dynload/xml/parsers/pyexpat.so lib-dynload && mv lib-dynload/xml/parsers/sgmlop.so lib-dynload"
-     #    ssh $MAC_HOST "zip $APP_PYDIR/site-packages.zip -d xml/*"
-     #    ssh $MAC_HOST "cd /Library/Frameworks/Python.framework/Versions/2.4/lib/python2.4 && zip -r -g -n .pyc $APP_PYDIR/site-packages.zip . -i xml\*.pyc && cd site-packages && zip -r -g -n .pyc:.mo $APP_PYDIR/site-packages . -i _xmlplus\*.pyc _xmlplus\*.mo"
-     #fi
 
      mkdir -p $DIST_DIR/dmg_files-$BUILD_TYPE
      scp -r "$MAC_HOST:$dir/installer/dist/EClass.Builder.app "  $DIST_DIR/dmg_files-$BUILD_TYPE
@@ -52,16 +43,6 @@ if [ "$skipmac" != "yes" ]; then
      fi
      
      hdiutil create -srcfolder $DIST_DIR/dmg_files-$BUILD_TYPE -volname "EClass.Builder" -imagekey zlib-level=9 $DMG_NAME
-     
-     rm -rf $DMG_DIR
-
-     #scp -r "$MAC_HOST:$dir/installer/dist/EClass.Library.app "  $DMG_DIR
-     #DMG_NAME=deliver/eclass-library-$LIBRARY_VERSION-$BUILD_TYPE.dmg
-     #if [ -f $DMG_NAME ]; then
-     #  rm $DMG_NAME
-     #fi
-     
-     #hdiutil create -srcfolder $DMG_DIR -volname "EClass.Library" -imagekey zlib-level=9 $DMG_NAME
      
      rm -rf $DMG_DIR
 

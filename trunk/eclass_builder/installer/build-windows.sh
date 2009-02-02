@@ -26,10 +26,7 @@ if [ $skipwin != yes ]; then
         exit 1 
     fi
 
-     cmd="export VS71COMNTOOLS=$MSVS7_DIR/Common7/Tools/ && cmd /c make_installer.bat $BUILD_VERSION"
-     #cmd="/c/python23/python ../updateVersion.py && python2.4 make_py_dist.py && /c/Progra~1/nsis/makensis eclass-builder.nsi"
-     #scp ./make_msvc7_setup $WIN_HOST:$dir/installer
-     #&& export MSVS7_DIR=$MSVS7_DIR && export NET_FrameworkDir=$NET_FrameworkDir && . make_msvc7_setup
+     cmd="cmd /c make_installer.bat $BUILD_VERSION"
      ssh $WIN_HOST "rm -rf $dir/installer/*.exe && cd $dir/installer && $cmd"
 
      echo "Fetching the results..."
