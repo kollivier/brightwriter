@@ -11,6 +11,9 @@ if [ "$skipmac" != "yes" ]; then
          BUILD_TYPE="intel"
          #PYTHON="python"
      fi
+     # clean up the build dir
+     ssh $MAC_HOST "rm -rf $MAC_BUILD/*"
+     
      echo "Copying source file and build script..."
      scp -r $STAGING_DIR/* $MAC_HOST:$MAC_BUILD
     
@@ -23,11 +26,7 @@ if [ "$skipmac" != "yes" ]; then
      dir=$MAC_BUILD/eclass_builder
      
      # run unit tests
-     ssh $MAC_HOST "cd $dir" # && $PYTHON runTests.py"
-     #if [ $? != 0 ]; then
-     #    echo "Unit tests failed! Stopping release..."
-     #    exit 1 
-     #fi
+     ssh $MAC_HOST "cd $dir"
 
      cmd="export PYTHONPATH=..:/Users/kevino/wxpython-2.8/wxPython/wx-2.8-mac-unicode && $PYTHON make-installer.py"
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
