@@ -59,7 +59,7 @@ for subdir in subdirs:
 setup(
     name="EClass.Builder",
     app=[rootdir + 'eclass_builder.py'],
-    windows=[rootdir + 'eclass_builder.py'],
+    windows={"script": rootdir + 'eclass_builder.py', "icon_resources": [(1, "../icons/eclass_builder.ico")]},
     data_files=source_files,
     options=dict(py2exe=py2exe_options, py2app=py2app_options),
 )
