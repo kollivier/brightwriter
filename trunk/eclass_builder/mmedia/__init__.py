@@ -108,10 +108,6 @@ def getHTMLTemplate(filename, url, isVideo=True, autoStart=False):
     # check if we have a streaming version of the same file first, 
     # and use that if so
 
-    if os.path.exists(base + ".mp4"):
-        ext = ".mp4"
-    if os.path.exists(base + ".mp3"):
-        ext = ".mp3"
     mimetype = getMediaMimeType(filename, isVideo)
     html = ""
     
