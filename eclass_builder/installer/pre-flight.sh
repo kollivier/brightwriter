@@ -20,6 +20,10 @@ if [ -d $ECLASS_TEMP_DIR ]; then
     rm -rf $ECLASS_TEMP_DIR
 fi
 
+if [ -d $STAGING_DIR ]; then
+    rm -rf $STAGING_DIR
+fi
+
 svn co https://eclass.svn.sourceforge.net/svnroot/eclass/trunk/eclass_builder
 
 # this is where we will store the wxAll tarball we create
