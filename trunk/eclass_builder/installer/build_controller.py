@@ -92,7 +92,7 @@ intel_config.update({"IS_INTEL":"yes"})
 mactasks_intel = TaskRunner( Task([ Job("mac_intel", "./build-mac.sh", env=intel_config), ]) )
 tasks['mac_intel'] = mactasks_intel
 
-runtasks = ["win", "mac", "mac_intel"]
+runtasks = ["win", "mac_intel"]
 
 threads = []
 for task in runtasks:
@@ -119,7 +119,7 @@ if not errorOccurred and "upload" in sys.argv:
     releasefiles = getDistribFiles()
     createSFReleaseFile(releasefiles)
 
-    upload_tasks = TaskRunner( Task([ Job("upload", "python2.4", ["sf-release.py", "uploads", config.SF_USERNAME.replace('"', ''), config.SF_PASSWORD.replace('"', '')], env=config_env), ]) )
+    upload_tasks = TaskRunner( Task([ Job("upload", "python2.5", ["sf-release.py", "uploads", config.SF_USERNAME.replace('"', ''), config.SF_PASSWORD.replace('"', '')], env=config_env), ]) )
 
     uploadthread = TaskRunnerThread(upload_tasks)
     uploadthread.start()
