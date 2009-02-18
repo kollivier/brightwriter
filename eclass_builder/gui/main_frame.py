@@ -884,6 +884,7 @@ class MainFrame2(sc.SizedFrame):
                 
                 filename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
                 lang = appdata.projectLanguage = "en-US"
+                settings.ProjectSettings["Theme"] = "Default (frames)"
                 
                 self.imscp.metadata.lom.general.title[lang] = newdialog.txtTitle.GetValue()
                 self.imscp.metadata.lom.general.description[lang] = newdialog.txtDescription.GetValue()
@@ -891,7 +892,6 @@ class MainFrame2(sc.SizedFrame):
                 
                 self.imscp.organizations.append(ims.contentpackage.Organization())
                 self.CreateIMSResource(self.imscp.metadata.lom.general.title[lang])
-                settings.ProjectSettings["Theme"] = "Default (frames)"
                 if not self.imscp.saveAsXML(filename):
                     wx.MessageBox(_("Unable to save project file. Make sure you have permission to write to the project directory."))
                 
