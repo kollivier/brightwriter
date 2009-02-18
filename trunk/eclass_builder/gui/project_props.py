@@ -31,9 +31,6 @@ class ProjectPropsDialog(sc.SizedDialog):
         self.generalPanel = GeneralPanel(self.notebook, self.project)
         self.notebook.AddPage(self.generalPanel, _("General"))
         
-        self.searchPanel = SearchPanel(self.notebook, self.project)
-        self.notebook.AddPage(self.searchPanel, _("Search"))
-        
         self.publishPanel = PublishPanel(self.notebook)
         self.notebook.AddPage(self.publishPanel, _("Publish"))
         
@@ -69,17 +66,6 @@ class ProjectPropsDialog(sc.SizedDialog):
             self.project.metadata.lom.general.description[lang] = self.generalPanel.txtdescription.GetValue()
             self.project.metadata.lom.general.keyword[lang] = self.generalPanel.txtkeywords.GetValue()
 
-        settings.ProjectSettings["SearchEnabled"] = int(self.searchPanel.chkSearch.GetValue())
-        useswishe = False
-        updatetheme = False
-        #if self.searchPanel.whichSearch.GetStringSelection() == self.searchPanel.options[0]:
-        #    settings.ProjectSettings["SearchProgram"] = "Lucene"
-        #    useswishe = True
-        #elif self.searchPanel.whichSearch.GetStringSelection() == self.self.searchPanel.options[1]:
-        #    settings.ProjectSettings["SearchProgram"] = "Greenstone"
-
-        #if self.searchchanged:
-        #    self.parent.Update()
         if self.publishPanel.chkFilename.GetValue() == True:
             settings.ProjectSettings["ShortenFilenames"] = "Yes"
         else:
