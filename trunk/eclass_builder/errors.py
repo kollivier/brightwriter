@@ -38,8 +38,11 @@ def print_exc_plus(exctype, value, trace):
             #We have to be careful not to cause a new error in our error
             #printer! Calling str() on an unknown object could cause an
             #error we don't want.
-            try:                   
-                exception += `keyvalue`
+            try:
+                valuestring = `keyvalue`
+                if len(valuestring) > 500:
+                    valuestring = valuestring[:500]
+                exception += valuestring
             except:
                 exception += "<ERROR WHILE PRINTING VALUE>"
             exception += "\n"
