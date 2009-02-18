@@ -27,6 +27,10 @@ import gui
 import fileutils
 import externals.BeautifulSoup
 
+# workaround for http://bugs.python.org/issue843590
+import encodings
+encodings.aliases.aliases['macintosh'] = 'mac_roman'
+
 #imports for packaging tools
 import htmleditor
 if sys.platform.startswith("win"):
