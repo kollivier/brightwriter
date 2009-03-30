@@ -53,18 +53,20 @@ class IMSCPTreeControl(wx.TreeCtrl):
         return None
     
     def AddIMSItemUnderCurrentItem(self, imsitem):
+        # Since we hide the root, we need to create a 'fake' root item
+        # to attach the first node to.
         if self.IsEmpty():
-            newtreenode = self.AddRoot(
+            parentitem = self.AddRoot(
                 imsitem.title.text,
                 -1,-1,
                 wx.TreeItemData(imsitem))
                 
         else:
             parentitem = self.GetCurrentTreeItem()
-            
-            newtreenode = self.AppendItem(parentitem, 
-                                       imsitem.title.text, -1, -1, 
-                                       wx.TreeItemData(imsitem))
+        
+        newtreenode = self.AppendItem(parentitem, 
+                                   imsitem.title.text, -1, -1, 
+                                   wx.TreeItemData(imsitem))
        
         if newtreenode.IsOk():
             self.SelectItem(newtreenode)
