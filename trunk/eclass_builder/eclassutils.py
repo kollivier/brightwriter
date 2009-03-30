@@ -23,9 +23,10 @@ def getEClassPageForIMSResource(imsresource):
     # HTML page. This is so that tools that do not understand the EClass Page format
     # can read EClass-created IMS content packages.
     filename = None
-    for file in imsresource.files:
-        if "href" in file.attrs and os.path.splitext(file.attrs["href"])[1] == ".ecp":
-            filename = file.attrs["href"]
+    if imsresource:
+        for file in imsresource.files:
+            if "href" in file.attrs and os.path.splitext(file.attrs["href"])[1] == ".ecp":
+                filename = file.attrs["href"]
     
     return filename
     
