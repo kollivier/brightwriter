@@ -530,22 +530,23 @@ class MainFrame2(sc.SizedFrame):
         parent = self.projectTree.GetItemParent(selection)
         parentitem = self.projectTree.GetPyData(parent)
         
-        index = parentitem.items.index(selitem)
-        if index > 0:
-            parentitem.items.remove(selitem)
-            parentitem.items.insert(index - 1, selitem)
-
-            haschild = self.projectTree.ItemHasChildren(selection)
-            prevsibling = self.projectTree.GetPrevSibling(selection)
-            insertafter = self.projectTree.GetPrevSibling(prevsibling)
-            
-            self.projectTree.Delete(selection)
-            newitem = self.projectTree.InsertItem(parent, insertafter, 
-                                     selitem.title.text,-1,-1,wx.TreeItemData(selitem))
-            if haschild:
-                self.AddIMSChildItemsToTree(selection, selitem.items)
-            self.projectTree.SelectItem(newitem)
-            self.Update()
+        if parentitem:
+            index = parentitem.items.index(selitem)
+            if index > 0:
+                parentitem.items.remove(selitem)
+                parentitem.items.insert(index - 1, selitem)
+    
+                haschild = self.projectTree.ItemHasChildren(selection)
+                prevsibling = self.projectTree.GetPrevSibling(selection)
+                insertafter = self.projectTree.GetPrevSibling(prevsibling)
+                
+                self.projectTree.Delete(selection)
+                newitem = self.projectTree.InsertItem(parent, insertafter, 
+                                         selitem.title.text,-1,-1,wx.TreeItemData(selitem))
+                if haschild:
+                    self.AddIMSChildItemsToTree(selection, selitem.items)
+                self.projectTree.SelectItem(newitem)
+                self.Update()
                 
     def OnMoveItemDown(self, event):
         selection = self.projectTree.GetCurrentTreeItem()
@@ -553,21 +554,22 @@ class MainFrame2(sc.SizedFrame):
         parent = self.projectTree.GetItemParent(selection)
         parentitem = self.projectTree.GetPyData(parent)
         
-        index = parentitem.items.index(selitem)
-        if index > 0:
-            parentitem.items.remove(selitem)
-            parentitem.items.insert(index + 1, selitem)
-
-            insertafter = self.projectTree.GetNextSibling(selection)
-            haschild = self.projectTree.ItemHasChildren(selection)
-            
-            self.projectTree.Delete(selection)
-            newitem = self.projectTree.InsertItem(parent, insertafter, 
-                                     selitem.title.text,-1,-1,wx.TreeItemData(selitem))
-            if haschild:
-                self.AddIMSChildItemsToTree(selection, selitem.items)
-            self.projectTree.SelectItem(newitem)
-            self.Update()
+        if parentitem:        
+            index = parentitem.items.index(selitem)
+            if index > 0:
+                parentitem.items.remove(selitem)
+                parentitem.items.insert(index + 1, selitem)
+    
+                insertafter = self.projectTree.GetNextSibling(selection)
+                haschild = self.projectTree.ItemHasChildren(selection)
+                
+                self.projectTree.Delete(selection)
+                newitem = self.projectTree.InsertItem(parent, insertafter, 
+                                         selitem.title.text,-1,-1,wx.TreeItemData(selitem))
+                if haschild:
+                    self.AddIMSChildItemsToTree(selection, selitem.items)
+                self.projectTree.SelectItem(newitem)
+                self.Update()
 
     def OnOpen(self,event):
         """
@@ -758,13 +760,15 @@ class MainFrame2(sc.SizedFrame):
                     parentitem = self.projectTree.GetCurrentTreeItemData()
                     if parentitem:
                         parentitem.items.append(newitem)
-                        newtreeitem = self.projectTree.AddIMSItemUnderCurrentItem(newitem)
-                        
                     else: 
                         self.imscp.organizations[0].items.append(newitem)
-                        self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0])
 
-                    self.EditItem(None)
+                    newtreeitem = self.projectTree.AddIMSItemUnderCurrentItem(newitem)
+
+                    if not self.projectTree.GetSelection().IsOk() and self.projectTree.GetCount() == 1:
+                        self.projectTree.SelectItem(self.projectTree.GetRootItem())
+
+                    self.EditItem(newitem)
                     self.PublishPage(newitem)
                     self.UpdateEClassDataFiles()
     
@@ -959,8 +963,9 @@ class MainFrame2(sc.SizedFrame):
             
         del busy
     
-    def EditItem(self, event=None):
+    def EditItem(self, item=None):
         selitem = self.projectTree.GetCurrentTreeItemData()
+        
         if selitem:
             filename = eclassutils.getEditableFileForIMSItem(self.imscp, selitem)
             isplugin = False
@@ -1046,7 +1051,7 @@ class MainFrame2(sc.SizedFrame):
 
         self.Preview()
         self.dirtyNodes.append(imsitem)
-        if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
+        if "UploadOnSave" in settings.ProjectSettings and string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
             self.UploadPage()
             
     def UpdateEClassDataFiles(self):
