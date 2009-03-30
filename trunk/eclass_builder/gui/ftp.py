@@ -206,7 +206,7 @@ class FTPUpload:
 		#now construct the subdir as relative to the start URL
 		#for the EClass
 		fulldir = self.ftpService.hostdir + mydir
-		if not fulldir[0] == "/":
+		if not fulldir == "" and not fulldir[0] == "/":
 			fulldir = "/" + fulldir
 		#print "Fulldir: " + fulldir
 		return fulldir
