@@ -133,6 +133,7 @@ class MainFrame2(sc.SizedFrame):
         self.CutNode = None
         self.CopyNode = None
         self.inLabelEdit = False
+        self.selectedFileLastModifiedTime = 0
         
         self.themes = themes.ThemeList(os.path.join(settings.AppDir, "themes"))
         self.currentTheme = self.themes.FindTheme("Default (no frames)")
@@ -313,6 +314,7 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         
         self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
+        self.Bind(wx.EVT_IDLE, self.OnIdle)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_BEGIN_LABEL_EDIT, self.OnTreeLabelWillChange, self.projectTree)
@@ -354,6 +356,19 @@ class MainFrame2(sc.SizedFrame):
             url = os.path.join(settings.AppDir, "docs", "en", "manual", "index.htm")
         webbrowser.open_new("file://" + url)
 
+    def OnIdle(self, event):
+        event.Skip()
+        if self.selectedFileLastModifiedTime > 0:
+            try:
+                filename = self.GetContentFilenameForSelectedItem()
+            
+                if filename:
+                    modifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
+                    if not modifiedTime == self.selectedFileLastModifiedTime:
+                        self.Preview()
+            except:
+                pass
+
     def OnAppPreferences(self, event):
         PreferencesEditor(self).ShowModal()
 
@@ -392,8 +407,12 @@ class MainFrame2(sc.SizedFrame):
                 self.imscp.resources.append(newresource)
                 
                 newitem = ims.contentpackage.Item()
-                assert os.path.basename(packagefile) is not None and os.path.basename(packagefile) != "" 
-                newitem.title.text = os.path.basename(packagefile)
+                assert os.path.basename(packagefile) is not None and os.path.basename(packagefile) != ""
+                
+                titleString = htmlutils.getTitleForPage(os.path.join(settings.ProjectDir, packagefile))
+                if not titleString or titleString == "":
+                    titleString = os.path.basename(packagefile)
+                newitem.title.text = titleString
                 newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
                 newitem.attrs["identifierref"] = newresource.attrs["identifier"]
                 
@@ -880,6 +899,7 @@ class MainFrame2(sc.SizedFrame):
             result = newdialog.ShowModal()
             if result == wx.ID_OK:
                 self.imscp = ims.contentpackage.ContentPackage() # conman.ConMan()
+                settings.ProjectSettings = xml_settings.XMLSettings()
                 self.projectTree.DeleteAllItems()
                 self.browser.LoadPage("about:blank")
         
@@ -963,7 +983,7 @@ class MainFrame2(sc.SizedFrame):
             
         del busy
     
-    def EditItem(self, item=None):
+    def EditItem(self, event=None):
         selitem = self.projectTree.GetCurrentTreeItemData()
         
         if selitem:
@@ -1007,33 +1027,41 @@ class MainFrame2(sc.SizedFrame):
                 self.UpdateEClassDataFiles()
                 self.Update()
 
-    def Preview(self):
-        filename = None
+    def GetContentFilenameForSelectedItem(self):
         if self.projectTree:
             imsitem = self.projectTree.GetCurrentTreeItemData()
             if imsitem:
                 import ims.utils
                 resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
                 if resource:
-                    filename = resource.getFilename()
+                    return resource.getFilename()
+        
+        return None
+
+    def Preview(self):
+        filename = self.GetContentFilenameForSelectedItem()
             
-            if filename:
-                #publisher = plugins.GetPublisherForFilename(filename)
-                #filelink = publisher.GetFileLink(filename).replace("/", os.sep)
-                filename = os.path.join(settings.ProjectDir, filename)
-        
-                #we shouldn't preview files that EClass can't view
-                ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
-                if sys.platform == "win32":
-                    ok_fileTypes.append("pdf")
-        
-                if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
-                    self.browser.LoadPage(filename)
-                else:
-                    self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
-                        
+        if filename:
+            try:
+                self.selectedFileLastModifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
+            except:
+                self.selectedFileLastModifiedTime = 0
+            #publisher = plugins.GetPublisherForFilename(filename)
+            #filelink = publisher.GetFileLink(filename).replace("/", os.sep)
+            filename = os.path.join(settings.ProjectDir, filename)
+    
+            #we shouldn't preview files that EClass can't view
+            ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
+            if sys.platform == "win32":
+                ok_fileTypes.append("pdf")
+    
+            if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
+                self.browser.LoadPage(filename)
             else:
-                self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("This page cannot be previewed inside EClass. Double-click on the page to view or edit it.") + "</p>"))
+                self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
+                    
+        else:
+            self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("This page cannot be previewed inside EClass. Double-click on the page to view or edit it.") + "</p>"))
 
     def PublishPage(self, imsitem):
         if imsitem != None:
@@ -1051,7 +1079,7 @@ class MainFrame2(sc.SizedFrame):
 
         self.Preview()
         self.dirtyNodes.append(imsitem)
-        if "UploadOnSave" in settings.ProjectSettings and string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
+        if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
             self.UploadPage()
             
     def UpdateEClassDataFiles(self):
