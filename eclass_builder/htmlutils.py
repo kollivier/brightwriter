@@ -1,13 +1,17 @@
-import string, os, sys
-import utils
-import re
-import fileutils
 from HTMLParser import HTMLParser
 from xmlutils import *
+
 import analyzer
-import urllib
-import settings
+import externals.BeautifulSoup as BeautifulSoup
 import cStringIO
+import fileutils
+import os
+import re
+import settings
+import string
+import sys
+import urllib
+import utils
 
 def TextToHTMLChar(mytext):
     
@@ -15,7 +19,7 @@ def TextToHTMLChar(mytext):
     
 def GetFullPathForURL(url, basedir):
     path = urllib.unquote(url)
-    if path.find("file://") == 0:
+    if path.find("file://") == 0 and os.path.exists(urllib.url2pathname(path)):
         path = urllib.urlretrieve(url)[0]
             
     if not os.path.exists(path):
@@ -23,6 +27,18 @@ def GetFullPathForURL(url, basedir):
     
     return path
     
+def getTitleForPage(filename):
+    """
+    Returns the text of the <title> tag in the HTML page if it has one, returns None otherwise.
+    """
+    soup = BeautifulSoup.BeautifulSoup(open(filename).read())
+    if soup:
+        title = soup.find('title')
+        if title:
+            return title.string
+            
+    return None
+
 def copyDependentFilesAndUpdateLinks(oldfile, filename):
     myanalyzer = analyzer.ContentAnalyzer()
     myanalyzer.analyzeFile(filename)
