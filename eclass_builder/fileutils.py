@@ -20,6 +20,15 @@ def getNumFiles(dirname, recurse=True):
             
     return numFiles
             
+def isHidden(filename):
+    """
+    Determines if a file is marked hidden, or is within a hidden directory.
+    """
+    for part in filename.split(os.sep):
+        if not len(part) == 1 and part.startswith("."):
+            return True
+    
+    return False
 
 def getPubDir():
     return os.path.join(settings.ProjectDir, "pub")

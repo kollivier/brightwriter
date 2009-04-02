@@ -4,6 +4,7 @@ import wx.lib.sized_controls as sc
 import persistence
 import autolist
 
+import fileutils
 import ftplib
 import traceback
 import settings
@@ -219,7 +220,7 @@ class FTPUpload:
 		"""
 		for afile in filelist:
 			uploaddir = self.GetUploadDirName(os.path.dirname(afile))
-			if not uploaddir in self.dirlist:
+			if not uploaddir in self.dirlist and not fileutils.isHidden(uploaddir):
 				self.dirlist.append(uploaddir)
 
 	def GenerateFileList(self, indir):
@@ -232,7 +233,7 @@ class FTPUpload:
 		for item in os.listdir(indir):
 			myitem = os.path.join(indir, item)
 			
-			if os.path.isfile(myitem) and not string.find(item, "._") == 0 and string.find(item, "Karrigell") == -1 and string.find(item, "httpserver") == -1 and string.find(item, "ftppass.txt") == -1:
+			if os.path.isfile(myitem) and not fileutils.isHidden(myitem) and string.find(item, "Karrigell") == -1 and string.find(item, "httpserver") == -1 and string.find(item, "ftppass.txt") == -1:
 				finalname = string.replace(myitem, settings.ProjectDir, "")
 				if wx.Platform == "__WXMSW__":
 					finalname = string.replace(finalname, "\\", "/")
