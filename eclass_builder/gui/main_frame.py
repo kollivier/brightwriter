@@ -1085,9 +1085,6 @@ class MainFrame2(sc.SizedFrame):
     def UpdateEClassDataFiles(self):
         result = False
         busy = wx.BusyCursor()
-        wx.Yield()
-        #self.CreateDocumancerBook()
-        #self.CreateDevHelpBook()
         utils.CreateJoustJavascript(self.imscp.organizations[0].items[0])
         utils.CreateiPhoneNavigation(self.imscp.organizations[0].items[0])
         self.currentTheme = self.themes.FindTheme(settings.ProjectSettings["Theme"])
