@@ -6,14 +6,8 @@ if not os.path.isdir(rootdir):
     rootdir = os.path.dirname(rootdir)
     
 # do this first because other modules may rely on _()
-localedir = os.path.join(rootdir, 'locale')
-import gettext
-gettext.install('eclass', localedir)
-lang_dict = {
-            "en": gettext.translation('eclass', localedir, languages=['en']), 
-            "es": gettext.translation('eclass', localedir, languages=['es']),
-            "fr": gettext.translation('eclass', localedir, languages=['fr'])
-            }
+import i18n
+lang_dict = i18n.installEClassGettext()
 
 import wx
 import gui.error_viewer as errors
