@@ -7,40 +7,15 @@
 import sys, os, string
 import settings
 import shutil
-import plugins
 import constants
 import ims
 import ims.contentpackage
 import ims.utils
-import conman
 import appdata
 import eclassutils
 import uuid
 
 filenameRestrictedChars = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
-
-class LogFile:
-    def __init__(self, filename="log.txt"):
-        self.filename = filename
-        
-    def read(self):
-        if os.path.exists(self.filename):
-            return unicode(open(self.filename, "rb").read(), "utf-8")
-        else:
-            return ""
-
-    def write(self, message):
-        if message == None:
-            return
-        try:
-            myfile = open(self.filename, "ab")
-            myfile.write(message.encode("utf-8") + "\n")
-            myfile.close()
-        except IOError:
-            print "WARNING: Unable to write to %s" % self.filename
-
-    def clear(self):
-        os.remove(self.filename)
 
 def getStdErrorMessage(type = "IOError", args={}):
     if type == "IOError":
@@ -88,14 +63,18 @@ def AddiPhoneItems(node, isroot=False):
     for root in children:
         filename = ""
 
-        name = root.title.text        
+        name = root.title.text
+        if not name:
+            name = ""
         childLinks += "<li><a href=\"#%s\">%s</a></li>\n" % (name.replace(" ", ""), name)
         if len(root.children) > 0:
             newlinks, newpages = AddiPhoneItems(root)
             links += newlinks
             pages += newpages
 
-    name = node.title.text
+    name = nodename = node.title.text
+    if not name:
+        name = nodename = ""
 
     selectedText = ""
     
@@ -108,7 +87,7 @@ def AddiPhoneItems(node, isroot=False):
 <ul id="%s"%s>
     <li><a href="#%s">Intro</a></li>
     %s
-</ul>""" % (node.title.text.replace(" ", ""), selectedText, name.replace(" ", ""), childLinks)
+</ul>""" % (nodename.replace(" ", ""), selectedText, name.replace(" ", ""), childLinks)
 
 
     resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, node)
@@ -155,16 +134,12 @@ def CreateiPhoneNavigation(rootItem):
     shutil.copytree(os.path.join(settings.AppDir, "externals", "iui-0.13", "iui"), destdir)
 
 def CreateJoustJavascript(pub):
-    if isinstance(pub, conman.conman.ConNode):
-        name = pub.nodes[0].content.metadata.name
-        filename = GetFileLink(pub.content.filename)
-    elif isinstance(pub, ims.contentpackage.Item):
-        name = pub.title.text
-        resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, pub)
-        filename = eclassutils.getEClassPageForIMSResource(resource)
-        if not filename:
-            filename = resource.getFilename()
-        filename = GetFileLink(filename)
+    name = pub.title.text
+    resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, pub)
+    filename = eclassutils.getEClassPageForIMSResource(resource)
+    if not filename:
+        filename = resource.getFilename()
+    filename = GetFileLink(filename)
     text = u"""
 function addJoustItems(theMenu){
 var level1ID = -1;
@@ -182,27 +157,22 @@ var level3ID = -1;
 
 def AddJoustItems(nodes, level):
     text = u""
-    if isinstance(nodes, conman.conman.ConNode):
-        children = nodes.children
-    else:
-        children = nodes.items
+
+    children = nodes.items
         
     for root in children:
         filename = ""
 
-        if isinstance(root, conman.conman.ConNode):
-            filename = GetFileLink(root.content.filename)
-            name = root.content.metadata.name
-        elif isinstance(root, ims.contentpackage.Item):
-            name = root.title.text
-            resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, root)
-            filename = eclassutils.getEClassPageForIMSResource(resource)
-            if not filename:
-                filename = resource.getFilename()
-            filename = GetFileLink(filename)
+        name = root.title.text
+        if not name:
+            name = ""
+        resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, root)
+        filename = eclassutils.getEClassPageForIMSResource(resource)
+        if not filename:
+            filename = resource.getFilename()
+        filename = GetFileLink(filename)
 
-        if isinstance(root, conman.conman.ConNode) and len(root.children) > 0 \
-            or isinstance(root, ims.contentpackage.Item) and len(root.items) > 0:
+        if isinstance(root, ims.contentpackage.Item) and len(root.items) > 0:
             nodeType = "Book"
         else:
             nodeType = "Document"
@@ -215,6 +185,7 @@ def AddJoustItems(nodes, level):
 
 def GetFileLink(filename):
     try:
+        import plugins
         publisher = plugins.GetPluginForFilename(filename).HTMLPublisher()
         filename = publisher.GetFileLink(filename)
     except: 
