@@ -16,7 +16,7 @@ import xml.dom.minidom
 
 import appdata
 import ftplib
-import themes.themes as themes
+import themes
 import conman.xml_settings as xml_settings
 import conman.vcard as vcard
 from convert.PDF import PDFPublisher
@@ -899,6 +899,7 @@ class MainFrame2(sc.SizedFrame):
             result = newdialog.ShowModal()
             if result == wx.ID_OK:
                 self.imscp = ims.contentpackage.ContentPackage() # conman.ConMan()
+                appdata.currentPackage = self.imscp
                 settings.ProjectSettings = xml_settings.XMLSettings()
                 self.projectTree.DeleteAllItems()
                 self.browser.LoadPage("about:blank")
@@ -941,6 +942,7 @@ class MainFrame2(sc.SizedFrame):
                 self.imscp.loadFromXML(filename)
             
             if self.imscp:
+                appdata.currentPackage = self.imscp
                 settings.ProjectDir = os.path.dirname(filename)
                 # TODO: We should store the project as a global rather than its settings
                 settings.ProjectSettings = xml_settings.XMLSettings()

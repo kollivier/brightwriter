@@ -26,7 +26,7 @@ lang_dict = {
 import conman
 import plugins
 plugins.LoadPlugins()
-import themes.themes as themes
+import themes
 	
 class EClassPublisher:
     def __init__(self, filename, pubdir, format="html"):
