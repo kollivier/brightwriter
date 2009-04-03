@@ -1,3 +1,4 @@
+import logging
 import sys, string, os
 import utils
 import settings
@@ -72,9 +73,9 @@ class errorCallbacks:
             appErrorLog.write(message)
             
 
-class AppErrorLog(utils.LogFile):
+class AppErrorLog(logging.LogFile):
 	def __init__(self):
-		utils.LogFile.__init__(self)
+		logging.LogFile.__init__(self)
 		logdir = settings.AppDir
 		try:
 			import guiutils
