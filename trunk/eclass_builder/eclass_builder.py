@@ -10,8 +10,8 @@ import i18n
 lang_dict = i18n.installEClassGettext()
 
 import wx
-import gui.error_viewer as errors
-sys.excepthook = errors.guiExceptionHook
+import gui.error_viewer as error_viewer
+sys.excepthook = error_viewer.guiExceptionHook
 
 import settings, guiutils, appdata, errors
 import conman.xml_settings as xml_settings
