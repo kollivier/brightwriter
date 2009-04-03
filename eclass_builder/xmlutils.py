@@ -7,6 +7,10 @@ def TextToXMLChar(mytext):
     Function: TextToXMLChar(mytext)
     Description: Validates text and converts special characters to their XML character equivalents.
     """
+    
+    if not mytext:
+        return ""
+        
     global escapeChars
     for char in escapeChars:
         mytext = mytext.replace(char[0], char[1])
@@ -18,6 +22,10 @@ def XMLCharToText(mytext):
     Function: XMLCharToText(mytext)
     Description: Validates XML character text and converts XML special characters to their text equivalent.
     """
+
+    if not mytext:
+        return ""
+
     global escapeChars
     for char in escapeChars:
         mytext = mytext.replace(char[1], char[0])
@@ -29,7 +37,9 @@ def XMLAttrToText(mytext):
     Function: XMLAttrToText(mytext)
     Description: Validates XML attribute text and converts special characters to their text equivalents
     """
-    
+    if not mytext:
+        return ""
+
     return XMLCharToText(mytext)
 
 def TextToXMLAttr(mytext):
@@ -37,6 +47,8 @@ def TextToXMLAttr(mytext):
     Function: TextToXMLAttr(mytext)
     Description: Validates text and converts special characters to their XML attribute equivalents
     """
+    if not mytext:
+        return ""
 
     return TextToXMLChar(mytext)
 
