@@ -1048,9 +1048,10 @@ class MainFrame2(sc.SizedFrame):
                 self.selectedFileLastModifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
             except:
                 self.selectedFileLastModifiedTime = 0
-            #publisher = plugins.GetPublisherForFilename(filename)
-            #filelink = publisher.GetFileLink(filename).replace("/", os.sep)
-            filename = os.path.join(settings.ProjectDir, filename)
+            
+            publisher = plugins.GetPublisherForFilename(filename)
+            filelink = publisher.GetFileLink(filename).replace("/", os.sep)
+            filename = os.path.join(settings.ProjectDir, filelink)
     
             #we shouldn't preview files that EClass can't view
             ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
