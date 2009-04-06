@@ -541,6 +541,8 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         else:
             myhtml = ""
         objtext = ""
+        
+        self.data['name'] = mypage.name
         myhtml = self._InsertTerms(myhtml, termlist)
         
         if len(mypage.objectives) > 0:
@@ -553,14 +555,14 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         objtext = utils.makeUnicode(objtext)
         myhtml = self._AddMedia(mypage) + objtext + utils.makeUnicode(myhtml)
 
+        myhtml = u'<h1 align="center">' + self.data['name'] + u'</h1>' + myhtml
         self.data['content'] = myhtml
-        self.data['name'] = mypage.name
         
         if not ishotword:
             self.data['credit'] = self.GetCreditString()
             
         else: #ugly hack for now...
-            self.data['backlink'] = "<a href=\"javascript:window.close()\">" + _("Close") + "</a>"
+            self.data['content'] += "<hr /><p align=\"center\"><a href=\"javascript:window.close()\">" + _("Close") + "</a></p>"
             
             try:
                 myhtml = self.ApplyTemplate(data=self.data)

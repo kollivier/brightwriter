@@ -480,17 +480,16 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
     def GetData(self):
         self.quiz = QuizPage()
         filename = ""
-        if isinstance(self.node, conman.conman.ConMan):
-            filename = self.node.content.filename
-        else:
-            self.content = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
-            filename = eclassutils.getEClassPageForIMSResource(self.content)
-            if not filename:
-                filename = self.content.getFilename()
+
+        self.content = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
+        filename = eclassutils.getEClassPageForIMSResource(self.content)
+        if not filename:
+            filename = self.content.getFilename()
         
         self.quiz.LoadPage(os.path.join(settings.ProjectDir, filename))
 
-        self.data['content'] = self._ItemsAsHTML()
+        self.data['content'] = u'<h1 align="center">%s</h1>' % self.node.title.text
+        self.data['content'] += self._ItemsAsHTML()
         #self.data['credit'] = ""
 
         try:        

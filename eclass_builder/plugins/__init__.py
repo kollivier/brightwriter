@@ -1,18 +1,25 @@
-import string, os, sys
-import settings
-import csv
-from htmlutils import *
 from xmlutils import *
-import types
-import locale
-import utils
+
+import appdata
 import conman
+import csv
+import eclassutils
 import ims
 import ims.contentpackage
-import eclassutils
-import appdata
+import locale
+import os
+import PyMeld
+import settings
+import string
+import sys
+import themes
+import types
+import utils
 
 pluginList = []
+
+metaTags = ["name", "description", "keywords", "credit", "author", "url"]
+
 def LoadPlugins():
     global pluginList
     for item in os.listdir(os.path.join(settings.AppDir, "plugins")):
@@ -56,7 +63,9 @@ def GetExtensionsForPlugin(name):
 def GetPublisherForFilename(filename):
     publisher = None
     plugin = GetPluginForFilename(filename)
-    publisher = plugin.HTMLPublisher()
+    if plugin:
+        publisher = plugin.HTMLPublisher()
+    
     return publisher
     
 # base plugin data types
@@ -208,7 +217,7 @@ class BaseHTMLPublisher:
             if not filename:
                 filename = resource.getFilename()
         
-        self.data['name'] = TextToHTMLChar(name)
+        self.data['name'] = TextToXMLChar(name)
         self.data['description'] = TextToXMLAttr(description)
         self.data['keywords'] = TextToXMLAttr(keywords)
         self.data['URL'] = utils.GetFileLink(filename)
@@ -218,24 +227,31 @@ class BaseHTMLPublisher:
         filename = self.GetFilename(filename)
         self.GetLinks()
         self.GetData()
-        templatefile = os.path.join(settings.AppDir, "themes", self.parent.currentTheme.themename, "default.tpl")
+        
+        # use PyMeld templates if available.
+        templatedir = os.path.join(settings.AppDir, "themes", themes.FindTheme(settings.ProjectSettings["Theme"]).themename)
+        if os.path.exists(os.path.join(templatedir, "default.meld")):
+            templatefile = os.path.join(templatedir, "default.meld")
+        else:
+            templatefile = os.path.join(templatedir, "default.tpl")
         self.data['charset'] = self.GetConverterEncoding()
 
         myhtml = self.ApplyTemplate(templatefile, self.data)
-        myhtml = self.EncodeHTMLToCharset(myhtml, self.data['charset']) 
-
+        myhtml = self.EncodeHTMLToCharset(myhtml, "utf8") 
 
         try:        
             myfile = open(os.path.join(self.dir, "pub", os.path.basename(filename)), "wb")
             myfile.write(myhtml)
             myfile.close()
-        except: 
+        except IOError: 
             message = "There was an error writing the file", filename + " to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file."
             import traceback
             print `traceback.print_exc()`
             print `message`
             raise IOError, message
             return false
+        except:
+            raise
         return myhtml
 
     def GetLinks(self):
@@ -284,7 +300,9 @@ class BaseHTMLPublisher:
     def ApplyTemplate(self, template="default.tpl", data={}):
         if template == "default.tpl":
             #get the template file from the current theme
-            template = os.path.join(settings.AppDir, "themes", self.parent.currentTheme.themename, template)
+            template = os.path.join(settings.AppDir, "themes", themes.FindTheme(settings.ProjectSettings["Theme"]).themename, template)
+        
+        print template
         temp = utils.openFile(template, "r")
         html = temp.read()
         temp.close()
@@ -299,8 +317,90 @@ class BaseHTMLPublisher:
                 if not type(value) == types.UnicodeType:
                     value = value.decode(charset, 'replace')
                 html = string.replace(html, "--[" + key + "]--", value)
-        elif ext == ".tal": #SimpleTAL support
-            pass #for now.... =)
+        elif ext == ".meld":
+            meld = PyMeld.Meld(html)
+            for key in data.keys():
+                value = data[key]
+                key = key.lower()
+                print key + ", " + value
+                global metaTags
+                if key in metaTags:
+                    key = "meta_" + key
+                    exec "hastag = hasattr(meld, '%s')" % key
+                    if hastag == True:
+                        if key == "meta_charset":
+                            value = u"text/html;charset=%s" % charset 
+                        print "has key %s" % key
+                        tag = eval("meld." + key)
+                        if tag:
+                            tag.content = value.encode(charset, 'replace')
+                            print tag
+                        
+                else:
+                    exec "hastag = hasattr(meld, '%s')" % key
+                    if hastag == True:
+                        print "has key %s" % key
+                        tag = eval("meld." + key)
+                        if tag:
+                            print tag
+                            tag._content = value.encode(charset, 'replace')
+            html = str(meld)        
+            html = html.decode(charset, 'replace')
+                
         return html
         
+import unittest
 
+class PluginTests(unittest.TestCase):
+    def setUp(self):
+        rootdir = os.path.abspath(os.path.join(sys.path[0], ".."))
+        settings.AppDir = rootdir
+        LoadPlugins()
+        
+        self.testdir = os.path.join(rootdir, "testFiles", "eclassTest", "TestEClass")
+        print self.testdir
+        appdata.currentPackage = self.cp = ims.contentpackage.ContentPackage()
+        self.cp.loadFromXML(os.path.join(self.testdir, "imsmanifest.xml"))
+        
+        settings.ProjectDir = self.testdir
+        settings.ProjectSettings["Theme"] = "Default (frames)"
+        
+    def tearDown(self):
+        self.cp = None
+        
+    def testPublish(self):
+        
+        imsitem = self.cp.organizations[0].items[0]
+        filename = ""
+        import ims.utils
+        resource = ims.utils.getIMSResourceForIMSItem(self.cp, imsitem)
+        if resource:
+            filename = resource.getFilename()
+            
+        self.assert_(os.path.exists(os.path.join(self.testdir, filename)))
+        publisher = GetPublisherForFilename(filename)
+        self.assert_(publisher)
+        publisher.Publish(None, imsitem, dir=self.testdir)
+        pub_filename = publisher.GetFileLink(filename)
+        
+        pub_path = os.path.join(self.testdir, pub_filename)
+        self.assert_(os.path.exists(pub_path))
+        print pub_path
+        meld = PyMeld.Meld(open(pub_path).read())
+        
+        html = """<p>Hello world!
+<p>Test
+"""
+        self.assertEquals(meld.meta_description.content, "A Description")
+        self.assertEquals(meld.meta_keywords.content, "keyword1, keyword2")
+        self.assertEquals(meld.content._content, html)
+        
+def getTestSuite():
+    return unittest.makeSuite(IndexingTests)
+
+if __name__ == '__main__':
+    sys.path.append(os.path.abspath(".."))
+    import i18n
+    i18n.installEClassGettext()
+
+    unittest.main()
