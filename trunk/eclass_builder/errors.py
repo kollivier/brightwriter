@@ -94,7 +94,7 @@ class AppErrorLog(logging.LogFile):
 			pass
 
 		message = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()) + self.separator + message + self.separator + tb + self.separator
-		utils.LogFile.write(self, message)
+		logging.LogFile.write(self, message)
 
 appErrorLog = AppErrorLog()
 
