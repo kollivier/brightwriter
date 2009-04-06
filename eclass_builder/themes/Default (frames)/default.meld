@@ -1,0 +1,49 @@
+<html>
+<head>
+<title id="pagetitle"></title>
+<meta id="meta_charset" http-equiv="Content-Type" content="text/html;charset=utf8">
+<meta id="meta_description" name="description" content="">
+<meta id="meta_keywords" name="keywords" content="">
+<meta id="meta_credit" name="copyright" content="">
+<meta id="meta_author" name="author" content="">
+<meta id="meta_url" name="URL" content="">
+<script language="Javascript">
+<!--
+function expOpen(windowName)
+{
+	if (document.body)
+	{
+	explorer = window.open(windowName, "", "toolbar=yes,location=no,directories=no,status=no,menubar=no,scrollbars=yes,top=10,left=25,height=432,width=576");
+	}
+	else
+	{
+	explorer = window.open(windowName, "", "toolbar=yes,location=no,directories=no,status=no,menubar=no,scrollbars=yes,height=432,width=576");
+	}
+}
+
+function openCredit(windowName, text)
+{
+	if (document.body)
+	{
+	explorer = window.open("",windowName,"toolbar=no,location=no,directories=no,status=no,menubar=yes,scrollbars=yes,top=10,left=25,height=200,width=200");
+	}
+	else
+	{
+	explorer = window.open("", windowName,"toolbar=no,location=no,directories=no,status=no,menubar=yes,scrollbars=yes,height=200,width=200");
+	}
+	
+	var mydoc;
+	mydoc = explorer.document;
+	mydoc.open();
+	mydoc.write("<HTML><HEAD></HEAD><BODY>" + text + "</BODY></HTML>");
+	mydoc.close();
+}
+//-->
+</script>
+</head>
+<body>
+<span id="content">
+</span>
+</body>
+
+</html>
