@@ -1,5 +1,7 @@
 import os
 
+# FIXME: Switch over to straight Python logging.
+
 class LogFile:
     def __init__(self, filename="log.txt"):
         self.filename = filename
