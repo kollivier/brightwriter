@@ -90,7 +90,7 @@ class SelectBox(sc.SizedPanel):
     def selectbtnClicked(self, event):
         f = None
         if self.type == "Directory":
-            f = wx.DirDialog(self.parent, _("Select a directory"), self.directory)
+            f = wx.DirDialog(self.parent, _("Select a directory"), self.startdir)
         else:
             f = wx.FileDialog(self.parent, _("Select a file"), self.startdir, "", self.createFilter(), wx.OPEN)
         if f and f.ShowModal() == wx.ID_OK:
