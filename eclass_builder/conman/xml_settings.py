@@ -77,9 +77,9 @@ class XMLSettings:
 				self.settings[myname] = myvalue
 
 	def SaveAsXML(self, filename):
-		XML = """<?xml version="1.0"?>\n<Settings>"""
+		XML = """<?xml version="1.0" encoding="utf-8"?>\n<Settings>"""
 		for key in self.settings.keys():
-			XML = XML + "<Setting name=\"" + str(key) + "\" value=\"" + str(self.settings[key]) + "\"/>\n"
+			XML = XML + "<Setting name=\"" + key.encode("utf-8") + "\" value=\"" + self.settings[key].encode("utf-8") + "\"/>\n"
 		XML = XML + "</Settings>"
 		xmlfile = open(filename, "w")
 		xmlfile.write(XML)
