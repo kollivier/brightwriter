@@ -1,4 +1,4 @@
-import logging
+import eclasslog
 import sys, string, os
 import utils
 import settings
@@ -73,9 +73,9 @@ class errorCallbacks:
             appErrorLog.write(message)
             
 
-class AppErrorLog(logging.LogFile):
+class AppErrorLog(eclasslog.LogFile):
 	def __init__(self):
-		logging.LogFile.__init__(self)
+		eclasslog.LogFile.__init__(self)
 		logdir = settings.AppDir
 		try:
 			import guiutils
@@ -94,7 +94,7 @@ class AppErrorLog(logging.LogFile):
 			pass
 
 		message = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()) + self.separator + message + self.separator + tb + self.separator
-		logging.LogFile.write(self, message)
+		eclasslog.LogFile.write(self, message)
 
 appErrorLog = AppErrorLog()
 
