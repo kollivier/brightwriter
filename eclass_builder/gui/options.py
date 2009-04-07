@@ -95,5 +95,5 @@ class PreferencesEditor(sc.SizedDialog):
 		language = settings.AppSettings["Language"]
 		if language != self.cmbLanguage.GetStringSelection():
 			settings.AppSettings["Language"] = self.cmbLanguage.GetStringSelection()
-			wx.MessageDialog(self, _("You will need to restart EClass.Builder for changes to take effect."), _("Restart required."), wxOK).ShowModal()
+			wx.MessageDialog(self, _("You will need to restart EClass.Builder for changes to take effect."), _("Restart required."), wx.OK).ShowModal()
 		self.EndModal(wx.ID_OK)
