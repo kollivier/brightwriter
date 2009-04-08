@@ -534,11 +534,7 @@ class MainFrame2(sc.SizedFrame):
         self.projectTree.DeleteAllItems()
         settings.ProjectDir = ""
         settings.ProjectSettings = conman.xml_settings.XMLSettings()
-        if sys.platform.startswith("win"):
-            self.ie.Navigate("about:blank")
-            self.mozilla.Navigate("about:blank")
-        else:
-            self.browser.SetPage("<HTML><BODY></BODY></HTML")
+        self.Preview()
 
     def OnManageThemes(self, event):
         ThemeManager(self).ShowModal()
@@ -602,7 +598,7 @@ class MainFrame2(sc.SizedFrame):
             elif answer == wx.ID_CANCEL:
                 return
             else:
-                self.ismcp.clearDirtyBit()
+                self.imscp.clearDirtyBit()
         
         defaultdir = ""
         if settings.AppSettings["CourseFolder"] != "" and os.path.exists(settings.AppSettings["CourseFolder"]):
@@ -1064,7 +1060,7 @@ class MainFrame2(sc.SizedFrame):
                 self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
                     
         else:
-            self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("This page cannot be previewed inside EClass. Double-click on the page to view or edit it.") + "</p>"))
+            self.browser.SetPage(utils.createHTMLPageWithBody(""))
 
     def PublishPage(self, imsitem):
         if imsitem != None:
