@@ -78,12 +78,23 @@ class XMLSettings:
 
 	def SaveAsXML(self, filename):
 		XML = """<?xml version="1.0" encoding="utf-8"?>\n<Settings>"""
+		doc = minidom.Document()
+		root = doc.createElement("Settings")
+		
 		for key in self.settings.keys():
-			XML = XML + "<Setting name=\"" + key.encode("utf-8") + "\" value=\"" + self.settings[key].encode("utf-8") + "\"/>\n"
-		XML = XML + "</Settings>"
-		xmlfile = open(filename, "w")
-		xmlfile.write(XML)
-		xmlfile.close()
+			setting = doc.createElement("Setting")
+			setting.setAttribute("name", key)
+			setting.setAttribute("value", self.settings[key])
+			root.appendChild(setting)
+		
+		doc.appendChild(root)
+		
+		import codecs
+		data = doc.toprettyxml("\t", encoding="utf-8")
+		myfile = open(filename, "w")
+		myfile.write(codecs.BOM_UTF8)
+		myfile.write(data)
+		myfile.close()
 		return None
 
 def Test():
