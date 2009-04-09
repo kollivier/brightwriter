@@ -352,7 +352,7 @@ class PagePropertiesDialog (sc.SizedDialog):
         if not name in appdata.vcards.keys():
             newcard = vcard.VCard()
             newcard.fname.value = name
-            newcard.filename = os.path.join(settings.PrefDir, "Contacts", MakeFileName2(name) + ".vcf")
+            newcard.filename = os.path.join(settings.PrefDir, "Contacts", fileutils.MakeFileName2(name) + ".vcf")
             myfile = utils.openFile(newcard.filename, "wb")
             myfile.write(newcard.asString())
             myfile.close()
