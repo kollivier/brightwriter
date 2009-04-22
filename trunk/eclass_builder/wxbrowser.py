@@ -4,7 +4,7 @@ import utils
 
 browserlist = []
 
-if sys.platform == "win32": 
+if sys.platform.startswith("win32"): 
 	import wx.lib.iewin
 	browserlist.append("ie")
 
@@ -15,9 +15,19 @@ try:
 except:
 	pass
 
-if sys.platform == "darwin": 
+if sys.platform.startswith("darwin"): 
 	import wx.webkit
 	browserlist.append("webkit")
+	
+def getDefaultBrowser():
+	global browserlist
+	default = "htmlwindow"
+	if sys.platform.startswith("win") and "ie" in browserlist:
+		default = "ie"
+	elif sys.platform.startswith("darwin") and "webkit" in browserlist:
+		default = "webkit"
+
+	return default
 
 class wxBrowser:
 	"""
@@ -46,31 +56,23 @@ class wxBrowser:
 		self.OnTitleChanged = lambda x: x
 		self.OnProgress = lambda x: x
 
-		if preferredBrowser != "":
-			if string.lower(preferredBrowser) == "ie":
-				if self._LoadIE():
-					return 
-			elif string.lower(preferredBrowser) == "webkit":
-				if self._LoadWebKitWindow():
-					return 
-			elif string.lower(preferredBrowser) == "htmlwindow":
-				if self._LoadHTMLWindow():
-					return 
+		if preferredBrowser == "":
+			preferredBrowser = getDefaultBrowser()
+			
+		assert preferredBrowser != ""
 
-		#default order - WebKit (on Mac), Mozilla, IE, HTMLWindow
-		if self._LoadWebKitWindow():
-			return
-		
-		if self._LoadIE():
-			return 
-
-		if self._LoadHTMLWindow():
-			return 
-
-		if self.browser == None:
-			print "Error: No browser could be found."
-
-		return None #should never happen, but...
+		if string.lower(preferredBrowser) == "ie":
+			if self._LoadIE():
+				return
+		elif string.lower(preferredBrowser) == "webkit":
+			if self._LoadWebKitWindow():
+				return
+		elif string.lower(preferredBrowser) == "htmlwindow":
+			if self._LoadHTMLWindow():
+				return
+		else:
+			if self.browser == None:
+				print "Error: No browser could be found."
 
 	def GoBack(self):
 		if self.engine == "mozilla":
