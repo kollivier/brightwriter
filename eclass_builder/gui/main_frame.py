@@ -215,27 +215,13 @@ class MainFrame2(sc.SizedFrame):
         accelerators = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_TREE_REMOVE)])
         self.SetAcceleratorTable(accelerators)
 
-        #self.previewbook = wx.Notebook(self.splitter1, -1, style=wx.CLIP_CHILDREN)
-
-        # TODO: This really needs fixed once webkit issues are worked out
-        self.browsers = {}
-        browsers = wxbrowser.browserlist
-
-        default = "htmlwindow"
-        if sys.platform.startswith("win") and "ie" in browsers:
-            default = "ie"
-        elif sys.platform.startswith("darwin") and "webkit" in browsers:
-            default = "webkit"
-        elif "mozilla" in browsers:
-            default = "mozilla"
         if not EXPERIMENTAL_WXWEBKIT:
-            self.browser = wxbrowser.wxBrowser(self.splitter1, -1, default)
+            self.browser = wxbrowser.wxBrowser(self.splitter1, -1)
         else:
             self.browser = webview.WebView(self.splitter1, -1, size=(200,200))
             self.browser.LoadPage = self.browser.LoadURL
             self.browser.SetPage = self.browser.SetPageSource
             self.browser.browser = self.browser
-        self.browsers[default] = self.browser
         
         self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
@@ -267,6 +253,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
         app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
         app.AddHandlerForID(ID_PASTE, self.OnPaste)
+        app.AddHandlerForID(ID_CLEAN_HTML, self.OnCleanHTML)
         app.AddHandlerForID(ID_IMPORT_FILE, self.OnImportFile)
         app.AddHandlerForID(ID_REFRESH_THEME, self.OnRefreshTheme)
         #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
@@ -313,7 +300,6 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_EXIT, self.OnCloseWindow)
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         
-        self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
         self.Bind(wx.EVT_IDLE, self.OnIdle)
         
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
@@ -365,9 +351,9 @@ class MainFrame2(sc.SizedFrame):
                 if filename:
                     modifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
                     if not modifiedTime == self.selectedFileLastModifiedTime:
-                        self.Preview()
+                        self.Update()
             except:
-                pass
+                raise
 
     def OnAppPreferences(self, event):
         PreferencesEditor(self).ShowModal()
@@ -421,8 +407,30 @@ class MainFrame2(sc.SizedFrame):
                 
                 self.EditItemProps()
                 
-                
+    def OnCleanHTML(self, event):
+        try:
+            import tidylib
+        except:
+            wx.MessageBox(_("Your system appears not to have the HTMLTidy library installed. Cannot run HTML clean up."))
+            return
 
+        filename = eclassutils.getEditableFileForIMSItem(self.imscp, self.projectTree.GetCurrentTreeItemData())
+        
+        if filename:
+            fullpath = os.path.join(settings.ProjectDir, filename)
+            
+            html, errors = htmlutils.cleanUpHTML(fullpath)
+        
+            import gui.cleanhtmldialog
+            dialog = gui.cleanhtmldialog.HTMLCleanUpDialog(self, -1, size=(600,400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+            dialog.SetOriginalHTML(htmlutils.getUnicodeHTMLForFile(fullpath))
+            dialog.SetCleanedHTML(html)
+            dialog.log.SetValue(errors)
+            if dialog.ShowModal() == wx.ID_OK:
+                outfile = open(fullpath, "wb")
+                outfile.write(html)
+                outfile.close()
+        
     def OnCut(self, event):
         if not wx.Window.FindFocus() == self.projectTree:
             event.Skip()
@@ -512,13 +520,6 @@ class MainFrame2(sc.SizedFrame):
             if not self.projectTree.GetChildrenCount(thisnode, False) == 0:
                 self.CopyChildrenRecursive(thisnode, thisitem)
             thisnode = self.projectTree.GetNextSibling(thisnode) 
-
-    def OnActivate(self, event):
-        if event.GetActive():
-            appdata.currentPackage = self.imscp
-            
-        if not self.IsBeingDeleted():
-            self.Preview()
 
     def OnCloseProject(self, event):
         if self.imscp and self.imscp.isDirty():
@@ -628,6 +629,11 @@ class MainFrame2(sc.SizedFrame):
         webbrowser.open_new("http://sourceforge.net/tracker/?group_id=67634")
         
     def OnTreeSelChanged(self, event):
+        filename = self.GetContentFilenameForSelectedItem()
+        is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
+        clean_item = self.MenuBar.FindItemById(ID_CLEAN_HTML)
+        clean_item.Enable(is_html)
+        
         self.Preview()
         event.Skip()
         
@@ -635,7 +641,12 @@ class MainFrame2(sc.SizedFrame):
         pt = event.GetPoint()
         item = event.GetItem() 
         if item:
-            self.PopupMenu(menus.getPageMenu(), pt)
+            filename = self.GetContentFilenameForSelectedItem()
+            is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
+            pageMenu = menus.getPageMenu()
+            cleanItem = pageMenu.FindItemById(ID_CLEAN_HTML)
+            cleanItem.Enable(is_html)
+            self.PopupMenu(pageMenu, pt)
             
     def OnTreeLabelWillChange(self, event):
         # If you click at just the right speed, wx.TreeCtrl will fire both a edit label event and a
@@ -1038,7 +1049,7 @@ class MainFrame2(sc.SizedFrame):
 
     def Preview(self):
         filename = self.GetContentFilenameForSelectedItem()
-            
+        
         if filename:
             try:
                 self.selectedFileLastModifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
