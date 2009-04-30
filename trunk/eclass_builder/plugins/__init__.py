@@ -322,7 +322,6 @@ class BaseHTMLPublisher:
             for key in data.keys():
                 value = data[key]
                 key = key.lower()
-                print key + ", " + value
                 global metaTags
                 if key in metaTags:
                     key = "meta_" + key
@@ -330,19 +329,15 @@ class BaseHTMLPublisher:
                     if hastag == True:
                         if key == "meta_charset":
                             value = u"text/html;charset=%s" % charset 
-                        print "has key %s" % key
                         tag = eval("meld." + key)
                         if tag:
                             tag.content = value.encode(charset, 'replace')
-                            print tag
                         
                 else:
                     exec "hastag = hasattr(meld, '%s')" % key
                     if hastag == True:
-                        print "has key %s" % key
                         tag = eval("meld." + key)
                         if tag:
-                            print tag
                             tag._content = value.encode(charset, 'replace')
             html = str(meld)        
             html = html.decode(charset, 'replace')
