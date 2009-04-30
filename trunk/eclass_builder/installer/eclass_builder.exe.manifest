@@ -7,16 +7,19 @@
     type="win32"
 />
 <description>EClass.Builder</description>
-<dependency>
+  <dependency>
     <dependentAssembly>
-        <assemblyIdentity
-            type="win32"
-            name="Microsoft.Windows.Common-Controls"
-            version="6.0.0.0"
-            processorArchitecture="X86"
-            publicKeyToken="6595b64144ccf1df"
-            language="*"
-        />
+      <assemblyIdentity type="win32" name="Microsoft.VC90.CRT" version="9.0.30411.0" processorArchitecture="x86"></assemblyIdentity>
     </dependentAssembly>
-</dependency>
+  </dependency>
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.VC90.MFC" version="9.0.30411.0" processorArchitecture="x86"></assemblyIdentity>
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="x86" publicKeyToken="6595b64144ccf1df" language="*"></assemblyIdentity>
+    </dependentAssembly>
+  </dependency>
 </assembly>
