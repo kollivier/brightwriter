@@ -38,6 +38,72 @@ def getTitleForPage(filename):
             return title.string
             
     return None
+    
+def footnoteFixer(soup):
+     matches = soup.findAll(style=re.compile("^mso-footnote-id:"))
+     for match in matches:
+        del match['style']
+        text = match.findAll(text=re.compile("[\d+]"))
+        if text and len(text) > 0:
+            match.insert(0, text[0].strip())
+     
+        for span in match.findAll("span"):
+            span.extract()
+
+def stripEmptyParagraphs(soup):
+    matches = soup.findAll(text=re.compile("^\s*&nbsp;\s*$"))
+    for match in matches:
+        match.extract()
+
+def getUnicodeHTMLForFile(filename):
+    html = open(filename, "rb").read()
+    encoding = GetEncoding(html)
+    if not encoding:
+        encoding = ""
+        
+    return utils.makeUnicode(html, encoding)
+    
+def addMetaTag(html, attrs):
+    """
+    This is used basically to re-add the stripped encoding meta tag caused
+    by running the document through HTMLTidy.
+    """
+    soup = BeautifulSoup.BeautifulSoup(html)
+    head = soup.find('head')
+    if head:
+        tag = BeautifulSoup.Tag(soup, "meta", attrs)
+        head.insert(0, tag)
+    
+    return soup.prettify(encoding=None)
+
+def cleanUpHTML(filename, options=None):
+    import tidylib
+    tidylib.BASE_OPTIONS = {}
+
+    default_options = { 
+                        "Word-2000" : 1,
+                        "force-output" : 1,
+                        "output-xhtml" : 1,
+                        "drop-empty-paras": 1,
+                        "output-encoding" : "utf8",
+                       }
+    if options:
+        default_options.extend(options)
+        
+    html = getUnicodeHTMLForFile(filename)
+
+    # first fix up footnotes so that HTMLTidy won't ditch them
+    soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
+    footnoteFixer(soup) #html)
+    stripEmptyParagraphs(soup)
+    
+    html, errors = tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
+    
+    html = addMetaTag(html, [('http-equiv', 'Content-Type'), ('content', 'text/html; charset=utf-8')])
+    
+    return html.encode("utf8"), errors
+    
+
 
 def copyDependentFilesAndUpdateLinks(oldfile, filename):
     myanalyzer = analyzer.ContentAnalyzer()
@@ -195,3 +261,48 @@ def GetBody(myhtml):
         
     return utils.makeUnicode(text, encoding)
 
+import unittest
+
+class HTMLTests(unittest.TestCase):
+    def setUp(self):
+        self.html = """
+<html>
+<head>
+<script>
+document.write("<BODY></BODY>")
+</script>
+</head>
+<body>
+<p>This is a sample MS Office footnote <a style='mso-footnote-id:
+ftn1' href="#_ftn1" name="_ftnref1" title=""><span class=MsoFootnoteReference><span
+style='mso-special-character:footnote'><![if !supportFootnotes]><span
+class=MsoFootnoteReference><span lang=EN-US style='font-size:12.0pt;font-family:
+"Times New Roman";mso-fareast-font-family:"Times New Roman";color:black;
+mso-ansi-language:EN-US;mso-fareast-language:ES;mso-bidi-language:AR-SA'>[1]</span></span><![endif]></span></span></a><o:p></o:p></span></p>
+
+<hr />
+
+<p class=MsoFootnoteText><a style='mso-footnote-id:ftn1' href="#_ftnref1"
+name="_ftn1" title=""><span class=MsoFootnoteReference><span lang=EN-US
+style='mso-ansi-language:EN-US'><span style='mso-special-character:footnote'><![if !supportFootnotes]><span
+class=MsoFootnoteReference><span lang=EN-US style='font-size:10.0pt;font-family:
+"Times New Roman";mso-fareast-font-family:"Times New Roman";mso-ansi-language:
+EN-US;mso-fareast-language:ES;mso-bidi-language:AR-SA'>[1]</span></span><![endif]></span></span></span></a>
+This is a sample MS Office reference</p>
+
+</body>
+</html>
+"""
+
+    def testFootnoteFixer(self):
+        soup = BeautifulSoup.BeautifulSoup(self.html)
+        footnoteFixer(soup)
+        html = str(soup)
+        self.assert_(html.find("""<a href="#_ftn1" name="_ftnref1" title="">[1]</a>""") != -1)
+        self.assert_(html.find("""<a href="#_ftnref1" name="_ftn1" title="">[1]</a>""") != -1)
+
+def getTestSuite():
+    return unittest.makeSuite(HTMLTests)
+
+if __name__ == '__main__':
+    unittest.main()

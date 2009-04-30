@@ -62,6 +62,9 @@ def getPageMenu():
     PageMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu2)
     
     PageMenu.AppendSeparator()
+    PageMenu.Append(ID_CLEAN_HTML, _("Clean Up HTML"))
+    
+    PageMenu.AppendSeparator()
     PageMenu.Append(ID_EDIT_ITEM, _("Edit Page"), _("Edit the currently selected page"))    
     PageMenu.Append(ID_TREE_MOVEUP, _("Move Page Up"), _("Move the selected page higher in the tree"))
     PageMenu.Append(ID_TREE_MOVEDOWN, _("Move Page Down"), _("Move the selected page lower in the tree"))   
