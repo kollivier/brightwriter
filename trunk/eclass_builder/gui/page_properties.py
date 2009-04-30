@@ -314,6 +314,10 @@ class PagePropertiesDialog (sc.SizedDialog):
             if os.path.splitext(filename)[1] == ".ecp":
                 eclassutils.setEClassPageForIMSResource(self.content, filename)
             else:
+                for item in self.content.files:
+                    if "href" in item.attrs and os.path.splitext(item.attrs["href"])[1] == ".ecp":
+                        self.content.files.remove(item)
+                    
                 self.content.setFilename(filename)
                 
             for person in self.content.metadata.lom.lifecycle.contributors:
