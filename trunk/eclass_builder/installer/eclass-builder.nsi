@@ -41,9 +41,7 @@ Section "Program Files" SecCopyUI
   ;ADD YOUR OWN STUFF HERE!
   WriteRegStr HKLM SOFTWARE\EClass\Builder\${MUI_VERSION} "Path" "$INSTDIR"
   SetOutPath "$INSTDIR"
-  ;File /r "..\3rdparty\win32\gre\*"
   File /r "dist\*"
-  File "eclass_builder.exe.manifest"
 
   CreateDirectory "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}"
   SetOutPath $INSTDIR ; for working directory
@@ -78,14 +76,7 @@ Section "Uninstall"
   RMDir /r "$INSTDIR"
 
   RMDir /r "$SMPROGRAMS\${MUI_PRODUCT} ${MUI_VERSION}" 
-;  DeleteRegKey HKLM SOFTWARE\mozilla.org\GRE\wxMozilla\1.3
-;  Push "$PROGRAMFILES\Common Files\mozilla.org\GRE\wxMozilla\1.3"
-;  Call un.RemoveFromPath
   DeleteRegKey HKLM SOFTWARE\EClass\Builder\${MUI_VERSION}
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${MUI_PRODUCT} ${MUI_VERSION}"
-;  Push "$PROGRAMFILES\OpenOffice.org1.1Beta\program"
-;  Call un.RemoveFromPath
-;  Push "$PROGRAMFILES\OpenOffice.org1.1Beta\program"
-;  Call un.RemoveFromPythonPath
 
 SectionEnd
