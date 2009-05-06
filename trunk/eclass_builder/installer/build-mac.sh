@@ -4,11 +4,11 @@
 set -o errexit
 
 if [ "$skipmac" != "yes" ]; then
-     BUILD_TYPE="ppc"
+     BUILD_TYPE=""
      PYTHON="/usr/local/bin/python2.5"
      if [ "$IS_INTEL" == "yes" ]; then
          MAC_HOST=$MAC_HOST_INTEL
-         BUILD_TYPE="intel"
+         BUILD_TYPE=""
          #PYTHON="python"
      fi
      # clean up the build dir
