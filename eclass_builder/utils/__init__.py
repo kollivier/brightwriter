@@ -148,6 +148,7 @@ var level3ID = -1;
 """
     text = text + """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(name, "\"", "\\\""), filename, string.replace(name, "\"", "\\\""))
     text = text + AddJoustItems(pub, 1)
+    text = text + "theMenu.openAll();\n"
     text = text + "return theMenu; \n}"
 
     afile = open(os.path.join(settings.ProjectDir, "joustitems.js"), "w")
