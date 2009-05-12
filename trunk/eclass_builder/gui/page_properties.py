@@ -2,20 +2,21 @@ import string, sys, os
 import wx
 import wx.lib.sized_controls as sc
 import persistence
-import select_box as picker
-import settings
 import gui.contacts
 
+import appdata
 import conman
 import conman.vcard as vcard
+import eclassutils
 import fileutils
-import utils
-import plugins
+import guiutils
 import htmlutils
-import appdata
 import ims
 import ims.contentpackage
-import eclassutils
+import plugins
+import select_box as picker
+import settings
+import utils
 
 class PagePropertiesDialog (sc.SizedDialog):
     """
