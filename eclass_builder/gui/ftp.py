@@ -103,7 +103,8 @@ class ftpService:
         self.stopNow = True
 
     def close(self):
-        self.connection.quit()
+        if self.connection:
+            self.connection.quit()
         self.connection = None
         
     def uploadFile(self, sourcename, destname, callback=None):
@@ -526,4 +527,4 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		wx.MessageBox(`message`)
 		self.parent.log.write(`message`)
 		self.ftpService.close()
-		self.OnUploadCanceled(None)
+		self.OnUploadCanceled()
