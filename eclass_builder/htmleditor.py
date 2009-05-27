@@ -759,10 +759,10 @@ class EditorFrame (wx.Frame):
         self.dirty = True
 
     def OnPaste(self, evt):
-        if self.notebook.GetSelection() == 0:
-            self.webview.ExecuteEditCommand("Paste")
-        else:
+        if self.notebook.GetSelection() == 1:
             self.source.Paste()
+        else:
+            event.Skip()
         self.dirty = True
 
     def OnLinkButton(self, evt):    
