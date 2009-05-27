@@ -46,7 +46,7 @@ def getEditMenu():
     
     return EditMenu
     
-def getPageMenu():
+def getPageMenu(openWithMenu=None):
     PageMenu = wx.Menu()
     PageMenu.Append(ID_ADD_MENU, _("Add New"))
     PageMenu.Append(ID_TREE_REMOVE, _("Remove Page"), _("Remove the current page"))     
@@ -65,7 +65,11 @@ def getPageMenu():
     PageMenu.Append(ID_CLEAN_HTML, _("Clean Up HTML"))
     
     PageMenu.AppendSeparator()
-    PageMenu.Append(ID_EDIT_ITEM, _("Edit Page"), _("Edit the currently selected page"))    
+    PageMenu.Append(ID_EDIT_ITEM, _("Edit Page"), _("Edit the currently selected page"))
+    
+    if openWithMenu:
+        PageMenu.AppendMenu(ID_OPEN_ITEM, _("Open With"), openWithMenu)
+    
     PageMenu.Append(ID_TREE_MOVEUP, _("Move Page Up"), _("Move the selected page higher in the tree"))
     PageMenu.Append(ID_TREE_MOVEDOWN, _("Move Page Down"), _("Move the selected page lower in the tree"))   
     PageMenu.AppendSeparator()

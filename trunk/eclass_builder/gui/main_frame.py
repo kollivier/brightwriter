@@ -137,6 +137,7 @@ class MainFrame2(sc.SizedFrame):
         
         self.themes = themes.ThemeList(os.path.join(settings.AppDir, "themes"))
         self.currentTheme = self.themes.FindTheme("Default (no frames)")
+        self.launchApps = []
         
         wx.InitAllImageHandlers()
 
@@ -225,7 +226,6 @@ class MainFrame2(sc.SizedFrame):
         
         self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
-        #wx.EVT_MENU(self, 
         app = wx.GetApp()
         app.AddHandlerForID(ID_NEW, self.OnNewContentPackage)
         app.AddHandlerForID(ID_OPEN, self.OnOpen)
@@ -291,9 +291,9 @@ class MainFrame2(sc.SizedFrame):
         app.AddUIHandlerForID(ID_UPLOAD_PAGE, self.UpdatePageCommand)
         app.AddUIHandlerForID(ID_TREE_EDIT, self.UpdatePageCommand)
         
-        
+        pagemenu = self.GetMenuBar().FindMenu(_("Page"))
 
-        app.AddUIHandlerForID(self.GetMenuBar().FindMenu(_("Page")), self.UpdatePageCommand)
+        app.AddUIHandlerForID(pagemenu, self.UpdatePageCommand)
         app.AddUIHandlerForID(self.GetMenuBar().FindMenu(_("Edit")), self.UpdatePageCommand)
         #wx.EVT_MENU(self, ID_FIND_IN_PROJECT, self.OnFindInProject)
 
@@ -637,16 +637,43 @@ class MainFrame2(sc.SizedFrame):
         self.Preview()
         event.Skip()
         
+    def OnLaunchWithApp(self, event):
+        appname = self.pageMenu.FindItemById(event.GetId()).GetLabel()
+        appfilename = self.launchapps[appname].filename
+        abspath = os.path.join(settings.ProjectDir, self.GetContentFilenameForSelectedItem())
+        print "launching with %s" % appname
+        
+        if sys.platform.startswith("darwin"):
+            os.system('open -a "%s" "%s"' % (appfilename, abspath)) 
+        
     def OnTreeItemContextMenu(self, event):
         pt = event.GetPoint()
         item = event.GetItem() 
         if item:
             filename = self.GetContentFilenameForSelectedItem()
+            
+            import launch
+            submenu = wx.Menu()
+            
+            abspath = os.path.join(settings.ProjectDir, filename)
+            self.launchapps = launch.getAppsForFilename(abspath, role = "editor")
+            if len(self.launchapps) < 1:
+                self.launchapps = launch.getAppsForFilename(abspath, role = "all")
+            
+            for item in self.launchapps:
+                id = wx.NewId()
+                submenu.Append(id, item)
+                self.Bind(wx.EVT_MENU, self.OnLaunchWithApp, id = id)
+            
             is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
-            pageMenu = menus.getPageMenu()
-            cleanItem = pageMenu.FindItemById(ID_CLEAN_HTML)
+            self.pageMenu = menus.getPageMenu(openWithMenu=submenu)
+            cleanItem = self.pageMenu.FindItemById(ID_CLEAN_HTML)
             cleanItem.Enable(is_html)
-            self.PopupMenu(pageMenu, pt)
+            
+            self.PopupMenu(self.pageMenu, pt)
+            
+            self.pageMenu = None
+            self.launchapps = None
             
     def OnTreeLabelWillChange(self, event):
         # If you click at just the right speed, wx.TreeCtrl will fire both a edit label event and a
