@@ -1,17 +1,19 @@
 import os
+import urllib
 
 import wx
 import wx.stc
 import wx.lib.sized_controls as sc
 
 # eclass specific imports... we should remove these
+import htmlutils
 import settings
 import utils
 import errors
 log = errors.appErrorLog
 
 try:
-    import webview
+    import wx.webview
     webkit_available = True
 except:
     webkit_available = False
@@ -93,12 +95,13 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
 
 class EditorFrame (wx.Frame):
-    def __init__(self, parent, filename):
+    def __init__(self, parent, filename, pos=wx.DefaultPosition, size=(400,400)):
         
-        wx.Frame.__init__(self, None, -1, "Document Editor", size=(400,400))
+        wx.Frame.__init__(self, None, -1, "Document Editor", pos=pos)
         
         self.running = True
         self.filename = filename
+        self.baseurl = 'file://' + urllib.quote(os.path.dirname(filename)) + "/"
         self.current = "about:blank"
         self.parent = parent
         self.currentItem = None #conman.ConNode("ID", conman.Content("ID2", "English"), None)
@@ -261,7 +264,7 @@ class EditorFrame (wx.Frame):
         notebooksizer.Add(self.notebook, 1, wx.EXPAND, wx.ALL, 4)
         mozillapanel = wx.Panel(self.notebook, -1)
         self.notebook.AddPage(mozillapanel, "Edit")
-        self.webview = webview.WebView(mozillapanel, -1, size=(200, 200), style = wx.NO_FULL_REPAINT_ON_RESIZE)
+        self.webview = wx.webview.WebView(mozillapanel, -1, size=(200, 200), style = wx.NO_FULL_REPAINT_ON_RESIZE)
         mozpanelsizer = wx.BoxSizer(wx.HORIZONTAL)
         mozpanelsizer.Add(self.webview, 1, wx.EXPAND)
         mozillapanel.SetAutoLayout(True)
@@ -373,7 +376,8 @@ class EditorFrame (wx.Frame):
         
         self.notebook.SetSelection(0)
         if os.path.exists(self.filename):
-            self.webview.LoadURL(self.filename)
+            print "baseurl = %s" % self.baseurl
+            self.webview.SetPageSource(open(self.filename).read(), self.baseurl)
         
         width, height = self.webview.GetVirtualSize()
         ssize = wx.Display().GetClientArea()
@@ -392,6 +396,8 @@ class EditorFrame (wx.Frame):
         wx.EVT_NOTEBOOK_PAGE_CHANGING(self.notebook, self.notebook.GetId(), self.OnPageChanging)
         if wx.Platform == '__WXMSW__':
             wx.EVT_CHAR(self.notebook, self.SkipNotebookEvent)
+            
+        self.Size = size
 
     def SkipNotebookEvent(self, evt):
         evt.Skip()
@@ -417,15 +423,16 @@ class EditorFrame (wx.Frame):
         self.webview.StopSpellChecker()
 
     def OnLoadComplete(self, evt):
-        if string.find(self.webview.GetPage(), '<base href="about:blank">') != -1:
-            pagetext = string.replace(self.webview.GetPage(), '<base href="about:blank">', '')
+        source = self.webview.GetPageSource()
+        if source.find('<base href="about:blank">') != -1:
+            pagetext = source.replace('<base href="about:blank">', '')
             self.webview.SetPageSource(pagetext)
             #self.webview.UpdateBaseURI()
             self.webview.Reload()
 
     def OnPageChanging(self, evt):
         if evt.GetOldSelection() == 1:
-            self.webview.SetPageSource(self.source.GetText())
+            self.webview.SetPageSource(self.source.GetText(), self.baseurl)
             #self.webview.UpdateBaseURI()
             self.webview.Reload()
         else:
@@ -433,7 +440,7 @@ class EditorFrame (wx.Frame):
             self.source.SetText(pagetext)
             seltext = self.webview.GetSelectionAsHTML()
             if seltext != "":
-                index = string.find(pagetext, seltext)
+                index = pagetext.find(seltext)
                 self.source.SetSelection(index, index+len(seltext))
         evt.Skip()
 
@@ -639,87 +646,60 @@ class EditorFrame (wx.Frame):
         self.webview.FindNext()
 
     def OnFindClose(self, evt):
-        evt.GetDialog().Destroy()       
+        evt.GetDialog().Destroy()
+        
+    def RunCommand(self, command, evt):
+        self.webview.ExecuteEditCommand(command)
+        self.UpdateStatus(evt)
+        self.dirty = True
 
     def OnSuperscript(self, evt):
-        self.webview.ExecuteEditCommand("superscript")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("superscript", evt)
 
     def OnSubscript(self, evt):
-        self.webview.ExecuteEditCommand("subscript")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("subscript", evt)
 
     def OnCode(self, evt):
-        self.webview.ExecuteEditCommand("code")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("code", evt)
 
     def OnCitation(self, evt):
-        self.webview.ExecuteEditCommand("cite")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("cite", evt)
 
     def OnRemoveStyle(self, evt):
-        self.webview.ExecuteEditCommand("removeStyles")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("removeStyles", evt)
 
     def OnRemoveLink(self, evt):
-        self.webview.ExecuteEditCommand("removeLinks")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("removeLinks", evt)
 
     def OnBullet(self, evt):
-        self.webview.ExecuteEditCommand("InsertUnorderedList")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("InsertUnorderedList", evt)
 
     def OnNumbering(self, evt):
-        self.webview.ExecuteEditCommand("InsertOrderedList")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("InsertOrderedList", evt)
 
     def OnBoldButton(self, evt):
-        self.webview.ExecuteEditCommand("Bold")
-        self.UpdateStatus(evt)
-        self.dirty = True
-
+        self.RunCommand("Bold", evt)
+        
     def OnItalicButton(self, evt):
-        self.webview.ExecuteEditCommand("Italic")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("Italic", evt)
 
     def OnUnderlineButton(self, evt):
-        self.webview.ExecuteEditCommand("Underline")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("Underline", evt)
 
     def OnLeftAlignButton(self, evt):
-        self.webview.ExecuteEditCommand("AlignLeft")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("AlignLeft", evt)
 
     def OnCenterAlignButton(self, evt):
-        self.webview.ExecuteEditCommand("AlignCenter")
-        self.UpdateStatus(evt)
-        self.dirty = True
-
+        self.RunCommand("AlignCenter", evt)
+        
     def OnRightAlignButton(self, evt):
-        self.webview.ExecuteEditCommand("AlignRight")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("AlignRight", evt)
 
     def OnOutdentButton(self, evt):
-        self.webview.ExecuteEditCommand("Outdent")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("Outdent", evt)
 
     def OnIndentButton(self, evt):
-        self.webview.ExecuteEditCommand("Indent")
-        self.UpdateStatus(evt)
-        self.dirty = True
+        self.RunCommand("Indent", evt)
 
     def OnUndo(self, evt):
         if self.notebook.GetSelection() == 0:
@@ -784,7 +764,7 @@ class EditorFrame (wx.Frame):
                 root = selection.GetFirstNode().GetParentNode()
                 
                 if root:
-                    if isinstance(root, webview.WebKitDOMElement) and root.GetTagName() == "A": #root.GetNodeType() == webview.ELEMENT_NODE and root.GetTagName() == "A": 
+                    if isinstance(root, wx.webview.WebKitDOMElement) and root.GetTagName() == "A": #root.GetNodeType() == wx.webview.ELEMENT_NODE and root.GetTagName() == "A": 
                         url = root
                     else:
                         def getNodeInfo(node):
@@ -792,7 +772,7 @@ class EditorFrame (wx.Frame):
                         
                         def traverseNodeRecursive(root):
                             getNodeInfo(root)
-                            if root.GetNodeType() == webview.ELEMENT_NODE:
+                            if root.GetNodeType() == wx.webview.ELEMENT_NODE:
                                 print "root tag name: %s, ID: %s" % (root.GetTagName(), root.GetIDAttribute())
                             children = root.GetChildNodes()
         
@@ -802,7 +782,7 @@ class EditorFrame (wx.Frame):
                                     
                                     if child:
                                         
-                                        if isinstance(child, webview.WebKitDOMElement):
+                                        if isinstance(child, wx.webview.WebKitDOMElement):
                                             print "tag name: %s, ID: %s" % (child.GetTagName(), child.GetIDAttribute())
                                             if child.GetTagName() == "A":
                                                 print "Hello?"
@@ -845,8 +825,8 @@ class EditorFrame (wx.Frame):
             if os.path.exists(dialog.GetPath()):
                 CopyFile(dialog.GetFilename(), dialog.GetDirectory(), os.path.join(settings.ProjectDir, "File"))
             code = HTMLTemplates.flashTemp
-            code = string.replace(code, "_filename_", "../File/" + dialog.GetFilename())
-            code = string.replace(code, "_autostart_", "True")
+            code = code.replace("_filename_", "../File/" + dialog.GetFilename())
+            code = code.replace("_autostart_", "True")
             self.webview.InsertHTML(code)
         dialog.Destroy()
 
@@ -876,13 +856,13 @@ class EditorFrame (wx.Frame):
         dlg.GetColourData().SetChooseFull(True)
         if dlg.ShowModal() == wx.ID_OK:
             data = dlg.GetColourData().GetColour().Get() #RGB tuple
-            red = string.replace(str(hex(data[0])), "0x", "")
+            red = str(hex(data[0])).replace("0x", "")
             if len(red) == 1:
                 red = "0" + red
-            green = string.replace(str(hex(data[1])), "0x", "")
+            green = str(hex(data[1])).replace("0x", "")
             if len(green) == 1:
                 green = "0" + green
-            blue = string.replace(str(hex(data[2])), "0x", "")
+            blue = str(hex(data[2])).replace("0x", "")
             if len(blue) == 1:
                 blue = "0" + blue
             value = "#" + red + green + blue
@@ -906,7 +886,7 @@ class EditorFrame (wx.Frame):
             
     def GetCommandState(self, command):
         state = self.webview.GetEditCommandState(command) 
-        if state in [webview.EditStateMixed, webview.EditStateTrue]:
+        if state in [wx.webview.EditStateMixed, wx.webview.EditStateTrue]:
             return True
         
         return False
@@ -947,12 +927,10 @@ class EditorFrame (wx.Frame):
         dlg.CentreOnParent()
         if dlg.ShowModal() == wx.ID_OK:
             self.current = dlg.GetPath()
-            self.webview.LoadURL(self.current)
+            self.SaveToDisk(self.current)
+        dlg.Destroy()
 
     def OnSave(self, event):
-        source = self.webview.GetPageSource()
-        if self.notebook.GetSelection() == 1:
-            source = self.source.GetText()
         filename = os.path.join(settings.ProjectDir, self.filename)
         if not os.path.exists(filename):
             self.OnSaveAs(event)
@@ -960,17 +938,25 @@ class EditorFrame (wx.Frame):
             self.SaveToDisk(filename)
         
     def SaveToDisk(self, filename):
-        if 1: #try:
-            afile = open(filename, "wb")
-            afile.write(source)
-            afile.close()
-            self.dirty = False
-            self.filename = filename
-        if 0: #except IOError:
-            message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
-            global log
-            log.write(message)
-            wx.MessageBox(message, _("Unable to Save File"), wx.ICON_ERROR)
+        source = self.webview.GetPageSource()
+        if self.notebook.GetSelection() == 1:
+            source = self.source.GetText()
+            
+        encoding = htmlutils.GetEncoding(source)
+        try:
+            source = source.encode(encoding)
+        except:
+            try:
+                encoding = utils.getCurrentEncoding()
+                source = source.encode(encoding)
+            except:
+                raise
+                
+        afile = open(filename, "wb")
+        afile.write(source)
+        afile.close()
+        self.dirty = False
+        self.filename = filename
 
     def logEvt(self, name, event):
         self.log.write('%s: %s\n' %
@@ -1269,14 +1255,14 @@ class CellPropsDialog(wx.Dialog):
         self.lblAlign = wx.StaticText(self, -1, _("Horizontal Alignment:"))
         self.cmbAlign = wx.Choice(self, -1, choices=["left", "center", "right", "justify"])
         if rowProps[2] != "":
-            self.cmbAlign.SetStringSelection(string.lower(rowProps[2]))
+            self.cmbAlign.SetStringSelection(rowProps[2].lower())
         else:
             self.cmbAlign.SetSelection(0)
     
         self.lblVAlign = wx.StaticText(self, -1, _("Vertical Alignment:"))
         self.cmbVAlign = wx.Choice(self, -1, choices=["top", "middle", "bottom"])
         if rowProps[3] != "":
-            self.cmbVAlign.SetStringSelection(string.lower(rowProps[3]))
+            self.cmbVAlign.SetStringSelection(rowProps[3].lower())
         else:
             self.cmbVAlign.SetSelection(0)
 
