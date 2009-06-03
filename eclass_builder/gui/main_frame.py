@@ -16,6 +16,8 @@ import xml.dom.minidom
 
 import appdata
 import ftplib
+import launch
+
 import themes
 import conman.xml_settings as xml_settings
 import conman.vcard as vcard
@@ -49,7 +51,7 @@ except:
 EXPERIMENTAL_WXWEBKIT = False
 
 try:
-    import webview
+    import wx.webview
     EXPERIMENTAL_WXWEBKIT = True
 except:
     pass
@@ -219,7 +221,7 @@ class MainFrame2(sc.SizedFrame):
         if not EXPERIMENTAL_WXWEBKIT:
             self.browser = wxbrowser.wxBrowser(self.splitter1, -1)
         else:
-            self.browser = webview.WebView(self.splitter1, -1, size=(200,200))
+            self.browser = wx.webview.WebView(self.splitter1, -1, size=(200,200))
             self.browser.LoadPage = self.browser.LoadURL
             self.browser.SetPage = self.browser.SetPageSource
             self.browser.browser = self.browser
@@ -652,7 +654,6 @@ class MainFrame2(sc.SizedFrame):
         if item:
             filename = self.GetContentFilenameForSelectedItem()
             
-            import launch
             submenu = wx.Menu()
             
             abspath = os.path.join(settings.ProjectDir, filename)
