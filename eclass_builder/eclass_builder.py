@@ -102,11 +102,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
                 gsdlfolder = "C:\Program Files\gsdl"
             
             if os.path.exists(gsdlfolder):
-                settings.AppSettings["GSDL"] = gsdlfolder       
-
-        if htmleditor == "":
-            if wx.Platform == '__WXMSW__':
-                htmleditor = "C:\Program Files\OpenOffice.org1.0\program\oooweb.exe"
+                settings.AppSettings["GSDL"] = gsdlfolder
             
             if os.path.exists(htmleditor):
                 settings.AppSettings["HTMLEditor"] = htmleditor
