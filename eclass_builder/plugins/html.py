@@ -22,7 +22,7 @@ from mmedia import HTMLTemplates
     #from conman.colorbutton import *
 
 try:
-    import webview
+    import wx.webview
     webkit_available = True
     from htmleditor import *
 except:
@@ -136,9 +136,14 @@ if __name__ != "__main__":
 
             global webkit_available
             if webkit_available:
-                self.frame = EditorFrame(self.parent, self.filename)
+                size = wx.Display().ClientArea.Size
+                size.x = size.x / 2
+                size.y = size.y / 2
+                print "size is %s" % size
+                self.frame = EditorFrame(self.parent, self.filename, size=size)
                 #self.frame.currentItem = self.currentItem
                 self.frame.Show()
+                self.frame.CentreOnScreen()
             else:
                 guiutils.openInHTMLEditor(self.filename)
                 
