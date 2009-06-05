@@ -590,21 +590,21 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             myfilename = win32api.GetShortPathName(filename)
 
         message = _("Unable to convert file %(filename)s") % {"filename": filename}
+        wx.BeginBusyCursor()
         try:
             import converter
-            wx.BeginBusyCursor()
             myconverter = converter.DocConverter()
             thefilename = myconverter.ConvertFile(myfilename, "html", "ms_office")[0]
-            wx.EndBusyCursor()
             if thefilename == "":
                 wx.MessageBox(message)
                 return ""
             myhtml = GetBody(utils.openFile(thefilename, "rb"))
         except:
-            wx.EndBusyCursor()
             global log
             log.write(message)
-            return ""
+            myhtml = ""
+        
+        wx.EndBusyCursor()
         
         return myhtml
 
