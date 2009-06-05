@@ -18,8 +18,9 @@ def TextToHTMLChar(mytext):
     return TextToXMLChar(mytext)
     
 def GetFullPathForURL(url, basedir):
-    path = urllib.unquote(url)
-    if path.find("file://") == 0 and os.path.exists(urllib.url2pathname(path)):
+    if url.find("file://") == 0:
+        # Using urlretrieve on a local file simply returns the filename
+        # and does not copy or reproduce the file.
         path = urllib.urlretrieve(url)[0]
             
     if not os.path.exists(path):
