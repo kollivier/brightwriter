@@ -420,15 +420,15 @@ class EClassMedia (plugins.PluginData):
 
     def __init__(self):
         plugins.PluginData.__init__(self)
-        self.image = ""
-        self.audio = ""
+        self.image = u""
+        self.audio = u""
         self.audioautostart = False
-        self.video = ""
+        self.video = u""
         self.videoautostart = False
-        self.introduction = ""
-        self.text = ""
-        self.powerpoint = ""
-        self.name = ""
+        self.introduction = u""
+        self.text = u""
+        self.powerpoint = u""
+        self.name = u""
         
 
 class EClassTerm(plugins.PluginData):
@@ -450,9 +450,9 @@ class EClassTerm(plugins.PluginData):
     """
     def __init__(self):
         plugins.PluginData.__init__(self)
-        self.name = ""
-        self.type = ""
-        self.url = ""
+        self.name = u""
+        self.type = u""
+        self.url = u""
         self.page = None
     
     def NewPage(self):
@@ -531,7 +531,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             myfile = None
             convert = False
             if string.find(os.path.splitext(string.lower(mypage.media.text))[1], "htm") != -1:
-                myhtml = GetBody(utils.openFile(sourcefile, 'rb'))
+                myhtml = GetBodySoup(utils.openFile(sourcefile, 'rb'))
             else: 
                 #It might be a Word/RTF document, try to convert...
                 convert = True
@@ -546,14 +546,14 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         myhtml = self._InsertTerms(myhtml, termlist)
         
         if len(mypage.objectives) > 0:
-            objtext = "<hr><h2>" + _("Objectives") + "</h2><ul id=\"objectives\">"
+            objtext = u"<hr><h2>" + _("Objectives") + u"</h2><ul id=\"objectives\">"
             for obj in mypage.objectives:
-                objtext = objtext + "<li>" + TextToXMLChar(obj) + "</li>"
-            objtext = objtext + "</ul><hr>"
+                objtext = objtext + u"<li>" + TextToXMLChar(obj) + u"</li>"
+            objtext = objtext + u"</ul><hr>"
 
         #try:
         objtext = utils.makeUnicode(objtext)
-        myhtml = self._AddMedia(mypage) + objtext + utils.makeUnicode(myhtml)
+        myhtml = self._AddMedia(mypage) + objtext + myhtml
 
         myhtml = u'<h1 align="center">' + self.data['name'] + u'</h1>' + myhtml
         self.data['content'] = myhtml
@@ -616,7 +616,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
                 newelement = result.replace(term[0], """<a href="%s" target=_blank>%s</a>""" % (term[1], term[0]))
                 result.replaceWith(newelement)
                 
-        return soup.prettify()
+        return soup.prettify(encoding=None)
 
 
     def _AddMedia(self, mypage):
@@ -1281,17 +1281,16 @@ class EditorDialog (sc.SizedDialog):
             if result == wx.ID_NO:
                 return
 
-        if isinstance(self.item, conman.conman.ConNode) or isinstance(self.item, ims.contentpackage.Item):
-            if len(self.filename) > 0:
-                filename = os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))
-                try:
-                    self.page.SaveAsXML(filename)
-                except IOError, e:
-                    global log
-                    message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
-                    log.write(message)
-                    wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
-                    return
+        if len(self.filename) > 0:
+            filename = os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))
+            try:
+                self.page.SaveAsXML(filename)
+            except IOError, e:
+                global log
+                message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
+                log.write(message)
+                wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
+                return
             
                 
             
