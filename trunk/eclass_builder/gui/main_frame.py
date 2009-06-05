@@ -228,6 +228,51 @@ class MainFrame2(sc.SizedFrame):
         
         self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
+        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
+        self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
+        
+        self.Bind(wx.EVT_IDLE, self.OnIdle)
+        
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
+        self.Bind(wx.EVT_TREE_BEGIN_LABEL_EDIT, self.OnTreeLabelWillChange, self.projectTree)
+        self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
+        self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
+        self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
+        
+        self.SetMinSize(self.GetSizer().GetMinSize())
+
+        #if sys.platform.startswith("win"):
+        # this nasty hack is needed because on Windows, the controls won't
+        # properly layout until the frame is resized. 
+        # It appears it is now needed on Mac, too.
+        self.SetSize((self.GetSize()[0]+1, self.GetSize()[1]+1))
+            
+        #if sys.platform.startswith("darwin"):
+        #    self.FileMenu.FindItemById(ID_PUBLISH_PDF).Enable(False)
+        #    self.toolbar.EnableTool(ID_PUBLISH_PDF, False)
+        
+        self.activityMonitor = ActivityMonitor(self)
+        self.activityMonitor.LoadState("ActivityMonitor")
+        
+        self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
+        self.errorViewer.LoadState("ErrorLogViewer", dialogIsModal=False)
+
+        if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
+            self.LoadEClass(settings.AppSettings["LastOpened"])
+                
+    def OnActivityMonitor(self, evt):
+        self.activityMonitor.Show()
+
+    def OnAbout(self, event):
+        EClassAboutDialog(self).ShowModal()
+        
+    def OnActivate(self, event):
+        if event.Active:
+            self.RegisterHandlers()
+        else:
+            self.RemoveHandlers()
+
+    def RegisterHandlers(self):
         app = wx.GetApp()
         app.AddHandlerForID(ID_NEW, self.OnNewContentPackage)
         app.AddHandlerForID(ID_OPEN, self.OnOpen)
@@ -300,42 +345,80 @@ class MainFrame2(sc.SizedFrame):
         #wx.EVT_MENU(self, ID_FIND_IN_PROJECT, self.OnFindInProject)
 
         app.AddHandlerForID(ID_EXIT, self.OnCloseWindow)
-        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
-        
-        self.Bind(wx.EVT_IDLE, self.OnIdle)
-        
-        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
-        self.Bind(wx.EVT_TREE_BEGIN_LABEL_EDIT, self.OnTreeLabelWillChange, self.projectTree)
-        self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
-        self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
-        self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
-        
-        self.SetMinSize(self.GetSizer().GetMinSize())
 
-        #if sys.platform.startswith("win"):
-        # this nasty hack is needed because on Windows, the controls won't
-        # properly layout until the frame is resized. 
-        # It appears it is now needed on Mac, too.
-        self.SetSize((self.GetSize()[0]+1, self.GetSize()[1]+1))
-            
-        #if sys.platform.startswith("darwin"):
-        #    self.FileMenu.FindItemById(ID_PUBLISH_PDF).Enable(False)
-        #    self.toolbar.EnableTool(ID_PUBLISH_PDF, False)
+    def RemoveHandlers(self):
+        app = wx.GetApp()
+        app.RemoveHandlerForID(ID_NEW)
+        app.RemoveHandlerForID(ID_OPEN)
+        app.RemoveHandlerForID(ID_SAVE)
+        app.RemoveHandlerForID(ID_CLOSE)
+        app.RemoveHandlerForID(ID_PROPS)
+        app.RemoveHandlerForID(ID_TREE_REMOVE)
+        app.RemoveHandlerForID(ID_TREE_EDIT) 
+        app.RemoveHandlerForID(ID_EDIT_ITEM)
+        app.RemoveHandlerForID(ID_PREVIEW) 
+        app.RemoveHandlerForID(ID_PUBLISH)
+        app.RemoveHandlerForID(ID_PUBLISH_CD)
+        #app.RemoveHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
+        app.RemoveHandlerForID(ID_PUBLISH_IMS)
+        app.RemoveHandlerForID(ID_BUG)
+        app.RemoveHandlerForID(ID_THEME)
         
-        self.activityMonitor = ActivityMonitor(self)
-        self.activityMonitor.LoadState("ActivityMonitor")
+        app.RemoveHandlerForID(ID_ADD_MENU)
+        app.RemoveHandlerForID(ID_TREE_MOVEUP)
+        app.RemoveHandlerForID(ID_TREE_MOVEDOWN)
+        app.RemoveHandlerForID(ID_HELP)
+        app.RemoveHandlerForID(ID_LINKCHECK)
+        app.RemoveHandlerForID(ID_CUT)
+        app.RemoveHandlerForID(ID_COPY)
+        app.RemoveHandlerForID(ID_PASTE_BELOW)
+        app.RemoveHandlerForID(ID_PASTE_CHILD)
+        app.RemoveHandlerForID(ID_PASTE)
+        app.RemoveHandlerForID(ID_CLEAN_HTML)
+        app.RemoveHandlerForID(ID_IMPORT_FILE)
+        app.RemoveHandlerForID(ID_REFRESH_THEME)
+        #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
+        app.RemoveHandlerForID(ID_ERRORLOG)
+        app.RemoveHandlerForID(ID_ACTIVITY)
+        app.RemoveHandlerForID(ID_CONTACTS)
         
-        self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
-        self.errorViewer.LoadState("ErrorLogViewer", dialogIsModal=False)
+        app.RemoveHandlerForID(ID_SETTINGS)
+        #app.RemoveHandlerForID(wx.ID_ABOUT, self.OnAbout)
+        
+        app.RemoveUIHandlerForID(ID_SAVE)
+        app.RemoveUIHandlerForID(ID_CLOSE)
+        app.RemoveUIHandlerForID(ID_PREVIEW)
+        app.RemoveUIHandlerForID(ID_REFRESH_THEME)
+        app.RemoveUIHandlerForID(ID_PUBLISH_MENU)
+        app.RemoveUIHandlerForID(ID_PUBLISH)
+        app.RemoveUIHandlerForID(ID_PUBLISH_CD)
+        #app.RemoveUIHandlerForID(ID_PUBLISH_PDF)
+        
+        app.RemoveUIHandlerForID(ID_PROPS)
+        app.RemoveUIHandlerForID(ID_THEME)
+        app.RemoveUIHandlerForID(ID_LINKCHECK)
+        
+        app.RemoveUIHandlerForID(ID_CUT)
+        app.RemoveUIHandlerForID(ID_COPY)
+        app.RemoveUIHandlerForID(ID_PASTE)
+        app.RemoveUIHandlerForID(ID_FIND_IN_PROJECT)
+        
+        app.RemoveUIHandlerForID(ID_ADD_MENU)
+        app.RemoveUIHandlerForID(ID_TREE_REMOVE)
+        app.RemoveUIHandlerForID(ID_IMPORT_FILE)
+        app.RemoveUIHandlerForID(ID_EDIT_ITEM)
+        app.RemoveUIHandlerForID(ID_TREE_MOVEUP)
+        app.RemoveUIHandlerForID(ID_TREE_MOVEDOWN)
+        app.RemoveUIHandlerForID(ID_UPLOAD_PAGE)
+        app.RemoveUIHandlerForID(ID_TREE_EDIT)
+        
+        pagemenu = self.GetMenuBar().FindMenu(_("Page"))
 
-        if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
-            self.LoadEClass(settings.AppSettings["LastOpened"])
-                
-    def OnActivityMonitor(self, evt):
-        self.activityMonitor.Show()
+        app.RemoveUIHandlerForID(pagemenu)
+        app.RemoveUIHandlerForID(self.GetMenuBar().FindMenu(_("Edit")))
+        #wx.EVT_MENU(self, ID_FIND_IN_PROJECT, self.OnFindInProject)
 
-    def OnAbout(self, event):
-        EClassAboutDialog(self).ShowModal()
+        #app.RemoveHandlerForID(ID_EXIT, self.OnCloseWindow)
 
     def OnHelp(self, event):
         import webbrowser
@@ -348,11 +431,10 @@ class MainFrame2(sc.SizedFrame):
         event.Skip()
         if self.selectedFileLastModifiedTime > 0:
             try:
-                filename = self.GetContentFilenameForSelectedItem()
-            
+                filename = eclassutils.getEditableFileForIMSItem(self.imscp, self.projectTree.GetCurrentTreeItemData())
                 if filename:
                     modifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
-                    if not modifiedTime == self.selectedFileLastModifiedTime:
+                    if not modifiedTime <= self.selectedFileLastModifiedTime:
                         self.Update()
             except:
                 raise
@@ -1030,14 +1112,7 @@ class MainFrame2(sc.SizedFrame):
             plugin = plugins.GetPluginForFilename(filename)
             if plugin:
                 mydialog = plugin.EditorDialog(self, selitem)
-                result = mydialog.ShowModal()
-    
-            if result == wx.ID_OK:
-                self.Update()
-                # FIXME: Need to remove the ability to set the page name from EClass in the next
-                # build.
-                if plugin == plugins.GetPlugin("eclass"):
-                    self.projectTree.SetItemText(self.projectTree.GetCurrentTreeItem(), selitem.title.text)
+                mydialog.ShowModal()
         
     def EditItemProps(self):
         selitem = self.projectTree.GetCurrentTreeItemData()
