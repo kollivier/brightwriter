@@ -172,12 +172,12 @@ def convNotSoSmartQuotesToHtmlEntity(x):
 
 def GetEncoding(myhtml):
     """Checks for document HTML encoding and returns it if found."""
-    import re
-    match = re.search("""<meta\s+http-equiv=["]?Content-Type["]?\s+content=["]?text/html;\s*charset=([^\"]*)["]?>""", myhtml, re.IGNORECASE)
-    if match:
-        return match.group(1).lower() #python encodings always in lowercase
-    else:
-        return None
+    soup = BeautifulSoup.BeautifulSoup(myhtml)
+    return soup.originalEncoding
+
+def GetBodySoup(myhtml):
+    soup = BeautifulSoup.BeautifulSoup(myhtml.read())
+    return soup.body.prettify(encoding=None)
 
 def GetBody(myhtml):
     """
