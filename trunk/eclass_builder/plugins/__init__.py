@@ -78,16 +78,10 @@ class Plugin:
         self.mimetype = mimetype
         self.requires = requires
 
+# FIXME: left for now to keep compatibility with classes using it.
 class PluginData:
     def __init__(self):
-        self.encoding = utils.getCurrentEncoding()
-        
-    def __setattr__(self, name, value):
-        # make sure internally we're always using Unicode
-        if not name == "encoding":
-            self.__dict__[name] = utils.makeUnicode(value, self.encoding)
-        else:
-            self.__dict__[name] = value 
+        pass
             
 #a base publisher to be overridden by plugins 
 class BaseHTMLPublisher:
