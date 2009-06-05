@@ -1133,7 +1133,9 @@ class MainFrame2(sc.SizedFrame):
                 parent = self.projectTree.GetItemParent(selection)
                 parentitem = self.projectTree.GetPyData(parent)
                 
-                parentitem.items.remove(selitem)
+                # FIXME: how are we hitting a situation where this isn't true?
+                if selitem in parentitem.items:
+                    parentitem.items.remove(selitem)
                 
                 self.projectTree.Delete(selection)
                 self.UpdateEClassDataFiles()
