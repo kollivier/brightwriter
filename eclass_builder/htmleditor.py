@@ -152,7 +152,7 @@ class EditorFrame (wx.Frame):
         textstylemenu.Append(ID_TEXT_CODE, _("Code"))
         textstylemenu.Append(ID_TEXT_CITATION, _("Citation"))
         textstylemenu.AppendSeparator()
-        textstylemenu.Append(ID_TEXT_REMOVE_STYLES, _("Clear Text Styles"))
+        textstylemenu.Append(ID_TEXT_REMOVE_STYLES, _("Remove Formatting"))
 
         self.formatmenu.AppendMenu(wx.NewId(), _("Text Style"), textstylemenu)
         
@@ -298,7 +298,7 @@ class EditorFrame (wx.Frame):
 
         wx.EVT_COMBOBOX(self, self.fontlist.GetId(), self.OnFontSelect)
         wx.EVT_TEXT_ENTER(self, self.fontlist.GetId(), self.OnFontSelect)
-        wx.EVT_CHOICE(self, self.fontsizelist.GetId(), self.OnFontSizeSelect)
+        wx.EVT_COMBOBOX(self, self.fontsizelist.GetId(), self.OnFontSizeSelect)
         #wx.EVT_KEY_UP(self.location, self.OnLocationKey)
         #wx.EVT_CHAR(self.location, self.IgnoreReturn)
         #wx.EVT_MENU(self, ID_NEW, self.OnNew)
@@ -364,6 +364,8 @@ class EditorFrame (wx.Frame):
         #wx.EVT_MOZILLA_LOAD_COMPLETE(self.webview, self.webview.GetId(), self.OnLoadComplete)
         wx.EVT_MOUSE_EVENTS(self.webview, self.UpdateStatus)
 
+        self.Bind(wx.webview.EVT_WEBVIEW_BEFORE_LOAD, self.OnLinkClicked)
+
         #btnSizer.Add(self.location, 1, wx.EXPAND|wx.ALL, 2)
         sizer.Add(self.toolbar, 0, wx.EXPAND)
         sizer.Add(self.toolbar2, 0, wx.EXPAND)
@@ -375,9 +377,7 @@ class EditorFrame (wx.Frame):
         self.SetAutoLayout(True)
         
         self.notebook.SetSelection(0)
-        if os.path.exists(self.filename):
-            print "baseurl = %s" % self.baseurl
-            self.webview.SetPageSource(open(self.filename).read(), self.baseurl)
+        self.LoadPage(self.filename)
         
         width, height = self.webview.GetVirtualSize()
         ssize = wx.Display().GetClientArea()
@@ -398,6 +398,14 @@ class EditorFrame (wx.Frame):
             wx.EVT_CHAR(self.notebook, self.SkipNotebookEvent)
             
         self.Size = size
+        
+    def LoadPage(self, filename):
+        if os.path.exists(filename):
+            self.webview.SetPageSource(htmlutils.getUnicodeHTMLForFile(filename), self.baseurl)
+            self.filename = filename
+
+    def OnLinkClicked(self, event):
+        event.Cancel()
 
     def SkipNotebookEvent(self, evt):
         evt.Skip()
@@ -666,7 +674,7 @@ class EditorFrame (wx.Frame):
         self.RunCommand("cite", evt)
 
     def OnRemoveStyle(self, evt):
-        self.RunCommand("removeStyles", evt)
+        self.RunCommand("RemoveFormat", evt)
 
     def OnRemoveLink(self, evt):
         self.RunCommand("removeLinks", evt)
