@@ -609,7 +609,7 @@ class MainFrame2(sc.SizedFrame):
         if self.imscp and self.imscp.isDirty():
             answer = self.PromptToSaveExistingProject()
             if answer == wx.ID_YES:
-                self.SaveProject(event)
+                self.SaveProject()
             elif answer == wx.ID_CANCEL:
                 return
             else:
@@ -679,7 +679,7 @@ class MainFrame2(sc.SizedFrame):
         if self.imscp and self.imscp.isDirty():
             answer = self.PromptToSaveExistingProject()
             if answer == wx.ID_YES:
-                self.SaveProject(event)
+                self.SaveProject()
             elif answer == wx.ID_CANCEL:
                 return
             else:
@@ -950,7 +950,7 @@ class MainFrame2(sc.SizedFrame):
         if self.imscp and self.imscp.isDirty():
             answer = self.PromptToSaveExistingProject()
             if answer == wx.ID_YES:
-                self.SaveProject(event)
+                self.SaveProject()
             elif answer == wx.ID_CANCEL:
                 return
         
@@ -966,7 +966,7 @@ class MainFrame2(sc.SizedFrame):
             self.errorViewer.Destroy()
         self.Destroy()
         
-    def SaveProject(self, event):
+    def SaveProject(self, event=None):
         """
         Runs when the user selects the Save option from the File menu
         """
@@ -1003,7 +1003,7 @@ class MainFrame2(sc.SizedFrame):
         if self.imscp and self.imscp.isDirty():
             answer = self.PromptToSaveExistingProject()
             if answer == wx.ID_YES:
-                self.SaveProject(event)
+                self.SaveProject()
             elif answer == wx.ID_CANCEL:
                 return
 
