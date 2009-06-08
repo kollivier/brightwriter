@@ -49,7 +49,8 @@ class ContentAnalyzer:
         
     def analyzeFile(self, filename):
         self.filename = filename
-        self.analyzeText( open(filename, "rb").read() )
+        if os.path.exists(filename):
+            self.analyzeText( open(filename, "rb").read() )
         
     def analyzeText(self, text):
         self.contents = text
