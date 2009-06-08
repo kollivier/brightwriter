@@ -43,7 +43,7 @@ import wx.lib.mixins.listctrl
 import wx.lib.newevent
 
 try:
-    import taskrunner
+    import externals.taskrunner as taskrunner
 except:
     pass
     

@@ -1,6 +1,9 @@
 import sys, os, string, time, shutil
 #import ReleaseForge
 
+externals_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../externals"))
+sys.path.append(externals_dir)
+
 from taskrunner import Job, Task, TaskRunner, TaskRunnerThread, Config
 import glob
 
