@@ -173,8 +173,12 @@ def convNotSoSmartQuotesToHtmlEntity(x):
 
 def GetEncoding(myhtml):
     """Checks for document HTML encoding and returns it if found."""
-    soup = BeautifulSoup.BeautifulSoup(myhtml)
-    return soup.originalEncoding
+    import re
+    match = re.search("""<meta.*?content=["]?text/html;\s*charset=([^\"]*)["]?""", myhtml, re.IGNORECASE)
+    if match:
+        return match.group(1).lower() #python encodings always in lowercase
+    else:
+        return None
 
 def GetBodySoup(myhtml):
     soup = BeautifulSoup.BeautifulSoup(myhtml.read())
@@ -301,6 +305,25 @@ This is a sample MS Office reference</p>
         html = str(soup)
         self.assert_(html.find("""<a href="#_ftn1" name="_ftnref1" title="">[1]</a>""") != -1)
         self.assert_(html.find("""<a href="#_ftnref1" name="_ftn1" title="">[1]</a>""") != -1)
+        
+    def testGetEncoding(self):
+        html = """
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><head>
+<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"></head><body></body></html>
+        """
+        
+        encoding = GetEncoding(html)
+        self.assertEquals(encoding.lower(), "iso-8859-1")
+        
+        html = """
+<html><head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+</head><body></body></html>
+        """
+        
+        encoding = GetEncoding(html)
+        self.assertEquals(encoding, "windows-1252")
 
 def getTestSuite():
     return unittest.makeSuite(HTMLTests)
