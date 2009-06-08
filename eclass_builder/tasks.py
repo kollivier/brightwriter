@@ -1,7 +1,7 @@
 hasTaskRunner=False
 
 try:
-    from taskrunner import *
+    from externals.taskrunner import *
     hasTaskRunner=True
 except:
     pass
