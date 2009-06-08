@@ -6,7 +6,7 @@ from core import *
 if sys.platform.startswith("darwin"):
     from launch_mac import *
 else:
-    assert False
+    from launch_none import *
 
 if __name__ == "__main__":
     apps = getAppsForFilename('/Users/kevino/Documents/EClass Projects/Business Plan for Social Entrepreneurial Organizations/Text/Page 4 Course Description and Introduction.htm', "all")

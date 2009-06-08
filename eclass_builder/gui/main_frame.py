@@ -743,12 +743,15 @@ class MainFrame2(sc.SizedFrame):
             if len(self.launchapps) < 1:
                 self.launchapps = launch.getAppsForFilename(abspath, role = "all")
             
-            for item in self.launchapps:
-                id = wx.NewId()
-                submenu.Append(id, item)
-                self.Bind(wx.EVT_MENU, self.OnLaunchWithApp, id = id)
+            if len(self.launchapps) > 0:
+                for item in self.launchapps:
+                    id = wx.NewId()
+                    submenu.Append(id, item)
+                    self.Bind(wx.EVT_MENU, self.OnLaunchWithApp, id = id)
             
-            is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
+                is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
+            else:
+                submenu = None
             self.pageMenu = menus.getPageMenu(openWithMenu=submenu)
             cleanItem = self.pageMenu.FindItemById(ID_CLEAN_HTML)
             cleanItem.Enable(is_html)
