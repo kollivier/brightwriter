@@ -748,10 +748,11 @@ class MainFrame2(sc.SizedFrame):
                     id = wx.NewId()
                     submenu.Append(id, item)
                     self.Bind(wx.EVT_MENU, self.OnLaunchWithApp, id = id)
-            
-                is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
+
             else:
                 submenu = None
+
+            is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
             self.pageMenu = menus.getPageMenu(openWithMenu=submenu)
             cleanItem = self.pageMenu.FindItemById(ID_CLEAN_HTML)
             cleanItem.Enable(is_html)
