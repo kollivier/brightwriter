@@ -954,11 +954,7 @@ class EditorFrame (wx.Frame):
         try:
             source = source.encode(encoding)
         except:
-            try:
-                encoding = utils.getCurrentEncoding()
-                source = source.encode(encoding)
-            except:
-                raise
+            raise
                 
         afile = open(filename, "wb")
         afile.write(source)
