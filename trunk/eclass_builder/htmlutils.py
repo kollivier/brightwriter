@@ -23,10 +23,11 @@ def GetFullPathForURL(url, basedir):
         # and does not copy or reproduce the file.
         path = urllib.urlretrieve(url)[0]
             
-    if not os.path.exists(path):
-        path = basedir + "/" + path
+        if not os.path.exists(path):
+            path = basedir + "/" + path
     
-    return path
+        return path
+    return url
     
 def getTitleForPage(filename):
     """
