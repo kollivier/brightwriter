@@ -796,9 +796,18 @@ class MainFrame2(sc.SizedFrame):
         event.Enable(value)
         
     def UpdatePageCommand(self, event):
-        value = not self.projectTree.GetCurrentTreeItem() is None
-
-        event.Enable(value)          
+        
+        if event.Id == ID_TREE_REMOVE:
+            selection = self.projectTree.GetCurrentTreeItem()
+            parent = self.projectTree.GetItemParent(selection)
+            if parent == self.projectTree.GetRootItem():
+                value = False
+            else:
+                value = True
+        else:
+            value = not self.projectTree.GetCurrentTreeItem() is None
+        
+        event.Enable(value)
             
     def OnCloseWindow(self, event):
         self.ShutDown(event)
@@ -1128,15 +1137,17 @@ class MainFrame2(sc.SizedFrame):
 
     def RemoveItem(self, event):
         selection = self.projectTree.GetCurrentTreeItem()
-        selitem = self.projectTree.GetCurrentTreeItemData()
+        selitem = self.projectTree.GetCurrentTreeItemData()        
+        
         if selection:
+            parent = self.projectTree.GetItemParent(selection)
+            parentitem = self.projectTree.GetPyData(parent)
+            assert parentitem
+            
             mydialog = wx.MessageDialog(self, _("Are you sure you want to delete this page? Deleting this page also deletes any sub-pages or terms assigned to this page."), 
                                              _("Delete Page?"), wx.YES_NO)
 
-            if mydialog.ShowModal() == wx.ID_YES:
-                parent = self.projectTree.GetItemParent(selection)
-                parentitem = self.projectTree.GetPyData(parent)
-                
+            if mydialog.ShowModal() == wx.ID_YES:                
                 # FIXME: how are we hitting a situation where this isn't true?
                 if selitem in parentitem.items:
                     parentitem.items.remove(selitem)
