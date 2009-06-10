@@ -16,7 +16,11 @@ import xml.dom.minidom
 
 import appdata
 import ftplib
-import launch
+
+
+use_launch = not hasattr(sys, 'frozen')
+if use_launch:
+    import launch
 
 import themes
 import conman.xml_settings as xml_settings
@@ -736,21 +740,24 @@ class MainFrame2(sc.SizedFrame):
         if item:
             filename = self.GetContentFilenameForSelectedItem()
             
-            submenu = wx.Menu()
+            submenu = None
             
             abspath = os.path.join(settings.ProjectDir, filename)
-            self.launchapps = launch.getAppsForFilename(abspath, role = "editor")
-            if len(self.launchapps) < 1:
-                self.launchapps = launch.getAppsForFilename(abspath, role = "all")
-            
-            if len(self.launchapps) > 0:
-                for item in self.launchapps:
-                    id = wx.NewId()
-                    submenu.Append(id, item)
-                    self.Bind(wx.EVT_MENU, self.OnLaunchWithApp, id = id)
+            if use_launch:
+                self.launchapps = launch.getAppsForFilename(abspath, role = "editor")
+                if len(self.launchapps) < 1:
+                    self.launchapps = launch.getAppsForFilename(abspath, role = "all")
+                
+                # Disable this until we can figure out the packaging issues
+                if len(self.launchapps) > 0:
+                    submenu = wx.Menu()
+                    for item in self.launchapps:
+                        id = wx.NewId()
+                        submenu.Append(id, item)
+                        self.Bind(wx.EVT_MENU, self.OnLaunchWithApp, id = id)
 
-            else:
-                submenu = None
+                else:
+                    submenu = None
 
             is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
             self.pageMenu = menus.getPageMenu(openWithMenu=submenu)
