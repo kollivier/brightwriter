@@ -76,7 +76,10 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
 
         settings.AppSettings = xml_settings.XMLSettings()
         if os.path.exists(os.path.join(settings.PrefDir, "settings.xml")):
-            settings.AppSettings.LoadFromXML(os.path.join(settings.PrefDir, "settings.xml"))
+            try:
+                settings.AppSettings.LoadFromXML(os.path.join(settings.PrefDir, "settings.xml"))
+            except:
+                wx.MessageBox(_("Unable to load application preferences due to an error reading the file. Using default preferences."))
         
     def LoadLanguage(self):
         self.langdir = "en"
