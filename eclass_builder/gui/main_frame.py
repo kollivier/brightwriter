@@ -273,8 +273,9 @@ class MainFrame2(sc.SizedFrame):
     def OnActivate(self, event):
         if event.Active:
             self.RegisterHandlers()
-        else:
-            self.RemoveHandlers()
+        # FIXME: This leads to a crash on shutdown on Windows.
+        #else:
+        #    self.RemoveHandlers()
 
     def RegisterHandlers(self):
         app = wx.GetApp()
