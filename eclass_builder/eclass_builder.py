@@ -11,7 +11,7 @@ lang_dict = i18n.installEClassGettext()
 
 import wx
 import gui.error_viewer as error_viewer
-sys.excepthook = error_viewer.guiExceptionHook
+
 
 import settings, guiutils, appdata, errors
 import conman.xml_settings as xml_settings
@@ -42,6 +42,9 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
         self.SetAppName("EClass.Builder")
 
+        self.oldexcepthook = sys.excepthook 
+        sys.excepthook = error_viewer.guiExceptionHook
+        
         # initialize the environment
         self.LoadPrefs()
         self.LoadLanguage()
@@ -56,6 +59,9 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
         return True
+        
+    def OnExit(self):
+        sys.excepthook = self.oldexcepthook
         
     def CreateAppDirsIfNeeded(self):
         contactsdir = os.path.join(settings.PrefDir, "Contacts")
