@@ -35,7 +35,7 @@ if [ "$skipmac" != "yes" ]; then
      scp -r "$MAC_HOST:$dir/installer/dist/EClass.Builder.app "  $DIST_DIR/dmg_files-$BUILD_TYPE
      #cd $OLDDIR
 
-     DMG_NAME=deliver/eclass-builder-$BUILD_VERSION-$BUILD_TYPE.dmg
+     DMG_NAME=deliver/eclass-builder-$BUILD_VERSION.dmg
      DMG_DIR=$DIST_DIR/dmg_files-$BUILD_TYPE
      if [ -f $DMG_NAME ]; then
        rm $DMG_NAME
