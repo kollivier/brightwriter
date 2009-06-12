@@ -804,16 +804,15 @@ class MainFrame2(sc.SizedFrame):
         event.Enable(value)
         
     def UpdatePageCommand(self, event):
-        
-        if event.Id == ID_TREE_REMOVE:
-            selection = self.projectTree.GetCurrentTreeItem()
+        selection = self.projectTree.GetCurrentTreeItem()
+        if selection and event.Id == ID_TREE_REMOVE:
             parent = self.projectTree.GetItemParent(selection)
             if parent == self.projectTree.GetRootItem():
                 value = False
             else:
                 value = True
         else:
-            value = not self.projectTree.GetCurrentTreeItem() is None
+            value = not selection is None
         
         event.Enable(value)
             
