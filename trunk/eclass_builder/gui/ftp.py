@@ -104,7 +104,10 @@ class ftpService:
 
     def close(self):
         if self.connection:
-            self.connection.quit()
+            try:
+                self.connection.quit()
+            except:
+                pass
         self.connection = None
         
     def uploadFile(self, sourcename, destname, callback=None):
