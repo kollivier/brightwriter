@@ -531,7 +531,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             myfile = None
             convert = False
             if string.find(os.path.splitext(string.lower(mypage.media.text))[1], "htm") != -1:
-                myhtml = GetBodySoup(utils.openFile(sourcefile, 'rb'))
+                myhtml = GetBody(utils.openFile(sourcefile, 'rb'))
             else: 
                 #It might be a Word/RTF document, try to convert...
                 convert = True
@@ -1281,7 +1281,7 @@ class EditorDialog (sc.SizedDialog):
             if result == wx.ID_NO:
                 return
 
-        if len(self.filename) > 0:
+        if self.filename:
             filename = os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))
             try:
                 self.page.SaveAsXML(filename)
