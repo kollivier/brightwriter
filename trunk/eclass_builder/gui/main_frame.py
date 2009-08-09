@@ -16,7 +16,7 @@ import xml.dom.minidom
 
 import appdata
 import ftplib
-
+import settings
 
 use_launch = not hasattr(sys, 'frozen')
 if use_launch:
@@ -55,8 +55,9 @@ except:
 EXPERIMENTAL_WXWEBKIT = False
 
 try:
-    import wx.webview
-    EXPERIMENTAL_WXWEBKIT = True
+    if settings.webkit:
+        import wx.webview
+        EXPERIMENTAL_WXWEBKIT = True
 except:
     pass
 

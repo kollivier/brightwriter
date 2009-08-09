@@ -33,7 +33,6 @@ if sys.platform.startswith("win"):
     import wx.stc
 
 settings.AppDir = rootdir
-new_editor = True
         
 class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def OnInit(self):
@@ -145,8 +144,8 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
 for arg in sys.argv:
     if arg == "--debug":
         debug = 1
-    elif arg == "--old-editor":
-        new_editor = False
+    elif arg == "--webkit":
+        settings.webkit = True
 
 app = BuilderApp(0)
 app.MainLoop()
