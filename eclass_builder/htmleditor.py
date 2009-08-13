@@ -306,12 +306,14 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
     def OnTableButton(self, evt):
         tableProps = []
-        mydialog = CreateTableDialog(self.webview)
+        mydialog = CreateTableDialog(self.webview, -1, _("Table Properties"), size=(400,400))
+        mydialog.CentreOnParent()
         if mydialog.ShowModal() == wx.ID_OK:
-            tablehtml = """<table border="%s" width="%s" height="%s">""" % ("1", mydialog.twidth, mydialog.theight)
-            for counter in range(0, int(mydialog.trows)):
+            trows, tcolumns, twidth, theight = mydialog.GetValues()
+            tablehtml = """<table border="%s" width="%s" height="%s">""" % ("1", twidth, theight)
+            for counter in range(0, int(trows)):
                 tablehtml = tablehtml + "<tr>"
-                for counter in range(0, int(mydialog.tcolumns)):
+                for counter in range(0, int(tcolumns)):
                     tablehtml = tablehtml + "<td>&nbsp</td>"
                 tablehtml = tablehtml + "</tr>"
             tablehtml = tablehtml + "</table>"
@@ -432,54 +434,61 @@ class HTMLEditorDelegate(wx.EvtHandler):
                 self.dirty = True
             mydialog.Destroy()
 
+    def FindElementInSelection(self, elementName):
+        """
+        Traverse the selection via the DOM to find the element we're looking for.
+        """
+        selection = self.webview.GetSelection().GetAsRange()
+        result = None
+        if selection:    
+            root = selection.GetFirstNode().GetParentNode()
+                
+            if root:
+                if isinstance(root, wx.webview.WebKitDOMElement) and root.GetTagName() == elementName: 
+                    result = root
+                else:
+                    def getNodeInfo(node):
+                        print "name: %s, value: %s" % (node.GetNodeName(), node.GetNodeValue())
+                    
+                    def traverseNodeRecursive(root):
+                        getNodeInfo(root)
+                        if root.GetNodeType() == wx.webview.ELEMENT_NODE:
+                            print "root tag name: %s, ID: %s" % (root.GetTagName(), root.GetIDAttribute())
+                        children = root.GetChildNodes()
+    
+                        if children:
+                            for i in xrange(children.GetLength()):
+                                child = children.GetNode(i)
+                                
+                                if child:
+                                    if isinstance(child, wx.webview.WebKitDOMElement):
+                                        print "tag name: %s, ID: %s" % (child.GetTagName(), child.GetIDAttribute())
+                                        if child.GetTagName() == elementName:
+                                            return child
+                                    
+                                    if child.GetChildNodes():
+                                        return traverseNodeRecursive(child)
+                                    
+                            return None
+
+                    node = root
+                    while node and node != selection.GetPastLastNode():
+                        result = traverseNodeRecursive(node)
+                        if result:
+                            break
+                        node = node.TraverseNextNode()
+        return result
+
     def OnLinkButton(self, evt):    
         linkProps = []
         linkProps.append("")
         linkProps.append("")
         mydialog = LinkPropsDialog(self.webview, linkProps)
+        mydialog.CentreOnParent()
         if mydialog.ShowModal() == wx.ID_OK:            
             self.webview.ExecuteEditCommand("CreateLink", mydialog.linkProps[0])
             print "selection is: %s" % self.webview.GetSelectionAsHTML()
-            url = None
-            selection = self.webview.GetSelection().GetAsRange()
-            if selection:
-                root = selection.GetFirstNode().GetParentNode()
-                
-                if root:
-                    if isinstance(root, wx.webview.WebKitDOMElement) and root.GetTagName() == "A": #root.GetNodeType() == wx.webview.ELEMENT_NODE and root.GetTagName() == "A": 
-                        url = root
-                    else:
-                        def getNodeInfo(node):
-                            print "name: %s, value: %s" % (node.GetNodeName(), node.GetNodeValue())
-                        
-                        def traverseNodeRecursive(root):
-                            getNodeInfo(root)
-                            if root.GetNodeType() == wx.webview.ELEMENT_NODE:
-                                print "root tag name: %s, ID: %s" % (root.GetTagName(), root.GetIDAttribute())
-                            children = root.GetChildNodes()
-        
-                            if children:
-                                for i in xrange(children.GetLength()):
-                                    child = children.GetNode(i)
-                                    
-                                    if child:
-                                        
-                                        if isinstance(child, wx.webview.WebKitDOMElement):
-                                            print "tag name: %s, ID: %s" % (child.GetTagName(), child.GetIDAttribute())
-                                            if child.GetTagName() == "A":
-                                                return child
-                                        
-                                        if child.GetChildNodes():
-                                            return traverseNodeRecursive(child)
-                                        
-                                return None
-
-                        node = root
-                        while node and node != selection.GetPastLastNode():
-                            url = traverseNodeRecursive(node)
-                            if url:
-                                break
-                            node = node.TraverseNextNode()
+            url = self.FindElementInSelection("A")
                     
             if url:
                 print url.GetAttribute("href")
@@ -927,6 +936,8 @@ class EditorFrame (wx.Frame):
             
         self.webview.Bind(wx.EVT_MOUSE_EVENTS, self.UpdateStatus)
         self.Size = size
+        
+        self.webview.SetFocus()
 
     def GetCommandState(self, command):
         if self.FindFocus() == self.webview:
@@ -1546,76 +1557,57 @@ class TablePropsDialog(wx.Dialog):
         self.tableProps[5] = `self.spnPadding.GetValue()`
         self.EndModal(wx.ID_OK)
 
-class CreateTableDialog(wx.Dialog):
-    def __init__(self, parent):
-        wx.Dialog.__init__ (self, parent, -1, _("Table Properties"))
-        height = 20
-        if wx.Platform == "__WXMAC__":
-            height = 25
-        self.parent = parent
+class CreateTableDialog(sc.SizedDialog):
+    def __init__(self, *args, **kwargs):
+        sc.SizedDialog.__init__ (self, *args, **kwargs)
+
         self.trows = "1"
         self.tcolumns = "1"
         self.twidth= "100"
         self.theight = "100"
 
-        self.lblRows = wx.StaticText(self, -1, _("Rows:"))
-        self.txtRows = wx.TextCtrl(self, -1, "1")
-        self.lblColumns = wx.StaticText(self, -1, _("Columns:"))
-        self.txtColumns = wx.TextCtrl(self, -1, "1")
+        panel = self.GetContentsPane()
 
-        self.sizebox = wx.StaticBox(self, -1, "Size")
-        #self.radOriginalSize = wx.RadioBox(self, -1, _("Actual size"))
-        #self.radResizeImage = wx.RadioBox(self, -1, _("Custom size"))
-        self.lblWidth = wx.StaticText(self, -1, _("Width:"))
-        self.txtWidth = wx.TextCtrl(self, -1, "100")
-        self.cmbWidthType = wx.Choice(self, -1, choices=[_("Percent"), _("Pixels")])
+        rcpane = sc.SizedPanel(panel, -1)
+        rcpane.SetSizerType("horizontal")
+        self.lblRows = wx.StaticText(rcpane, -1, _("Rows:"))
+        self.lblRows.SetSizerProps(valign="center")
+        self.txtRows = wx.SpinCtrl(rcpane, -1, "1")
+        self.lblColumns = wx.StaticText(rcpane, -1, _("Columns:"))
+        self.lblColumns.SetSizerProps(valign="center")
+        self.txtColumns = wx.SpinCtrl(rcpane, -1, "1")
+
+        widthPane = sc.SizedPanel(panel, -1)
+        widthPane.SetSizerType("horizontal")
+        self.lblWidth = wx.StaticText(widthPane, -1, _("Width:"))
+        self.txtWidth = wx.TextCtrl(widthPane, -1, "")
+        self.cmbWidthType = wx.Choice(widthPane, -1, choices=[_("Percent"), _("Pixels")])
         self.cmbWidthType.SetStringSelection(_("Percent"))
-        self.lblHeight = wx.StaticText(self, -1, _("Height:"))
-        self.txtHeight = wx.TextCtrl(self, -1, "100")
-        self.cmbHeightType = wx.Choice(self, -1, choices=[_("Percent"), _("Pixels")])
-        self.cmbHeightType.SetStringSelection(_("Percent"))
-
-        self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
-        self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.lblRows, 0, wx.ALL, 4)
-        self.sizer.Add(self.txtRows, 0, wx.ALL, 4)
-        self.sizer.Add(self.lblColumns, 0, wx.ALL, 4)
-        self.sizer.Add(self.txtColumns, 0, wx.ALL, 4)
-        boxsizer = wx.StaticBoxSizer(self.sizebox, wx.VERTICAL)
-        #boxsizer.Add(self.radOriginalSize, 0)
-        #boxsizer.Add(self.radResizeImage, 0)
-        size_sizer = wx.GridSizer(2, 3, 3, 3)
-        size_sizer.Add(self.lblWidth, 0)
-        size_sizer.Add(self.txtWidth, 0)
-        size_sizer.Add(self.cmbWidthType, 0)
-        size_sizer.Add(self.lblHeight, 0)
-        size_sizer.Add(self.txtHeight, 0)
-        size_sizer.Add(self.cmbHeightType, 0)
-        boxsizer.Add(size_sizer)
-        self.sizer.Add(boxsizer, 0)
-
-        btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnsizer.Add((100, 25), 1, wx.EXPAND | wx.ALL, 4)
-        btnsizer.Add(self.btnOK, 0, wx.ALL, 4)
-        btnsizer.Add(self.btnCancel, 0, wx.ALL, 4)
-        self.sizer.Add(btnsizer, 0, wx.ALL, 4)
-        self.SetSizerAndFit(self.sizer)
-        self.Layout()
-
-        wx.EVT_BUTTON(self, self.btnOK.GetId(), self.OnOKClicked)
-
-    def OnOKClicked(self, evt):
-        self.trows = self.txtRows.GetValue()
-        self.tcolumns = self.txtColumns.GetValue() 
-        self.twidth = self.txtWidth.GetValue()
-        if self.cmbWidthType.GetStringSelection() == _("Percent"):
-            self.twidth = self.twidth + "%"
         
-        self.theight = self.txtHeight.GetValue()
+        heightPane = sc.SizedPanel(panel, -1)
+        heightPane.SetSizerType("horizontal")
+        self.lblHeight = wx.StaticText(heightPane, -1, _("Height:"))
+        self.txtHeight = wx.TextCtrl(heightPane, -1, "")
+        self.cmbHeightType = wx.Choice(heightPane, -1, choices=[_("Percent"), _("Pixels")])
+        self.cmbHeightType.SetStringSelection(_("Percent"))
+        
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+        self.Fit()
+        self.SetMinSize(self.GetSize())
+
+    def GetValues(self):
+        trows = self.txtRows.GetValue()
+        tcolumns = self.txtColumns.GetValue() 
+        twidth = self.txtWidth.GetValue()
+        if self.cmbWidthType.GetStringSelection() == _("Percent"):
+            twidth += "%"
+        
+        theight = self.txtHeight.GetValue()
         if self.cmbHeightType.GetStringSelection() == _("Percent"):
-            self.theight = self.theight + "%"
-        self.EndModal(wx.ID_OK)
+            theight += "%"
+
+        return (trows, tcolumns, twidth, theight)
 
 class MyApp(wx.App):
     def OnInit(self):
