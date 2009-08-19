@@ -21,12 +21,15 @@ def GetFullPathForURL(url, basedir):
     if url.find("file://") == 0:
         # Using urlretrieve on a local file simply returns the filename
         # and does not copy or reproduce the file.
-        path = urllib.urlretrieve(url)[0]
+        try:
+            path = urllib.urlretrieve(url)[0]
             
-        if not os.path.exists(path):
-            path = basedir + "/" + path
+            if not os.path.exists(path):
+                path = basedir + "/" + path
     
-        return path
+            return path
+        except:
+            pass
     return url
     
 def getTitleForPage(filename):
