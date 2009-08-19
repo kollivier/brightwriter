@@ -439,9 +439,11 @@ class MainFrame2(sc.SizedFrame):
             try:
                 filename = eclassutils.getEditableFileForIMSItem(self.imscp, self.projectTree.GetCurrentTreeItemData())
                 if filename:
-                    modifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
-                    if not modifiedTime <= self.selectedFileLastModifiedTime:
-                        self.Update()
+                    fullpath = os.path.join(settings.ProjectDir, filename)
+                    if os.path.exists(fullpath):
+                        modifiedTime = os.path.getmtime(fullpath)
+                        if not modifiedTime <= self.selectedFileLastModifiedTime:
+                            self.Update()
             except:
                 raise
 
