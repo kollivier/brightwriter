@@ -20,7 +20,7 @@ class ErrorDialog(sc.SizedDialog):
         pane = self.GetContentsPane()
         
         wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in %s" % wx.GetApp().GetAppName()))
-        wx.StaticText(pane, -1, _("If you click on '%s', it will send only the error information\nto the project. This is helpful for us to diagnose any problems that may occur.") % _("Send Error Report"))
+        wx.StaticText(pane, -1, _("If you click on '%s', it will send only the error information listed below\nto the project. This is helpful for us to diagnose any problems that may occur.") % _("Send Error Report"))
         self.detailsButton = wx.Button(pane, -1, _("Show Details"))
 
         self.detailsText = wx.TextCtrl(pane, -1, size=(-1,300), style=wx.TE_MULTILINE|wx.TE_READONLY)
@@ -66,9 +66,9 @@ class ErrorDialog(sc.SizedDialog):
             self.Layout()
             self.Fit()
         
-def guiExceptionHook(exctype, value, trace):
-    errorText = errors.print_exc_plus(exctype, value, trace)
-    
+def guiExceptionHook(exctype, value, trace):    
+    errorText = errors.get_platform_info()
+    errorText += errors.print_exc_plus(exctype, value, trace)
     print errorText
     
     if not wx.GetApp():
