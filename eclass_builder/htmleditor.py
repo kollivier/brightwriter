@@ -201,8 +201,6 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_BULLETS, self.OnBullet)
         app.AddHandlerForID(ID_NUMBERING, self.OnNumbering)
         app.AddHandlerForID(ID_FIND, self.OnFind)
-        #app.AddHandlerForID(ID_SELECTALL, self.OnSelectAll)
-        #app.AddHandlerForID(ID_SELECTNONE, self.OnSelectNone)
 
         app.AddHandlerForID(ID_INSERT_IMAGE, self.OnImageButton)
         app.AddHandlerForID(ID_INSERT_LINK, self.OnLinkButton)
@@ -224,13 +222,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         #app.AddHandlerForID(ID_TEXT_CITATION, self.OnCitation)
         app.AddHandlerForID(ID_TEXT_REMOVE_STYLES, self.OnRemoveStyle)
         
-        
-        
-        #wx.EVT_CHAR(self.webview, self.OnKeyEvent)
-        #wx.EVT_KEY_DOWN(self.webview, self.OnCharEvent)
-        #wx.EVT_KEY_UP(self.webview, self.OnKeyEvent)
-
-        #self.webview.Bind(wx.webview.EVT_WEBVIEW_BEFORE_LOAD, self.OnLinkClicked)
+        self.webview.Bind(wx.EVT_CONTEXT_MENU, self.OnRightClick)
         
     def RemoveHandlers(self):
         app = wx.GetApp()
@@ -323,161 +315,141 @@ class HTMLEditorDelegate(wx.EvtHandler):
         
     def OnTableProps(self, evt):
         tableProps = []
-        if self.webview.IsElementInSelection("table"):
+        tag = self.GetParent("table")
+        if tag:
             attrs = ["width", "height", "align", "border", "cellspacing", "cellpadding"]
             for attr in attrs:
-                tableProps.append(self.webview.GetElementAttribute("table", attr))
+                tableProps.append(tag.GetAttribute(attr))
 
             mydialog = TablePropsDialog(self.webview, tableProps)
             if mydialog.ShowModal() == wx.ID_OK:
-                self.webview.SetElementAttribute("width", mydialog.tableProps[0])
-                self.webview.SetElementAttribute("height", mydialog.tableProps[1])
-                self.webview.SetElementAttribute("align", mydialog.tableProps[2])
-                self.webview.SetElementAttribute("border", mydialog.tableProps[3])
-                self.webview.SetElementAttribute("cellspacing", mydialog.tableProps[4])
-                self.webview.SetElementAttribute("cellpadding", mydialog.tableProps[5])
+                tag.SetAttribute("width", mydialog.tableProps[0])
+                tag.SetAttribute("height", mydialog.tableProps[1])
+                tag.SetAttribute("align", mydialog.tableProps[2])
+                tag.SetAttribute("border", mydialog.tableProps[3])
+                tag.SetAttribute("cellspacing", mydialog.tableProps[4])
+                tag.SetAttribute("cellpadding", mydialog.tableProps[5])
                 self.dirty = True
             mydialog.Destroy()
 
     def OnRowProps(self, evt):
         rowProps = []
-        if self.webview.IsElementInSelection("tr"):
-            rowProps.append(self.webview.GetElementAttribute("tr", "width"))
-            rowProps.append(self.webview.GetElementAttribute("tr", "height"))
-            rowProps.append(self.webview.GetElementAttribute("tr", "align"))
-            rowProps.append(self.webview.GetElementAttribute("tr", "valign"))
+        row = self.GetParent("tr")
+        if row:
+            rowProps.append(row.GetAttribute("width"))
+            rowProps.append(row.GetAttribute("height"))
+            rowProps.append(row.GetAttribute("align"))
+            rowProps.append(row.GetAttribute("valign"))
             mydialog = CellPropsDialog(self.webview, rowProps)
             mydialog.SetTitle("Row Properties")
             if mydialog.ShowModal() == wx.ID_OK:
-                self.webview.SetElementAttribute("width", mydialog.rowProps[0])
-                self.webview.SetElementAttribute("height", mydialog.rowProps[1])
-                self.webview.SetElementAttribute("align", mydialog.rowProps[2])
-                self.webview.SetElementAttribute("valign", mydialog.rowProps[3])
+                row.SetAttribute("width", mydialog.rowProps[0])
+                row.SetAttribute("height", mydialog.rowProps[1])
+                row.SetAttribute("align", mydialog.rowProps[2])
+                row.SetAttribute("valign", mydialog.rowProps[3])
                 self.dirty = True
             mydialog.Destroy()
 
     def OnCellProps(self, evt):
         rowProps = []
-        if self.webview.IsElementInSelection("td"):
-            rowProps.append(self.webview.GetElementAttribute("td", "width"))
-            rowProps.append(self.webview.GetElementAttribute("td", "height"))
-            rowProps.append(self.webview.GetElementAttribute("td", "align"))
-            rowProps.append(self.webview.GetElementAttribute("td", "valign"))
+        tag = self.GetParent("td")
+        if tag:
+            rowProps.append(tag.GetAttribute("width"))
+            rowProps.append(tag.GetAttribute("height"))
+            rowProps.append(tag.GetAttribute("align"))
+            rowProps.append(tag.GetAttribute("valign"))
             mydialog = CellPropsDialog(self.webview, rowProps)
             mydialog.SetTitle("Cell Properties")
             if mydialog.ShowModal() == wx.ID_OK:
-                self.webview.SetElementAttribute("width", mydialog.rowProps[0])
-                self.webview.SetElementAttribute("height", mydialog.rowProps[1])
-                self.webview.SetElementAttribute("align", mydialog.rowProps[2])
-                self.webview.SetElementAttribute("valign", mydialog.rowProps[3])
+                tag.SetAttribute("width", mydialog.rowProps[0])
+                tag.SetAttribute("height", mydialog.rowProps[1])
+                tag.SetAttribute("align", mydialog.rowProps[2])
+                tag.SetAttribute("valign", mydialog.rowProps[3])
                 self.dirty = True
             mydialog.Destroy()
 
     def OnImageProps(self, evt):
         imageProps = []
-        if self.webview.IsElementInSelection("img"):
-            imageProps.append(self.webview.GetElementAttribute("img", "src"))
-            imageProps.append(self.webview.GetElementAttribute("img", "alt"))
-            imageProps.append(self.webview.GetElementAttribute("img", "width"))
-            imageProps.append(self.webview.GetElementAttribute("img", "height"))
-            imageProps.append(self.webview.GetElementAttribute("img", "align"))
+        tag = self.GetParent("img")
+        if tag:
+            imageProps.append(tag.GetAttribute("src"))
+            imageProps.append(tag.GetAttribute("alt"))
+            imageProps.append(tag.GetAttribute("width"))
+            imageProps.append(tag.GetAttribute("height"))
+            imageProps.append(tag.GetAttribute("align"))
         mydialog = ImagePropsDialog(self.webview, imageProps)
         if mydialog.ShowModal() == wx.ID_OK:
-            self.webview.SetElementAttribute("src", mydialog.imageProps[0])
-            self.webview.SetElementAttribute("alt", mydialog.imageProps[1])
+            tag.SetAttribute("src", mydialog.imageProps[0])
+            tag.SetAttribute("alt", mydialog.imageProps[1])
             if not mydialog.imageProps[2] == "":
-                self.webview.SetElementAttribute("width", mydialog.imageProps[2])
+                tag.SetAttribute("width", mydialog.imageProps[2])
             if not mydialog.imageProps[3] == "":
-                self.webview.SetElementAttribute("height", mydialog.imageProps[3])
+                tag.SetAttribute("height", mydialog.imageProps[3])
             if not mydialog.imageProps[4] == "":
-                self.webview.SetElementAttribute("align", mydialog.imageProps[4])
+                tag.SetAttribute("align", mydialog.imageProps[4])
             self.dirty = True
         mydialog.Destroy()
 
     def OnLinkProps(self, evt):
         linkProps = []
-        if self.webview.IsElementInSelection("a"):
-            if self.webview.GetElementAttribute("a", "href") != "":
-                linkProps.append(self.webview.GetElementAttribute("a", "href"))
-                linkProps.append(self.webview.GetElementAttribute("a", "target"))
+        link = self.GetParent("A")
+        url = link.GetAttribute("href")
+        print "href = %s" % url
+        if link:
+            if url != "":
+                linkProps.append(url)
+                linkProps.append(link.GetAttribute("target"))
                 mydialog = LinkPropsDialog(self.webview, linkProps)
                 mydialog.CentreOnParent()
                 if mydialog.ShowModal() == wx.ID_OK:
-                    self.webview.SetElementAttribute("href", mydialog.linkProps[0])
-                    self.webview.SetElementAttribute("target", mydialog.linkProps[1])
+                    link.SetAttribute("href", mydialog.linkProps[0])
+                    link.SetAttribute("target", mydialog.linkProps[1])
                     self.dirty = True
                 mydialog.Destroy()
-            elif self.webview.GetElementAttribute("a", "name") != "":
-                linkProps.append(self.webview.GetElementAttribute("a", "name"))
-                mydialog = BookmarkPropsDialog(self, linkProps)
+            elif link.GetAttribute("name") != "":
+                linkProps.append(link.GetAttribute("name"))
+                mydialog = BookmarkPropsDialog(self.webview, linkProps)
                 if mydialog.ShowModal() == wx.ID_OK:
-                    self.webview.SetElementAttribute("href", mydialog.linkProps[0])
+                    link.SetAttribute("href", mydialog.linkProps[0])
                     self.dirty = True
                 mydialog.Destroy()
 
     def OnListProps(self, evt):
         listProps = []
-        if self.webview.IsElementInSelection("ol"):
-            listProps.append(self.webview.GetElementAttribute("ol", "type"))
-            listProps.append(self.webview.GetElementAttribute("ol", "start"))
+        list = self.GetParent("ol")
+        if list:
+            listProps.append(list.GetAttribute("type"))
+            listProps.append(list.GetAttribute("start"))
             mydialog = OLPropsDialog(self.webview, listProps)
             if mydialog.ShowModal() == wx.ID_OK:
-                self.webview.SetElementAttribute("type", mydialog.listProps[0])
-                self.webview.SetElementAttribute("start", mydialog.listProps[1])
+                list.SetAttribute("type", mydialog.listProps[0])
+                list.SetAttribute("start", mydialog.listProps[1])
                 self.dirty = True
             mydialog.Destroy()
-        if self.webview.IsElementInSelection("ul"):
-            listProps.append(self.webview.GetElementAttribute("ul", "type"))
-            mydialog = ULPropsDialog(self.webview, listProps)
-            if mydialog.ShowModal() == wx.ID_OK:
-                self.webview.SetElementAttribute("type", mydialog.listProps[0])
-                self.dirty = True
-            mydialog.Destroy()
+        
+        else:
+            list = self.GetParent("ul")
+            if list:
+                listProps.append(list.GetAttribute("type"))
+                mydialog = ULPropsDialog(self.webview, listProps)
+                if mydialog.ShowModal() == wx.ID_OK:
+                    list.SetAttribute("type", mydialog.listProps[0])
+                    self.dirty = True
+                mydialog.Destroy()
 
-    def FindElementInSelection(self, elementName):
-        """
-        Traverse the selection via the DOM to find the element we're looking for.
-        """
+    def GetParent(self, elementName):
+        elementName = elementName.upper()
         selection = self.webview.GetSelection().GetAsRange()
-        result = None
         if selection:    
-            root = selection.GetFirstNode().GetParentNode()
+            root = selection.GetFirstNode()
+            while root:
+                #if isinstance(root, wx.webview.WebKitDOMElement):
+                #    print "Parent tag is: %s" % root.GetTagName()
+                if isinstance(root, wx.webview.WebKitDOMElement) and root.GetTagName() == elementName:
+                    return root
                 
-            if root:
-                if isinstance(root, wx.webview.WebKitDOMElement) and root.GetTagName() == elementName: 
-                    result = root
-                else:
-                    def getNodeInfo(node):
-                        print "name: %s, value: %s" % (node.GetNodeName(), node.GetNodeValue())
-                    
-                    def traverseNodeRecursive(root):
-                        getNodeInfo(root)
-                        if root.GetNodeType() == wx.webview.ELEMENT_NODE:
-                            print "root tag name: %s, ID: %s" % (root.GetTagName(), root.GetIDAttribute())
-                        children = root.GetChildNodes()
-    
-                        if children:
-                            for i in xrange(children.GetLength()):
-                                child = children.GetNode(i)
-                                
-                                if child:
-                                    if isinstance(child, wx.webview.WebKitDOMElement):
-                                        print "tag name: %s, ID: %s" % (child.GetTagName(), child.GetIDAttribute())
-                                        if child.GetTagName() == elementName:
-                                            return child
-                                    
-                                    if child.GetChildNodes():
-                                        return traverseNodeRecursive(child)
-                                    
-                            return None
-
-                    node = root
-                    while node and node != selection.GetPastLastNode():
-                        result = traverseNodeRecursive(node)
-                        if result:
-                            break
-                        node = node.TraverseNextNode()
-        return result
+                root = root.GetParentNode()
+        return None
 
     def OnLinkButton(self, evt):    
         linkProps = []
@@ -487,14 +459,10 @@ class HTMLEditorDelegate(wx.EvtHandler):
         mydialog.CentreOnParent()
         if mydialog.ShowModal() == wx.ID_OK:            
             self.webview.ExecuteEditCommand("CreateLink", mydialog.linkProps[0])
-            print "selection is: %s" % self.webview.GetSelectionAsHTML()
-            url = self.FindElementInSelection("A")
-                    
+            url = self.GetParent("A")
             if url:
                 print url.GetAttribute("href")
                 url.SetAttribute("target", mydialog.linkProps[1])
-            else:
-                print "No url?"
         mydialog.Destroy()
 
     def OnBookmarkButton(self, evt):    
@@ -547,34 +515,32 @@ class HTMLEditorDelegate(wx.EvtHandler):
             if len(blue) == 1:
                 blue = "0" + blue
             value = "#" + red + green + blue
-            #print value
             self.webview.ExecuteEditCommand("ForeColor", value)
         dlg.Destroy()
         self.dirty = True
 
     def OnRightClick(self, evt):
         popupmenu = wx.Menu()
-        if evt.GetImageSrc() != "" and self.webview.IsElementInSelection("img"):
+        if self.GetParent("IMG"):
             popupmenu.Append(ID_EDITIMAGE, "Image Properties")
-        if evt.GetLink() != "" and self.webview.IsElementInSelection("href"):
+        link = self.GetParent("A")
+        if link and link.GetAttribute('href') != '':
             popupmenu.Append(ID_EDITLINK, "Link Properties")
             popupmenu.Append(ID_REMOVE_LINK, "Remove Link")
-        elif evt.GetLink() != "" and self.webview.IsElementInSelection("a"):
-            popupmenu.Append(ID_EDITBOOKMARK, "Bookmark Properties")
-            popupmenu.Append(ID_REMOVE_LINK, "Remove Bookmark")
-        if self.webview.IsElementInSelection("ol") or self.webview.IsElementInSelection("ul"):
+        #elif link and link.GetAttribute('name') != '':
+        #    popupmenu.Append(ID_EDITBOOKMARK, "Bookmark Properties")
+        #    popupmenu.Append(ID_REMOVE_LINK, "Remove Bookmark")
+        if self.GetParent("ol") or self.GetParent("ul"):
             popupmenu.Append(ID_EDITOL, "Bullets and Numbering")
-        if self.webview.IsElementInSelection("table"):
+        if self.GetParent("table"):
             popupmenu.Append(ID_EDITTABLE, "Table Properties")
-        if self.webview.IsElementInSelection("tr"):
+        if self.GetParent("tr"):
             popupmenu.Append(ID_EDITROW, "Row Properties")
-        if self.webview.IsElementInSelection("td"):
+        if self.GetParent("td"):
             popupmenu.Append(ID_EDITCELL, "Cell Properties")
         position = evt.GetPosition()
-        position[0] = position[0] + self.notebook.GetPosition()[0]
-        position[1] = position[1] + self.notebook.GetPosition()[1]
-        self.PopupMenu(popupmenu, position)
-        evt.Skip()
+        self.webview.PopupMenu(popupmenu, self.webview.ScreenToClient(position))
+        #evt.Skip()
 
     def OnUndo(self, evt):
         self.webview.ExecuteEditCommand("Undo")
@@ -1029,21 +995,21 @@ class EditorFrame (wx.Frame):
             
     def OnRightClick(self, evt):
         popupmenu = wx.Menu()
-        if evt.GetImageSrc() != "" and self.webview.IsElementInSelection("img"):
+        if evt.GetImageSrc() != "" and self.GetParent("img"):
             popupmenu.Append(ID_EDITIMAGE, "Image Properties")
-        if evt.GetLink() != "" and self.webview.IsElementInSelection("href"):
+        if evt.GetLink() != "" and self.GetParent("href"):
             popupmenu.Append(ID_EDITLINK, "Link Properties")
             popupmenu.Append(ID_REMOVE_LINK, "Remove Link")
-        elif evt.GetLink() != "" and self.webview.IsElementInSelection("a"):
+        elif evt.GetLink() != "" and self.GetParent("a"):
             popupmenu.Append(ID_EDITBOOKMARK, "Bookmark Properties")
             popupmenu.Append(ID_REMOVE_LINK, "Remove Bookmark")
-        if self.webview.IsElementInSelection("ol") or self.webview.IsElementInSelection("ul"):
+        if self.GetParent("ol") or self.GetParent("ul"):
             popupmenu.Append(ID_EDITOL, "Bullets and Numbering")
-        if self.webview.IsElementInSelection("table"):
+        if self.GetParent("table"):
             popupmenu.Append(ID_EDITTABLE, "Table Properties")
-        if self.webview.IsElementInSelection("tr"):
+        if self.GetParent("tr"):
             popupmenu.Append(ID_EDITROW, "Row Properties")
-        if self.webview.IsElementInSelection("td"):
+        if self.GetParent("td"):
             popupmenu.Append(ID_EDITCELL, "Cell Properties")
         position = evt.GetPosition()
         position[0] = position[0] + self.notebook.GetPosition()[0]
@@ -1146,12 +1112,12 @@ class LinkPropsDialog(sc.SizedDialog):
         sc.SizedDialog.__init__ (self, parent, -1, _("Link Properties"), size=wx.Size(400,200), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.parent = parent
         self.linkProps = linkProps
-
+        
         pane = self.GetContentsPane()
-        self.lblURL = wx.StaticText(pane, -1, _("Location:"))
+        self.lblURL = wx.StaticText(pane, -1, _("URL"))
         linkpane = sc.SizedPanel(pane, -1)
         linkpane.SetSizerType("horizontal")
-        self.cmbURL = wx.ComboBox(linkpane, -1, linkProps[0], style=wx.CB_DROPDOWN)
+        self.cmbURL = wx.TextCtrl(linkpane, -1, linkProps[0])
         self.btnURL = wx.Button(linkpane, -1, _("Select File..."))
 
         self.chkNewWindow = wx.CheckBox(pane, -1, _("Open in new window"))
