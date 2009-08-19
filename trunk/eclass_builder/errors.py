@@ -1,9 +1,12 @@
-import eclasslog
+import locale
+import platform
 import sys, string, os
-import utils
 import settings
 import time
 import traceback
+
+import eclasslog
+import utils
 
 def getTraceback():
 	import traceback
@@ -52,6 +55,16 @@ def print_exc_plus(exctype, value, trace):
     exception += exceptionAsString(exctype, value)        
     
     return exception
+    
+def get_platform_info():
+    info = """
+Platform: %s
+Processor: %s
+Version: %s
+Language: %s
+""" % (platform.platform(), platform.machine(), platform.release(), "%s, %s" % locale.getdefaultlocale())
+    
+    return info
 
 def exceptionHook(exctype, value, trace):
     print exceptionAsString(exctype, value, trace)
