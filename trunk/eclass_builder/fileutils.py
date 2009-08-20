@@ -3,8 +3,11 @@
 #Author - Kevin Ollivier
 
 #Date - 5/8/02
-import sys
+
 import os
+import shutil
+import sys
+
 import utils
 import settings
 
@@ -57,6 +60,9 @@ def getContactsDir():
 def CopyFiles(indir, outdir, recurse=0, callback=None):
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
+	if os.path.basename(indir).startswith('.'):
+		return
+		
 	for item in os.listdir(indir):
 		
 		if os.path.isfile(os.path.join(indir, item)):
@@ -77,22 +83,7 @@ def CopyFiles(indir, outdir, recurse=0, callback=None):
 					CopyFiles(os.path.join(indir,item) ,myoutdir, 1, callback)
 
 def CopyFile(filename, indir, outdir): 
-	try: 
-		file = utils.openFile(os.path.join(indir, filename), "rb")
-		data = file.read()
-		file.close()
-	except IOError:
-		print "Error reading file: " + os.path.join(indir, filename)
-		return False
-
-	try:
-		out = utils.openFile(os.path.join(outdir, filename), "wb")
-		out.write(data)
-		out.close()
-	except:
-		print "Error writing file: " + os.path.join(outdir, filename)
-		return False
-
+	shutil.copy(os.path.join(indir, filename), outdir)
 	return True
 
 def DeleteFiles(pattern):
