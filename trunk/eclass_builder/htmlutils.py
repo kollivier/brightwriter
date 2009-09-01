@@ -30,6 +30,9 @@ def GetFullPathForURL(url, basedir):
             return path
         except:
             pass
+    elif url.find('://') == -1: # no protocol, it's probably a relative file
+        return os.path.join(basedir, url)
+    
     return url
     
 def getTitleForPage(filename):
@@ -204,11 +207,14 @@ def GetBody(myhtml):
     inscript = 0
     bodystart = 0
     bodyend = 0
-    text = ""
+    text = u""
     uppercase = 1
     encoding = None
+    htmltext = myhtml.read()
+    myhtml = cStringIO.StringIO(htmltext)
     html = myhtml.readline()
     while not html == "":
+        print "html is %s, inbody = %r" % (html, inbody)
         if not encoding and string.find(html.lower(), "<meta") != -1:
             encoding = GetEncoding(html)
         #if we're inside a script, mark it so that we can test if body tag is inside the script
@@ -216,14 +222,8 @@ def GetBody(myhtml):
         if scriptstart == -1:
             scriptstart = string.find(html, "<script")
 
-        if not string.find(html, "</SCRIPT>") == -1 or not string.find(html, "</script>") == -1:
+        if not string.find(html.lower(), "</script>") == -1:
             inscript = 0
-
-        #if we've found a script BEFORE the start of the body tag, and then found a body tag
-        #it would be part of the script
-        #that's why we check the script status first
-        if not scriptstart == -1 and inbody == 0:
-            inscript = 1
 
         #check for start of body in upper and lowercase
         bodystart = string.find(string.lower(html), "<body")
@@ -234,7 +234,7 @@ def GetBody(myhtml):
 
         #if we've found both a body tag and a script tag, find which one comes first
         #if script is first, this isn't the "real" body tag
-        if bodystart != -1 and scriptstart != -1:
+        if (not inbody and bodystart != -1) and scriptstart != -1:
             if bodystart > scriptstart:
                 inscript = 1
 
@@ -268,6 +268,12 @@ def GetBody(myhtml):
     if not encoding:
         encoding = ""
         
+    soup = BeautifulSoup.BeautifulSoup(htmltext)
+    scripts = soup.html.head.findAll('script')
+    scripts.reverse() # since we're prepending, we need to do it in reverse order
+    for script in scripts:
+        text = unicode(script) + text
+    
     return utils.makeUnicode(text, encoding)
 
 import unittest
