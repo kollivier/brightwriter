@@ -82,7 +82,19 @@ def CopyFiles(indir, outdir, recurse=0, callback=None):
 				if os.path.isdir(myoutdir):
 					CopyFiles(os.path.join(indir,item) ,myoutdir, 1, callback)
 
-def CopyFile(filename, indir, outdir): 
+def CopyFile(filename, indir, outdir):
+	if indir == outdir:
+		return False
+	infile = os.path.join(indir, filename)
+	outfile = os.path.join(outdir, filename)
+	
+	# Don't copy files unless we need to, that way FTP sync won't 
+	# copy over files that haven't really changed just because the timestamp 
+	# changed.
+	if os.path.exists(outfile):
+		if os.path.getmtime(outfile) >= os.path.getmtime(infile):
+			if os.path.getsize(outfile) == os.path.getsize(infile):
+				return False
 	shutil.copy(os.path.join(indir, filename), outdir)
 	return True
 
