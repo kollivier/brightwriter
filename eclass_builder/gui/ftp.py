@@ -4,10 +4,14 @@ import wx.lib.sized_controls as sc
 import persistence
 import autolist
 
+import errno
 import fileutils
 import ftplib
+import tempfile
 import traceback
 import settings
+import socket
+import time
 import utils
 import errors
 import encrypt
@@ -68,6 +72,7 @@ class ftpService:
         self.passive = passive
         self.stopNow = False
         self.connection = None
+        self.clockskew = 0
         
     def normalizeHostDir(self, hostdir):
         """
@@ -87,6 +92,7 @@ class ftpService:
         self.connection.set_pasv(self.passive)
         self.connection.sock.setblocking(1)
         self.connection.sock.settimeout(30)
+        self.getClockSkew()
         
     def cwd(self, dir):
         if self.connection:
@@ -110,10 +116,61 @@ class ftpService:
                 pass
         self.connection = None
         
+    def getClockSkew(self):
+        (fd, filename) = tempfile.mkstemp()
+        os.write(fd, 'test')
+        os.close(fd)
+        try:
+            uploadStart = time.time()
+            rfile = self.hostdir + "/.test"
+            if self.uploadFile(filename, rfile):
+                uploadEnd = time.time()
+                
+                uploadTime = uploadEnd - uploadStart
+                rsize, rmtime = self.getFileInfo(rfile)
+                mtime = os.path.getmtime(filename)
+                self.clockskew = rmtime - mtime - uploadTime
+                print "clock skew is %r" % self.clockskew
+                self.connection.delete(rfile)
+        finally:
+            if os.path.exists(filename):
+                os.remove(filename)
+
+
+    def getFileInfo(self, destname):
+        self.connection.voidcmd('TYPE I')
+        
+        mtime = 0
+        size = 0
+        
+        try:
+            mtime = self.connection.sendcmd('MDTM %s' % destname)
+            size = self.connection.sendcmd('SIZE %s' % destname)
+        
+            assert mtime[:3] == '213'
+            assert size[:3] == '213'
+        
+            size = int(size[3:].strip())
+            mtime = int(time.mktime(time.strptime(mtime[3:].strip(), '%Y%m%d%H%M%S')))
+        except:
+            import traceback
+            print traceback.print_exc()
+            
+        return [size, mtime]
+        
     def uploadFile(self, sourcename, destname, callback=None):
         success = False
         myfile = utils.openFile(sourcename, "rb")
         bytes = os.path.getsize(sourcename)
+        mtime = int(os.path.getmtime(sourcename))
+        
+        rbytes, rmtime = self.getFileInfo(destname)
+        
+        if rmtime - self.clockskew >= mtime:
+            # file is the same, consider it uploaded.
+            return True
+        else:
+            print "Uploading %s" % sourcename
 
         self.connection.voidcmd('TYPE I')
         mysocket = self.connection.transfercmd('STOR ' + destname)
@@ -139,9 +196,16 @@ class ftpService:
                 block = myfile.read(4096)
                 if not block:
                     break
-
-                resp = mysocket.sendall(block)
-                bytesuploaded = bytesuploaded + len(block)
+                    
+                while block:
+                    try:
+                        resp = mysocket.sendall(block)
+                        bytesuploaded = bytesuploaded + len(block)
+                        block = None
+                    except socket.error, e:
+                        if e[0] != errno.EAGAIN:
+                            raise
+                        
                 if callback:
                     percent = int((float(bytesuploaded)/float(bytes))*100.0)
                     callback.uploadFileProgressEvent(destname, percent) 
@@ -294,7 +358,7 @@ class FTPUpload:
 				try:
 					success = self.ftpService.uploadFile(   sourcename, 
 				                                        destname, self.callback)
-				except:
+				except: 
 					self.ftpService.close()
 					self.callback.uploadFileFailed(destname, _("There was a connection error. Please try uploading again."))
 					return
@@ -430,7 +494,7 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 		self.btnOK.SetLabel(_("Upload"))
 		self.stopupload = False
 		if self.closewindow == True:
-			self.EndModal(wxID_OK)
+			self.EndModal(wx.ID_OK)
 		
 	def OnFileProgress(self, filename, percent):
 		self.txtTotalProg.SetLabel(_("Uploading files..."))
