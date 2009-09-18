@@ -210,11 +210,8 @@ def GetBody(myhtml):
     text = u""
     uppercase = 1
     encoding = None
-    htmltext = myhtml.read()
-    myhtml = cStringIO.StringIO(htmltext)
-    html = myhtml.readline()
-    while not html == "":
-        print "html is %s, inbody = %r" % (html, inbody)
+    htmltext = myhtml.readlines()
+    for html in htmltext:
         if not encoding and string.find(html.lower(), "<meta") != -1:
             encoding = GetEncoding(html)
         #if we're inside a script, mark it so that we can test if body tag is inside the script
@@ -268,7 +265,7 @@ def GetBody(myhtml):
     if not encoding:
         encoding = ""
         
-    soup = BeautifulSoup.BeautifulSoup(htmltext)
+    soup = BeautifulSoup.BeautifulSoup('\n'.join(htmltext))
     scripts = soup.html.head.findAll('script')
     scripts.reverse() # since we're prepending, we need to do it in reverse order
     for script in scripts:
