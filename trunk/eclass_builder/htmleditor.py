@@ -4,7 +4,12 @@ import urllib
 
 import wx
 import wx.stc
+import wx.lib.eventStack as events
+import wx.lib.flatnotebook as fnb
+import wx.lib.mixins.inspection
 import wx.lib.sized_controls as sc
+
+import htmledit.htmlattrs as htmlattrs
 
 # eclass specific imports... we should remove these
 import htmlutils
@@ -17,6 +22,8 @@ try:
     import wx.webview
     webkit_available = True
 except:
+    import traceback
+    print traceback.print_exc()
     webkit_available = False
 
 ID_NEW = wx.NewId()
@@ -200,14 +207,14 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_DEDENT, self.OnOutdentButton)
         app.AddHandlerForID(ID_BULLETS, self.OnBullet)
         app.AddHandlerForID(ID_NUMBERING, self.OnNumbering)
-        app.AddHandlerForID(ID_FIND, self.OnFind)
+        app.AddHandlerForID(ID_SELECTALL, self.OnSelectAll)
+        app.AddHandlerForID(ID_SELECTNONE, self.OnSelectNone)
 
         app.AddHandlerForID(ID_INSERT_IMAGE, self.OnImageButton)
         app.AddHandlerForID(ID_INSERT_LINK, self.OnLinkButton)
         app.AddHandlerForID(ID_INSERT_HR, self.OnHRButton)
         app.AddHandlerForID(ID_INSERT_TABLE, self.OnTableButton)
         app.AddHandlerForID(ID_INSERT_BOOKMARK, self.OnBookmarkButton)
-        app.AddHandlerForID(ID_INSERT_FLASH, self.OnFlashButton)
 
         app.AddHandlerForID(ID_EDITIMAGE, self.OnImageProps)
         app.AddHandlerForID(ID_EDITLINK, self.OnLinkProps)
@@ -218,8 +225,6 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
         app.AddHandlerForID(ID_TEXT_SUP, self.OnSuperscript)
         app.AddHandlerForID(ID_TEXT_SUB, self.OnSubscript)
-        #app.AddHandlerForID(ID_TEXT_CODE, self.OnCode)
-        #app.AddHandlerForID(ID_TEXT_CITATION, self.OnCitation)
         app.AddHandlerForID(ID_TEXT_REMOVE_STYLES, self.OnRemoveStyle)
         
         self.webview.Bind(wx.EVT_CONTEXT_MENU, self.OnRightClick)
@@ -243,16 +248,14 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_DEDENT)
         app.RemoveHandlerForID(ID_BULLETS)
         app.RemoveHandlerForID(ID_NUMBERING)
-        app.RemoveHandlerForID(ID_FIND)
-        #app.RemoveHandlerForID(ID_SELECTALL)
-        #app.RemoveHandlerForID(ID_SELECTNONE)
+        app.RemoveHandlerForID(ID_SELECTALL)
+        app.RemoveHandlerForID(ID_SELECTNONE)
 
         app.RemoveHandlerForID(ID_INSERT_IMAGE)
         app.RemoveHandlerForID(ID_INSERT_LINK)
         app.RemoveHandlerForID(ID_INSERT_HR)
         app.RemoveHandlerForID(ID_INSERT_TABLE)
         app.RemoveHandlerForID(ID_INSERT_BOOKMARK)
-        app.RemoveHandlerForID(ID_INSERT_FLASH)
 
         app.RemoveHandlerForID(ID_EDITIMAGE)
         app.RemoveHandlerForID(ID_EDITLINK)
@@ -263,8 +266,6 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
         app.RemoveHandlerForID(ID_TEXT_SUP)
         app.RemoveHandlerForID(ID_TEXT_SUB)
-        #app.RemoveHandlerForID(ID_TEXT_CODE)
-        #app.RemoveHandlerForID(ID_TEXT_CITATION)
         app.RemoveHandlerForID(ID_TEXT_REMOVE_STYLES)
         
     def OnDoSearch(self, event):
@@ -272,17 +273,10 @@ class HTMLEditorDelegate(wx.EvtHandler):
         self.webview.FindString(text)
 
     def OnSelectAll(self, evt):
-        self.webview.SelectAll()
+        self.webview.ExecuteEditCommand("SelectAll")
 
     def OnSelectNone(self, evt):
-        self.webview.SelectNone()
-
-    def OnLoadComplete(self, evt):
-        source = self.webview.GetPageSource()
-        if source.find('<base href="about:blank">') != -1:
-            pagetext = source.replace('<base href="about:blank">', '')
-            self.webview.SetPageSource(pagetext)
-            self.webview.Reload()
+        self.webview.ExecuteEditCommand("Unselect")
 
     def OnRedo(self, evt):
         self.RunCommand("Redo", evt)
@@ -301,8 +295,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
         mydialog = CreateTableDialog(self.webview, -1, _("Table Properties"), size=(400,400))
         mydialog.CentreOnParent()
         if mydialog.ShowModal() == wx.ID_OK:
-            trows, tcolumns, twidth, theight = mydialog.GetValues()
-            tablehtml = """<table border="%s" width="%s" height="%s">""" % ("1", twidth, theight)
+            trows, tcolumns, twidth = mydialog.GetValues()
+            tablehtml = """<table border="%s" width="%s">""" % ("1", twidth)
             for counter in range(0, int(trows)):
                 tablehtml = tablehtml + "<tr>"
                 for counter in range(0, int(tcolumns)):
@@ -314,186 +308,108 @@ class HTMLEditorDelegate(wx.EvtHandler):
         mydialog.Destroy()
         
     def OnTableProps(self, evt):
-        tableProps = []
-        tag = self.GetParent("table")
-        if tag:
-            attrs = ["width", "height", "align", "border", "cellspacing", "cellpadding"]
-            for attr in attrs:
-                tableProps.append(tag.GetAttribute(attr))
-
-            mydialog = TablePropsDialog(self.webview, tableProps)
-            if mydialog.ShowModal() == wx.ID_OK:
-                tag.SetAttribute("width", mydialog.tableProps[0])
-                tag.SetAttribute("height", mydialog.tableProps[1])
-                tag.SetAttribute("align", mydialog.tableProps[2])
-                tag.SetAttribute("border", mydialog.tableProps[3])
-                tag.SetAttribute("cellspacing", mydialog.tableProps[4])
-                tag.SetAttribute("cellpadding", mydialog.tableProps[5])
-                self.dirty = True
-            mydialog.Destroy()
+        self.ShowEditorForTag("TABLE", TablePropsDialog)
 
     def OnRowProps(self, evt):
-        rowProps = []
-        row = self.GetParent("tr")
-        if row:
-            rowProps.append(row.GetAttribute("width"))
-            rowProps.append(row.GetAttribute("height"))
-            rowProps.append(row.GetAttribute("align"))
-            rowProps.append(row.GetAttribute("valign"))
-            mydialog = CellPropsDialog(self.webview, rowProps)
-            mydialog.SetTitle("Row Properties")
-            if mydialog.ShowModal() == wx.ID_OK:
-                row.SetAttribute("width", mydialog.rowProps[0])
-                row.SetAttribute("height", mydialog.rowProps[1])
-                row.SetAttribute("align", mydialog.rowProps[2])
-                row.SetAttribute("valign", mydialog.rowProps[3])
-                self.dirty = True
-            mydialog.Destroy()
+        self.ShowEditorForTag("TR", RowPropsDialog)
 
     def OnCellProps(self, evt):
-        rowProps = []
-        tag = self.GetParent("td")
-        if tag:
-            rowProps.append(tag.GetAttribute("width"))
-            rowProps.append(tag.GetAttribute("height"))
-            rowProps.append(tag.GetAttribute("align"))
-            rowProps.append(tag.GetAttribute("valign"))
-            mydialog = CellPropsDialog(self.webview, rowProps)
-            mydialog.SetTitle("Cell Properties")
-            if mydialog.ShowModal() == wx.ID_OK:
-                tag.SetAttribute("width", mydialog.rowProps[0])
-                tag.SetAttribute("height", mydialog.rowProps[1])
-                tag.SetAttribute("align", mydialog.rowProps[2])
-                tag.SetAttribute("valign", mydialog.rowProps[3])
-                self.dirty = True
-            mydialog.Destroy()
+        self.ShowEditorForTag("TD", CellPropsDialog)
 
     def OnImageProps(self, evt):
-        imageProps = []
-        tag = self.GetParent("img")
-        if tag:
-            imageProps.append(tag.GetAttribute("src"))
-            imageProps.append(tag.GetAttribute("alt"))
-            imageProps.append(tag.GetAttribute("width"))
-            imageProps.append(tag.GetAttribute("height"))
-            imageProps.append(tag.GetAttribute("align"))
-        mydialog = ImagePropsDialog(self.webview, imageProps)
+        self.ShowEditorForTag("IMG", ImagePropsDialog)
+    
+    def ShowEditorForTag(self, tagName, editorClass):
+        props = {}
+        tag = self.GetParent(tagName)
+        attrs = htmlattrs.tag_attrs[tagName]
+        all_attrs = attrs["required"] + attrs["optional"]
+        for attr in all_attrs:
+            props[attr] = tag.GetAttribute(attr)
+
+        mydialog = editorClass(self.webview, props)
+        mydialog.CentreOnParent()
         if mydialog.ShowModal() == wx.ID_OK:
-            tag.SetAttribute("src", mydialog.imageProps[0])
-            tag.SetAttribute("alt", mydialog.imageProps[1])
-            if not mydialog.imageProps[2] == "":
-                tag.SetAttribute("width", mydialog.imageProps[2])
-            if not mydialog.imageProps[3] == "":
-                tag.SetAttribute("height", mydialog.imageProps[3])
-            if not mydialog.imageProps[4] == "":
-                tag.SetAttribute("align", mydialog.imageProps[4])
+            return_props = mydialog.getProps()
+            editcmd = wx.webview.WebEditCommand(self.webview.GetMainFrame())        
+            for prop in return_props:
+                assert prop in all_attrs
+                editcmd.SetNodeAttribute(tag, prop, return_props[prop])
+            editcmd.Apply()
             self.dirty = True
+
         mydialog.Destroy()
 
     def OnLinkProps(self, evt):
-        linkProps = []
+        linkProps = {}
         link = self.GetParent("A")
-        url = link.GetAttribute("href")
-        print "href = %s" % url
         if link:
+            url = link.GetAttribute("href")
             if url != "":
-                linkProps.append(url)
-                linkProps.append(link.GetAttribute("target"))
-                mydialog = LinkPropsDialog(self.webview, linkProps)
-                mydialog.CentreOnParent()
-                if mydialog.ShowModal() == wx.ID_OK:
-                    link.SetAttribute("href", mydialog.linkProps[0])
-                    link.SetAttribute("target", mydialog.linkProps[1])
-                    self.dirty = True
-                mydialog.Destroy()
+                self.ShowEditorForTag("A", LinkPropsDialog)
+
             elif link.GetAttribute("name") != "":
-                linkProps.append(link.GetAttribute("name"))
-                mydialog = BookmarkPropsDialog(self.webview, linkProps)
-                if mydialog.ShowModal() == wx.ID_OK:
-                    link.SetAttribute("href", mydialog.linkProps[0])
-                    self.dirty = True
-                mydialog.Destroy()
+                self.ShowEditorForTag("A", BookmarkPropsDialog)
 
     def OnListProps(self, evt):
         listProps = []
         list = self.GetParent("ol")
         if list:
-            listProps.append(list.GetAttribute("type"))
-            listProps.append(list.GetAttribute("start"))
-            mydialog = OLPropsDialog(self.webview, listProps)
-            if mydialog.ShowModal() == wx.ID_OK:
-                list.SetAttribute("type", mydialog.listProps[0])
-                list.SetAttribute("start", mydialog.listProps[1])
-                self.dirty = True
-            mydialog.Destroy()
+            self.ShowEditorForTag("OL", OLPropsDialog)
         
         else:
-            list = self.GetParent("ul")
-            if list:
-                listProps.append(list.GetAttribute("type"))
-                mydialog = ULPropsDialog(self.webview, listProps)
-                if mydialog.ShowModal() == wx.ID_OK:
-                    list.SetAttribute("type", mydialog.listProps[0])
-                    self.dirty = True
-                mydialog.Destroy()
+            self.ShowEditorForTag("UL", ULPropsDialog)
 
     def GetParent(self, elementName):
         elementName = elementName.upper()
         selection = self.webview.GetSelection().GetAsRange()
-        if selection:    
-            root = selection.GetFirstNode()
+        if selection:                
+            root = selection.GetStartContainer()
+            children = root.GetChildNodes()
+            
+            # when selecting, say, an image, the container is actually the tag above the
+            # image, so we need to find the image in the children.
+            for index in xrange(children.GetLength()):
+                child = children.Item(index)
+                if isinstance(child, wx.webview.DOMElement) and child.GetTagName() == elementName:
+                    return child
+            
             while root:
-                #if isinstance(root, wx.webview.WebKitDOMElement):
-                #    print "Parent tag is: %s" % root.GetTagName()
-                if isinstance(root, wx.webview.WebKitDOMElement) and root.GetTagName() == elementName:
+                if isinstance(root, wx.webview.DOMElement) and root.GetTagName() == elementName:
                     return root
                 
                 root = root.GetParentNode()
         return None
 
     def OnLinkButton(self, evt):    
-        linkProps = []
-        linkProps.append("")
-        linkProps.append("")
+        linkProps = {}
         mydialog = LinkPropsDialog(self.webview, linkProps)
         mydialog.CentreOnParent()
-        if mydialog.ShowModal() == wx.ID_OK:            
-            self.webview.ExecuteEditCommand("CreateLink", mydialog.linkProps[0])
-            url = self.GetParent("A")
-            if url:
-                print url.GetAttribute("href")
-                url.SetAttribute("target", mydialog.linkProps[1])
+        if mydialog.ShowModal() == wx.ID_OK:
+            props = mydialog.getProps()
+            self.webview.ExecuteEditCommand("CreateLink", props["href"])
+            if "target" in props:
+                url = self.GetParent("A")
+                if url:
+                    url.SetAttribute("target", props["target"])
         mydialog.Destroy()
 
     def OnBookmarkButton(self, evt):    
-        dialog = BookmarkPropsDialog(self.webview, [""])
+        dialog = BookmarkPropsDialog(self.webview, {})
+        dialog.CentreOnParent()
         result = dialog.ShowModal()
         if result == wx.ID_OK:
-            #html = "<a href='' name='" + dialog.bookmarkProps[0] + "'></a>"
-            html = "<a name=\"" + dialog.bookmarkProps[0] + "\"></a>"
-            #wx.MessageBox(html)
+            props = dialog.getProps()
+            html = "<a name=\"" + props["name"] + "\"></a>"
             self.webview.ExecuteEditCommand("InsertHTML", html)
             self.dirty = True
-        dialog.Destroy()
-
-    def OnFlashButton(self, evt):
-        dialog = wx.FileDialog(self.webview, _("Choose a file"), "", "", _("Macromedia Flash Files") + " (*.swf)|*.swf", wx.OPEN)
-        if dialog.ShowModal() == wx.ID_OK:
-            if os.path.exists(dialog.GetPath()):
-                shutil.copy(dialog.GetPath(), os.path.join(settings.ProjectDir, "File"))
-            code = HTMLTemplates.flashTemp
-            code = code.replace("_filename_", "../File/" + dialog.GetFilename())
-            code = code.replace("_autostart_", "True")
-            self.webview.ExecuteEditCommand("InsertHTML", code)
         dialog.Destroy()
 
     def OnImageButton(self, evt):
         imageFormats = _("Image files") +"|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
         dialog = wx.FileDialog(self.webview, _("Select an image"), "","", imageFormats, wx.OPEN)
         if dialog.ShowModal() == wx.ID_OK:
-            if os.path.exists(dialog.GetPath()):
-                shutil.copy(dialog.GetPath(), os.path.join(settings.ProjectDir, "Graphics"))
-            self.webview.ExecuteEditCommand("insertImage", "../Graphics/" + dialog.GetFilename())
+            self.webview.ExecuteEditCommand("InsertImage", 'file://' + dialog.GetPath())
         self.dirty = True
 
     def OnHRButton(self, evt):
@@ -540,7 +456,6 @@ class HTMLEditorDelegate(wx.EvtHandler):
             popupmenu.Append(ID_EDITCELL, "Cell Properties")
         position = evt.GetPosition()
         self.webview.PopupMenu(popupmenu, self.webview.ScreenToClient(position))
-        #evt.Skip()
 
     def OnUndo(self, evt):
         self.webview.ExecuteEditCommand("Undo")
@@ -548,15 +463,6 @@ class HTMLEditorDelegate(wx.EvtHandler):
     def OnKeyEvent(self, evt):
         #for now, we're just interested in knowing when to ask for save
         self.UpdateStatus(evt)
-
-    def OnFind(self, evt):
-        self.searchCtrl.SetFocus()
-        self.searchCtrl.SetSelection(-1, -1)
-
-    def RunCommand(self, command, evt):
-        self.webview.ExecuteEditCommand(command)
-        #self.UpdateStatus(evt)
-        #self.dirty = True
 
     def OnSuperscript(self, evt):
         self.RunCommand("superscript", evt)
@@ -602,26 +508,23 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
     def RunCommand(self, command, evt):
         self.webview.ExecuteEditCommand(command)
-        #self.UpdateStatus(evt)
         self.dirty = True
 
     def OnSuperscript(self, evt):
-        self.RunCommand("superscript", evt)
+        self.RunCommand("Superscript", evt)
 
     def OnSubscript(self, evt):
-        self.RunCommand("subscript", evt)
-
-    def OnCode(self, evt):
-        self.RunCommand("code", evt)
-
-    def OnCitation(self, evt):
-        self.RunCommand("cite", evt)
+        self.RunCommand("Subscript", evt)
 
     def OnRemoveStyle(self, evt):
         self.RunCommand("RemoveFormat", evt)
 
     def OnRemoveLink(self, evt):
-        self.RunCommand("removeLinks", evt)
+        # FIXME: This only works when the entire link is in the selection. To make this
+        # work from anywhere inside the link, we must expand the selection to contain
+        # the whole link, which will require adding more of WebCore::SelectionController API
+        # to wxWebKitSelection.
+        self.RunCommand("Unlink", evt)
 
     def OnBullet(self, evt):
         self.RunCommand("InsertUnorderedList", evt)
@@ -655,7 +558,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
 
 class EditorFrame (wx.Frame):
-    def __init__(self, parent, filename, pos=wx.DefaultPosition, size=(400,400)):
+    def __init__(self, parent, filename, pos=wx.DefaultPosition, size=(660,400)):
         
         wx.Frame.__init__(self, None, -1, "Document Editor", pos=pos)
         
@@ -682,23 +585,19 @@ class EditorFrame (wx.Frame):
         self.editmenu.Append(ID_COPY, _("Copy") + "\tCTRL+C")
         self.editmenu.Append(ID_PASTE, _("Paste") + "\tCTRL+V")
         self.editmenu.AppendSeparator()
-        #self.editmenu.Append(ID_SELECTALL, _("Select All") + "\tCTRL+A")
-        #self.editmenu.Append(ID_SELECTNONE, _("Select None"))
-        #self.editmenu.AppendSeparator()
-        self.editmenu.Append(ID_FIND, _("Find") + "\tCTRL+F")
+        self.editmenu.Append(ID_SELECTALL, _("Select All") + "\tCTRL+A")
+        self.editmenu.Append(ID_SELECTNONE, _("Select None"))
+        self.editmenu.AppendSeparator()
         if wx.Platform == "__WXMAC__":
             self.editmenu.Append(ID_FIND_NEXT, _("Find Next") + "\tF3")
         else:
             self.editmenu.Append(ID_FIND_NEXT, _("Find Next") + "\tCTRL+G")
-        self.editmenu.AppendSeparator()
-        self.editmenu.Append(ID_REMOVE_LINK, _("Remove Link"))
 
         self.insertmenu = wx.Menu()
         self.insertmenu.Append(ID_INSERT_LINK, _("Hyperlink") + "\tCTRL+L")
         self.insertmenu.Append(ID_INSERT_BOOKMARK, _("Bookmark"))
         self.insertmenu.AppendSeparator()
         self.insertmenu.Append(ID_INSERT_IMAGE, _("Image..."))
-        self.insertmenu.Append(ID_INSERT_FLASH, _("Flash Animation..."))
 
         self.formatmenu = wx.Menu()
         textstylemenu = wx.Menu()
@@ -708,18 +607,13 @@ class EditorFrame (wx.Frame):
         textstylemenu.AppendSeparator()
         textstylemenu.Append(ID_TEXT_SUP, _("Superscript"))
         textstylemenu.Append(ID_TEXT_SUB, _("Subscript"))
-        #textstylemenu.Append(ID_TEXT_CODE, _("Code"))
-        #textstylemenu.Append(ID_TEXT_CITATION, _("Citation"))
         textstylemenu.AppendSeparator()
         textstylemenu.Append(ID_TEXT_REMOVE_STYLES, _("Remove Formatting"))
-
+        textstylemenu.Append(ID_REMOVE_LINK, _("Remove Link"))
         self.formatmenu.AppendMenu(wx.NewId(), _("Text Style"), textstylemenu)
         
         self.tablemenu = wx.Menu()
         self.tablemenu.Append(ID_INSERT_TABLE, _("Insert Table"))
-
-        #self.toolmenu = wx.Menu()
-        #self.toolmenu.Append(ID_SPELLCHECK, _("Check Spelling"))
 
         self.menu.Append(self.filemenu, _("File"))
         self.menu.Append(self.editmenu, _("Edit"))
@@ -733,57 +627,59 @@ class EditorFrame (wx.Frame):
         self.dirty = False
 
         #load icons
-        icnSave = wx.Bitmap(os.path.join(settings.AppDir, "icons", "save16.gif"), wx.BITMAP_TYPE_GIF)
-        icnBold = wx.Bitmap(os.path.join(settings.AppDir, "icons", "bold_blue16.gif"), wx.BITMAP_TYPE_GIF)
-        icnItalic = wx.Bitmap(os.path.join(settings.AppDir, "icons", "italic_blue16.gif"), wx.BITMAP_TYPE_GIF)    
-        icnUnderline = wx.Bitmap(os.path.join(settings.AppDir, "icons", "underline_blue16.gif"), wx.BITMAP_TYPE_GIF)
-
-        icnCut = wx.Bitmap(os.path.join(settings.AppDir, "icons", "cut16.gif"), wx.BITMAP_TYPE_GIF)
-        icnCopy = wx.Bitmap(os.path.join(settings.AppDir, "icons", "copy16.gif"), wx.BITMAP_TYPE_GIF)
-        icnPaste = wx.Bitmap(os.path.join(settings.AppDir, "icons", "paste16.gif"), wx.BITMAP_TYPE_GIF)
+        icondir = os.path.join("htmledit", "images")
         
-        icnAlignLeft = wx.Bitmap(os.path.join(settings.AppDir, "icons", "align_left16.gif"), wx.BITMAP_TYPE_GIF) 
-        icnAlignCenter = wx.Bitmap(os.path.join(settings.AppDir, "icons", "align_centre16.gif"), wx.BITMAP_TYPE_GIF)
-        icnAlignRight = wx.Bitmap(os.path.join(settings.AppDir, "icons", "align_right16.gif"), wx.BITMAP_TYPE_GIF) 
-        icnAlignJustify = wx.Bitmap(os.path.join(settings.AppDir, "icons", "align_justify16.gif"), wx.BITMAP_TYPE_GIF)
+        icnNew = wx.Bitmap(os.path.join(icondir, "document-new.png"))
+        icnOpen = wx.Bitmap(os.path.join(icondir, "document-open.png"))
+        icnSave = wx.Bitmap(os.path.join(icondir, "document-save.png"))
+        icnBold = wx.Bitmap(os.path.join(icondir, "format-text-bold.png"))
+        icnItalic = wx.Bitmap(os.path.join(icondir, "format-text-italic.png"))
+        icnUnderline = wx.Bitmap(os.path.join(icondir, "format-text-underline.png"))
 
-        icnIncreaseFont = wx.Bitmap(os.path.join(settings.AppDir, "icons", "arrowup_blue16.gif"), wx.BITMAP_TYPE_GIF)
-        icnDecreaseFont = wx.Bitmap(os.path.join(settings.AppDir, "icons", "arrowdown_blue16.gif"), wx.BITMAP_TYPE_GIF)
+        icnCut = wx.Bitmap(os.path.join(icondir, "edit-copy.png"))
+        icnCopy = wx.Bitmap(os.path.join(icondir, "edit-cut.png"))
+        icnPaste = wx.Bitmap(os.path.join(icondir, "edit-paste.png"))
+        
+        icnAlignLeft = wx.Bitmap(os.path.join(icondir, "format-justify-left.png")) 
+        icnAlignCenter = wx.Bitmap(os.path.join(icondir, "format-justify-center.png"))
+        icnAlignRight = wx.Bitmap(os.path.join(icondir, "format-justify-right.png"))
+        icnAlignJustify = wx.Bitmap(os.path.join(icondir, "format-justify-fill.png"))
 
-        icnIndent = wx.Bitmap(os.path.join(settings.AppDir, "icons", "increase_indent16.gif"), wx.BITMAP_TYPE_GIF) 
-        icnDedent = wx.Bitmap(os.path.join(settings.AppDir, "icons", "decrease_indent16.gif"), wx.BITMAP_TYPE_GIF)
-        icnBullets = wx.Bitmap(os.path.join(settings.AppDir, "icons", "bullets16.gif"), wx.BITMAP_TYPE_GIF)
-        icnNumbering = wx.Bitmap(os.path.join(settings.AppDir, "icons", "numbering16.gif"), wx.BITMAP_TYPE_GIF)
+        icnIndent = wx.Bitmap(os.path.join(icondir, "format-indent-more.png")) 
+        icnDedent = wx.Bitmap(os.path.join(icondir, "format-indent-less.png"))
+        #icnBullets = wx.Bitmap(os.path.join(icondir, "bullets16.gif"))
+        #icnNumbering = wx.Bitmap(os.path.join(icondir, "numbering16.gif"))
 
-        icnColour = wx.Bitmap(os.path.join(settings.AppDir, "icons", "colour16.gif"), wx.BITMAP_TYPE_GIF)
+        #icnColour = wx.Bitmap(os.path.join(icondir, "colour16.gif"))
 
-        icnLink = wx.Bitmap(os.path.join(settings.AppDir, "icons", "insert_hyperlink16.gif"), wx.BITMAP_TYPE_GIF)
-        icnImage = wx.Bitmap(os.path.join(settings.AppDir, "icons", "image16.gif"), wx.BITMAP_TYPE_GIF) 
-        icnHR = wx.Bitmap(os.path.join(settings.AppDir, "icons", "horizontal_line16.gif"), wx.BITMAP_TYPE_GIF)
+        icnLink = wx.Bitmap(os.path.join(icondir, "applications-internet.png"))
+        icnImage = wx.Bitmap(os.path.join(icondir, "image-x-generic.png")) 
+        #icnHR = wx.Bitmap(os.path.join(icondir, "horizontal_line16.gif"))
         #create toolbar
 
         self.fonts = ["Times New Roman, Times, serif", "Helvetica, Arial, sans-serif", "Courier New, Courier, monospace"]
 
         #self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
-        self.toolbar = wx.ToolBar(self, -1, size=(26,26))
+        self.toolbar = wx.ToolBar(self, -1)
+        self.toolbar.SetToolBitmapSize(wx.Size(32,32))
+        self.toolbar.AddSimpleTool(ID_NEW, icnNew, _("New"), _("Create a New File"))
+        self.toolbar.AddSimpleTool(ID_OPEN, icnOpen, _("Open"), _("Open File on Disk"))
         self.toolbar.AddSimpleTool(ID_SAVE, icnSave, _("Save"), _("Save File to Disk"))
         self.toolbar.AddSeparator()
         self.toolbar.AddSimpleTool(ID_CUT, icnCut, _("Cut"))
         self.toolbar.AddSimpleTool(ID_COPY, icnCopy, _("Copy"))
         self.toolbar.AddSimpleTool(ID_PASTE, icnPaste, _("Paste"))
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
-        self.toolbar.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
-        self.toolbar.AddSimpleTool(ID_INSERT_HR, icnHR, _("Insert Horizontal Line"), _("Insert Horizontal Line"))
-        self.toolbar.SetToolBitmapSize(wx.Size(16,16))
+        self.searchCtrl = wx.SearchCtrl(self.toolbar, -1, size=(200,-1))
+        self.toolbar.AddControl(self.searchCtrl)
+        
         self.toolbar.Realize()
 
-        self.toolbar2 = wx.ToolBar(self, -1, size=(30,30))
+        self.SetToolBar(self.toolbar)
+
+        self.toolbar2 = wx.ToolBar(self, -1)
+        self.toolbar2.SetToolBitmapSize(wx.Size(24,24))
         self.fontlist = wx.ComboBox(self.toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
-        #self.headings = ["None", "Heading 1", "Heading 2", "Heading 3", "Heading 4", "Heading 5", "Heading 6"]
-        #self.headinglist = wx.Choice(self.toolbar2, wx.NewId(), choices=self.headings)
-        #if self.headinglist.GetCount() > 0:
-        #   self.headinglist.SetSelection(0)
 
         self.fontsizes = ["1", "2", "3", "4", "5", "6", "7"]
         self.fontsizelist = wx.ComboBox(self.toolbar2, wx.NewId(), choices=self.fontsizes)
@@ -800,30 +696,30 @@ class EditorFrame (wx.Frame):
         self.toolbar2.AddCheckTool(ID_BOLD, icnBold, shortHelp=_("Bold"))
         self.toolbar2.AddCheckTool(ID_ITALIC, icnItalic, shortHelp=_("Italic"))
         self.toolbar2.AddCheckTool(ID_UNDERLINE, icnUnderline, shortHelp=_("Underline"))
-        self.toolbar2.AddSimpleTool(ID_FONT_COLOR, icnColour, _("Font Color"), _("Select a font color"))
+        #self.toolbar2.AddSimpleTool(ID_FONT_COLOR, icnColour, _("Font Color"), _("Select a font color"))
         self.toolbar2.AddSeparator()
         self.toolbar2.AddCheckTool(ID_ALIGN_LEFT, icnAlignLeft, shortHelp=_("Left Align"))
         self.toolbar2.AddCheckTool(ID_ALIGN_CENTER, icnAlignCenter, shortHelp=_("Center"))
         self.toolbar2.AddCheckTool(ID_ALIGN_RIGHT, icnAlignRight, shortHelp=_("Right Align"))
-        #self.toolbar2.AddCheckTool(ID_ALIGN_JUSTIFY, icnAlignJustify, shortHelp=_("Justify"))
         self.toolbar2.AddSeparator()
         self.toolbar2.AddSimpleTool(ID_DEDENT, icnDedent, _("Decrease Indent"), _("Decrease Indent"))
         self.toolbar2.AddSimpleTool(ID_INDENT, icnIndent, _("Increase Indent"), _("Increase Indent"))
-        self.toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
-        self.toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
+        #self.toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
+        #self.toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
         self.toolbar2.AddSeparator()
-        self.searchCtrl = wx.SearchCtrl(self.toolbar2, -1, size=(200,-1))
-        self.toolbar2.AddControl(self.searchCtrl)
-        self.toolbar2.SetToolBitmapSize(wx.Size(16,16))
+        self.toolbar2.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
+        self.toolbar2.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
+        #self.toolbar.AddSimpleTool(ID_INSERT_HR, icnHR, _("Insert Horizontal Line"), _("Insert Horizontal Line"))
         self.toolbar2.Realize()
 
         #wx.MessageBox("Loading wx.Mozilla...")
-        self.notebook = wx.Notebook(self, -1)
+        self.notebook = fnb.FlatNotebook(self, -1, style=fnb.FNB_NODRAG)
         notebooksizer = wx.BoxSizer(wx.VERTICAL)
         notebooksizer.Add(self.notebook, 1, wx.EXPAND, wx.ALL, 4)
         webpanel = wx.Panel(self.notebook, -1)
         self.notebook.AddPage(webpanel, "Edit")
         self.webview = wx.webview.WebView(webpanel, -1, size=(200, 200), style = wx.NO_FULL_REPAINT_ON_RESIZE)
+        self.webview.MakeEditable(True)
         self.webdelegate = HTMLEditorDelegate(source=self.webview)
         
         webpanelsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -831,7 +727,6 @@ class EditorFrame (wx.Frame):
         webpanel.SetAutoLayout(True)
         webpanel.SetSizerAndFit(webpanelsizer)
 
-        self.webview.MakeEditable(True)
         sourcepanel = wx.Panel(self.notebook, -1)
         self.notebook.AddPage(sourcepanel, "HTML")
 
@@ -859,13 +754,14 @@ class EditorFrame (wx.Frame):
         accelerators = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('B'), ID_BOLD),(wx.ACCEL_CTRL, ord('I'), ID_ITALIC), (wx.ACCEL_CTRL, ord('U'), ID_UNDERLINE), (wx.ACCEL_CTRL, ord('S'), ID_SAVE)]) 
         self.SetAcceleratorTable(accelerators)
 
-        wx.EVT_COMBOBOX(self, self.fontlist.GetId(), self.OnFontSelect)
+        self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
         wx.EVT_TEXT_ENTER(self, self.fontlist.GetId(), self.OnFontSelect)
         wx.EVT_COMBOBOX(self, self.fontsizelist.GetId(), self.OnFontSizeSelect)
-        wx.EVT_MENU(self, ID_OPEN, self.OnOpen)
-        wx.EVT_MENU(self, ID_SAVE, self.OnSave)
-        wx.EVT_MENU(self, ID_QUIT, self.OnQuit)
-        wx.EVT_CLOSE(self, self.OnQuit)
+        self.Bind(wx.EVT_MENU, self.OnNew, id=ID_NEW)
+        self.Bind(wx.EVT_MENU, self.OnOpen, id=ID_OPEN)
+        self.Bind(wx.EVT_MENU, self.OnSave, id=ID_SAVE)
+        self.Bind(wx.EVT_MENU, self.OnQuit, id=ID_QUIT)
+        self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
@@ -880,18 +776,21 @@ class EditorFrame (wx.Frame):
         self.SetAutoLayout(True)
         
         self.notebook.SetSelection(0)
-        self.LoadPage(self.filename)
+        self.baseurl = os.path.abspath(os.path.dirname(__file__))
+        self.CreateNewPage()
         
-        width, height = self.webview.GetVirtualSize()
-        ssize = wx.Display().GetClientArea()
+        #width, height = self.webview.GetVirtualSize()
+        #ssize = wx.Display().GetClientArea()
         
-        if width > ssize.GetWidth():
-            width = ssize.GetWidth() - 40
+        #if width > ssize.GetWidth():
+        #    width = ssize.GetWidth() - 40
         
-        if height > ssize.GetHeight():
-            height = ssize.GetHeight() - 40
+        #if height > ssize.GetHeight():
+        #    height = ssize.GetHeight() - 40
             
-        self.SetSize((width, height))
+        #self.SetSize((width, height))
+        
+        self.CentreOnScreen()
         
         wx.EVT_SIZE(self, self.OnSize)
         wx.EVT_CLOSE(self, self.OnQuit)
@@ -928,6 +827,9 @@ class EditorFrame (wx.Frame):
         
         evt.Skip()
 
+    def CreateNewPage(self):
+        self.webview.SetPageSource("<html><head><title>New Page</title></head><body><p></p></body></html>", 'file://' + self.baseurl + "/")
+
     def OnDoSearch(self, event):
         text = event.GetString()
         self.webview.FindString(text)
@@ -943,9 +845,7 @@ class EditorFrame (wx.Frame):
     def LoadPage(self, filename):
         if os.path.exists(filename):
             fileurl = urllib.quote(os.path.dirname(filename)) + "/"
-            print "File URL is: %s" % fileurl
             self.baseurl = 'file://' + fileurl
-            print "base url is %s" % self.baseurl
             self.webview.SetPageSource(htmlutils.getUnicodeHTMLForFile(filename), self.baseurl)
             self.filename = filename
 
@@ -968,9 +868,12 @@ class EditorFrame (wx.Frame):
 
     def OnPageChanging(self, evt):
         if evt.GetOldSelection() == 1:
+            self.webview.Show()
             self.webview.SetPageSource(self.source.GetText(), self.baseurl)
             #self.webview.UpdateBaseURI()
-            self.webview.Reload()
+            #self.webview.Reload()
+            self.toolbar2.Show()
+            self.Layout()
         else:
             pagetext = self.webview.GetPageSource()
             self.source.SetText(pagetext)
@@ -978,7 +881,8 @@ class EditorFrame (wx.Frame):
             if seltext != "":
                 index = pagetext.find(seltext)
                 self.source.SetSelection(index, index+len(seltext))
-        evt.Skip()
+            self.toolbar2.Hide()
+            self.Layout()
 
     def OnQuit(self, evt):
         self.running = False
@@ -1050,15 +954,14 @@ class EditorFrame (wx.Frame):
             evt.Skip()
 
     def OnNew(self, event):
-        self.webview.LoadURL("about:blank")
+        self.CreateNewPage()
 
     def OnOpen(self, event):
         global webPageWildcard
         dlg = wx.FileDialog(self, _("Select a file"), "", "", webPageWildcard, wx.OPEN)
         dlg.CentreOnParent()
         if dlg.ShowModal() == wx.ID_OK:
-            self.current = dlg.GetPath()
-            self.webview.LoadURL(self.current)
+            self.LoadPage(dlg.GetPath())
         dlg.Destroy()
 
     def OnSaveAs(self, event):
@@ -1070,8 +973,8 @@ class EditorFrame (wx.Frame):
         dlg.Destroy()
 
     def OnSave(self, event):
-        filename = os.path.join(settings.ProjectDir, self.filename)
-        if not os.path.exists(filename):
+        filename = self.filename
+        if not filename or not os.path.exists(filename):
             self.OnSaveAs(event)
         else:
             self.SaveToDisk(filename)
@@ -1083,6 +986,8 @@ class EditorFrame (wx.Frame):
             
         encoding = htmlutils.GetEncoding(source)
         try:
+            if not encoding:
+                encoding = utils.getCurrentEncoding()
             source = source.encode(encoding)
         except:
             raise
@@ -1106,422 +1011,252 @@ class EditorFrame (wx.Frame):
 
 def strict(char):
     print "Unicode Error on character: " + chr(char)
+    
+class TagEditorDialog(sc.SizedDialog):
+    def __init__(self, *a, **kw):
+        sc.SizedDialog.__init__(self, *a, **kw)
+        self.tagName = None
+        # FIXME: Add a notebook with a "style" section here
+    
+    def setProps(self, props):
+        assert self.tagName
+        
+        attrs = htmlattrs.tag_attrs[self.tagName]
+        
+        for prop in props:
+            assert prop in attrs["required"] + attrs["optional"]
+            control = self.FindWindowByName(prop)
+            if control:
+                value = props[prop]
+                if isinstance(control, wx.TextCtrl):
+                    control.SetValue(value)
+                elif isinstance(control, wx.SpinCtrl):
+                    if value.isdigit():
+                        control.SetValue(int(value))
+                elif isinstance(control, wx.Choice) or isinstance(control, wx.ComboBox):
+                    tagattrs = htmlattrs.attr_values[self.tagName][prop]
+                    in_list = False
+                    for tagattr in tagattrs:
+                        if tagattrs[tagattr] == value:
+                            if isinstance(control, wx.Choice):
+                                control.SetStringSelection(tagattr)
+                            else:
+                                control.SetValue(tagattr)
+                            in_list = True
+                    if not in_list and isinstance(control, wx.ComboBox):
+                        control.SetValue(value)
+                elif isinstance(control, wx.FilePickerCtrl):
+                    control.SetPath(value)
+                    
+    def getProps(self):
+        assert self.tagName
+        retattrs = {}
+        attrs = htmlattrs.tag_attrs[self.tagName]
+        all_attrs = attrs["required"] + attrs["optional"]
+        for attr in all_attrs:
+            control = self.FindWindowByName(attr)
+            if control:
+                if isinstance(control, wx.TextCtrl):
+                    retattrs[attr] = control.GetValue()
+                elif isinstance(control, wx.SpinCtrl):
+                    retattrs[attr] = "%d" % control.GetValue()
+                elif isinstance(control, wx.Choice) or isinstance(control, wx.ComboBox):
+                    if isinstance(control, wx.Choice):
+                        value = control.GetStringSelection()
+                    else:
+                        value = control.GetValue()
+                    if value in htmlattrs.attr_values[self.tagName][attr]:
+                        retattrs[attr] = htmlattrs.attr_values[self.tagName][attr][value]
+                    elif isinstance(control, wx.ComboBox):
+                        retattrs[attr] = value
+                elif isinstance(control, wx.FilePickerCtrl):
+                    retattrs[attr] = control.GetPath()
+        return retattrs
 
-class LinkPropsDialog(sc.SizedDialog):
+class LinkPropsDialog(TagEditorDialog):
     def __init__(self, parent, linkProps):
-        sc.SizedDialog.__init__ (self, parent, -1, _("Link Properties"), size=wx.Size(400,200), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
-        self.parent = parent
-        self.linkProps = linkProps
+        TagEditorDialog.__init__ (self, parent, -1, _("Link Properties"), size=wx.Size(400,200), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "A"
         
         pane = self.GetContentsPane()
-        self.lblURL = wx.StaticText(pane, -1, _("URL"))
-        linkpane = sc.SizedPanel(pane, -1)
-        linkpane.SetSizerType("horizontal")
-        self.cmbURL = wx.TextCtrl(linkpane, -1, linkProps[0])
-        self.btnURL = wx.Button(linkpane, -1, _("Select File..."))
+        pane.SetSizerType("form")
+        wx.StaticText(pane, -1, _("Link"))
+        self.fileURL = wx.FilePickerCtrl(pane, -1, style=wx.FLP_OPEN | wx.FLP_USE_TEXTCTRL, name="href")
 
-        self.chkNewWindow = wx.CheckBox(pane, -1, _("Open in new window"))
-        if linkProps[1] == "_blank":
-            self.chkNewWindow.SetValue(1)
-        else:
-            self.chkNewWindow.SetValue(0)
+        wx.StaticText(pane, -1, _("Open in"))
+        wx.ComboBox(pane, -1, choices=htmlattrs.attr_values["A"]["target"].keys(), name="target")
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
-        self.cmbURL.SetFocus()
+        self.fileURL.SetFocus()
         self.Fit()
+        self.MinSize = self.Size
+        
+        self.setProps(linkProps)
 
-        wx.EVT_BUTTON(self, wx.ID_OK, self.OnOKClicked)
-        wx.EVT_BUTTON(self.btnURL, self.btnURL.GetId(), self.OnSelectFile)
-
-    def OnOKClicked(self, evt):
-        self.linkProps[0] = self.cmbURL.GetValue()
-        if self.chkNewWindow.IsChecked():
-            self.linkProps[1] = "_blank"
-        else:
-            self.linkProps[1] = ""
-        self.EndModal(wx.ID_OK)
-
-    def OnSelectFile(self, evt):
-        dialog = wx.FileDialog(self, _("Select a file"), "","", _("All files") + "|*.*", wx.OPEN)
-        if dialog.ShowModal() == wx.ID_OK:
-            filedir = os.path.join(settings.ProjectDir, "File")
-            if os.path.exists(dialog.GetPath()):
-                if dialog.GetDirectory() != filedir:
-                    shutil.copy(dialog.GetPath(), filedir)
-                self.cmbURL.SetValue("../File/" + dialog.GetFilename())
-        dialog.Destroy()
-
-class BookmarkPropsDialog(wx.Dialog):
+class BookmarkPropsDialog(TagEditorDialog):
     def __init__(self, parent, bookmarkProps):
-        wx.Dialog.__init__ (self, parent, -1, _("Bookmark Properties"), wx.DefaultPosition,wx.Size(300,200))
-        self.parent = parent
-        self.bookmarkProps = bookmarkProps
+        TagEditorDialog.__init__ (self, parent, -1, _("Bookmark Properties"), size=wx.Size(400,200), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "A"
 
-        self.lblName = wx.StaticText(self, -1, _("Name"))
-        self.txtName = wx.TextCtrl(self, -1, bookmarkProps[0])
+        pane = self.GetContentsPane()
+        pane.SetSizerType("form")
 
-        self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
-        self.btnOK.SetDefault()
-        self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+        wx.StaticText(pane, -1, _("Name"))
+        wx.TextCtrl(pane, -1, name="name")
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.lblName)
-        self.sizer.Add(self.txtName, 1, wx.EXPAND)
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+        self.Fit()
+        self.MinSize = self.Size
+        
+        self.setProps(bookmarkProps)
 
-        btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnsizer.Add((1, 1), 1, wx.EXPAND)
-        btnsizer.Add(self.btnOK)
-        btnsizer.Add(self.btnCancel)
-
-        self.sizer.Add(btnsizer)
-        self.SetSizerAndFit(self.sizer)
-        self.Layout()
-
-        wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.OnOK)
-
-    def OnOK(self, event):
-        self.bookmarkProps[0] = self.txtName.GetValue()
-        self.EndModal(wx.ID_OK)
-
-class OLPropsDialog(wx.Dialog):
+class OLPropsDialog(TagEditorDialog):
     def __init__(self, parent, listProps):
-        wx.Dialog.__init__ (self, parent, -1, _("Bullets and Numbering"), wx.DefaultPosition,wx.Size(300,200))
-        self.parent = parent
-        self.listProps = listProps
+        TagEditorDialog.__init__ (self, parent, -1, _("Ordered List Properties"), size=wx.Size(400,200), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "OL"
+        
+        pane = self.GetContentsPane()
+        pane.SetSizerType("form")
+        
+        wx.StaticText(pane, -1, _("List Type"))
+        wx.Choice(pane, -1, choices=htmlattrs.attr_values["OL"]["type"].keys(), name="type")
 
-        self.lblListType = wx.StaticText(self, -1, _("List Type:"))
-        self.lstListType = wx.ListBox(self, -1)
-
-        listTypes = ["1", "i", "I", "a", "A"]
-        for type in listTypes:
-            self.lstListType.Append(type)
-            if type == listProps[0]:
-                self.lstListType.SetStringSelection(type)
-        self.lblStartNum = wx.StaticText(self, -1, _("Start at: "))
-        self.txtStartNum = wx.TextCtrl(self, -1, "")
-        h = self.txtStartNum.GetSize().height
-        self.spnStartNum = wx.SpinButton(self, -1,size=(h,h), style=wx.SP_VERTICAL)
+        wx.StaticText(pane, -1, _("Start at"))
+        self.spnStartNum = wx.SpinCtrl(pane, -1, "1", name="start")
         self.spnStartNum.SetRange(1, 100)
-        startnum = listProps[1]
-        if startnum != "":
-            self.spnStartNum.SetValue(int(startnum))
-        else:
-            self.spnStartNum.SetValue(1)
 
-        self.txtStartNum.SetValue(str(self.spnStartNum.GetValue()))
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
-        self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
-        self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+        self.Fit()
+        self.MinSize = self.Size
+        
+        self.setProps(listProps)
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.lblListType, 0, wx.LEFT, 4)
-        self.sizer.Add(self.lstListType, 1, wx.EXPAND | wx.ALL, 4)
-        self.sizer.Add(self.lblStartNum, 0, wx.LEFT, 4)
-        spinsizer = wx.BoxSizer(wx.HORIZONTAL)
-        spinsizer.Add(self.txtStartNum, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL | wx.ALL, 4)
-        spinsizer.Add(self.spnStartNum, 0, wx.ALL, 4)
-        self.sizer.Add(spinsizer)
-
-        btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnsizer.Add((1, 1), 1, wx.EXPAND)
-        btnsizer.Add(self.btnOK)
-        btnsizer.Add(self.btnCancel)
-
-        self.sizer.Add(btnsizer)
-        self.SetSizerAndFit(self.sizer)
-        self.Layout()
-
-        wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.OnOKClicked)
-        wx.EVT_SPIN(self, self.spnStartNum.GetId(), self.OnSpin)
-        #wx.EVT_BUTTON(self.btnURL, self.btnURL.GetId(), self.OnSelectFile)
-
-    def OnOKClicked(self, evt):
-        self.listProps[0] = self.lstListType.GetStringSelection()
-        self.listProps[1] = `self.txtStartNum.GetValue()`
-        self.EndModal(wx.ID_OK)
-
-    def OnSpin(self, evt):
-        self.txtStartNum.SetValue(str(evt.GetPosition()))
-
-class ULPropsDialog(wx.Dialog):
+class ULPropsDialog(TagEditorDialog):
     def __init__(self, parent, listProps):
-        wx.Dialog.__init__ (self, parent, -1, _("Bullets and Numbering"), wx.DefaultPosition,wx.Size(300,200))
-        self.parent = parent
-        self.listProps = listProps
+        TagEditorDialog.__init__ (self, parent, -1, _("Unordered List Properties"), size=wx.Size(400,200), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "UL"
 
-        self.lblListType = wx.StaticText(self, -1, _("List Type:"))
-        self.lstListType = wx.ListBox(self, -1)
+        pane = self.GetContentsPane()
+        pane.SetSizerType("form")
 
-        listTypes = ["circle", "diamond", "square"]
-        for type in listTypes:
-            self.lstListType.Append(type)
-            if type == listProps[0]:
-                self.lstListType.SetStringSelection(type)
+        wx.StaticText(pane, -1, _("List Type"))
+        wx.Choice(pane, -1, choices=htmlattrs.attr_values["UL"]["type"].keys(), name="type")
         
-        self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
-        self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+        self.Fit()
+        self.MinSize = self.Size
+        
+        self.setProps(listProps)
 
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.lblListType, 0, wx.LEFT, 4)
-        self.sizer.Add(self.lstListType, 1, wx.EXPAND | wx.ALL, 4)
-
-        btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnsizer.Add((1, 1), 1, wx.EXPAND)
-        btnsizer.Add(self.btnOK)
-        btnsizer.Add(self.btnCancel)
-
-        self.sizer.Add(btnsizer)
-        self.SetSizerAndFit(self.sizer)
-        self.Layout()
-
-        wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.OnOKClicked)
-        #wx.EVT_SPIN(self, self.spnStartNum.GetId(), self.OnSpin)
-        #wx.EVT_BUTTON(self.btnURL, self.btnURL.GetId(), self.OnSelectFile)
-
-    def OnOKClicked(self, evt):
-        self.listProps[0] = self.lstListType.GetStringSelection()
-        if self.listProps[0] == "diamond":
-            self.listProps[0] = "disc"
-        self.EndModal(wx.ID_OK)
-
-    def OnSpin(self, evt):
-        self.txtStartNum.SetValue(str(evt.GetPosition()))
-
-class ImagePropsDialog(wx.Dialog):
+class ImagePropsDialog(TagEditorDialog):
     def __init__(self, parent, imageProps):
-        wx.Dialog.__init__ (self, parent, -1, _("Image Properties"), wx.DefaultPosition,wx.Size(300,300))
-        height = 20
-        if wx.Platform == "__WXMAC__":
-            height = 25
-        self.parent = parent
-        self.imageProps = imageProps
-        self.alignments = {"": _("Default"), "left": _("Left"), "right": _("Right"), "top": _("Top"), "middle": _("Middle"), "bottom": _("Bottom")}
-
-        self.lblImageSrc = wx.StaticText(self, -1, _("Image Location:"))
-        self.txtImageSrc = wx.TextCtrl(self, -1, imageProps[0])
-        self.btnImageSrc = wx.Button(self, -1, _("Select Image..."))
-        self.lblDescription = wx.StaticText(self, -1, _("Text Description:"))
-        self.txtDescription = wx.TextCtrl(self, -1, imageProps[1])
-        self.lblAlign = wx.StaticText(self, -1, _("Image Alignment..."))
-        self.chAlign = wx.Choice(self, -1, choices=self.alignments.values())
-        if imageProps[4] in self.alignments.keys():
-            self.chAlign.SetStringSelection(self.alignments[imageProps[4]])
-
-        self.sizebox = wx.StaticBox(self, -1, _("Size"))
-        #self.radOriginalSize = wx.RadioBox(self, -1, _("Actual size"))
-        #self.radResizeImage = wx.RadioBox(self, -1, _("Custom size"))
-        self.lblWidth = wx.StaticText(self, -1, _("Width:"))
-        self.txtWidth = wx.TextCtrl(self, -1, imageProps[2])
-        self.lblHeight = wx.StaticText(self, -1, _("Height:"))
-        self.txtHeight = wx.TextCtrl(self, -1, imageProps[3])
-
-        self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
-        self.btnOK.SetDefault()
-        self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.sizer.Add(self.lblImageSrc, 0, wx.ALL, 4)
-        self.sizer.Add(self.txtImageSrc, 0, wx.ALL | wx.EXPAND, 4)
-        self.sizer.Add(self.btnImageSrc, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
-        self.sizer.Add(self.lblDescription, 0, wx.ALL, 4)
-        self.sizer.Add(self.txtDescription, 0, wx.ALL | wx.EXPAND, 4)
-        boxsizer = wx.StaticBoxSizer(self.sizebox, wx.VERTICAL)
-        #boxsizer.Add(self.radOriginalSize, 0)
-        #boxsizer.Add(self.radResizeImage, 0)
-        boxsizer.Add(self.lblWidth, 0)
-        boxsizer.Add(self.txtWidth, 0)
-        boxsizer.Add(self.lblHeight, 0)
-        boxsizer.Add(self.txtHeight, 0)
-        self.sizer.Add(boxsizer)
-        self.sizer.Add(self.lblAlign)
-        self.sizer.Add(self.chAlign)
-        btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnsizer.Add((100, 25), 1, wx.EXPAND | wx.ALL, 4)
-        btnsizer.Add(self.btnOK, 0, wx.ALL, 4)
-        btnsizer.Add(self.btnCancel, 0, wx.ALL, 4)
-        self.sizer.Add(btnsizer, 0, wx.EXPAND, 4)
-        self.SetSizerAndFit(self.sizer)
-        self.Layout()
-
-        wx.EVT_BUTTON(self, self.btnOK.GetId(), self.OnOKClicked)
-        wx.EVT_BUTTON(self, self.btnImageSrc.GetId(), self.OnSelectImage)
-
-    def OnOKClicked(self, evt):
-        self.imageProps[0] = self.txtImageSrc.GetValue()
-        self.imageProps[1] = self.txtDescription.GetValue() 
-        self.imageProps[2] = self.txtWidth.GetValue()
-        self.imageProps[3] = self.txtHeight.GetValue()
-        align = self.chAlign.GetStringSelection()
-        for item in self.alignments.keys():
-            if align == self.alignments[item]:
-                self.imageProps[4] = item
-
-        self.EndModal(wx.ID_OK)
+        TagEditorDialog.__init__ (self, parent, -1, _("Image Properties"), wx.DefaultPosition,wx.DefaultSize,style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "IMG"
+        
+        pane = self.GetContentsPane()
  
-    def OnSelectImage(self, evt):
-        imageFormats = _("Image files") + "|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
-        dialog = wx.FileDialog(self, _("Select an image"), "","", imageFormats, wx.OPEN)
-        if dialog.ShowModal() == wx.ID_OK:
-            graphicsdir = os.path.join(self.parent.parent.pub.directory, "Graphics")
-            if os.path.exists(dialog.GetPath()):
-                if dialog.GetDirectory() != graphicsdir:
-                    shutil.copy(dialog.GetPath(), graphicsdir)
-                self.txtImageSrc.SetValue("../Graphics/" + dialog.GetFilename())
-        dialog.Destroy()
+        self.imageProps = imageProps
 
-class CellPropsDialog(wx.Dialog):
-    def __init__(self, parent, rowProps):
-        wx.Dialog.__init__ (self, parent, -1, _("Cell Properties"), wx.DefaultPosition,wx.Size(300,300))
-        height = 20
-        if wx.Platform == "__WXMAC__":
-            height = 25
-        self.parent = parent
-        self.rowProps = rowProps
+        pane.SetSizerType("form")
+        
+        wx.StaticText(pane, -1, _("Image Location"))
+        self.txtImageSrc = wx.FilePickerCtrl(pane, -1, name="src")
+        self.txtImageSrc.SetSizerProps(expand=True)
+        wx.StaticText(pane, -1, _("Text Description"))
+        self.txtDescription = wx.TextCtrl(pane, -1, name="alt")
+        self.txtDescription.SetSizerProps(expand=True)
+        wx.StaticText(pane, -1, _("Image Alignment"))
+        wx.Choice(pane, -1, choices=htmlattrs.attr_values['IMG']['align'].keys(), name="align")
 
-        self.sizebox = wx.StaticBox(self, -1, _("Size"))
-        #self.radOriginalSize = wx.RadioBox(self, -1, _("Actual size"))
-        #self.radResizeImage = wx.RadioBox(self, -1, _("Custom size"))
-        self.lblWidth = wx.StaticText(self, -1, _("Width:"))
-        self.txtWidth = wx.TextCtrl(self, -1, rowProps[0])
-        self.lblHeight = wx.StaticText(self, -1, _("Height:"))
-        self.txtHeight = wx.TextCtrl(self, -1, rowProps[1])
+        wx.StaticText(pane, -1, _("Width"))
+        wx.TextCtrl(pane, -1, name="width")
+        wx.StaticText(pane, -1, _("Height"))
+        wx.TextCtrl(pane, -1, name="height")
 
-        self.alignbox = wx.StaticBox(self, -1, _("Layout and Borders"))
-        self.lblAlign = wx.StaticText(self, -1, _("Horizontal Alignment:"))
-        self.cmbAlign = wx.Choice(self, -1, choices=["left", "center", "right", "justify"])
-        if rowProps[2] != "":
-            self.cmbAlign.SetStringSelection(rowProps[2].lower())
-        else:
-            self.cmbAlign.SetSelection(0)
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+        self.Fit()
+        self.MinSize = self.Size
+        
+        self.setProps(imageProps)
+
+class RowPropsDialog(TagEditorDialog):
+    def __init__(self, parent, props):
+        TagEditorDialog.__init__ (self, parent, -1, _("Row Properties"), wx.DefaultPosition,wx.DefaultSize,style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "TR"
+
+        pane = self.GetContentsPane()
+        pane.SetSizerType("form")
+
+        wx.StaticText(pane, -1, _("Horizontal Alignment"))
+        wx.Choice(pane, -1, choices=htmlattrs.attr_values['TR']['align'].keys(), name="align")
     
-        self.lblVAlign = wx.StaticText(self, -1, _("Vertical Alignment:"))
-        self.cmbVAlign = wx.Choice(self, -1, choices=["top", "middle", "bottom"])
-        if rowProps[3] != "":
-            self.cmbVAlign.SetStringSelection(rowProps[3].lower())
-        else:
-            self.cmbVAlign.SetSelection(0)
+        wx.StaticText(pane, -1, _("Vertical Alignment:"))
+        wx.Choice(pane, -1, choices=htmlattrs.attr_values['TR']['valign'].keys(), name="valign")
+        
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+        self.Fit()
+        self.MinSize = self.Size
+        
+        self.setProps(props)
 
-        self.btnOK = wx.Button(self, wx.ID_OK, _("OK"))
-        self.btnOK.SetDefault()
-        self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        boxsizer = wx.StaticBoxSizer(self.sizebox, wx.VERTICAL)
-        sizegridsizer = wx.FlexGridSizer(2, 2, 4, 4)
-        sizegridsizer.AddMany([(self.lblWidth, 0), (self.txtWidth, 0), (self.lblHeight, 0), (self.txtHeight, 0)])
-        boxsizer.Add(sizegridsizer, 1, wx.EXPAND)
+class CellPropsDialog(TagEditorDialog):
+    def __init__(self, parent, props):
+        TagEditorDialog.__init__ (self, parent, -1, _("Cell Properties"), wx.DefaultPosition,wx.DefaultSize,style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "TD"
 
-        alignsizer = wx.StaticBoxSizer(self.alignbox, wx.VERTICAL)
-        aligngridsizer = wx.FlexGridSizer(2, 2, 4, 4)
-        aligngridsizer.AddMany([(self.lblAlign, 0), (self.cmbAlign, 0), (self.lblVAlign,0), (self.cmbVAlign, 0)])
-        alignsizer.Add(aligngridsizer, 1, wx.EXPAND)
-        self.sizer.Add(boxsizer, 0, wx.EXPAND | wx.ALL, 4)
-        self.sizer.Add(alignsizer, 0, wx.EXPAND | wx.ALL, 4)
+        pane = self.GetContentsPane()
+        pane.SetSizerType("form")
 
-        btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnsizer.Add((100, 25), 1, wx.EXPAND | wx.ALL, 4)
-        btnsizer.Add(self.btnOK, 0, wx.ALL, 4)
-        btnsizer.Add(self.btnCancel, 0, wx.ALL, 4)
-        self.sizer.Add(btnsizer, 0, wx.EXPAND, 4)
-        self.SetSizerAndFit(self.sizer)
-        self.Layout()
+        wx.StaticText(pane, -1, _("Horizontal Alignment"))
+        wx.Choice(pane, -1, choices=htmlattrs.attr_values['TD']['align'].keys(), name="align")
+    
+        wx.StaticText(pane, -1, _("Vertical Alignment:"))
+        wx.Choice(pane, -1, choices=htmlattrs.attr_values['TD']['valign'].keys(), name="valign")
+        
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+        self.Fit()
+        self.MinSize = self.Size
+        
+        self.setProps(props)
 
-        wx.EVT_BUTTON(self, self.btnOK.GetId(), self.OnOKClicked)
-
-    def OnOKClicked(self, evt):
-        self.rowProps[0] = self.txtWidth.GetValue()
-        self.rowProps[1] = self.txtHeight.GetValue()
-        self.rowProps[2] = self.cmbAlign.GetStringSelection()
-        self.rowProps[3] = self.cmbVAlign.GetStringSelection()
-        self.EndModal(wx.ID_OK)
-
-class TablePropsDialog(wx.Dialog):
+class TablePropsDialog(TagEditorDialog):
     def __init__(self, parent, tableProps):
-        wx.Dialog.__init__ (self, parent, -1, _("Table Properties"), wx.DefaultPosition,wx.Size(300,300))
-        height = 20
-        if wx.Platform == "__WXMAC__":
-            height = 25
-        self.parent = parent
-        self.tableProps = tableProps
+        TagEditorDialog.__init__ (self, parent, -1, _("Table Properties"), wx.DefaultPosition,wx.DefaultSize,style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "TABLE"
+        
+        pane = self.GetContentsPane()
+        pane.SetSizerType("form")
 
-        #sizing options
-        self.sizebox = wx.StaticBox(self, -1, _("Size"))
-        #self.radOriginalSize = wx.RadioBox(self, -1, _("Actual size"))
-        #self.radResizeImage = wx.RadioBox(self, -1, _("Custom size"))
-        self.lblWidth = wx.StaticText(self, -1, _("Width:"))
-        self.txtWidth = wx.TextCtrl(self, -1, tableProps[0])
-        self.lblHeight = wx.StaticText(self, -1, _("Height:"))
-        self.txtHeight = wx.TextCtrl(self, -1, tableProps[1])
+        wx.StaticText(pane, -1, _("Width"))
+        wx.TextCtrl(pane, -1, name="width")
 
         #alignment options
-        self.alignbox = wx.StaticBox(self, -1, _("Layout and Borders"))
-        self.lblAlign = wx.StaticText(self, -1, _("Table Alignment:"))
-        self.cmbAlign = wx.Choice(self, -1, choices=["Default", "Left", "Center", "Right", "Justify"])
-        if tableProps[2] != "":
-            self.cmbAlign.SetStringSelection(tableProps[2])
-        else:
-            self.cmbAlign.SetSelection(0)
+#
+        wx.StaticText(pane, -1, _("Alignment"))
+        wx.Choice(pane, -1, choices=htmlattrs.attr_values["TABLE"]["align"].keys(), name="align")
 
-        self.lblBorder = wx.StaticText(self, -1, _("Border:"))
-        value = "0"
-        if tableProps[3] != "":
-            value = tableProps[3]
-        self.spnBorder = wx.SpinCtrl(self, -1, value)
-        self.lblSpacing = wx.StaticText(self, -1, _("Spacing:"))
-        value = "0"
-        if tableProps[4] != "":
-            value = tableProps[4]
-        self.spnSpacing = wx.SpinCtrl(self, -1, value)
-        self.lblPadding = wx.StaticText(self, -1, _("Padding:"))
-        value = "0"
-        if tableProps[5] != "":
-            value = tableProps[5]
-        self.spnPadding = wx.SpinCtrl(self, -1, value)
+        wx.StaticText(pane, -1, _("Border"))
+        wx.SpinCtrl(pane, -1, "0", name="border")
+        
+        wx.StaticText(pane, -1, _("Spacing"))
+        wx.SpinCtrl(pane, -1, "0", name="cellspacing")
+        
+        wx.StaticText(pane, -1, _("Padding"))
+        wx.SpinCtrl(pane, -1, "0", name="cellpadding")
 
-        #background color 
-        #self.lblBackColor = wx.StaticText(self, -1, _("Background Color:"))
-        #self.btnBackColor = wx.ColorButton(self, -1)
-
-        self.btnOK = wx.Button(self, wx.ID_OK, "OK")
-        self.btnOK.SetDefault()
-        self.btnCancel = wx.Button(self, wx.ID_CANCEL, _("Cancel"))
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        boxsizer = wx.StaticBoxSizer(self.sizebox, wx.VERTICAL)
-        sizegridsizer = wx.FlexGridSizer(2, 2, 4, 4)
-        sizegridsizer.AddMany([(self.lblWidth, 0), (self.txtWidth, 0), (self.lblHeight, 0), (self.txtHeight, 0)])
-        boxsizer.Add(sizegridsizer, 1, wx.EXPAND)
-        alignsizer = wx.StaticBoxSizer(self.alignbox, wx.VERTICAL)
-        aligngridsizer = wx.FlexGridSizer(2, 2, 4, 4)
-        aligngridsizer.AddMany([(self.lblAlign, 0), (self.cmbAlign, 0), (self.lblBorder,0), (self.spnBorder, 0), 
-                        (self.lblSpacing,0), (self.spnSpacing, 0), (self.lblPadding,0), (self.spnPadding, 0)])
-        alignsizer.Add(aligngridsizer, 1, wx.EXPAND)
-        topsizer = wx.BoxSizer(wx.HORIZONTAL)       
-        self.sizer.Add(boxsizer, 0, wx.EXPAND | wx.ALL, 4)
-        self.sizer.Add(alignsizer, 0, wx.EXPAND | wx.ALL, 4)
-        #colorsizer = wx.BoxSizer(wx.HORIZONTAL)
-        #colorsizer.AddMany([(self.lblBackColor),(self.btnBackColor)])
-        #self.sizer.Add(colorsizer, 0, wx.ALL, 4)
-
-        btnsizer = wx.BoxSizer(wx.HORIZONTAL)
-        btnsizer.Add((100, 25), 1, wx.EXPAND | wx.ALL, 4)
-        btnsizer.Add(self.btnOK, 0, wx.ALL, 4)
-        btnsizer.Add(self.btnCancel, 0, wx.ALL, 4)
-        self.sizer.Add(btnsizer, 0, wx.EXPAND, 4)
-        self.SetSizerAndFit(self.sizer)
-        self.Layout()
-
-        wx.EVT_BUTTON(self, self.btnOK.GetId(), self.OnOKClicked)
-
-    def OnOKClicked(self, evt):
-        self.tableProps[0] = self.txtWidth.GetValue()
-        self.tableProps[1] = self.txtHeight.GetValue()
-        if self.cmbAlign.GetStringSelection() != "Default":
-            self.tableProps[2] = self.cmbAlign.GetStringSelection()
-        else:
-            self.tableProps[2] = ""
-        self.tableProps[3] = `self.spnBorder.GetValue()`
-        self.tableProps[4] = `self.spnSpacing.GetValue()`
-        self.tableProps[5] = `self.spnPadding.GetValue()`
-        self.EndModal(wx.ID_OK)
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+        self.Fit()
+        self.MinSize = self.Size
+        
+        self.setProps(tableProps)
 
 class CreateTableDialog(sc.SizedDialog):
     def __init__(self, *args, **kwargs):
@@ -1530,7 +1265,6 @@ class CreateTableDialog(sc.SizedDialog):
         self.trows = "1"
         self.tcolumns = "1"
         self.twidth= "100"
-        self.theight = "100"
 
         panel = self.GetContentsPane()
 
@@ -1550,13 +1284,6 @@ class CreateTableDialog(sc.SizedDialog):
         self.cmbWidthType = wx.Choice(widthPane, -1, choices=[_("Percent"), _("Pixels")])
         self.cmbWidthType.SetStringSelection(_("Percent"))
         
-        heightPane = sc.SizedPanel(panel, -1)
-        heightPane.SetSizerType("horizontal")
-        self.lblHeight = wx.StaticText(heightPane, -1, _("Height:"))
-        self.txtHeight = wx.TextCtrl(heightPane, -1, "")
-        self.cmbHeightType = wx.Choice(heightPane, -1, choices=[_("Percent"), _("Pixels")])
-        self.cmbHeightType.SetStringSelection(_("Percent"))
-        
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
         self.Fit()
@@ -1568,16 +1295,15 @@ class CreateTableDialog(sc.SizedDialog):
         twidth = self.txtWidth.GetValue()
         if self.cmbWidthType.GetStringSelection() == _("Percent"):
             twidth += "%"
-        
-        theight = self.txtHeight.GetValue()
-        if self.cmbHeightType.GetStringSelection() == _("Percent"):
-            theight += "%"
 
-        return (trows, tcolumns, twidth, theight)
+        return (trows, tcolumns, twidth)
 
-class MyApp(wx.App):
+class MyApp(wx.App, events.AppEventHandlerMixin, wx.lib.mixins.inspection.InspectionMixin):
     def OnInit(self):
-        self.frame = EditorFrame(None, "about:blank")
+        events.AppEventHandlerMixin.__init__(self)
+        wx.lib.mixins.inspection.InspectionMixin.__init__(self)
+        #self.ShowInspectionTool()
+        self.frame = EditorFrame(None, None)
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
         return True
