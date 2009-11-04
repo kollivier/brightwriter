@@ -10,6 +10,8 @@ import wx.lib.flatnotebook as fnb
 import wx.lib.mixins.inspection
 import wx.lib.sized_controls as sc
 
+from wx.lib.pubsub import Publisher
+
 thisfile = sys.executable
 if not hasattr(sys, 'frozen'):
     thisfile = __file__
@@ -106,7 +108,9 @@ class STCFindReplaceController(wx.EvtHandler):
         self.BindEvents()
         
     def OnKeyDown(self, event):
-        if self.searchText and event.MetaDown() and event.KeyCode == 'G':
+        is_search = event.MetaDown() and event.KeyCode == 'G'
+        
+        if self.searchText and is_search:
             self.DoInlineSearch(self.searchText, next=True)
         else:
             event.Skip()
@@ -132,6 +136,8 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
         wx.EvtHandler.__init__(self, *args, **kwargs)
         self.source = source
         self.sourceFindHandler = STCFindReplaceController(self.source)
+        self.searchId = None
+        Publisher().subscribe(self.OnDoSearch, ('search', 'text', 'changed'))
         
     def RegisterHandlers(self, event=None):
         self.source.Bind(wx.EVT_CHAR, self.OnKeyEvent)
@@ -141,6 +147,11 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_REDO, self.OnRedo)
         app.AddHandlerForID(ID_SELECTALL, self.OnSelectAll)
         app.AddHandlerForID(ID_SELECTNONE, self.OnSelectNone)
+        
+        search = self.webview.FindWindowByName("searchctrl")
+        if search:
+            self.searchId = search.GetId()
+            app.AddHandlerForID(self.searchId, self.OnDoSearch)
         
     def RemoveHandlers(self, event=None):
         app = wx.GetApp()
@@ -155,9 +166,8 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
     def OnRedo(self, event):
         self.source.Redo()
         
-    def OnDoSearch(self, event):
-        text = event.GetValue()
-        self.sourceFindHandler.DoInlineSearch(text)
+    def OnDoSearch(self, message):
+        self.sourceFindHandler.DoInlineSearch(message.data)
 
     def OnSelectAll(self, evt):
         self.source.SelectAll()
@@ -180,6 +190,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
         self.webview = source
         self.webview.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
         self.webview.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+        self.searchId = None
+        Publisher().subscribe(self.OnDoSearch, ('search', 'text', 'changed'))
         
     def OnSetFocus(self, event):
         self.RegisterHandlers()
@@ -269,9 +281,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_TEXT_SUB)
         app.RemoveHandlerForID(ID_TEXT_REMOVE_STYLES)
         
-    def OnDoSearch(self, event):
-        text = event.GetString()
-        self.webview.FindString(text)
+    def OnDoSearch(self, message):
+        self.webview.FindString(message.data)
 
     def OnSelectAll(self, evt):
         self.webview.ExecuteEditCommand("SelectAll")
@@ -444,9 +455,6 @@ class HTMLEditorDelegate(wx.EvtHandler):
         if link and link.GetAttribute('href') != '':
             popupmenu.Append(ID_EDITLINK, "Link Properties")
             popupmenu.Append(ID_REMOVE_LINK, "Remove Link")
-        #elif link and link.GetAttribute('name') != '':
-        #    popupmenu.Append(ID_EDITBOOKMARK, "Bookmark Properties")
-        #    popupmenu.Append(ID_REMOVE_LINK, "Remove Bookmark")
         if self.GetParent("ol") or self.GetParent("ul"):
             popupmenu.Append(ID_EDITOL, "Bullets and Numbering")
         if self.GetParent("table"):
@@ -567,11 +575,9 @@ class EditorFrame (sc.SizedFrame):
         self.filename = filename
         self.current = "about:blank"
         self.parent = parent
-        self.currentItem = None #conman.ConNode("ID", conman.Content("ID2", "English"), None)
+        self.currentItem = None
         self.findtext = ""
         
-        
-        #self.filename = self.currentItem.content.filename
         self.menu = wx.MenuBar()
         self.filemenu = wx.Menu()
         self.filemenu.Append(ID_NEW, _("New"))
@@ -589,7 +595,7 @@ class EditorFrame (sc.SizedFrame):
         self.editmenu.Append(ID_SELECTALL, _("Select All") + "\tCTRL+A")
         self.editmenu.Append(ID_SELECTNONE, _("Select None"))
         self.editmenu.AppendSeparator()
-        if wx.Platform == "__WXMAC__":
+        if wx.Platform != "__WXMAC__":
             self.editmenu.Append(ID_FIND_NEXT, _("Find Next") + "\tF3")
         else:
             self.editmenu.Append(ID_FIND_NEXT, _("Find Next") + "\tCTRL+G")
@@ -663,7 +669,6 @@ class EditorFrame (sc.SizedFrame):
         self.panel = self.GetContentsPane()
         
         self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
-        #self.toolbar = wx.ToolBar(self.panel, -1)
         self.toolbar.SetToolBitmapSize(wx.Size(32,32))
         self.toolbar.AddSimpleTool(ID_NEW, icnNew, _("New"), _("Create a New File"))
         self.toolbar.AddSimpleTool(ID_OPEN, icnOpen, _("Open"), _("Open File on Disk"))
@@ -716,12 +721,8 @@ class EditorFrame (sc.SizedFrame):
         #self.toolbar.AddSimpleTool(ID_INSERT_HR, icnHR, _("Insert Horizontal Line"), _("Insert Horizontal Line"))
         self.toolbar2.Realize()
 
-        #wx.MessageBox("Loading wx.Mozilla...")
         self.notebook = fnb.FlatNotebook(self.panel, -1, style=fnb.FNB_NODRAG)
         self.notebook.SetSizerProps(expand=True,proportion=1)
-        #notebooksizer = wx.BoxSizer(wx.VERTICAL)
-        #notebooksizer.Add(self.toolbar2, 0)
-        #notebooksizer.Add(self.notebook, 1, wx.EXPAND, wx.ALL, 4)
         webpanel = sc.SizedPanel(self.notebook, -1)
         #webpanel.SetSizerProps(expand=True,proportion=1)
         self.notebook.AddPage(webpanel, "Edit")
@@ -740,12 +741,9 @@ class EditorFrame (sc.SizedFrame):
         self.source = wx.stc.StyledTextCtrl(sourcepanel, -1)
         sourcepanelsizer = wx.BoxSizer(wx.HORIZONTAL)
         sourcepanelsizer.Add(self.source, 1, wx.EXPAND)
-        #sourcepanel.SetAutoLayout(True)
         sourcepanel.SetSizerAndFit(sourcepanelsizer)
 
         self.source.SetLexer(wx.stc.STC_LEX_HTML)
-        #self.source.SetCodePage(wx.stc.STC_CP_DBCS)
-        #self.source.StyleClearAll()
         self.source.StyleSetSpec(wx.stc.STC_STYLE_DEFAULT, "fore:#000000,size:12,face:Arial")
         self.source.StyleSetSpec(wx.stc.STC_STYLE_LINENUMBER, "fore:#000000")
         self.source.StyleSetSpec(wx.stc.STC_H_TAG, "fore:#000099")
@@ -754,9 +752,6 @@ class EditorFrame (sc.SizedFrame):
         self.source.SetProperty("fold.html", "1")
 
         self.sourceDelegate = HTMLSourceEditorDelegate(self.source)
-
-        #self.SetAutoLayout(True)
-        #self.SetSizer(notebooksizer)
 
         accelerators = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('B'), ID_BOLD),(wx.ACCEL_CTRL, ord('I'), ID_ITALIC), (wx.ACCEL_CTRL, ord('U'), ID_UNDERLINE), (wx.ACCEL_CTRL, ord('S'), ID_SAVE)]) 
         self.SetAcceleratorTable(accelerators)
@@ -772,30 +767,11 @@ class EditorFrame (sc.SizedFrame):
 
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
-        #btnSizer.Add(self.location, 1, wx.EXPAND|wx.ALL, 2)
-        #sizer.Add(self.toolbar2, 0, wx.EXPAND)
-        #sizer.Add(notebooksizer, 1, wx.EXPAND)
-        #self.webview.ExecuteEditCommand("fontFace", self.fonts[0])
-        #self.location.Append(self.current)
-
         self.Fit()
-        #self.SetSizer(sizer)
-        #self.SetAutoLayout(True)
         
         self.notebook.SetSelection(0)
         self.baseurl = os.path.abspath(os.path.dirname(thisfile))
         self.CreateNewPage()
-        
-        #width, height = self.webview.GetVirtualSize()
-        #ssize = wx.Display().GetClientArea()
-        
-        #if width > ssize.GetWidth():
-        #    width = ssize.GetWidth() - 40
-        
-        #if height > ssize.GetHeight():
-        #    height = ssize.GetHeight() - 40
-            
-        #self.SetSize((width, height))
         
         self.CentreOnScreen()
         
@@ -838,8 +814,9 @@ class EditorFrame (sc.SizedFrame):
         self.webview.SetPageSource("<html><head><title>New Page</title></head><body><p></p></body></html>", 'file://' + self.baseurl + "/")
 
     def OnDoSearch(self, event):
-        text = event.GetString()
-        self.webview.FindString(text)
+        # wx bug: event.GetString() doesn't work on Windows 
+        text = event.GetEventObject().GetValue()
+        Publisher().sendMessage(('search', 'text', 'changed'), text)
 
     def OnFontSelect(self, evt):
         self.webview.ExecuteEditCommand("FontName", self.fontlist.GetStringSelection())
@@ -1276,15 +1253,15 @@ class CreateTableDialog(sc.SizedDialog):
         rcpane.SetSizerType("horizontal")
         self.lblRows = wx.StaticText(rcpane, -1, _("Rows:"))
         self.lblRows.SetSizerProps(valign="center")
-        self.txtRows = wx.SpinCtrl(rcpane, -1, "1")
+        self.txtRows = wx.SpinCtrl(rcpane, -1, self.trows)
         self.lblColumns = wx.StaticText(rcpane, -1, _("Columns:"))
         self.lblColumns.SetSizerProps(valign="center")
-        self.txtColumns = wx.SpinCtrl(rcpane, -1, "1")
+        self.txtColumns = wx.SpinCtrl(rcpane, -1, self.tcolumns)
 
         widthPane = sc.SizedPanel(panel, -1)
         widthPane.SetSizerType("horizontal")
         self.lblWidth = wx.StaticText(widthPane, -1, _("Width:"))
-        self.txtWidth = wx.TextCtrl(widthPane, -1, "")
+        self.txtWidth = wx.TextCtrl(widthPane, -1, self.twidth)
         self.cmbWidthType = wx.Choice(widthPane, -1, choices=[_("Percent"), _("Pixels")])
         self.cmbWidthType.SetStringSelection(_("Percent"))
         
@@ -1297,7 +1274,7 @@ class CreateTableDialog(sc.SizedDialog):
         trows = self.txtRows.GetValue()
         tcolumns = self.txtColumns.GetValue() 
         twidth = self.txtWidth.GetValue()
-        if self.cmbWidthType.GetStringSelection() == _("Percent"):
+        if twidth.isdigit() and self.cmbWidthType.GetStringSelection() == _("Percent"):
             twidth += "%"
 
         return (trows, tcolumns, twidth)
@@ -1306,7 +1283,6 @@ class MyApp(wx.App, events.AppEventHandlerMixin, wx.lib.mixins.inspection.Inspec
     def OnInit(self):
         events.AppEventHandlerMixin.__init__(self)
         wx.lib.mixins.inspection.InspectionMixin.__init__(self)
-        #self.ShowInspectionTool()
         self.frame = EditorFrame(None, None)
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
