@@ -30,13 +30,13 @@ lang_dict = {
 import unittest
 import encrypt
 import analyzer
-import index
+#import index
 import converter
 import library.metadata
 
 alltests = unittest.TestSuite(( encrypt.getTestSuite(), 
                                 analyzer.getTestSuite(),
-                                index.getTestSuite(),
+                                #index.getTestSuite(),
                                 converter.getTestSuite(),
                                 library.metadata.getTestSuite(),
                               ))
