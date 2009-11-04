@@ -32,7 +32,7 @@ def getUnicodeHTMLForFile(filename):
     if not encoding:
         encoding = ""
         
-    return utils.makeUnicode(html, encoding)
+    return makeUnicode(html, encoding)
     
 def GetEncoding(myhtml):
     """Checks for document HTML encoding and returns it if found."""
