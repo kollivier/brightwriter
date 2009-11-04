@@ -676,7 +676,7 @@ class EditorFrame (sc.SizedFrame):
         self.SetToolBar(self.toolbar)
 
         self.toolbar2 = wx.ToolBar(self.panel, -1)
-        self.toolbar2.SetSizerProps(expand=True)
+        self.toolbar2.SetSizerProps(expand=True, border=("all", 0))
         self.toolbar2.SetToolBitmapSize(wx.Size(24,24))
         self.fontlist = wx.ComboBox(self.toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
 
@@ -872,10 +872,8 @@ class EditorFrame (sc.SizedFrame):
         if evt.GetOldSelection() == 1:
             self.webview.Show()
             self.webview.SetPageSource(self.source.GetText(), self.baseurl)
-            #self.webview.UpdateBaseURI()
-            #self.webview.Reload()
-            self.toolbar2.Show()
-            self.Layout()
+            self.toolbar2.Parent.GetSizer().Show(self.toolbar2)
+            self.toolbar2.Parent.Layout()
         else:
             pagetext = self.webview.GetPageSource()
             self.source.SetText(pagetext)
@@ -883,8 +881,8 @@ class EditorFrame (sc.SizedFrame):
             if seltext != "":
                 index = pagetext.find(seltext)
                 self.source.SetSelection(index, index+len(seltext))
-            self.toolbar2.Hide()
-            self.Layout()
+            self.toolbar2.Parent.GetSizer().Hide(self.toolbar2)
+            self.toolbar2.Parent.Layout()
 
     def OnQuit(self, evt):
         self.running = False
