@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import urllib
 
@@ -8,6 +9,10 @@ import wx.lib.eventStack as events
 import wx.lib.flatnotebook as fnb
 import wx.lib.mixins.inspection
 import wx.lib.sized_controls as sc
+
+thisfile = sys.executable
+if not hasattr(sys, 'frozen'):
+    thisfile = __file__
 
 import htmledit.htmlattrs as htmlattrs
 
@@ -778,7 +783,7 @@ class EditorFrame (sc.SizedFrame):
         #self.SetAutoLayout(True)
         
         self.notebook.SetSelection(0)
-        self.baseurl = os.path.abspath(os.path.dirname(__file__))
+        self.baseurl = os.path.abspath(os.path.dirname(thisfile))
         self.CreateNewPage()
         
         #width, height = self.webview.GetVirtualSize()
