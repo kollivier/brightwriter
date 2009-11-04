@@ -102,7 +102,7 @@ if __name__ != "__main__":
                 myfile = utils.openFile(filename, 'r')
                 
                 #if myfile:
-                myhtml = GetBody(myfile)
+                myhtml = GetBodySoup(myfile)
                 myfile.close()
                 #else:
                 #   myhtml = ""
