@@ -553,10 +553,10 @@ class HTMLEditorDelegate(wx.EvtHandler):
         self.RunCommand("Indent", evt)
 
 
-class EditorFrame (wx.Frame):
+class EditorFrame (sc.SizedFrame):
     def __init__(self, parent, filename, pos=wx.DefaultPosition, size=(660,400)):
         
-        wx.Frame.__init__(self, None, -1, "Document Editor", pos=pos)
+        sc.SizedFrame.__init__(self, None, -1, "Document Editor", pos=pos)
         
         self.running = True
         self.filename = filename
@@ -655,8 +655,10 @@ class EditorFrame (wx.Frame):
 
         self.fonts = ["Times New Roman, Times, serif", "Helvetica, Arial, sans-serif", "Courier New, Courier, monospace"]
 
-        #self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
-        self.toolbar = wx.ToolBar(self, -1)
+        self.panel = self.GetContentsPane()
+        
+        self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
+        #self.toolbar = wx.ToolBar(self.panel, -1)
         self.toolbar.SetToolBitmapSize(wx.Size(32,32))
         self.toolbar.AddSimpleTool(ID_NEW, icnNew, _("New"), _("Create a New File"))
         self.toolbar.AddSimpleTool(ID_OPEN, icnOpen, _("Open"), _("Open File on Disk"))
@@ -673,7 +675,8 @@ class EditorFrame (wx.Frame):
 
         self.SetToolBar(self.toolbar)
 
-        self.toolbar2 = wx.ToolBar(self, -1)
+        self.toolbar2 = wx.ToolBar(self.panel, -1)
+        self.toolbar2.SetSizerProps(expand=True)
         self.toolbar2.SetToolBitmapSize(wx.Size(24,24))
         self.fontlist = wx.ComboBox(self.toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
 
@@ -709,10 +712,13 @@ class EditorFrame (wx.Frame):
         self.toolbar2.Realize()
 
         #wx.MessageBox("Loading wx.Mozilla...")
-        self.notebook = fnb.FlatNotebook(self, -1, style=fnb.FNB_NODRAG)
-        notebooksizer = wx.BoxSizer(wx.VERTICAL)
-        notebooksizer.Add(self.notebook, 1, wx.EXPAND, wx.ALL, 4)
-        webpanel = wx.Panel(self.notebook, -1)
+        self.notebook = fnb.FlatNotebook(self.panel, -1, style=fnb.FNB_NODRAG)
+        self.notebook.SetSizerProps(expand=True,proportion=1)
+        #notebooksizer = wx.BoxSizer(wx.VERTICAL)
+        #notebooksizer.Add(self.toolbar2, 0)
+        #notebooksizer.Add(self.notebook, 1, wx.EXPAND, wx.ALL, 4)
+        webpanel = sc.SizedPanel(self.notebook, -1)
+        #webpanel.SetSizerProps(expand=True,proportion=1)
         self.notebook.AddPage(webpanel, "Edit")
         self.webview = wx.webview.WebView(webpanel, -1, size=(200, 200), style = wx.NO_FULL_REPAINT_ON_RESIZE)
         self.webview.MakeEditable(True)
@@ -720,16 +726,16 @@ class EditorFrame (wx.Frame):
         
         webpanelsizer = wx.BoxSizer(wx.HORIZONTAL)
         webpanelsizer.Add(self.webview, 1, wx.EXPAND)
-        webpanel.SetAutoLayout(True)
+        #webpanel.SetAutoLayout(True)
         webpanel.SetSizerAndFit(webpanelsizer)
 
-        sourcepanel = wx.Panel(self.notebook, -1)
+        sourcepanel = sc.SizedPanel(self.notebook, -1)
         self.notebook.AddPage(sourcepanel, "HTML")
 
         self.source = wx.stc.StyledTextCtrl(sourcepanel, -1)
         sourcepanelsizer = wx.BoxSizer(wx.HORIZONTAL)
         sourcepanelsizer.Add(self.source, 1, wx.EXPAND)
-        sourcepanel.SetAutoLayout(True)
+        #sourcepanel.SetAutoLayout(True)
         sourcepanel.SetSizerAndFit(sourcepanelsizer)
 
         self.source.SetLexer(wx.stc.STC_LEX_HTML)
@@ -744,8 +750,8 @@ class EditorFrame (wx.Frame):
 
         self.sourceDelegate = HTMLSourceEditorDelegate(self.source)
 
-        self.SetAutoLayout(True)
-        self.SetSizer(notebooksizer)
+        #self.SetAutoLayout(True)
+        #self.SetSizer(notebooksizer)
 
         accelerators = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('B'), ID_BOLD),(wx.ACCEL_CTRL, ord('I'), ID_ITALIC), (wx.ACCEL_CTRL, ord('U'), ID_UNDERLINE), (wx.ACCEL_CTRL, ord('S'), ID_SAVE)]) 
         self.SetAcceleratorTable(accelerators)
@@ -762,14 +768,14 @@ class EditorFrame (wx.Frame):
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
         #btnSizer.Add(self.location, 1, wx.EXPAND|wx.ALL, 2)
-        sizer.Add(self.toolbar, 0, wx.EXPAND)
-        sizer.Add(self.toolbar2, 0, wx.EXPAND)
-        sizer.Add(self.notebook, 1, wx.EXPAND)
+        #sizer.Add(self.toolbar2, 0, wx.EXPAND)
+        #sizer.Add(notebooksizer, 1, wx.EXPAND)
         #self.webview.ExecuteEditCommand("fontFace", self.fonts[0])
         #self.location.Append(self.current)
 
-        self.SetSizer(sizer)
-        self.SetAutoLayout(True)
+        self.Fit()
+        #self.SetSizer(sizer)
+        #self.SetAutoLayout(True)
         
         self.notebook.SetSelection(0)
         self.baseurl = os.path.abspath(os.path.dirname(__file__))
