@@ -697,9 +697,13 @@ class MainFrame2(sc.SizedFrame):
         if settings.AppSettings["CourseFolder"] != "" and os.path.exists(settings.AppSettings["CourseFolder"]):
             defaultdir = settings.AppSettings["CourseFolder"]
 
-        dialog = OpenPubDialog(self)
+        dialog = wx.DirDialog(self, _("Choose an EClass Project directory."), settings.AppSettings["CourseFolder"], style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dialog.ShowModal() == wx.ID_OK:
-            self.LoadEClass(dialog.GetPath())
+            manifest = os.path.join(dialog.GetPath(), "imsmanifest.xml")
+            if os.path.exists(manifest):
+                self.LoadEClass(manifest)
+            else:
+                wx.MessageBox(_("This directory does not contain an EClass Project."))
         
         dialog.Destroy()
 
