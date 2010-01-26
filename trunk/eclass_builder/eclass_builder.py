@@ -26,7 +26,8 @@ import encodings
 encodings.aliases.aliases['macintosh'] = 'mac_roman'
 
 #imports for packaging tools
-import htmleditor
+if settings.webkit:
+    import htmleditor
 if sys.platform.startswith("win"):
     import ctypes
     import ctypes.wintypes
