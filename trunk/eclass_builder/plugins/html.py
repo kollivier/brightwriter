@@ -22,9 +22,10 @@ from mmedia import HTMLTemplates
     #from conman.colorbutton import *
 
 try:
-    import wx.webview
-    webkit_available = True
-    from htmleditor import *
+    if settings.webkit:
+        import wx.webview
+        webkit_available = True
+        from htmleditor import *
 except:
     webkit_available = False
 
