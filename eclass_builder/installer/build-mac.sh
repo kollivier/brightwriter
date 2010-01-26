@@ -28,7 +28,7 @@ if [ "$skipmac" != "yes" ]; then
      # run unit tests
      ssh $MAC_HOST "cd $dir"
 
-     cmd="export PYTHONPATH=..:/Users/kevino/wxpython-2.8/wxPython/wx-2.8-mac-unicode && $PYTHON make-installer.py"
+     cmd="$PYTHON make-installer.py"
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
 
      mkdir -p $DIST_DIR/dmg_files-$BUILD_TYPE
