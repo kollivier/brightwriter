@@ -29,7 +29,8 @@ py2app_options = dict(
     iconfile=rootdir + "icons/eclass_builder.icns", 
     argv_emulation=True,
     plist=myplist,
-    optimize=2
+    optimize=2,
+    strip=False,
 )
 
 def allFilesRecursive(dir):
