@@ -56,8 +56,9 @@ EXPERIMENTAL_WXWEBKIT = False
 
 try:
     if settings.webkit:
-        import wx.webview
-        EXPERIMENTAL_WXWEBKIT = True
+        pass
+        #import wx.webview
+        #EXPERIMENTAL_WXWEBKIT = True
 except:
     pass
 
