@@ -19,17 +19,33 @@ class ErrorDialog(sc.SizedDialog):
         sc.SizedDialog.__init__(self, parent, -1, _("%s - Error Occurred" % wx.GetApp().GetAppName()), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
         
-        wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in %s" % wx.GetApp().GetAppName()))
+        
+        title = wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in %s" % wx.GetApp().GetAppName()))
+        font = title.GetFont()
+        font.SetWeight(wx.FONTWEIGHT_BOLD)
+        font.SetPointSize(font.GetPointSize() + 2)
+        title.SetFont(font)
         wx.StaticText(pane, -1, _("If you click on '%s', it will send only the error information listed below\nto the project. This is helpful for us to diagnose any problems that may occur.") % _("Send Error Report"))
 
-        wx.StaticText(panel, -1, _("Optional"))
-        wx.StaticText(panel, -1, _("If you do not mind being contacted for more details on the problem, please enter your name and email here:"))
+        options = wx.StaticText(pane, -1, _("Optional"))
+        options.SetFont(font)
+        wx.StaticText(pane, -1, _("If you do not mind being contacted for more details on the problem, please enter your name and email below.\nThis information will not be sold or used in any way other than to help track and fix this bug."))
         
-        wx.StaticText(panel, -1, _("Name"))
-        self.nameText = wx.TextCtrl(panel, -1)
+        infoPanel = sc.SizedPanel(pane, -1)
+        infoPanel.SetSizerType("horizontal")
+        infoPanel.SetSizerProps(expand=True)
         
-        wx.StaticText(panel, -1, _("Email"))
-        self.emailText = wx.TextCtrl(panel, -1)
+        wx.StaticText(infoPanel, -1, _("Name"))
+        self.nameText = wx.TextCtrl(infoPanel, -1)
+        self.nameText.SetSizerProps(expand=True, proportion=1)
+        
+        wx.StaticText(infoPanel, -1, _("Email"))
+        self.emailText = wx.TextCtrl(infoPanel, -1)
+        self.emailText.SetSizerProps(expand=True, proportion=1)
+        
+        wx.StaticText(pane, -1, _("Please describe what you were doing at the time of the crash."))
+        self.descriptionText = wx.TextCtrl(pane, -1, style=wx.TE_MULTILINE)
+        self.descriptionText.SetSizerProps(expand=True, proportion=1)
 
         self.detailsButton = wx.Button(pane, -1, _("Show Details"))
 
@@ -42,9 +58,9 @@ class ErrorDialog(sc.SizedDialog):
         
         btnPanel = sc.SizedPanel(pane)
         btnPanel.SetSizerType("horizontal")
-        btnPanel.SetSizerProps(expand=True, proportion=1)
+        btnPanel.SetSizerProps(expand=True)
         spacer = sc.SizedPanel(btnPanel, -1)
-        spacer.SetSizerProps({"expand":True, "proportion":1})
+        spacer.SetSizerProps(expand=True, proportion=1)
         
         self.sendBtn = wx.Button(btnPanel, -1, _("Send Error Report"))
         
@@ -55,17 +71,18 @@ class ErrorDialog(sc.SizedDialog):
         
     def OnSubmitReport(self, event):
         server = xmlrpc.getEClassXMLRPCServer()
-        result = server.sendError(self.nameText, self.emailText, "", self.detailsText.GetValue(), version.asString())
+        result = server.sendError(self.nameText.GetValue(), self.emailText.GetValue(), self.descriptionText.GetValue(), self.detailsText.GetValue(), version.asString())
         if result == "success":
             wx.MessageBox(_("Error report sent successfully! Thanks!"))
         else:
             wx.MessageBox(_("Unable to send error report. Error details can also be emailed to kevino@tulane.edu."))
+        self.EndModal(wx.ID_OK)
             
     def OnPaneChanged(self, event):
         if not self.detailsText.IsShown(): 
             self.detailsText.Show()
             self.detailsButton.SetLabel(_("Hide Details"))
-            self.GetContentsPane().GetSizer().Insert(4, self.detailsText, 0, wx.EXPAND)
+            self.GetContentsPane().GetSizer().Insert(8, self.detailsText, 0, wx.EXPAND)
             self.Layout()
             self.Fit()
         else:
@@ -78,7 +95,6 @@ class ErrorDialog(sc.SizedDialog):
 def guiExceptionHook(exctype, value, trace):    
     errorText = errors.get_platform_info()
     errorText += errors.print_exc_plus(exctype, value, trace)
-    print errorText
     
     if not wx.GetApp():
         app = wx.PySimpleApp()
