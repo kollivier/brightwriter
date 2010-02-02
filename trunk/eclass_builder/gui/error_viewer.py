@@ -21,6 +21,16 @@ class ErrorDialog(sc.SizedDialog):
         
         wx.StaticText(pane, -1, _("An Unexpected Error Has Occurred in %s" % wx.GetApp().GetAppName()))
         wx.StaticText(pane, -1, _("If you click on '%s', it will send only the error information listed below\nto the project. This is helpful for us to diagnose any problems that may occur.") % _("Send Error Report"))
+
+        wx.StaticText(panel, -1, _("Optional"))
+        wx.StaticText(panel, -1, _("If you do not mind being contacted for more details on the problem, please enter your name and email here:"))
+        
+        wx.StaticText(panel, -1, _("Name"))
+        self.nameText = wx.TextCtrl(panel, -1)
+        
+        wx.StaticText(panel, -1, _("Email"))
+        self.emailText = wx.TextCtrl(panel, -1)
+
         self.detailsButton = wx.Button(pane, -1, _("Show Details"))
 
         self.detailsText = wx.TextCtrl(pane, -1, size=(-1,300), style=wx.TE_MULTILINE|wx.TE_READONLY)
@@ -45,10 +55,9 @@ class ErrorDialog(sc.SizedDialog):
         
     def OnSubmitReport(self, event):
         server = xmlrpc.getEClassXMLRPCServer()
-        result = server.sendError("Anonymous", "", "", self.detailsText.GetValue(), version.asString())
+        result = server.sendError(self.nameText, self.emailText, "", self.detailsText.GetValue(), version.asString())
         if result == "success":
             wx.MessageBox(_("Error report sent successfully! Thanks!"))
-            self.Destroy()
         else:
             wx.MessageBox(_("Unable to send error report. Error details can also be emailed to kevino@tulane.edu."))
             
@@ -86,6 +95,7 @@ def guiExceptionHook(exctype, value, trace):
         error.Centre()
         error.ShowModal()
         error.Destroy()
+        wx.GetApp().ExitMainLoop()
 
 class ErrorLogViewer(sc.SizedDialog):
     def __init__(self, parent=None):
