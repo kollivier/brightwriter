@@ -151,29 +151,29 @@ def convNotSoSmartQuotesToHtmlEntity(x):
     """
     Found at http://myzope.kedai.com.my/blogs/kedai/128
     """ 
-    d =      {  "\xc2\x82":"&sbquo;",
-                "\xc2\x83":"&fnof;",
-                "\xc2\x84":"&bdquo;",
-                "\xc2\x85":"&hellip;",
-                "\xc2\x86":"&dagger;",
-                "\xc2\x87":"&Dagger;",
-                "\xc2\x88":"&circ;",
-                "\xc2\x89":"&permil;",
-                "\xc2\x8A":"&Scaron;",
-                "\xc2\x8B":"&lsaquo;",
-                "\xc2\x8C":"&OElig;",
-                "\xc2\x91":"&lsquo;",
-                "\xc2\x92":"&rsquo;",
-                "\xc2\x93":"&ldquo;",
-                "\xc2\x94":"&rdquo;",
-                "\xc2\x95":"&bull;",
-                "\xc2\x96":"&ndash;",
-                "\xc2\x97":"&mdash;",
-                "\xc2\x98":"&tilde;",
-                "\xc2\x99":"&trade;",
-                "\xc2\x9A":"&scaron;",
-                "\xc2\x9B":"&rsaquo;",
-                "\xc2\x9C":"&oelig;"}
+    d =      {  "\x82":"&sbquo;",
+                "\x83":"&fnof;",
+                "\x84":"&bdquo;",
+                "\x85":"&hellip;",
+                "\x86":"&dagger;",
+                "\x87":"&Dagger;",
+                "\x88":"&circ;",
+                "\x89":"&permil;",
+                "\x8A":"&Scaron;",
+                "\x8B":"&lsaquo;",
+                "\x8C":"&OElig;",
+                "\x91":"&lsquo;",
+                "\x92":"&rsquo;",
+                "\x93":"&ldquo;",
+                "\x94":"&rdquo;",
+                "\x95":"&bull;",
+                "\x96":"&ndash;",
+                "\x97":"&mdash;",
+                "\x98":"&tilde;",
+                "\x99":"&trade;",
+                "\x9A":"&scaron;",
+                "\x9B":"&rsaquo;",
+                "\x9C":"&oelig;"}
     for i in d.keys():
         x=x.replace(i,d[i])
     return x
@@ -207,7 +207,7 @@ def GetBody(myhtml):
     inscript = 0
     bodystart = 0
     bodyend = 0
-    text = u""
+    text = ""
     uppercase = 1
     encoding = None
     htmltext = myhtml.readlines()
@@ -256,22 +256,26 @@ def GetBody(myhtml):
                 text = text + html[bodystart+1:-1] 
                 bodystart = -1
             elif inbody == 1:
-                text = text + html 
+                text = text + html
         html = myhtml.readline()
     
-    if encoding and encoding in ["windows-1252", "iso-8859-1", "iso-8859-2"]:
-        text = convNotSoSmartQuotesToHtmlEntity(text)
-        
     if not encoding:
-        encoding = ""
-        
-    soup = BeautifulSoup.BeautifulSoup('\n'.join(htmltext))
-    scripts = soup.html.head.findAll('script')
-    scripts.reverse() # since we're prepending, we need to do it in reverse order
-    for script in scripts:
-        text = unicode(script) + text
+        encoding = utils.guessEncodingForText(text)
     
-    return utils.makeUnicode(text, encoding)
+    if encoding and encoding.lower() in ["windows-1252", "iso-8859-1", "iso-8859-2"]:
+        text = convNotSoSmartQuotesToHtmlEntity(text)
+    
+    print "calling makeUnicode"
+    text = utils.makeUnicode(text, encoding, 'xmlcharrefreplace')
+    
+    soup = BeautifulSoup.BeautifulSoup('\n'.join(htmltext))
+    if soup.html.head:
+        scripts = soup.html.head.findAll('script')
+        scripts.reverse() # since we're prepending, we need to do it in reverse order
+        for script in scripts:
+            text = script + text
+    
+    return text
 
 import unittest
 

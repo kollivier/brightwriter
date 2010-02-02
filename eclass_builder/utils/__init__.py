@@ -7,6 +7,7 @@
 import sys, os, string
 import settings
 import shutil
+import chardet
 import constants
 import ims
 import ims.contentpackage
@@ -193,6 +194,15 @@ def GetFileLink(filename):
         filename = string.replace(filename, "\\", "/")
 
     return filename
+    
+def guessEncodingForText(text):
+    encoding = chardet.detect(text)['encoding']
+    try:
+        text.decode(encoding)
+        print "Encoding is %s" % encoding
+        return encoding
+    except:
+        return None
 
 def getCurrentEncoding():
     import locale
@@ -205,12 +215,21 @@ def getCurrentEncoding():
     
     return encoding
     
-def makeUnicode(text, encoding=""):
-    if encoding == "":
-        encoding = getCurrentEncoding()
-
-    if isinstance(text, str):
-        return text.decode(encoding, 'replace')
+def makeUnicode(text, encoding="", errors='strict'):
+    if not isinstance(text, str):
+        return text
+        
+    # Always try latin1 first, since it sometimes gets misread / detected as other encodings
+    detect_encoding = guessEncodingForText(text)
+    encodings = ['latin_1', detect_encoding, getCurrentEncoding(), 'utf-8']
+    if encoding != "":
+        encodings.insert(1, encoding)
+        
+    for guess_encoding in encodings:
+        try:
+            return text.decode(guess_encoding, errors)
+        except:
+            pass
     else:
         return text
 
