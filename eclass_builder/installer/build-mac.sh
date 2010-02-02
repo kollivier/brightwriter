@@ -5,7 +5,7 @@ set -o errexit
 
 if [ "$skipmac" != "yes" ]; then
      BUILD_TYPE=""
-     PYTHON="python"
+     PYTHON="/usr/local/bin/python"
      if [ "$IS_INTEL" == "yes" ]; then
          MAC_HOST=$MAC_HOST_INTEL
          BUILD_TYPE=""
