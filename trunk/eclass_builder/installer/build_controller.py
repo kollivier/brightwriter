@@ -1,4 +1,5 @@
 import sys, os, string, time, shutil
+import tempfile
 #import ReleaseForge
 
 externals_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../externals"))
@@ -14,6 +15,12 @@ config = Config()
 config.read(CFGFILE)
 
 package_exts = [".dmg", ".exe", ".rpm", ".tar.gz", ".tar.bz", ".tgz", ".zip"]
+
+def run(command):
+    result = os.system(command)
+    if result != 0:
+        #print "ERROR: %s failed." % command
+        raise Exception("Command %s failed." % command)
 
 def getDistribFiles():
     # get a list of files that should be uploaded by checking the deliver directory
@@ -43,6 +50,8 @@ class Job(Job):
 if not os.path.exists(config.STAGING_DIR):
     os.makedirs(config.STAGING_DIR)
 
+abs_staging_dir = os.path.abspath(config.STAGING_DIR)
+
 # Figure out the wxPython version number, possibly adjusted for being a daily build
 if config.KIND == "daily":
     t = time.localtime()
@@ -70,17 +79,26 @@ config_env.update(os.environ)
 if myconfig:
     config_env.update(myconfig.asDict())
     
-setup_tasks = Task([ Job("pre-flight", "./pre-flight.sh", env=config_env)]) 
+print os.environ
+
+olddir = os.getcwd()
 start_time = time.time()
-print "Build getting started at: ", time.ctime(start_time)
 
+try:
+    tempdir = tempfile.mkdtemp()
+    tarball = "eclass.builder-%s.tar.gz" % config.BUILD_VERSION
+    print "tempdir = %s" % tempdir
+    os.chdir(tempdir)
+    run('svn co https://eclass.svn.sourceforge.net/svnroot/eclass/trunk/eclass_builder')
+    os.chdir('eclass_builder')
+    run('python publish.py docs/en/manual')
+    os.chdir('..')
+    run("tar czvf %s eclass_builder" % tarball)
+    shutil.copy(tarball, abs_staging_dir)
 
-# Run the first task, which will create the docs and sources tarballs
-tr = TaskRunner(setup_tasks)
-rc = tr.run()
-
-if "--strict" in sys.argv and rc != 0:
-    sys.exit(1)
+finally:
+    shutil.rmtree(tempdir)
+    os.chdir(olddir)
     
 tasks = {}
 wintasks = TaskRunner( Task([ Job("win", "./build-windows.sh", env=config_env), ]) )
