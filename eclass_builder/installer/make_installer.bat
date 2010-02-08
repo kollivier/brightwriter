@@ -11,4 +11,4 @@ cp C:\Python26\msvcr90.dll dist
 cp C:\Python26\msvcm90.dll dist
 cp C:\Python26\msvcp90.dll dist
 cp C:\Python26\Microsoft.VC90.CRT.manifest dist
-C:\Progra~1\nsis\makensis eclass-builder.nsi
+C:\Progra~2\nsis\makensis eclass-builder.nsi
