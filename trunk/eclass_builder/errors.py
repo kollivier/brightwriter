@@ -112,5 +112,3 @@ class AppErrorLog(eclasslog.LogFile):
         message = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()) + self.separator + message + self.separator + tb + self.separator
         eclasslog.LogFile.write(self, message)
 
-appErrorLog = AppErrorLog()
-
