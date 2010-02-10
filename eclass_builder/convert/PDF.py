@@ -73,7 +73,7 @@ class PDFPublisher:
             try:
                 shutil.rmtree(self.tempdir)
             except:
-                log.write(_("Could not remove directory '%(dir)s'.") % {"dir": self.tempdir})
+                log.error(_("Could not remove directory '%(dir)s'.") % {"dir": self.tempdir})
 
         try:
             if isinstance(self.parent, wx.Frame):
@@ -111,7 +111,7 @@ class PDFPublisher:
             os.rename(bookpath, bookpath + ".book")
         except:
             message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":bookpath})
-            log.write(message)
+            log.error(message)
             return False
         
         if sys.platform == "win32":
@@ -135,11 +135,11 @@ class PDFPublisher:
             result = wx.Execute(command, wx.EXEC_SYNC)
             if result == -1:
                 message = _("Could not execute command '%(command)s'.") % {"command": command}
-                log.write(message)
+                log.error(message)
                 wx.MessageBox(message)
         except:
             message = _("Could not publish PDF File.")
-            log.write(message)
+            log.error(message)
             if isinstance(self.parent, wx.Frame):
                 wx.MessageBox(message  + constants.errorInfoMsg)
             self.cancelled = True
@@ -202,7 +202,7 @@ class PDFPublisher:
             except:
                 message = _("Could not publish page '%(page)s'") % {"page": os.path.join(self.tempdir, filename)}
                 global log
-                log.write(message)
+                log.error(message)
                 if "--debug" in sys.argv:
                     raise
 
