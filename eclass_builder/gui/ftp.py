@@ -592,6 +592,6 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
 			message = str(info[1])
 		
 		wx.MessageBox(`message`)
-		self.parent.log.write(`message`)
+		self.parent.log.error(`message`)
 		self.ftpService.close()
 		self.OnUploadCanceled()

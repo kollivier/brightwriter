@@ -294,7 +294,7 @@ class PagePropertiesDialog (sc.SizedDialog):
                         elif person.role == "Content Provider" and self.txtOrganization.GetValue() == "":
                             self.content.metadata.lifecycle.contributors.remove(person)
                     except:
-                        self.parent.log.write(_("Error removing empty contact."))
+                        self.parent.log.error(_("Error removing empty contact."))
         
             self.content.metadata.classification.categories = []
             for num in range(0, self.lstCategories.GetCount()):

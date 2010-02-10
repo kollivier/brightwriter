@@ -1021,7 +1021,7 @@ class MainFrame2(sc.SizedFrame):
                     settings.ProjectSettings.SaveAsXML(os.path.join(settings.ProjectDir, "settings.xml"))
             except IOError, e:
                 message = _("Could not save EClass project file. Error Message is:")
-                self.log.write(message)
+                self.log.error(message)
                 wx.MessageBox(message + str(e), _("Could Not Save File"))
         
     def NewContentPackage(self):

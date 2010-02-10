@@ -95,7 +95,7 @@ class ContactsDialog(sc.SizedDialog):
                         os.remove(filename)
                     except:
                         pass
-                self.parent.log.write(message)
+                self.parent.log.error(message)
                 wx.MessageBox(message)
 
     def OnEdit(self, event):
@@ -120,7 +120,7 @@ class ContactsDialog(sc.SizedDialog):
                 os.remove(thisvcard.filename)
             except:
                 message = _("The contact could not be deleted. Please ensure you have the proper permissions to access the EClass.Builder data directory.")
-                self.parent.log.write(message)
+                self.parent.log.error(message)
                 wx.MessageBox(message)
                 return
 

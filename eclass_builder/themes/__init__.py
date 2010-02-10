@@ -24,10 +24,10 @@ class ThemeList:
                         self.themes[mytheme.themename] = mytheme
                     except:
                         global log
-                        log.write("Couldn't load theme: " + theme)
+                        log.error("Couldn't load theme: " + theme)
                         import traceback
                         if traceback.print_exc() != None:
-                            log.write(traceback.print_exc())                                
+                            log.error(traceback.print_exc())                                
 
     def GetPublicThemeNames(self):
         result = []
