@@ -12,7 +12,7 @@ class GUIErrorCallbacks:
     def displayWarning(self, message, title=_("EClass.Builder Warning")):
         wx.MessageBox(message, style=wx.OK|wx.ICON_EXCLAMATION)
         if log:
-            log.warning(message)
+            log.warn(message)
             
     def displayInformation(self, message, title=_("EClass.Builder Message")):
         wx.MessageBox(message, style=wx.OK|wx.ICON_INFORMATION)

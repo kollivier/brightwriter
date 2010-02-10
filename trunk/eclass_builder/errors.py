@@ -1,12 +1,14 @@
 import locale
+import logging
 import platform
 import sys, string, os
 import settings
 import time
 import traceback
 
-import eclasslog
 import utils
+
+log = logging.getLogger('EClass')
 
 def getTraceback():
     import traceback
@@ -72,43 +74,16 @@ def exceptionHook(exctype, value, trace):
 class errorCallbacks:
     def displayError(self, message):
         print "ERROR: " + message
-        if appErrorLog:
-            appErrorLog.write(message)
+        if log:
+            log.error(message)
         
     def displayWarning(self, message):
         print "WARNING: " + message
-        if appErrorLog:
-            appErrorLog.write(message)
+        if log:
+            log.warn(message)
             
     def displayInformation(self, message):
         print "INFO: " + message
-        if appErrorLog:
-            appErrorLog.write(message)
-            
-
-class AppErrorLog(eclasslog.LogFile):
-    def __init__(self):
-        eclasslog.LogFile.__init__(self)
-        logdir = settings.AppDir
-        try:
-            import guiutils
-            logdir = guiutils.getAppDataDir()
-        except:
-            pass
-        self.filename = os.path.join(logdir, "errors.txt")
-        self.separator = u"|"
-
-    def error(self, message):
-        self.write(message)
-
-    def write(self, message):
-        #get traceback if available
-        tb = ""
-        try:
-            tb = getTraceback()
-        except:
-            pass
-
-        message = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()) + self.separator + message + self.separator + tb + self.separator
-        eclasslog.LogFile.write(self, message)
+        if log:
+            log.info(message)
 
