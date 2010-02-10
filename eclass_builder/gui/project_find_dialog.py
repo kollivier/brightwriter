@@ -6,13 +6,10 @@ import time
 import wx
 import persistence
 import wx.lib.sized_controls as sc
-import errors
 import settings
 import autolist
 
 import index
-
-appErrorLog = errors.appErrorLog
 
 class ProjectFindDialog(sc.SizedDialog):
     def __init__(self, parent=None):

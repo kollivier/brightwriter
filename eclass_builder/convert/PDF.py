@@ -24,8 +24,8 @@ from StringIO import StringIO
 themename = "PDF"
 Elements = []
 
-import errors
-log = errors.appErrorLog
+import logging
+log = logging.getLogger('EClass')
 
 class PDFPublisher:
     """

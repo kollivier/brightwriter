@@ -1,8 +1,8 @@
 import string, os
 import utils
-import errors
 
-log = errors.appErrorLog #utils.LogFile("errlog.txt")
+import logging
+log = logging.getLogger('EClass')
 
 themeList = None
 

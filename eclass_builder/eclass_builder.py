@@ -1,5 +1,9 @@
 import string, sys, os, shutil, glob
 
+import logging
+eclass_logger = logging.getLogger('EClass')
+eclass_logger.setLevel(logging.DEBUG)
+
 rootdir = os.path.abspath(sys.path[0])
 # os.path.dirname will chop the last dir if the path is to a directory
 if not os.path.isdir(rootdir):
