@@ -9,14 +9,14 @@ import eclasslog
 import utils
 
 def getTraceback():
-	import traceback
-	type, value, trace = sys.exc_info()
-	list = traceback.format_exception_only(type, value) + ["\n"] + traceback.format_tb(trace)
-	return string.join(list, "")
+    import traceback
+    type, value, trace = sys.exc_info()
+    list = traceback.format_exception_only(type, value) + ["\n"] + traceback.format_tb(trace)
+    return string.join(list, "")
 
 def exceptionAsString(exctype, value):
-	return string.join(traceback.format_exception(exctype, value, None), "\n")	
-	
+    return string.join(traceback.format_exception(exctype, value, None), "\n")  
+    
 # taken from http://code.activestate.com/recipes/52215/
 def print_exc_plus(exctype, value, trace):
     """
@@ -68,7 +68,7 @@ Language: %s
 
 def exceptionHook(exctype, value, trace):
     print exceptionAsString(exctype, value, trace)
-	
+    
 class errorCallbacks:
     def displayError(self, message):
         print "ERROR: " + message
@@ -87,27 +87,27 @@ class errorCallbacks:
             
 
 class AppErrorLog(eclasslog.LogFile):
-	def __init__(self):
-		eclasslog.LogFile.__init__(self)
-		logdir = settings.AppDir
-		try:
-			import guiutils
-			logdir = guiutils.getAppDataDir()
-		except:
-			pass
-		self.filename = os.path.join(logdir, "errors.txt")
-		self.separator = u"|"
+    def __init__(self):
+        eclasslog.LogFile.__init__(self)
+        logdir = settings.AppDir
+        try:
+            import guiutils
+            logdir = guiutils.getAppDataDir()
+        except:
+            pass
+        self.filename = os.path.join(logdir, "errors.txt")
+        self.separator = u"|"
 
-	def write(self, message):
-		#get traceback if available
-		tb = ""
-		try:
-			tb = getTraceback()
-		except:
-			pass
+    def write(self, message):
+        #get traceback if available
+        tb = ""
+        try:
+            tb = getTraceback()
+        except:
+            pass
 
-		message = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()) + self.separator + message + self.separator + tb + self.separator
-		eclasslog.LogFile.write(self, message)
+        message = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()) + self.separator + message + self.separator + tb + self.separator
+        eclasslog.LogFile.write(self, message)
 
 appErrorLog = AppErrorLog()
 
