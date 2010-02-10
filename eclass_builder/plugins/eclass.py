@@ -611,10 +611,14 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
     def _InsertTerms(self, myhtml, termlist):
         soup = BeautifulSoup.BeautifulSoup(myhtml)
         for term in termlist:
-            results = soup.findAll(text=re.compile(re.escape(term[0])))
+            term_regex = re.compile(re.escape(term[0]).replace("\ ", "\s+"))
+            results = soup.findAll(text=term_regex)
+            if not results:
+                print "Regex failed for %s" % term_regex
             for result in results:
-                newelement = result.replace(term[0], """<a href="%s" target=_blank>%s</a>""" % (term[1], term[0]))
-                result.replaceWith(newelement)
+                str_result = re.sub(term_regex, """<a href="%s" target=_blank>%s</a>""" % (term[1], term[0]), result)
+                #newelement = result.replace(term[0], )
+                result.replaceWith(str_result)
                 
         return soup.prettify(encoding=None)
 
