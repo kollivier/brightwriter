@@ -66,7 +66,7 @@ def CreateNewFile(name, filename):
         return True
     except:
         global log
-        log.write(_("Could not create new EClass Page."))
+        log.error(_("Could not create new EClass Page."))
         return False
         
 class EClassPage(plugins.PluginData):
@@ -187,7 +187,7 @@ class EClassPage(plugins.PluginData):
                         myterm.LoadPage(term.getElementsByTagName("Page")[0])
                     except:
                         global log
-                        log.write(_("Could not load hotword page for '%(name)s'.") % {"name":myterm.name})
+                        log.error(_("Could not load hotword page for '%(name)s'.") % {"name":myterm.name})
                 else:
                     myterm.page = None
     
@@ -210,7 +210,7 @@ class EClassPage(plugins.PluginData):
         except:
             message = _("The EClass page file cannot be loaded from disk.")
             global log
-            log.write(message)
+            log.error(message)
 
         if len(doc.getElementsByTagName("Terms")) > 0:
             terms = []
@@ -305,7 +305,7 @@ class EClassPage(plugins.PluginData):
             myxml = """<?xml version="1.0"?>%s""" % (self.WriteDoc())
         except:
             message = _("There was an error updating the file '%(filename)s'. Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.") % {"filename": filename}
-            log.write(message)
+            log.error(message)
             raise IOError, message
         try:
             import types
@@ -320,7 +320,7 @@ class EClassPage(plugins.PluginData):
             myfile.close()
         except:
             message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
-            log.write(message)
+            log.error(message)
             raise IOError, message
 
         return ""
@@ -577,7 +577,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
                 traceback.print_exc()
                 message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
                 global log
-                log.write(message)
+                log.error(message)
                 raise IOError, message
                 return False    
         return myhtml
@@ -601,7 +601,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             myhtml = GetBody(utils.openFile(thefilename, "rb"))
         except:
             global log
-            log.write(message)
+            log.error(message)
             myhtml = ""
         
         wx.EndBusyCursor()
@@ -883,7 +883,7 @@ class EditorDialog (sc.SizedDialog):
             global log
             message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
             wx.MessageDialog(parent, message, _("Error loading page"), wx.OK).ShowModal()
-            log.write(message)
+            log.error(message)
             del busy
             return
         
@@ -1292,7 +1292,7 @@ class EditorDialog (sc.SizedDialog):
             except IOError, e:
                 global log
                 message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
-                log.write(message)
+                log.error(message)
                 wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
                 return
             

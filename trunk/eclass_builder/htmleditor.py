@@ -938,7 +938,7 @@ class EditorFrame (wx.Frame):
 
     def OnLocationSelect(self, evt):
         #url = self.location.GetStringSelection()
-        self.log.write('OnLocationSelect: %s\n' % url)
+        self.log.error('OnLocationSelect: %s\n' % url)
         self.webview.LoadURL(url)
 
     def OnLocationKey(self, evt):
@@ -999,7 +999,7 @@ class EditorFrame (wx.Frame):
         self.filename = filename
 
     def logEvt(self, name, event):
-        self.log.write('%s: %s\n' %
+        self.log.error('%s: %s\n' %
                        (name, (event.GetLong1(), event.GetLong2(), event.GetText1())))
 
     def OnBeforeNavigate2(self, evt):

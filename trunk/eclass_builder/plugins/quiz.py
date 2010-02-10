@@ -62,7 +62,7 @@ def CreateNewFile(name, filename):
         return True
     except:
         global log
-        log.write(_("Could not create new Quiz."))
+        log.error(_("Could not create new Quiz."))
         return False
 
 class QuizPage(plugins.PluginData):
@@ -282,7 +282,7 @@ class QuizPage(plugins.PluginData):
             myxml = """<?xml version="1.0"?>%s""" % (self.WriteDoc())
         except:
             message = _("There was an error updating the file %(filename)s. Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.") % {"filename":filename}
-            log.write(message)
+            log.error(message)
             raise IOError, message
         try:
             import types
@@ -298,7 +298,7 @@ class QuizPage(plugins.PluginData):
             myfile.close()
         except:
             message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": filename})
-            log.write(message)
+            log.error(message)
             raise IOError(message)
 
         return ""
@@ -502,7 +502,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         except: 
             global log
             message = _("Could not copy Quiz files from %(directory)s to your EClass. Please check that you have enough hard disk space to write this file and that you have permission to write to the directory.") % {"directory":os.path.join(settings.AppDir, "plugins", "Quiz", "Files")}
-            log.write(message)
+            log.error(message)
             raise IOError, message
             return ""   
         return ""
@@ -696,7 +696,7 @@ class EditorDialog(sc.SizedDialog):
             except IOError, msg:
                 message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": self.filename})
                 global log
-                log.write(message)
+                log.error(message)
                 wx.MessageBox(message, _("Unable to create file."), wxICON_ERROR)
                 return
 
@@ -721,7 +721,7 @@ class EditorDialog(sc.SizedDialog):
         except IOError:
             message = utils.getStdErrorMessage("IOError", {"filename":self.filename, "type":"write"})
             global log
-            log.write(message)
+            log.error(message)
             wx.MessageBox(message, _("Cannot Save File"), wxICON_ERROR)
 
     def btnAddClicked(self,event):

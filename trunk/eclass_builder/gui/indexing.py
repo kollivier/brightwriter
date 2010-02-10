@@ -101,7 +101,7 @@ class UpdateIndexDialog(sc.SizedDialog):
 				collectcfg.close()
 			except:
 				message = _("There was an error reading the file '%(filename)s'. Please ensure that the file exists and that you have read permissions.") % {"filename": configfile}
-				self.log.write(message)
+				self.log.error(message)
 				wx.MessageBox(message)
 				return
 
@@ -113,7 +113,7 @@ class UpdateIndexDialog(sc.SizedDialog):
 				collectout.close()
 			except:
 				message = _("There was an error writing the file '%(collectfile)s'. Please ensure that the file exists and that you have write permissions.") % {"collectfile": outfile}
-				self.log.write(message)
+				self.log.error(message)
 				wx.MessageBox(message)
 				return
 

@@ -74,7 +74,7 @@ def CreateNewFile(filename, name="New Page"):
         return True
     except:
         global log
-        log.write(_("Could not create new HTML file."))
+        log.error(_("Could not create new HTML file."))
         return False
 
 #------------------------ PUBLISHER CLASSES -------------------------------------------

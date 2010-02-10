@@ -98,6 +98,9 @@ class AppErrorLog(eclasslog.LogFile):
         self.filename = os.path.join(logdir, "errors.txt")
         self.separator = u"|"
 
+    def error(self, message):
+        self.write(message)
+
     def write(self, message):
         #get traceback if available
         tb = ""

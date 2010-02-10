@@ -127,7 +127,7 @@ class ThemeManager(sc.SizedDialog):
                 os.mkdir(os.path.join(themedir, foldername))
             except:
                 message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(settings.AppDir, "themes")}
-                self.parent.log.write(message)
+                self.parent.log.error(message)
                 wx.MessageBox(message)
                 return 
             myfile = utils.openFile(os.path.join(themedir, filename), "w")
@@ -193,7 +193,7 @@ class HTMLPublisher(BaseHTMLPublisher):
                 os.mkdir(os.path.join(themedir, foldername))
             except:
                 message = _("Cannot create theme. Check that a theme with this name does not already exist, and that you have write access to the '%(themedir)s' directory.") % {"themedir":os.path.join(settings.AppDir, "themes")}
-                self.parent.log.write(message)
+                self.parent.log.error(message)
                 wx.MessageBox(message)
                 return 
 
