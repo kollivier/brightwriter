@@ -149,8 +149,8 @@ class MainFrame2(sc.SizedFrame):
         
         wx.InitAllImageHandlers()
 
-        import errors
-        self.log = errors.appErrorLog
+        import logging
+        self.log = logging.getLogger('EClass')
 
         self.statusBar = None #self.CreateStatusBar()
 

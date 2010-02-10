@@ -15,8 +15,9 @@ import htmledit.htmlattrs as htmlattrs
 import htmlutils
 import settings
 import utils
-import errors
-log = errors.appErrorLog
+
+import logging
+log = logging.getLogger('EClass')
 
 try:
     import wx.webview

@@ -39,8 +39,8 @@ from threading import *
 import traceback
 import sys
 
-import errors
-log = errors.appErrorLog
+import logging
+log = logging.getLogger('EClass')
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into

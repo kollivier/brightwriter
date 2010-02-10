@@ -32,8 +32,8 @@ from threading import *
 import traceback
 #from xml.dom.minidom import parse
 
-import errors
-log = errors.appErrorLog
+import logging
+log = logging.getLogger('EClass')
 
 #-------------------------- PLUGIN REGISTRATION ---------------------
 # This info is used so that EClass can be dynamically be added into

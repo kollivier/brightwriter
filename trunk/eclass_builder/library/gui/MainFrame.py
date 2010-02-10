@@ -17,7 +17,6 @@ import settings
 import LibSettings
 import palettes.Props as Props
 import palettes.Metadata as Metadata
-import errors
 import PyLucene
 
 errorLog = None
@@ -555,7 +554,8 @@ class MainFrame(sc.SizedFrame):
         
         self.CreateStatusBar()
         
-        globals.errorLog = errors.AppErrorLog()
+        import logging
+        globals.errorLog = logging.getLogger('EClass.Library')
         
         # Re-enable this when plugins are further along.
         
