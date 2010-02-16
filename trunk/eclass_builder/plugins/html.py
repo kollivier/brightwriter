@@ -135,8 +135,8 @@ if __name__ != "__main__":
                 file.write(htmlpage)
                 file.close()
 
-            global webkit_available
-            if webkit_available:
+            
+            if False:
                 size = wx.Display().ClientArea.Size
                 size.x = size.x / 2
                 size.y = size.y / 2
