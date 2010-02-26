@@ -1,2 +1,2 @@
 [autorun]
-OPEN=loader.EXE
+shellexecute=index.htm
