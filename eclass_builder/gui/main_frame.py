@@ -714,7 +714,7 @@ class MainFrame2(sc.SizedFrame):
         
     def OnTreeItemContextMenu(self, event):
         pt = event.GetPoint()
-        item = event.GetItem() 
+        item = event.GetItem()
         if item:
             filename = self.GetContentFilenameForSelectedItem()
             
@@ -737,10 +737,11 @@ class MainFrame2(sc.SizedFrame):
                 else:
                     submenu = None
             
-            self.PopupMenu(self.pageMenu, pt)
+            self.pageMenu = menus.getPageMenu(openWithMenu=submenu)
             
-            self.pageMenu = None
+            self.PopupMenu(self.pageMenu, pt)
             self.launchapps = None
+            self.pageMenu = None
             
     def OnTreeLabelWillChange(self, event):
         # If you click at just the right speed, wx.TreeCtrl will fire both a edit label event and a
