@@ -62,9 +62,6 @@ def getPageMenu(openWithMenu=None):
     PageMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu2)
     
     PageMenu.AppendSeparator()
-    PageMenu.Append(ID_CLEAN_HTML, _("Clean Up HTML"))
-    
-    PageMenu.AppendSeparator()
     PageMenu.Append(ID_EDIT_ITEM, _("Edit Page"), _("Edit the currently selected page"))
     
     if openWithMenu:
