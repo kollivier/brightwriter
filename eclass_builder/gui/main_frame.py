@@ -80,7 +80,6 @@ from gui.indexing import *
 from gui.project_props import *
 from gui.activity_monitor import *
 
-import gui.cleanhtmldialog
 import gui.error_viewer
 import gui.media_convert
 import gui.prompts as prompts
@@ -308,7 +307,6 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
         app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
         app.AddHandlerForID(ID_PASTE, self.OnPaste)
-        app.AddHandlerForID(ID_CLEAN_HTML, self.OnCleanHTML)
         app.AddHandlerForID(ID_IMPORT_FILE, self.OnImportFile)
         app.AddHandlerForID(ID_REFRESH_THEME, self.OnRefreshTheme)
         #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
@@ -382,7 +380,6 @@ class MainFrame2(sc.SizedFrame):
         app.RemoveHandlerForID(ID_PASTE_BELOW)
         app.RemoveHandlerForID(ID_PASTE_CHILD)
         app.RemoveHandlerForID(ID_PASTE)
-        app.RemoveHandlerForID(ID_CLEAN_HTML)
         app.RemoveHandlerForID(ID_IMPORT_FILE)
         app.RemoveHandlerForID(ID_REFRESH_THEME)
         #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
@@ -501,29 +498,6 @@ class MainFrame2(sc.SizedFrame):
                 
                 self.EditItemProps()
                 
-    def OnCleanHTML(self, event):
-        try:
-            import tidylib
-        except:
-            wx.MessageBox(_("Your system appears not to have the HTMLTidy library installed. Cannot run HTML clean up."))
-            return
-
-        filename = eclassutils.getEditableFileForIMSItem(self.imscp, self.projectTree.GetCurrentTreeItemData())
-        
-        if filename:
-            fullpath = os.path.join(settings.ProjectDir, filename)
-            
-            html, errors = htmlutils.cleanUpHTML(fullpath)
-        
-            dialog = gui.cleanhtmldialog.HTMLCleanUpDialog(self, -1, size=(600,400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
-            dialog.SetOriginalHTML(htmlutils.getUnicodeHTMLForFile(fullpath))
-            dialog.SetCleanedHTML(html)
-            dialog.log.SetValue(errors)
-            if dialog.ShowModal() == wx.ID_OK:
-                outfile = open(fullpath, "wb")
-                outfile.write(html)
-                outfile.close()
-        
     def OnCut(self, event):
         if not wx.Window.FindFocus() == self.projectTree:
             event.Skip()
@@ -726,11 +700,6 @@ class MainFrame2(sc.SizedFrame):
         webbrowser.open_new("http://sourceforge.net/tracker/?group_id=67634")
         
     def OnTreeSelChanged(self, event):
-        filename = self.GetContentFilenameForSelectedItem()
-        is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
-        clean_item = self.MenuBar.FindItemById(ID_CLEAN_HTML)
-        clean_item.Enable(is_html)
-        
         self.Preview()
         event.Skip()
         
@@ -767,11 +736,6 @@ class MainFrame2(sc.SizedFrame):
 
                 else:
                     submenu = None
-
-            is_html = os.path.splitext(filename)[1] in [".htm", ".html"]
-            self.pageMenu = menus.getPageMenu(openWithMenu=submenu)
-            cleanItem = self.pageMenu.FindItemById(ID_CLEAN_HTML)
-            cleanItem.Enable(is_html)
             
             self.PopupMenu(self.pageMenu, pt)
             
