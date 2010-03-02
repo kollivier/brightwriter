@@ -79,8 +79,9 @@ from gui.ftp import *
 from gui.indexing import *
 from gui.project_props import *
 from gui.activity_monitor import *
+
+import gui.cleanhtmldialog
 import gui.error_viewer
-#simport gui.project_find_dialog as pfdlg
 import gui.media_convert
 import gui.prompts as prompts
 import gui.imstree
@@ -514,7 +515,6 @@ class MainFrame2(sc.SizedFrame):
             
             html, errors = htmlutils.cleanUpHTML(fullpath)
         
-            import gui.cleanhtmldialog
             dialog = gui.cleanhtmldialog.HTMLCleanUpDialog(self, -1, size=(600,400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
             dialog.SetOriginalHTML(htmlutils.getUnicodeHTMLForFile(fullpath))
             dialog.SetCleanedHTML(html)
@@ -959,20 +959,8 @@ class MainFrame2(sc.SizedFrame):
 
             self.dialog.Destroy()
             self.dialog = None
-        # copy the server program
-        if settings.ProjectSettings["SearchProgram"] != "Greenstone":
-            fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
-            fileutils.CopyFile("loader.exe", os.path.join(settings.AppDir, "autorun"),pubdir)
 
-        if settings.ProjectSettings["SearchProgram"] == "Greenstone":
-            cddir = os.path.join(settings.AppSettings["GSDL"], "tmp", "exported_collections")
-            if not os.path.exists(os.path.join(cddir, "gsdl", "eclass")):
-                os.mkdir(os.path.join(cddir, "gsdl", "eclass"))
-            fileutils.CopyFiles(settings.ProjectDir, os.path.join(cddir, "gsdl", "eclass"), True)
-            fileutils.CopyFile("home.dm", os.path.join(settings.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
-            fileutils.CopyFile("style.dm", os.path.join(settings.AppDir, "greenstone"), os.path.join(cddir, "gsdl", "macros"))
-        elif settings.ProjectSettings["SearchProgram"] == "Lucene":
-            pass
+        fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
 
     def ShutDown(self, event):
         if self.imscp and self.imscp.isDirty():
