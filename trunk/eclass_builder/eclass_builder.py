@@ -1,14 +1,4 @@
 import string, sys, os, shutil, glob
-
-import logging
-logging.basicConfig()
-log = logging.getLogger('EClass')
-log.setLevel(logging.DEBUG)
-
-rootdir = os.path.abspath(sys.path[0])
-# os.path.dirname will chop the last dir if the path is to a directory
-if not os.path.isdir(rootdir):
-    rootdir = os.path.dirname(rootdir)
     
 # do this first because other modules may rely on _()
 import i18n
@@ -17,6 +7,16 @@ lang_dict = i18n.installEClassGettext()
 import wx
 import gui.error_viewer as error_viewer
 
+oldexcepthook = sys.excepthook 
+sys.excepthook = error_viewer.guiExceptionHook
+
+rootdir = os.path.abspath(sys.path[0])
+# os.path.dirname will chop the last dir if the path is to a directory
+if not os.path.isdir(rootdir):
+    rootdir = os.path.dirname(rootdir)
+
+import logging
+log = None
 
 import settings, guiutils, appdata, errors
 import conman.xml_settings as xml_settings
@@ -44,18 +44,19 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         
         self.SetAppName("EClass.Builder")
         
+        global log
         settings.logfile = os.path.join(guiutils.getAppDataDir(), 'log.txt')
-        fileHandler = logging.FileHandler(settings.logfile, 'w')
         formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
-        # add formatter to ch
-        fileHandler.setFormatter(formatter)
-        log.addHandler(fileHandler)
+        logging.basicConfig(filename=settings.logfile, format="%(asctime)s\t%(levelname)s\t%(message)s")
+        log = logging.getLogger('EClass')
+        log.setLevel(logging.DEBUG)
+        
+        sys.stderr = open(settings.logfile, "w")
+        sys.stdout = sys.stderr
+        
         log.info('Starting EClass.Builder.')
         
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
-
-        self.oldexcepthook = sys.excepthook 
-        sys.excepthook = error_viewer.guiExceptionHook
         
         # initialize the environment
         self.LoadPrefs()
@@ -73,7 +74,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         return True
         
     def OnExit(self):
-        sys.excepthook = self.oldexcepthook
+        sys.excepthook = oldexcepthook
         
     def CreateAppDirsIfNeeded(self):
         contactsdir = os.path.join(settings.PrefDir, "Contacts")
