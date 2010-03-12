@@ -5,6 +5,7 @@ import os
 import re
 import string
 import sys
+from externals import BeautifulSoup
 
 def getCurrentEncoding():
     import locale
@@ -42,6 +43,60 @@ def GetEncoding(myhtml):
         return match.group(1).lower() #python encodings always in lowercase
     else:
         return None
+        
+def footnoteFixer(soup):
+     matches = soup.findAll(style=re.compile("^mso-footnote-id:"))
+     for match in matches:
+        del match['style']
+        text = match.findAll(text=re.compile("[\d+]"))
+        if text and len(text) > 0:
+            match.insert(0, text[0].strip())
+     
+        for span in match.findAll("span"):
+            span.extract()
+
+def stripEmptyParagraphs(soup):
+    matches = soup.findAll(text=re.compile("^\s*&nbsp;\s*$"))
+    for match in matches:
+        match.extract()
+        
+def addMetaTag(html, attrs):
+    """
+    This is used basically to re-add the stripped encoding meta tag caused
+    by running the document through HTMLTidy.
+    """
+    soup = BeautifulSoup.BeautifulSoup(html)
+    head = soup.find('head')
+    if head:
+        tag = BeautifulSoup.Tag(soup, "meta", attrs)
+        head.insert(0, tag)
+    
+    return soup.prettify(encoding=None)
+
+def cleanUpHTML(html, options=None):
+    import tidylib
+    tidylib.BASE_OPTIONS = {}
+
+    default_options = { 
+                        "Word-2000" : 1,
+                        "force-output" : 1,
+                        "output-xhtml" : 1,
+                        "drop-empty-paras": 1,
+                        "output-encoding" : "utf8",
+                       }
+    if options:
+        default_options.extend(options)
+
+    # first fix up footnotes so that HTMLTidy won't ditch them
+    soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
+    footnoteFixer(soup) #html)
+    stripEmptyParagraphs(soup)
+    
+    html, errors = tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
+    
+    html = addMetaTag(html, [('http-equiv', 'Content-Type'), ('content', 'text/html; charset=utf-8')])
+    
+    return html.encode("utf8"), errors
 
 import unittest
 

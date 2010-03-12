@@ -18,8 +18,8 @@ if not hasattr(sys, 'frozen'):
 
 import htmledit.htmlattrs as htmlattrs
 
-# eclass specific imports... we should remove these
 import htmlutils
+import cleanhtmldialog
 
 try:
     import wx.webview
@@ -88,6 +88,7 @@ ID_TEXT_SUB = wx.NewId()
 ID_TEXT_CODE = wx.NewId()
 ID_TEXT_CITATION = wx.NewId()
 ID_TEXT_REMOVE_STYLES = wx.NewId()
+ID_CLEANUP_HTML = wx.NewId()
 
 def _(text):
     return text
@@ -618,6 +619,8 @@ class EditorFrame (sc.SizedFrame):
         textstylemenu.Append(ID_TEXT_REMOVE_STYLES, _("Remove Formatting"))
         textstylemenu.Append(ID_REMOVE_LINK, _("Remove Link"))
         self.formatmenu.AppendMenu(wx.NewId(), _("Text Style"), textstylemenu)
+        self.formatmenu.AppendSeparator()
+        self.formatmenu.Append(ID_CLEANUP_HTML, _("Clean Up HTML"))
         
         self.tablemenu = wx.Menu()
         self.tablemenu.Append(ID_INSERT_TABLE, _("Insert Table"))
@@ -763,6 +766,7 @@ class EditorFrame (sc.SizedFrame):
         self.Bind(wx.EVT_MENU, self.OnOpen, id=ID_OPEN)
         self.Bind(wx.EVT_MENU, self.OnSave, id=ID_SAVE)
         self.Bind(wx.EVT_MENU, self.OnQuit, id=ID_QUIT)
+        self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
@@ -901,6 +905,23 @@ class EditorFrame (sc.SizedFrame):
         position[0] = position[0] + self.notebook.GetPosition()[0]
         position[1] = position[1] + self.notebook.GetPosition()[1]
         self.PopupMenu(popupmenu, position)
+
+    def OnCleanHTML(self, event):
+        try:
+            import tidylib
+        except:
+            wx.MessageBox(_("Your system appears not to have the HTMLTidy library installed. Cannot run HTML clean up."))
+            return
+        
+        html, errors = htmlutils.cleanUpHTML(self.webview.GetPageSource())
+    
+        dialog = cleanhtmldialog.HTMLCleanUpDialog(self, -1, size=(600,400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        dialog.SetOriginalHTML(self.webview.GetPageSource())
+        dialog.SetCleanedHTML(html)
+        dialog.log.SetValue(errors)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.webview.SetPageSource(html)
+        
 
     def OnSize(self, evt):
         self.Layout()
