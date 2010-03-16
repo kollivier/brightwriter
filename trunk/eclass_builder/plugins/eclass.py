@@ -315,6 +315,7 @@ class EClassPage(plugins.PluginData):
                 myxml = unicode(myxml, encoding)
             
             myxml = myxml.encode("utf-8")
+            
             myfile = utils.openFile(filename, "w")
             myfile.write(myxml)
             myfile.close()
@@ -362,6 +363,7 @@ class EClassPage(plugins.PluginData):
         <Fecha_pub>%s</Fecha_pub>
         <Author>%s</Author>
         <Credit>%s</Credit>""" % (TextToXMLChar(self.name), TextToXMLChar(self.codigo_pub), TextToXMLChar(self.fecha_pub), TextToXMLChar(self.author), TextToXMLChar(self.credit))
+        
         return mymetadata
 
     def _ObjectivesAsXML(self):
@@ -862,23 +864,27 @@ class EditorDialog (sc.SizedDialog):
             import ims.contentpackage
             self.page = EClassPage(self)
             
+            name = None
             if isinstance(item, conman.conman.ConNode):
                 self.filename = item.content.filename
     
-                self.page.name = item.content.metadata.name
+                name = item.content.metadata.name
                 
             elif isinstance(item, ims.contentpackage.Item):
                 import ims.utils
                 resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, item)
                 self.filename = eclassutils.getEClassPageForIMSResource(resource)
-                self.page.name = item.title.text
-    
+                name = item.title.text
             else:
                 self.page = item.page
                 self.isHotword = True
-                
+
             if self.filename and len(self.filename) > 0:
                 self.page.LoadPage(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
+                
+            if name:
+                self.page.name = name
+                
         except RuntimeError, e:
             global log
             message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
@@ -1214,6 +1220,7 @@ class EditorDialog (sc.SizedDialog):
     def btnOKClicked(self,event):
         busy = wx.BusyCursor()
         self.page.name = self.txtTitle.GetValue()
+        
         if isinstance(self.item, conman.conman.ConNode):
             self.item.content.metadata.name = self.page.name
         elif isinstance(self.item, ims.contentpackage.Item):

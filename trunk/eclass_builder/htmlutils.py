@@ -58,11 +58,6 @@ def footnoteFixer(soup):
         for span in match.findAll("span"):
             span.extract()
 
-def stripEmptyParagraphs(soup):
-    matches = soup.findAll(text=re.compile("^\s*&nbsp;\s*$"))
-    for match in matches:
-        match.extract()
-
 def getUnicodeHTMLForFile(filename):
     html = open(filename, "rb").read()
     encoding = GetEncoding(html)
@@ -70,19 +65,6 @@ def getUnicodeHTMLForFile(filename):
         encoding = ""
         
     return utils.makeUnicode(html, encoding)
-    
-def addMetaTag(html, attrs):
-    """
-    This is used basically to re-add the stripped encoding meta tag caused
-    by running the document through HTMLTidy.
-    """
-    soup = BeautifulSoup.BeautifulSoup(html)
-    head = soup.find('head')
-    if head:
-        tag = BeautifulSoup.Tag(soup, "meta", attrs)
-        head.insert(0, tag)
-    
-    return soup.prettify(encoding=None)
 
 def cleanUpHTML(filename, options=None):
     import tidylib
@@ -123,6 +105,12 @@ def copyDependentFilesAndUpdateLinks(oldfile, filename):
         encoding = utils.getCurrentEncoding()
         
     html = utils.makeUnicode(html, encoding)
+    
+    if not encoding:
+        encoding = utils.guessEncodingForText(text)
+    
+    if encoding and encoding.lower() in ["windows-1252", "iso-8859-1", "iso-8859-2"]:
+        html = convNotSoSmartQuotesToHtmlEntity(html)
     
     for link in myanalyzer.fileLinks:
         sourcefile = GetFullPathForURL(link, htmldir)
