@@ -249,7 +249,7 @@ def openFile(filename, mode="r"):
                 sepmarker = mydir.rfind(os.sep)
             mydir = mydir[0:sepmarker-1]
             myfilename = os.path.join(mydir[sepmarker+1:], myfilename)
-            os.chdir(mydir)
+        os.chdir(mydir)
     myfile = open(myfilename, mode)
     os.chdir(olddir)
     return myfile
