@@ -5,6 +5,8 @@ import os
 import re
 import string
 import sys
+import types
+
 from externals import BeautifulSoup
 
 def getCurrentEncoding():
@@ -60,18 +62,15 @@ def stripEmptyParagraphs(soup):
     for match in matches:
         match.extract()
         
-def addMetaTag(html, attrs):
+def addMetaTag(soup, attrs):
     """
     This is used basically to re-add the stripped encoding meta tag caused
     by running the document through HTMLTidy.
     """
-    soup = BeautifulSoup.BeautifulSoup(html)
     head = soup.find('head')
     if head:
         tag = BeautifulSoup.Tag(soup, "meta", attrs)
         head.insert(0, tag)
-    
-    return soup.prettify(encoding=None)
 
 def cleanUpHTML(html, options=None):
     import tidylib
@@ -91,12 +90,9 @@ def cleanUpHTML(html, options=None):
     soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
     footnoteFixer(soup) #html)
     stripEmptyParagraphs(soup)
+    addMetaTag(soup, [('http-equiv', 'Content-Type'), ('content', 'text/html; charset=utf-8')])
     
-    html, errors = tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
-    
-    html = addMetaTag(html, [('http-equiv', 'Content-Type'), ('content', 'text/html; charset=utf-8')])
-    
-    return html.encode("utf8"), errors
+    return tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
 
 import unittest
 
