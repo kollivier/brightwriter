@@ -189,6 +189,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
     def __init__(self, source, *args, **kwargs):
         wx.EvtHandler.__init__(self, *args, **kwargs)
         self.webview = source
+        settings = self.webview.GetWebSettings()
+        settings.SetEditableLinkBehavior(wx.webview.EditableLinkOnlyLiveWithShiftKey)
         self.webview.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
         self.webview.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         self.searchId = None
@@ -603,7 +605,7 @@ class EditorFrame (sc.SizedFrame):
 
         self.insertmenu = wx.Menu()
         self.insertmenu.Append(ID_INSERT_LINK, _("Hyperlink") + "\tCTRL+L")
-        self.insertmenu.Append(ID_INSERT_BOOKMARK, _("Bookmark"))
+        self.insertmenu.Append(ID_INSERT_BOOKMARK, _("Bookmark") + "\tCTRL+SHIFT+B")
         self.insertmenu.AppendSeparator()
         self.insertmenu.Append(ID_INSERT_IMAGE, _("Image..."))
 
@@ -630,11 +632,14 @@ class EditorFrame (sc.SizedFrame):
         self.menu.Append(self.insertmenu, _("Insert"))
         self.menu.Append(self.formatmenu, _("Format"))
         self.menu.Append(self.tablemenu, _("Table"))
-        #self.menu.Append(self.toolmenu, _("Tools"))
+        
         self.SetMenuBar(self.menu)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        btnSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.dirty = False
+        
+        self.fileHistory = wx.FileHistory()
+        self.fileConfig = wx.FileConfig(appName="EClass.HTMLEditor", vendorName="Tulane University")
+        self.fileHistory.UseMenu(self.filemenu)
+        self.fileHistory.Load(self.fileConfig)
 
         #load icons
         icondir = os.path.join("htmledit", "images")
@@ -767,6 +772,7 @@ class EditorFrame (sc.SizedFrame):
         self.Bind(wx.EVT_MENU, self.OnSave, id=ID_SAVE)
         self.Bind(wx.EVT_MENU, self.OnQuit, id=ID_QUIT)
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
+        self.Bind(wx.EVT_MENU_RANGE, self.OnFileHistory, id=wx.ID_FILE1, id2=wx.ID_FILE9)
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
@@ -798,6 +804,10 @@ class EditorFrame (sc.SizedFrame):
                 return True
         
         return False
+        
+    def OnFileHistory(self, event):
+        filename = self.fileHistory.GetHistoryFile(event.GetId() - wx.ID_FILE1)
+        self.LoadPage(filename)
 
     def UpdateStatus(self, evt):
         self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
@@ -832,6 +842,7 @@ class EditorFrame (sc.SizedFrame):
 
     def LoadPage(self, filename):
         if os.path.exists(filename):
+            self.fileHistory.AddFileToHistory(filename)
             fileurl = urllib.quote(os.path.dirname(filename)) + "/"
             self.baseurl = 'file://' + fileurl
             self.webview.SetPageSource(htmlutils.getUnicodeHTMLForFile(filename), self.baseurl)
@@ -879,6 +890,7 @@ class EditorFrame (sc.SizedFrame):
                 self.OnSave(evt)
             elif result == wx.ID_CANCEL:
                 return
+        self.fileHistory.Save(self.fileConfig)
         self.MakeModal(False)
         self.Show(False)
         self.Destroy()
@@ -1084,15 +1096,18 @@ class LinkPropsDialog(TagEditorDialog):
         pane.SetSizerType("form")
         wx.StaticText(pane, -1, _("Link"))
         self.fileURL = wx.FilePickerCtrl(pane, -1, style=wx.FLP_OPEN | wx.FLP_USE_TEXTCTRL, name="href")
+        self.fileURL.SetSizerProps(expand=True)
 
         wx.StaticText(pane, -1, _("Open in"))
-        wx.ComboBox(pane, -1, choices=htmlattrs.attr_values["A"]["target"].keys(), name="target")
+        target = wx.ComboBox(pane, -1, choices=htmlattrs.attr_values["A"]["target"].keys(), name="target")
+        target.SetSizerProps(expand=True)
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
         self.fileURL.SetFocus()
         self.Fit()
         self.MinSize = self.Size
+        self.MaxSize = (-1, self.Size.y)
         
         self.setProps(linkProps)
 
