@@ -45,14 +45,17 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         self.SetAppName("EClass.Builder")
         
         global log
-        settings.logfile = os.path.join(guiutils.getAppDataDir(), 'log.txt')
+        if hasattr(sys, 'frozen'):
+            settings.logfile = os.path.join(guiutils.getAppDataDir(), 'log.txt')
+        
         formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
         logging.basicConfig(filename=settings.logfile, format="%(asctime)s\t%(levelname)s\t%(message)s")
         log = logging.getLogger('EClass')
         log.setLevel(logging.DEBUG)
         
-        sys.stderr = open(settings.logfile, "w")
-        sys.stdout = sys.stderr
+        if settings.logfile:
+            sys.stderr = open(settings.logfile, "w")
+            sys.stdout = sys.stderr
         
         log.info('Starting EClass.Builder.')
         
