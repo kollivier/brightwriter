@@ -147,15 +147,16 @@ class ErrorLogViewer(sc.SizedDialog):
     def LoadErrorLog(self):
         self.listCtrl.DeleteAllItems()
         self.itemCount = 0
-        errorList = open(settings.logfile, 'r').read().split('\n')
-        self.errList = []
-        for err in errorList:
-            if err != "":
-                errArray = err.split('\t')
-                self.errList.append(errArray)
-                index = self.errList.index(errArray)
-                self.listCtrl.InsertStringItem(self.itemCount, errArray[0])
-                if len(errArray) > 1:
-                    self.listCtrl.SetStringItem(self.itemCount, 1, "%s : %s" % (errArray[1], errArray[2]))
-                self.listCtrl.SetItemData(self.itemCount, index)
-                self.itemCount += 1
+        if settings.logfile:
+            errorList = open(settings.logfile, 'r').read().split('\n')
+            self.errList = []
+            for err in errorList:
+                if err != "":
+                    errArray = err.split('\t')
+                    self.errList.append(errArray)
+                    index = self.errList.index(errArray)
+                    self.listCtrl.InsertStringItem(self.itemCount, errArray[0])
+                    if len(errArray) > 1:
+                        self.listCtrl.SetStringItem(self.itemCount, 1, "%s : %s" % (errArray[1], errArray[2]))
+                    self.listCtrl.SetItemData(self.itemCount, index)
+                    self.itemCount += 1
