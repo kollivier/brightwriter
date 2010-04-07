@@ -1322,7 +1322,17 @@ class MyApp(wx.App, events.AppEventHandlerMixin, wx.lib.mixins.inspection.Inspec
         self.frame = EditorFrame(None, None)
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
+        
+        for arg in sys.argv:
+            if os.path.exists(arg):
+                self.frame.LoadPage(arg)
+        
         return True
+        
+    def MacOpenFile(self, filename):
+        newframe = EditorFrame(None, None)
+        newframe.LoadPage(filename)
+        newframe.Show()
 
 if __name__ == "__main__":
     app = MyApp(0)
