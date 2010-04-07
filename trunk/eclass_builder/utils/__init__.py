@@ -246,9 +246,10 @@ def openFile(filename, mode="r"):
             # fun, now we have to break up the directory into a two parts that are both less than 240 chars
             sepmarker = mydir.rfind(os.sep)
             while (sepmarker > 0 and sepmarker > 240):
-                sepmarker = mydir.rfind(os.sep)
-            mydir = mydir[0:sepmarker-1]
+                sepmarker = mydir.rfind(os.sep, 0, sepmarker-1)
+                
             myfilename = os.path.join(mydir[sepmarker+1:], myfilename)
+            mydir = mydir[0:sepmarker]
         os.chdir(mydir)
     myfile = open(myfilename, mode)
     os.chdir(olddir)
