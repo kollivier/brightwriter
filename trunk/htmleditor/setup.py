@@ -2,8 +2,11 @@
 
 from distutils.core import setup
 
+import glob
 import os
+import shutil
 import sys
+
 sys.path.append("..")
 platform = None
 if sys.platform.startswith("win"):
@@ -14,7 +17,6 @@ elif sys.platform.startswith("darwin"):
     import py2app
     sys.argv.append("py2app")
     platform = "mac"
-import glob
 
 myplist = dict(
     CFBundleIdentifier='net.eclass.htmledit',
@@ -31,6 +33,10 @@ py2app_options = dict(
 py2exe_options = dict(skip_archive=True)
 
 rootdir = os.path.dirname(__file__)
+distdir = os.path.join(rootdir, "dist")
+
+if os.path.exists(distdir):
+    shutil.rmtree(distdir)
 
 source_files = glob.glob("htmledit/images/*")
 
