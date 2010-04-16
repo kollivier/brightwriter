@@ -846,6 +846,7 @@ class EditorFrame (sc.SizedFrame):
             fileurl = urllib.quote(os.path.dirname(filename)) + "/"
             self.baseurl = 'file://' + fileurl
             self.webview.SetPageSource(htmlutils.getUnicodeHTMLForFile(filename), self.baseurl)
+            self.SetTitle(os.path.basename(filename))
             self.filename = filename
 
     def OnLinkClicked(self, event):
@@ -862,6 +863,7 @@ class EditorFrame (sc.SizedFrame):
         if source.find('<base href="about:blank">') != -1:
             pagetext = source.replace('<base href="about:blank">', '')
             self.webview.SetPageSource(pagetext)
+            self.SetTitle(self.webview.GetPageTitle())
             #self.webview.UpdateBaseURI()
             self.webview.Reload()
 
@@ -1323,7 +1325,7 @@ class MyApp(wx.App, events.AppEventHandlerMixin, wx.lib.mixins.inspection.Inspec
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
         
-        for arg in sys.argv:
+        for arg in sys.argv[1:]:
             if os.path.exists(arg):
                 self.frame.LoadPage(arg)
         
