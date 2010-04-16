@@ -221,9 +221,9 @@ def makeUnicode(text, encoding="", errors='strict'):
         
     # Always try latin1 first, since it sometimes gets misread / detected as other encodings
     detect_encoding = guessEncodingForText(text)
-    encodings = ['latin_1', detect_encoding, getCurrentEncoding(), 'utf-8']
+    encodings = [detect_encoding, 'latin_1', getCurrentEncoding(), 'utf-8']
     if encoding != "":
-        encodings.insert(1, encoding)
+        encodings.insert(0, encoding)
         
     for guess_encoding in encodings:
         try:
