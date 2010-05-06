@@ -69,6 +69,9 @@ def addMetaTag(soup, attrs):
     """
     head = soup.find('head')
     if head:
+        meta = soup.find(attrs={'http-equiv': 'Content-type'})
+        if meta:
+            meta.extract()
         tag = BeautifulSoup.Tag(soup, "meta", attrs)
         head.insert(0, tag)
 
@@ -90,9 +93,13 @@ def cleanUpHTML(html, options=None):
     soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
     footnoteFixer(soup) #html)
     stripEmptyParagraphs(soup)
-    addMetaTag(soup, [('http-equiv', 'Content-Type'), ('content', 'text/html; charset=utf-8')])
     
-    return tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
+    html, errors = tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
+    
+    soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
+    addMetaTag(soup, [('http-equiv', 'Content-type'), ('content', 'text/html; charset=utf-8')])
+    
+    return soup.prettify(encoding=None), errors
 
 import unittest
 
