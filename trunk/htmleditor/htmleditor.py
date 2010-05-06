@@ -405,8 +405,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
             self.webview.ExecuteEditCommand("CreateLink", props["href"])
             if "target" in props:
                 url = self.GetParent("A")
-                if url:
-                    url.SetAttribute("target", props["target"])
+                #if url:
+                #    url.SetAttribute("target", props["target"])
         mydialog.Destroy()
 
     def OnBookmarkButton(self, evt):    
@@ -776,6 +776,7 @@ class EditorFrame (sc.SizedFrame):
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
 
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
+        self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
 
         self.Fit()
         
@@ -808,6 +809,16 @@ class EditorFrame (sc.SizedFrame):
     def OnFileHistory(self, event):
         filename = self.fileHistory.GetHistoryFile(event.GetId() - wx.ID_FILE1)
         self.LoadPage(filename)
+
+    def OnActivate(self, event):
+        delegate = self.webdelegate
+        if self.FindFocus() is not self.webview:
+            delegate = self.sourceDelegate
+
+        if event.GetActive():
+            delegate.RegisterHandlers()
+        else:
+            delegate.RemoveHandlers()
 
     def UpdateStatus(self, evt):
         self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
@@ -970,7 +981,7 @@ class EditorFrame (sc.SizedFrame):
             evt.Skip()
 
     def OnNew(self, event):
-        self.CreateNewPage()
+        wx.GetApp().CreateNewFrame()
 
     def OnOpen(self, event):
         global webPageWildcard
@@ -1004,6 +1015,7 @@ class EditorFrame (sc.SizedFrame):
         try:
             if not encoding:
                 encoding = htmlutils.getCurrentEncoding()
+            print "encoding to %s" % encoding
             source = source.encode(encoding)
         except:
             raise
@@ -1331,10 +1343,14 @@ class MyApp(wx.App, events.AppEventHandlerMixin, wx.lib.mixins.inspection.Inspec
         
         return True
         
-    def MacOpenFile(self, filename):
+    def CreateNewFrame(self, filename=None):
         newframe = EditorFrame(None, None)
-        newframe.LoadPage(filename)
+        if filename:
+            newframe.LoadPage(filename)
         newframe.Show()
+        
+    def MacOpenFile(self, filename):
+        self.CreateNewFrame(filename)
 
 if __name__ == "__main__":
     app = MyApp(0)
