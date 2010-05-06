@@ -32,6 +32,7 @@ except:
 ID_NEW = wx.NewId()
 ID_OPEN = wx.NewId()
 ID_SAVE = wx.NewId()
+ID_SAVE_AS = wx.NewId()
 ID_QUIT = wx.NewId()
 
 ID_BOLD = wx.NewId()
@@ -586,6 +587,7 @@ class EditorFrame (sc.SizedFrame):
         self.filemenu.Append(ID_NEW, _("New"))
         self.filemenu.Append(ID_OPEN, _("Open"))
         self.filemenu.Append(ID_SAVE, _("Save") +"\tCTRL+S")
+        self.filemenu.Append(ID_SAVE_AS, _("Save As..."))
         self.filemenu.Append(ID_QUIT, _("Exit") +"\tCTRL+Q")
         self.editmenu = wx.Menu()
         self.editmenu.Append(ID_UNDO, _("Undo") + "\tCTRL+Z")
@@ -770,6 +772,7 @@ class EditorFrame (sc.SizedFrame):
         self.Bind(wx.EVT_MENU, self.OnNew, id=ID_NEW)
         self.Bind(wx.EVT_MENU, self.OnOpen, id=ID_OPEN)
         self.Bind(wx.EVT_MENU, self.OnSave, id=ID_SAVE)
+        self.Bind(wx.EVT_MENU, self.OnSaveAs, id=ID_SAVE_AS)
         self.Bind(wx.EVT_MENU, self.OnQuit, id=ID_QUIT)
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
         self.Bind(wx.EVT_MENU_RANGE, self.OnFileHistory, id=wx.ID_FILE1, id2=wx.ID_FILE9)
