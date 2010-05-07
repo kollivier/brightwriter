@@ -19,6 +19,7 @@ if not hasattr(sys, 'frozen'):
 import htmledit.htmlattrs as htmlattrs
 
 import htmlutils
+import aboutdialog
 import cleanhtmldialog
 
 try:
@@ -141,16 +142,14 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
         self.searchId = None
         Publisher().subscribe(self.OnDoSearch, ('search', 'text', 'changed'))
         
-    def RegisterHandlers(self, event=None):
-        self.source.Bind(wx.EVT_CHAR, self.OnKeyEvent)
-        
+    def RegisterHandlers(self, event=None):       
         app = wx.GetApp()
         app.AddHandlerForID(ID_UNDO, self.OnUndo)
         app.AddHandlerForID(ID_REDO, self.OnRedo)
         app.AddHandlerForID(ID_SELECTALL, self.OnSelectAll)
         app.AddHandlerForID(ID_SELECTNONE, self.OnSelectNone)
         
-        search = self.webview.FindWindowByName("searchctrl")
+        search = self.source.FindWindowByName("searchctrl")
         if search:
             self.searchId = search.GetId()
             app.AddHandlerForID(self.searchId, self.OnDoSearch)
@@ -169,7 +168,8 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
         self.source.Redo()
         
     def OnDoSearch(self, message):
-        self.sourceFindHandler.DoInlineSearch(message.data)
+        if wx.GetTopLevelParent(self.source).IsActive():
+            self.sourceFindHandler.DoInlineSearch(message.data)
 
     def OnSelectAll(self, evt):
         self.source.SelectAll()
@@ -286,7 +286,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_TEXT_REMOVE_STYLES)
         
     def OnDoSearch(self, message):
-        self.webview.FindString(message.data)
+        if wx.GetTopLevelParent(self.webview).IsActive():
+            self.webview.FindString(message.data)
 
     def OnSelectAll(self, evt):
         self.webview.ExecuteEditCommand("SelectAll")
@@ -406,8 +407,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
             self.webview.ExecuteEditCommand("CreateLink", props["href"])
             if "target" in props:
                 url = self.GetParent("A")
-                #if url:
-                #    url.SetAttribute("target", props["target"])
+                if url:
+                    url.SetAttribute("target", props["target"])
         mydialog.Destroy()
 
     def OnBookmarkButton(self, evt):    
@@ -628,12 +629,16 @@ class EditorFrame (sc.SizedFrame):
         
         self.tablemenu = wx.Menu()
         self.tablemenu.Append(ID_INSERT_TABLE, _("Insert Table"))
+        
+        self.helpmenu = wx.Menu()
+        self.helpmenu.Append(wx.ID_ABOUT, _("About %s" % wx.GetApp().GetAppName()))
 
         self.menu.Append(self.filemenu, _("File"))
         self.menu.Append(self.editmenu, _("Edit"))
         self.menu.Append(self.insertmenu, _("Insert"))
         self.menu.Append(self.formatmenu, _("Format"))
         self.menu.Append(self.tablemenu, _("Table"))
+        self.menu.Append(self.helpmenu, _("Help"))
         
         self.SetMenuBar(self.menu)
         self.dirty = False
@@ -664,8 +669,8 @@ class EditorFrame (sc.SizedFrame):
 
         icnIndent = wx.Bitmap(os.path.join(icondir, "format-indent-more.png")) 
         icnDedent = wx.Bitmap(os.path.join(icondir, "format-indent-less.png"))
-        #icnBullets = wx.Bitmap(os.path.join(icondir, "bullets16.gif"))
-        #icnNumbering = wx.Bitmap(os.path.join(icondir, "numbering16.gif"))
+        icnBullets = wx.Bitmap(os.path.join(icondir, "fatcow", "text_list_bullets.png"))
+        icnNumbering = wx.Bitmap(os.path.join(icondir, "fatcow", "text_list_numbers.png"))
 
         #icnColour = wx.Bitmap(os.path.join(icondir, "colour16.gif"))
 
@@ -723,8 +728,8 @@ class EditorFrame (sc.SizedFrame):
         self.toolbar2.AddSeparator()
         self.toolbar2.AddSimpleTool(ID_DEDENT, icnDedent, _("Decrease Indent"), _("Decrease Indent"))
         self.toolbar2.AddSimpleTool(ID_INDENT, icnIndent, _("Increase Indent"), _("Increase Indent"))
-        #self.toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
-        #self.toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
+        self.toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
+        self.toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
         self.toolbar2.AddSeparator()
         self.toolbar2.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
         self.toolbar2.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
@@ -774,6 +779,7 @@ class EditorFrame (sc.SizedFrame):
         self.Bind(wx.EVT_MENU, self.OnSave, id=ID_SAVE)
         self.Bind(wx.EVT_MENU, self.OnSaveAs, id=ID_SAVE_AS)
         self.Bind(wx.EVT_MENU, self.OnQuit, id=ID_QUIT)
+        self.Bind(wx.EVT_MENU, self.OnAbout, id=wx.ID_ABOUT)
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
         self.Bind(wx.EVT_MENU_RANGE, self.OnFileHistory, id=wx.ID_FILE1, id2=wx.ID_FILE9)
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
@@ -822,6 +828,10 @@ class EditorFrame (sc.SizedFrame):
             delegate.RegisterHandlers()
         else:
             delegate.RemoveHandlers()
+
+    def OnAbout(self, event):
+        aboutdlg = aboutdialog.AboutDialog(self, -1, pos=(40,40), style=wx.CLOSE_BOX|wx.FRAME_NO_TASKBAR)
+        aboutdlg.Show()
 
     def UpdateStatus(self, evt):
         self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
@@ -1336,6 +1346,7 @@ class MyApp(wx.App, events.AppEventHandlerMixin, wx.lib.mixins.inspection.Inspec
     def OnInit(self):
         events.AppEventHandlerMixin.__init__(self)
         wx.lib.mixins.inspection.InspectionMixin.__init__(self)
+        self.SetAppName("EClass.HTMLEdit")
         self.frame = EditorFrame(None, None)
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
