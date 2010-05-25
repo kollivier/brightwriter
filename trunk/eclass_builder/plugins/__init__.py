@@ -296,7 +296,6 @@ class BaseHTMLPublisher:
             #get the template file from the current theme
             template = os.path.join(settings.AppDir, "themes", themes.FindTheme(settings.ProjectSettings["Theme"]).themename, template)
         
-        print template
         temp = utils.openFile(template, "r")
         html = temp.read()
         temp.close()

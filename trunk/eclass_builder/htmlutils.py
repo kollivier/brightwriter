@@ -253,7 +253,6 @@ def GetBody(myhtml):
     if encoding and encoding.lower() in ["windows-1252", "iso-8859-1", "iso-8859-2"]:
         text = convNotSoSmartQuotesToHtmlEntity(text)
     
-    print "calling makeUnicode"
     text = utils.makeUnicode(text, encoding, 'xmlcharrefreplace')
     
     soup = BeautifulSoup.BeautifulSoup('\n'.join(htmltext))
