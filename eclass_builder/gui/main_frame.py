@@ -1014,6 +1014,7 @@ class MainFrame2(sc.SizedFrame):
                 self.imscp.metadata.lom.general.keyword[lang] = newdialog.txtKeywords.GetValue()
                 
                 self.imscp.organizations.append(ims.contentpackage.Organization())
+                self.imscp.organizations[0].attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
                 self.CreateIMSResource(self.imscp.metadata.lom.general.title[lang])
                 if not self.imscp.saveAsXML(filename):
                     wx.MessageBox(_("Unable to save project file. Make sure you have permission to write to the project directory."))
@@ -1118,7 +1119,21 @@ class MainFrame2(sc.SizedFrame):
             if mydialog.ShowModal() == wx.ID_YES:                
                 # FIXME: how are we hitting a situation where this isn't true?
                 if selitem in parentitem.items:
+                    resourceid = selitem.attrs["identifierref"]
                     parentitem.items.remove(selitem)
+                    for resource in self.imscp.resources:
+                        if resource.attrs["identifier"] == resourceid:
+                            datadialog = wx.MessageDialog(self, _("Would you like to delete the data files associated with this page?"), _("Delete data files?"), wx.YES_NO)
+                            # TODO: recurse to handle child items
+                            if datadialog.ShowModal() == wx.ID_YES:
+                                for afile in resource.files:
+                                    if "href" in afile.attrs:
+                                        fullpath = os.path.join(settings.ProjectDir, afile.attrs["href"])
+                                        if os.path.exists(fullpath):
+                                            os.remove(fullpath)
+                            
+                            self.imscp.resources.remove(resource)
+                            break
                 
                 self.projectTree.Delete(selection)
                 self.UpdateEClassDataFiles()
@@ -1234,7 +1249,7 @@ class MainFrame2(sc.SizedFrame):
             
             myzip = zipfile.ZipFile(zipname, "w")
             import utils.zip
-            utils.zip.dirToZipFile("", myzip, os.path.dirname(self.imscp.filename), excludeFiles=["imsmanifest.xml"], 
+            utils.zip.dirToZipFile("", myzip, os.path.dirname(self.imscp.filename), 
                             excludeDirs=["installers", "cgi-bin"], ignoreHidden=True)
 
             myzip.close()
