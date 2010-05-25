@@ -268,6 +268,7 @@ class ContentPackage(Tag):
             filename = self.filename
         doc = xml.dom.minidom.Document()
         
+        self.organizations.attrs["default"] = self.organizations[0].attrs["identifier"]
         doc.appendChild(self.asXML(doc, strictMode))
         
         import codecs
