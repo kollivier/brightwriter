@@ -1273,9 +1273,9 @@ class MainFrame2(sc.SizedFrame):
             os.close(handle)
             if os.path.exists(dialog.GetPath()):
                 result = wx.MessageBox(_("The file %s already exists in this directory. Do you want to overwrite this file?") % dialog.GetFilename(), 
-                            _("Overwrite file?"), wx.YES_NO | wx.CANCEL | wx.ICON_WARNING)
+                            _("Overwrite file?"), wx.YES_NO | wx.ICON_WARNING)
                 
-                if not result == wx.ID_YES:
+                if not result == wx.YES:
                     return
                     
                 os.remove(dialog.GetPath())
