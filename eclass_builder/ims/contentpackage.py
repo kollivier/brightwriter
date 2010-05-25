@@ -296,6 +296,29 @@ class ContentPackage(Tag):
         # Obviously a load shouldn't set the publication as needing saved
         self.clearDirtyBit()
 
+    def getDanglingResources(self):
+        needed_resources = []
+        missing_resources = []
+        
+        def getResourceRefsRecursive(item):
+            resource_refs = []
+            if "identifierref" in item.attrs:
+                resource_refs.append(item.attrs["identifierref"])
+                for anitem in item.items:
+                    resource_refs.extend(getResourceRefsRecursive(anitem))
+                    
+            return resource_refs
+        
+        for org in self.organizations:
+            for item in org.items:
+                needed_resources.extend(getResourceRefsRecursive(item))
+                
+        for resource in self.resources:
+            if "identifier" in resource.attrs and not resource.attrs["identifier"] in needed_resources:
+                missing_resources.append(resource)
+
+        return missing_resources
+
 import unittest
 
 class IMSContentPackageTests(unittest.TestCase):
