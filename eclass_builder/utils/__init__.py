@@ -199,7 +199,6 @@ def guessEncodingForText(text):
     encoding = chardet.detect(text)['encoding']
     try:
         text.decode(encoding)
-        print "Encoding is %s" % encoding
         return encoding
     except:
         return None
