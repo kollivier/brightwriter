@@ -84,6 +84,7 @@ import gui.error_viewer
 import gui.media_convert
 import gui.prompts as prompts
 import gui.imstree
+import gui.ims_dialogs
 import gui.menus as menus
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
@@ -966,6 +967,42 @@ class MainFrame2(sc.SizedFrame):
         #self.CreateDevHelpBook()
 
         if os.path.exists(filename):
+            # check for references to resources no longer in the project, so we can clean them up
+            resources = self.imscp.getDanglingResources()
+            
+            if len(resources) > 0:
+                dialog = gui.ims_dialogs.IMSCleanUpDialog(self, -1, _("References to Unused Files in Project"))
+                for resource in resources:
+                    for afile in resource.files:
+                        if "href" in afile.attrs:
+                            dialog.filelist.WriteText(afile.attrs["href"] + "\n")
+                        
+                dialog.CentreOnParent()
+                result = dialog.ShowModal()
+                if result == wx.ID_CANCEL:
+                    return
+                    
+                elif result == wx.ID_YES:
+                    for resource in resources:
+                        unused_dir = os.path.join(settings.ProjectDir, "Unused Files")
+                            
+                        for afile in resource.files:
+                            if "href" in afile.attrs:
+                                filepath = os.path.join(settings.ProjectDir, afile.attrs["href"])
+                                
+                                if os.path.exists(filepath):
+                                    if not os.path.exists(unused_dir):
+                                        os.makedirs(unused_dir)
+                            
+                                    destpath = os.path.join(unused_dir, afile.attrs["href"])
+                                    destdir = os.path.dirname(destpath)
+                                    if not os.path.exists(destdir):
+                                        os.makedirs(destdir)
+                                    
+                                    os.rename(filepath, destpath)
+                            
+                        self.imscp.resources.remove(resource)
+        
             try:
                 if not self.imscp.saveAsXML(filename):
                     wx.MessageBox(_("Unable to save project file. Make sure you have permission to write to the project directory."))
