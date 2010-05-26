@@ -6,7 +6,7 @@
 # License: EClass.Builder Open Source License
 
 import string, os, sys
-from imsxml import *
+from xmlobjects import *
 import xml.dom.minidom
 
 class Language(Tag):
