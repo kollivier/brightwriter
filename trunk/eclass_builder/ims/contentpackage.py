@@ -212,6 +212,9 @@ class Resource(Tag):
         self.files = TagList("file", tagClass=File)
         self.dependencies = TagList("dependency", tagClass=Tag)
         
+        # default for when it is not set by the tag explicitly
+        self.attrs["adlcp:scormtype"] = "asset"
+        
         self.children = [self.metadata, self.files, self.dependencies]
         
     def getFilename(self):
@@ -255,6 +258,7 @@ class ContentPackage(Tag):
         
         self.attrs["xmlns"] = "http://www.imsglobal.org/xsd/imscp_v1p1"
         self.attrs["xmlns:imsmd"] = "http://www.imsglobal.org/xsd/imsmd_v1p2"
+        self.attrs["xmlns:adlcp"] = "http://www.adlnet.org/xsd/adlcp_v1p3"
         self.attrs["xmlns:xsi"] = "http://www.w3.org/2001/XMLSchema-instance"
         self.attrs["xsi:schemaLocation"] = "http://www.imsglobal.org/xsd/imscp_v1p1 http://www.imsglobal.org/xsd/imscp_v1p1.xsd http://www.imsglobal.org/xsd/imsmd_v1p2 http://www.imsglobal.org/xsd/imsmd_v1p2.xsd "
         self.attrs["version"] = "IMS CP 1.1.4"
