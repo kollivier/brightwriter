@@ -17,11 +17,13 @@ def getFileMenu():
     FileMenu.Append(ID_REFRESH_THEME, _("Refresh Theme"), "Reapply current theme to pages.")
     FileMenu.AppendSeparator()
     
+    FileMenu.Append(ID_IMPORT_PACKAGE, _("Import Package"))
+    
     PubMenu = wx.Menu()
     PubMenu.Append(ID_PUBLISH, _("To web site"), _("Publish EClass to a web server"))
     PubMenu.Append(ID_PUBLISH_CD, _("To CD-ROM"), _("Publish EClass to a CD-ROM"))
     #PubMenu.Append(ID_PUBLISH_PDF, _("To PDF"))
-    PubMenu.Append(ID_PUBLISH_IMS, _("IMS Package"))
+    PubMenu.Append(ID_PUBLISH_IMS, _("IMS Content Package"))
     FileMenu.AppendMenu(ID_PUBLISH_MENU, "&" + _("Publish"), PubMenu, "")
     
     FileMenu.AppendSeparator()
