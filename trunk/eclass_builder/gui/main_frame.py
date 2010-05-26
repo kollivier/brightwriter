@@ -2,6 +2,8 @@
 
 import sys, urllib2, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
+import tempfile
+import zipfile
 
 import wx
 import persistence
@@ -290,6 +292,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_TREE_REMOVE, self.RemoveItem)
         app.AddHandlerForID(ID_TREE_EDIT, self.OnEditItemProps) 
         app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
+        app.AddHandlerForID(ID_IMPORT_PACKAGE, self.OnImportIMS)
         app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
         app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
@@ -363,7 +366,8 @@ class MainFrame2(sc.SizedFrame):
         app.RemoveHandlerForID(ID_TREE_REMOVE)
         app.RemoveHandlerForID(ID_TREE_EDIT) 
         app.RemoveHandlerForID(ID_EDIT_ITEM)
-        app.RemoveHandlerForID(ID_PREVIEW) 
+        app.RemoveHandlerForID(ID_PREVIEW)
+        app.RemoveHandlerForID(ID_IMPORT_PACKAGE)
         app.RemoveHandlerForID(ID_PUBLISH)
         app.RemoveHandlerForID(ID_PUBLISH_CD)
         #app.RemoveHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
@@ -498,6 +502,27 @@ class MainFrame2(sc.SizedFrame):
                 self.projectTree.AddIMSItemUnderCurrentItem(newitem)
                 
                 self.EditItemProps()
+
+    def OnImportIMS(self, event):
+        dialog = wx.FileDialog(self, _("Select package to import"), "", "", _("Packages") + " (*.zip)|*.zip")
+        if dialog.ShowModal() == wx.ID_OK:
+            packagefile = dialog.GetPath()
+            zip = zipfile.ZipFile(packagefile)
+            if "imsmanifest.xml" in zip.namelist():
+                subdir = os.path.splitext(os.path.basename(packagefile))[0]
+                self.OpenIMSPackage(zip, subdir)
+
+    def OpenIMSPackage(self, zip, subdir):
+        eclassdir = os.path.join(settings.AppSettings["CourseFolder"], subdir)
+        if os.path.exists(eclassdir):
+            result = wx.MessageBox(_("It appears you already have imported this package. Would you like to overwrite the existing package?"), _("Overwrite Package?"), wx.YES_NO)
+            if result == wx.YES:
+                shutil.rmtree(eclassdir)
+            else:
+                return
+        
+        zip.extractall(eclassdir)
+        self.LoadEClass(os.path.join(eclassdir, "imsmanifest.xml"))
                 
     def OnCut(self, event):
         if not wx.Window.FindFocus() == self.projectTree:
@@ -552,8 +577,6 @@ class MainFrame2(sc.SizedFrame):
             previndex = parentitem.items.index(beforeitem) + 1
             parentitem.items.insert(previndex, pasteitem)
             
-            for item in parentitem.items:
-                print "Title: " + item.title.text
 
         elif event.GetId() == ID_PASTE_CHILD:
             newitem = self.projectTree.AppendItem(sel_item, self.projectTree.GetItemText(pastenode), 
@@ -708,7 +731,6 @@ class MainFrame2(sc.SizedFrame):
         appname = self.pageMenu.FindItemById(event.GetId()).GetLabel()
         appfilename = self.launchapps[appname].filename
         abspath = os.path.join(settings.ProjectDir, self.GetContentFilenameForSelectedItem())
-        print "launching with %s" % appname
         
         if sys.platform.startswith("darwin"):
             os.system('open -a "%s" "%s"' % (appfilename, abspath)) 
@@ -1254,8 +1276,6 @@ class MainFrame2(sc.SizedFrame):
         return True
 
     def PublishToIMS(self, event):
-        import zipfile
-        import tempfile
         #zipname = os.path.join(settings.ProjectDir, "myzip.zip")
         deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".zip"
         dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.SAVE)
@@ -1281,8 +1301,6 @@ class MainFrame2(sc.SizedFrame):
                 os.remove(dialog.GetPath())
         
             assert(self.imscp.filename)
-            import zipfile
-            import tempfile
             
             myzip = zipfile.ZipFile(zipname, "w")
             import utils.zip
