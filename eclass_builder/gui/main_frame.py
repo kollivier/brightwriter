@@ -2,6 +2,7 @@
 
 import sys, urllib2, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
+import logging
 import tempfile
 import zipfile
 
@@ -505,12 +506,19 @@ class MainFrame2(sc.SizedFrame):
 
     def OnImportIMS(self, event):
         dialog = wx.FileDialog(self, _("Select package to import"), "", "", _("Packages") + " (*.zip)|*.zip")
-        if dialog.ShowModal() == wx.ID_OK:
+        log = logging.getLogger('EClass')
+        result = dialog.ShowModal()
+        if result == wx.ID_OK:
             packagefile = dialog.GetPath()
             zip = zipfile.ZipFile(packagefile)
             if "imsmanifest.xml" in zip.namelist():
                 subdir = os.path.splitext(os.path.basename(packagefile))[0]
+                log.debug("Loading %s" % subdir)
                 self.OpenIMSPackage(zip, subdir)
+            else:
+                wx.MessageBox(_("This file does not appear to be a valid package."))
+        else:
+            log.debug("Load cancelled, result is %r" % result)
 
     def OpenIMSPackage(self, zip, subdir):
         eclassdir = os.path.join(settings.AppSettings["CourseFolder"], subdir)
@@ -521,6 +529,8 @@ class MainFrame2(sc.SizedFrame):
             else:
                 return
         
+        log = logging.getLogger('EClass')
+        log.debug("Extracting files to %s" % eclassdir)
         zip.extractall(eclassdir)
         self.LoadEClass(os.path.join(eclassdir, "imsmanifest.xml"))
                 
