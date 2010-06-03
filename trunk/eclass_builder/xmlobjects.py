@@ -268,3 +268,43 @@ class Container(Tag):
         
     def __delitem__(self, key):
         del self.childTags[key]
+
+class RootTag(Tag):
+    def __init__(self, name):
+        Tag.__init__(self, name)
+        self.filename = None
+        
+    def loadFromXML(self, filename, strictMode=False):
+        assert(os.path.exists(filename))
+        self.filename = filename
+        doc = minidom.parse(filename)
+        
+        self.fromXML(doc.getElementsByTagName(self.name)[0], strictMode)
+        # Obviously a load shouldn't set the publication as needing saved
+        self.clearDirtyBit()
+
+    def saveAsXML(self, filename=None, strictMode=False):
+        if not filename:
+            filename = self.filename
+        doc = minidom.Document()
+        
+        if len(self.organizations) > 0:
+            self.organizations.attrs["default"] = self.organizations[0].attrs["identifier"]
+        
+        doc.appendChild(self.asXML(doc, strictMode))
+        
+        import codecs
+        data = doc.toprettyxml("\t", encoding="utf-8")
+        myfile = open(filename, "w")
+        myfile.write(codecs.BOM_UTF8)
+        myfile.write(data)
+        myfile.close()
+        
+        if not os.path.exists(filename):
+            return False
+        
+        self.filename = filename
+        
+        self.clearDirtyBit()
+        
+        return True

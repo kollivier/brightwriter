@@ -7,7 +7,6 @@
 
 import string, os, sys
 from xmlobjects import *
-import xml.dom.minidom
 
 class LangStringTag(Tag):
     def __init__(self, name=None, attrs={}, ns=None, maxlength=-1):
@@ -366,7 +365,7 @@ class Resources(Container):
     def __init__(self, name="resources"):
         Container.__init__(self, name, "resource", Resource)
         
-class ContentPackage(Tag):
+class ContentPackage(RootTag):
     def __init__(self, name="manifest"):
         Tag.__init__(self, name)
         self.metadata = Metadata()
@@ -385,38 +384,11 @@ class ContentPackage(Tag):
         
         self.clearDirtyBit()
         
-    def saveAsXML(self, filename=None, strictMode=False):
-        if not filename:
-            filename = self.filename
-        doc = xml.dom.minidom.Document()
+    def saveAsXML(self, filename=None, strictMode=False):        
+        if len(self.organizations) > 0:
+            self.organizations.attrs["default"] = self.organizations[0].attrs["identifier"]
         
-        self.organizations.attrs["default"] = self.organizations[0].attrs["identifier"]
-        doc.appendChild(self.asXML(doc, strictMode))
-        
-        import codecs
-        data = doc.toprettyxml("\t", encoding="utf-8")
-        myfile = open(filename, "w")
-        myfile.write(codecs.BOM_UTF8)
-        myfile.write(data)
-        myfile.close()
-        
-        if not os.path.exists(filename):
-            return False
-        
-        self.filename = filename
-        
-        self.clearDirtyBit()
-        
-        return True
-
-    def loadFromXML(self, filename, strictMode=False):
-        assert(os.path.exists(filename))
-        self.filename = filename
-        doc = minidom.parse(filename)
-        
-        self.fromXML(doc.getElementsByTagName(self.name)[0], strictMode)
-        # Obviously a load shouldn't set the publication as needing saved
-        self.clearDirtyBit()
+        return RootTag.saveAsXML(self, filename, strictMode)
 
     def getDanglingResources(self):
         needed_resources = []
@@ -447,6 +419,8 @@ class IMSContentPackageTests(unittest.TestCase):
 
     def setUp(self):
         self.cp = ContentPackage()
+        thisdir = os.path.dirname(__file__)
+        self.metadataFilename = os.path.join(thisdir, "..", "testFiles", "cpv1p1p4cp","exmpldocs", "Full_Metadata", "imsmanifest.xml")
     
     def tearDown(self):
         self.cp = None
@@ -454,7 +428,8 @@ class IMSContentPackageTests(unittest.TestCase):
         #    os.remove("./imsmanifest.xml")
         
     def testReadingIMSFullMetadataSampleCpv1p1p4cp(self):
-        filename = os.path.join("..", "testFiles", "cpv1p1p4cp","exmpldocs", "Full_Metadata", "imsmanifest.xml")
+        thisdir = os.path.dirname(__file__)
+        filename = self.metadataFilename
         if not os.path.exists(filename):
             print "Filename not found. Have you downloaded and installed the IMS Content Packaging examples?"
             return
@@ -638,7 +613,7 @@ class IMSContentPackageTests(unittest.TestCase):
     def testDirtyBit(self):
         self.assert_(not self.cp.isDirty())
         
-        filename = os.path.join("..", "testFiles", "cpv1p1p4cp","exmpldocs", "Full_Metadata", "imsmanifest.xml")
+        filename = self.metadataFilename
         if not os.path.exists(filename):
             print "Filename not found. Have you downloaded and installed the IMS Content Packaging examples?"
             return
