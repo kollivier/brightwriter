@@ -367,7 +367,7 @@ class Resources(Container):
         
 class ContentPackage(RootTag):
     def __init__(self, name="manifest"):
-        Tag.__init__(self, name)
+        RootTag.__init__(self, name)
         self.metadata = Metadata()
         self.organizations = Organizations()
         self.resources = Resources()
