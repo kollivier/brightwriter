@@ -299,6 +299,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
         #app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
         app.AddHandlerForID(ID_PUBLISH_IMS, self.PublishToIMS)
+        app.AddHandlerForID(ID_PUBLISH_EPUB, self.PublishToEpub)
         app.AddHandlerForID(ID_BUG, self.OnReportBug)
         app.AddHandlerForID(ID_THEME, self.OnManageThemes)
         
@@ -403,6 +404,8 @@ class MainFrame2(sc.SizedFrame):
         app.RemoveUIHandlerForID(ID_PUBLISH_MENU)
         app.RemoveUIHandlerForID(ID_PUBLISH)
         app.RemoveUIHandlerForID(ID_PUBLISH_CD)
+        app.RemoveUIHandlerForID(ID_PUBLISH_EPUB)
+        app.RemoveUIHandlerForID(ID_PUBLISH_IMS)
         #app.RemoveUIHandlerForID(ID_PUBLISH_PDF)
         
         app.RemoveUIHandlerForID(ID_PROPS)
@@ -1284,6 +1287,17 @@ class MainFrame2(sc.SizedFrame):
         del busy
 
         return True
+
+    def PublishToEpub(self, event):
+        deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".epub"
+        dialog = wx.FileDialog(self, _("Export ePub package"), "", deffilename, _("ePub Files") + " (*.epub)|*.epub", wx.SAVE)
+        if dialog.ShowModal() == wx.ID_OK: 
+            import epub
+            epubPackage = epub.EPubPackage(self.imscp.organizations[0].items[0].title.text)
+            epubPackage.imsToEPub(self.imscp)
+            epubPackage.createEPubPackage(settings.ProjectDir, dialog.GetPath())
+            
+            wx.MessageBox(_("Finished exporting!"))
 
     def PublishToIMS(self, event):
         #zipname = os.path.join(settings.ProjectDir, "myzip.zip")

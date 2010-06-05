@@ -288,9 +288,6 @@ class RootTag(Tag):
             filename = self.filename
         doc = minidom.Document()
         
-        if len(self.organizations) > 0:
-            self.organizations.attrs["default"] = self.organizations[0].attrs["identifier"]
-        
         doc.appendChild(self.asXML(doc, strictMode))
         
         import codecs

@@ -24,6 +24,7 @@ def getFileMenu():
     PubMenu.Append(ID_PUBLISH_CD, _("To CD-ROM"), _("Publish EClass to a CD-ROM"))
     #PubMenu.Append(ID_PUBLISH_PDF, _("To PDF"))
     PubMenu.Append(ID_PUBLISH_IMS, _("IMS Content Package"))
+    PubMenu.Append(ID_PUBLISH_EPUB, _("ePub Package"))
     FileMenu.AppendMenu(ID_PUBLISH_MENU, "&" + _("Publish"), PubMenu, "")
     
     FileMenu.AppendSeparator()
