@@ -1,12 +1,13 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
 <title id="pagetitle"></title>
-<meta id="meta_charset" http-equiv="Content-Type" content="text/html;charset=utf-8">
-<meta id="meta_description" name="description" content="">
-<meta id="meta_keywords" name="keywords" content="">
-<meta id="meta_credit" name="copyright" content="">
-<meta id="meta_author" name="author" content="">
-<meta id="meta_url" name="URL" content="">
+<meta id="meta_charset" http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta id="meta_description" name="description" content="" />
+<meta id="meta_keywords" name="keywords" content="" />
+<meta id="meta_credit" name="copyright" content="" />
+<meta id="meta_author" name="author" content="" />
+<meta id="meta_url" name="URL" content="" />
 <script language="Javascript">
 <!--
 function expOpen(windowName)
