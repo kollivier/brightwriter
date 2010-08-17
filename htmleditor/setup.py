@@ -7,7 +7,10 @@ import os
 import shutil
 import sys
 
-sys.path.append("..")
+sys.path.append("..
+
+rootdir = os.path.abspath(".")
+
 platform = None
 if sys.platform.startswith("win"):
     import py2exe
@@ -25,6 +28,7 @@ myplist = dict(
     )
 
 py2app_options = dict(
+    iconfile=rootdir + "icons/eclass_builder.icns", 
     argv_emulation=True,
     plist=myplist,
     optimize=2
