@@ -16,6 +16,8 @@ import themes
 import types
 import utils
 
+from externals.BeautifulSoup import BeautifulSoup, Tag
+
 pluginList = []
 
 metaTags = ["name", "description", "keywords", "credit", "author", "url"]
@@ -224,10 +226,7 @@ class BaseHTMLPublisher:
         
         # use PyMeld templates if available.
         templatedir = os.path.join(settings.AppDir, "themes", themes.FindTheme(settings.ProjectSettings["Theme"]).themename)
-        if os.path.exists(os.path.join(templatedir, "default.meld")):
-            templatefile = os.path.join(templatedir, "default.meld")
-        else:
-            templatefile = os.path.join(templatedir, "default.tpl")
+        templatefile = os.path.join(templatedir, "default.meld")
         self.data['charset'] = self.GetConverterEncoding()
 
         myhtml = self.ApplyTemplate(templatefile, self.data)
@@ -291,11 +290,7 @@ class BaseHTMLPublisher:
     def _CreateHTMLPage(self, mypage, filename):
         pass #overridden in child classes
 
-    def ApplyTemplate(self, template="default.tpl", data={}):
-        if template == "default.tpl":
-            #get the template file from the current theme
-            template = os.path.join(settings.AppDir, "themes", themes.FindTheme(settings.ProjectSettings["Theme"]).themename, template)
-        
+    def ApplyTemplate(self, template="default.meld", data={}):
         temp = utils.openFile(template, "r")
         html = temp.read()
         temp.close()
@@ -303,37 +298,25 @@ class BaseHTMLPublisher:
         if 'charset' in self.data.keys():
             charset = self.data['charset']
         ext = os.path.splitext(template)[1]
-        if ext == ".tpl":
-            for key in data.keys():
-                value = data[key]
-                import types
-                if not type(value) == types.UnicodeType:
-                    value = value.decode(charset, 'replace')
-                html = string.replace(html, "--[" + key + "]--", value)
-        elif ext == ".meld":
-            meld = PyMeld.Meld(html)
-            for key in data.keys():
-                value = data[key]
-                key = key.lower()
-                global metaTags
-                if key in metaTags:
-                    key = "meta_" + key
-                    exec "hastag = hasattr(meld, '%s')" % key
-                    if hastag == True:
-                        if key == "meta_charset":
-                            value = u"text/html;charset=%s" % charset 
-                        tag = eval("meld." + key)
-                        if tag:
-                            tag.content = value.encode(charset, 'replace')
-                        
-                else:
-                    exec "hastag = hasattr(meld, '%s')" % key
-                    if hastag == True:
-                        tag = eval("meld." + key)
-                        if tag:
-                            tag._content = value.encode(charset, 'replace')
-            html = str(meld)        
-            html = html.decode(charset, 'replace')
+        soup = BeautifulSoup(html)
+        for key in data.keys():
+            value = data[key]
+            key = key.lower()
+            global metaTags
+            if key in metaTags:
+                tag = soup.find("meta", attrs={"http_equiv": key})
+                if not tag:
+                    tag = Tag(soup, "meta")
+                    tag['http-equiv'] = key
+                    soup.html.head.insert(0, tag)
+
+                tag['content'] = value
+                if key == 'name':
+                    soup.html.head.insert(0, value)
+            elif key == 'content':
+                    soup.html.body.insert(0, value)
+        
+        html = soup.prettify(charset)
                 
         return html
         
@@ -374,14 +357,14 @@ class PluginTests(unittest.TestCase):
         pub_path = os.path.join(self.testdir, pub_filename)
         self.assert_(os.path.exists(pub_path))
         print pub_path
-        meld = PyMeld.Meld(open(pub_path).read())
+        soup = BeautifulSoup(open(pub_path).read())
         
         html = """<p>Hello world!
 <p>Test
 """
-        self.assertEquals(meld.meta_description.content, "A Description")
-        self.assertEquals(meld.meta_keywords.content, "keyword1, keyword2")
-        self.assertEquals(meld.content._content, html)
+        self.assertEquals(soup.find("meta", attrs={"http-equiv":"description"})['content'], "A Description")
+        self.assertEquals(soup.find("meta", attrs={"http-equiv":"keywords"})['content'], "keyword1, keyword2")
+        self.assertEquals(soup.body, html)
         
 def getTestSuite():
     return unittest.makeSuite(IndexingTests)
