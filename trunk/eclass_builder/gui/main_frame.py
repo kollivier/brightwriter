@@ -148,7 +148,7 @@ class MainFrame2(sc.SizedFrame):
         self.selectedFileLastModifiedTime = 0
         
         self.themes = themes.ThemeList(os.path.join(settings.AppDir, "themes"))
-        self.currentTheme = self.themes.FindTheme("Default (no frames)")
+        self.currentTheme = self.themes.FindTheme("Default (frames)")
         self.launchApps = []
         
         wx.InitAllImageHandlers()
