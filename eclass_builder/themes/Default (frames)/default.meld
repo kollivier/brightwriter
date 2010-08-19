@@ -1,41 +1,7 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
 <title></title>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-<script type="text/javascript">
-<!--
-function expOpen(windowName)
-{
-	if (document.body)
-	{
-	explorer = window.open(windowName, "", "toolbar=yes,location=no,directories=no,status=no,menubar=no,scrollbars=yes,top=10,left=25,height=432,width=576");
-	}
-	else
-	{
-	explorer = window.open(windowName, "", "toolbar=yes,location=no,directories=no,status=no,menubar=no,scrollbars=yes,height=432,width=576");
-	}
-}
-
-function openCredit(windowName, text)
-{
-	if (document.body)
-	{
-	explorer = window.open("",windowName,"toolbar=no,location=no,directories=no,status=no,menubar=yes,scrollbars=yes,top=10,left=25,height=200,width=200");
-	}
-	else
-	{
-	explorer = window.open("", windowName,"toolbar=no,location=no,directories=no,status=no,menubar=yes,scrollbars=yes,height=200,width=200");
-	}
-	
-	var mydoc;
-	mydoc = explorer.document;
-	mydoc.open();
-	mydoc.write("<HTML><HEAD></HEAD><BODY>" + text + "</BODY></HTML>");
-	mydoc.close();
-}
-//-->
-</script>
 </head>
 <body>
 </body>
