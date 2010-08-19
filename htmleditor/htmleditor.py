@@ -39,6 +39,12 @@ def _(text):
 # should be part of the frame?
 webPageWildcard = _("Web Pages") + "(*.htm,*.html)|*.html;*.htm"
 
+def getMimeTypeForHTML(html):
+    mimetype = 'text/html'
+    if html.find("//W3C//DTD XHTML") != -1:
+        mimetype = 'application/xhtml+xml'
+    return mimetype
+
 class STCFindReplaceController(wx.EvtHandler):
     '''
     This class controls Find and Replace behaviors for wxSTC, e.g. adding
@@ -425,7 +431,9 @@ class EditorFrame (sc.SizedFrame):
             self.fileHistory.AddFileToHistory(filename)
             fileurl = urllib.quote(os.path.dirname(filename)) + "/"
             self.baseurl = 'file://' + fileurl
-            self.webview.SetPageSource(htmlutils.getUnicodeHTMLForFile(filename), self.baseurl)
+            html = htmlutils.getUnicodeHTMLForFile(filename)
+            
+            self.webview.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
             self.SetTitle(os.path.basename(filename))
             self.filename = filename
 
@@ -442,7 +450,7 @@ class EditorFrame (sc.SizedFrame):
         source = self.webview.GetPageSource()
         if source.find('<base href="about:blank">') != -1:
             pagetext = source.replace('<base href="about:blank">', '')
-            self.webview.SetPageSource(pagetext)
+            self.webview.SetPageSource(pagetext, self.baseurl)
             self.SetTitle(self.webview.GetPageTitle())
             #self.webview.UpdateBaseURI()
             self.webview.Reload()
@@ -514,7 +522,7 @@ class EditorFrame (sc.SizedFrame):
         dialog.SetCleanedHTML(html)
         dialog.log.SetValue(errors)
         if dialog.ShowModal() == wx.ID_OK:
-            self.webview.SetPageSource(html)
+            self.webview.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
         
 
     def OnSize(self, evt):
