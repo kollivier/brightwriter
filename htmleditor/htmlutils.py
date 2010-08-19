@@ -83,8 +83,10 @@ def cleanUpHTML(html, options=None):
                         "Word-2000" : 1,
                         "force-output" : 1,
                         "output-xhtml" : 1,
+                        "doctype" : "strict",
                         "drop-empty-paras": 1,
                         "output-encoding" : "utf8",
+                        "clean": 1
                        }
     if options:
         default_options.extend(options)
