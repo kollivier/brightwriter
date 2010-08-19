@@ -218,7 +218,6 @@ class BaseHTMLPublisher:
         self.data['keywords'] = TextToXMLAttr(keywords)
         self.data['URL'] = utils.GetFileLink(filename)
         self.data['SourceFile'] = filename
-        self.data['credit'] = self.GetCreditString()
         filename = os.path.join(self.dir, "Text", filename)
         filename = self.GetFilename(filename)
         self.GetLinks()
@@ -312,7 +311,7 @@ class BaseHTMLPublisher:
 
                 tag['content'] = value
                 if key == 'name':
-                    soup.html.head.insert(0, value)
+                    soup.html.head.title.insert(0, value)
             elif key == 'content':
                     soup.html.body.insert(0, value)
         
