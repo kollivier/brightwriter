@@ -33,7 +33,7 @@ def addIMSItemsToEPubRecursive(imspackage, imsitems, ncxparent, opf):
             opf.spine.itemrefs.append(opfitemref)
             
             if len(refitem.files) > 0:
-                filename = refitem.files[0].attrs['href']
+                filename = refitem.attrs['href']
                 navpoint.content.attrs['src'] = filename
                 opfitem = xmlobjects.Tag("item")
                 opfitem.attrs['href'] = filename
