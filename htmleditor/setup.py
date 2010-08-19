@@ -7,8 +7,6 @@ import os
 import shutil
 import sys
 
-sys.path.append("..
-
 rootdir = os.path.abspath(".")
 
 platform = None
@@ -28,7 +26,7 @@ myplist = dict(
     )
 
 py2app_options = dict(
-    iconfile=rootdir + "icons/eclass_builder.icns", 
+    iconfile=rootdir + "/htmledit/icons/eclass_htmledit.icns", 
     argv_emulation=True,
     plist=myplist,
     optimize=2
