@@ -8,7 +8,6 @@ import ims
 import ims.contentpackage
 import locale
 import os
-import PyMeld
 import settings
 import string
 import sys
@@ -223,7 +222,6 @@ class BaseHTMLPublisher:
         self.GetLinks()
         self.GetData()
         
-        # use PyMeld templates if available.
         templatedir = os.path.join(settings.AppDir, "themes", themes.FindTheme(settings.ProjectSettings["Theme"]).themename)
         templatefile = os.path.join(templatedir, "default.meld")
         self.data['charset'] = self.GetConverterEncoding()
