@@ -160,3 +160,25 @@ class ErrorLogViewer(sc.SizedDialog):
                         self.listCtrl.SetStringItem(self.itemCount, 1, "%s : %s" % (errArray[1], errArray[2]))
                     self.listCtrl.SetItemData(self.itemCount, index)
                     self.itemCount += 1
+
+class PublishErrorLogViewer(sc.SizedDialog):
+    def __init__(self, parent=None, errorString=""):
+        sc.SizedDialog.__init__(self, parent, -1, _("Publishing Errors"), wx.DefaultPosition, wx.Size(420, 340), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        pane = self.GetContentsPane()
+        
+        self.textCtrl = wx.TextCtrl(pane, -1, errorString, style=wx.TE_MULTILINE | wx.TE_READONLY)
+        self.textCtrl.SetSizerProps(expand=True, proportion=1)
+        
+        self.saveButton = wx.Button(pane, -1, _("Save Error Log"))
+        self.saveButton.SetSizerProps(halign="right")
+        
+        self.saveButton.Bind(wx.EVT_BUTTON, self.OnButton)
+        
+    def OnButton(self, event):
+        filedlg = wx.FileDialog(self, _("Save Log File"), wildcard="Text Files (*.txt);*.txt", style=wx.FD_SAVE)
+        if filedlg.ShowModal() == wx.ID_OK:
+            filename = filedlg.GetPath()
+            afile = open(filename, "w")
+            afile.write(self.textCtrl.GetValue())
+            afile.close()
+        

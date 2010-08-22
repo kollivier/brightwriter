@@ -19,6 +19,23 @@ from StringIO import StringIO
 
 themename = "Default (frames)"
 
+import logging
+
+class PublishErrorHandler(logging.Handler):
+    def __init__(self):
+        logging.Handler.__init__(self, logging.ERROR)
+        self.errors = []
+        
+    def clear(self):
+        self.errors = []
+
+    def emit(self, record):
+        self.errors.append("%s" % record.getMessage())
+
+errorLog = PublishErrorHandler()
+log = logging.getLogger('HTMLPublisher')
+log.addHandler(errorLog)
+
 class BaseHTMLPublisher:
     """
     Class: HTMLPublish.HTMLPublisher
@@ -56,7 +73,17 @@ class BaseHTMLPublisher:
         self.themedir = os.path.join(settings.AppDir, "themes", themename)
         self.cancelled = False
 
+    def GetErrors(self):
+        global errorLog
+        if errorLog:
+            return errorLog.errors
+    
+        return None
+
     def Publish(self):
+        global errorLog
+        errorLog.clear()
+        
         self.progress = None
         if not self.parent or not self.parent.imscp:
             return
