@@ -616,7 +616,8 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             term_regex = re.compile(re.escape(term[0]).replace("\ ", "\s+"))
             results = soup.findAll(text=term_regex)
             if not results:
-                print "Regex failed for %s" % term_regex
+                publishLog = logging.getLogger("HTMLPublisher")
+                publishLog.error("Could not find hotword \"%s\" (link: %s) in page \"%s\"." % (term[0], term[1], self.data['name']))
             for result in results:
                 str_result = re.sub(term_regex, """<a href="%s" target=_blank>%s</a>""" % (term[1], term[0]), result)
                 #newelement = result.replace(term[0], )
