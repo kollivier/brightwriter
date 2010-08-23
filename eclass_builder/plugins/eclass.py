@@ -519,7 +519,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             myfilename = ""
             if term.type == "Page":
                 myfilename = string.replace(os.path.basename(filename), ".ecp", "")
-                myfilename = myfilename + "hw" + `counter` + ".htm"
+                myfilename = myfilename + "_" + fileutils.MakeFileName2(term.page.name + ".html")
                 html = self._CreateEClassPage(term.page, myfilename, True)
             elif term.type == "URL":
                 myfilename = term.url
@@ -527,7 +527,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             termlist.append([term.name, myfilename])
             counter = counter + 1
 
-        myhtml = ""
+        myhtml = u""
         sourcefile = os.path.join(settings.ProjectDir, "Text", mypage.media.text)
         if len(mypage.media.text) > 0 and os.path.exists(sourcefile):
             myfile = None
@@ -541,7 +541,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
                 myhtml = self._ConvertFile(sourcefile)
 
         else:
-            myhtml = ""
+            myhtml = u""
         objtext = ""
         
         self.data['name'] = mypage.name
@@ -555,7 +555,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
         #try:
         objtext = utils.makeUnicode(objtext)
-        myhtml = self._AddMedia(mypage) + objtext + myhtml
+        myhtml = self._AddMedia(mypage, ishotword) + objtext + myhtml
 
         myhtml = u'<h1 align="center">' + self.data['name'] + u'</h1>' + myhtml
         self.data['content'] = myhtml
@@ -564,24 +564,20 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             self.data['credit'] = self.GetCreditString()
             
         else: #ugly hack for now...
-            self.data['content'] += "<hr /><p align=\"center\"><a href=\"javascript:window.close()\">" + _("Close") + "</a></p>"
-            
             try:
                 myhtml = self.ApplyTemplate(data=self.data)
             except UnicodeError:
                 raise
 
-            try:        
-                myfile = utils.openFile(os.path.join(self.dir, "pub",filename), "w")
-                myfile.write(myhtml.encode("utf8"))
-                myfile.close()
-            except:
-                traceback.print_exc()
-                message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
-                global log
-                log.error(message)
-                raise IOError, message
-                return False    
+            outfile = os.path.join(self.dir, "pub",filename)
+            mydir = os.path.dirname(outfile)
+            if not os.path.exists(mydir):
+                os.makedirs(mydir)
+            myfile = utils.openFile(outfile, "w")
+            myhtml = self.EncodeHTMLToCharset(myhtml, "utf8")
+            myfile.write(myhtml)
+            myfile.close()
+
         return myhtml
         
     def _ConvertFile(self, filename):
@@ -626,7 +622,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         return soup.prettify(encoding=None)
 
 
-    def _AddMedia(self, mypage):
+    def _AddMedia(self, mypage, isHotword):
         """Appends media files specified in the EClassPage to the current HTML page."""
         HTML = ""
     
@@ -637,12 +633,15 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         audioHTML = ""
         presentHTML = ""
  
+        rootDir = ".."
+        mediaDir = ""
+        
         if len(mypage.media.image) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "Graphics", mypage.media.image)):
-            imageHTML = "<IMG src='../Graphics/%s'>" % (mypage.media.image)
+            imageHTML = "<IMG src='%s/Graphics/%s'>" % (rootDir, mypage.media.image)
         
         videofile = os.path.join(settings.ProjectDir, "pub", "Video", mypage.media.video)
         if os.path.exists(videofile):
-            url = "Video/" + mypage.media.video
+            url = mediaDir + "Video/" + mypage.media.video
             videoHTML = mmedia.getHTMLTemplate(videofile, url, isVideo=True, 
                             autoStart=mypage.media.videoautostart)
             basename, ext = os.path.splitext(url) 
@@ -651,12 +650,12 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
         audiofile = os.path.join(settings.ProjectDir, "pub", "Audio", mypage.media.audio)
         if len(mypage.media.audio) > 0 and os.path.exists(audiofile):
-            url = "Audio/" + mypage.media.audio
+            url = mediaDir + "Audio/" + mypage.media.audio
             audioHTML = mmedia.getHTMLTemplate(audiofile, url, isVideo=False, 
                             autoStart=mypage.media.audioautostart)
 
         if len(mypage.media.powerpoint) > 0 and os.path.exists(os.path.join(settings.ProjectDir, "Present", mypage.media.powerpoint)):
-            presentHTML = """<a href="../Present/%(pres)s" target="_blank">%(viewpres)s</a>""" % {"pres":mypage.media.powerpoint, "viewpres":_("View Presentation")}
+            presentHTML = """<a href="%(root)s/Present/%(pres)s" target="_blank">%(viewpres)s</a>""" % {"root": rootDir, "pres":mypage.media.powerpoint, "viewpres":_("View Presentation")}
     
         if len(imageHTML) > 0 and len(videoHTML) > 0:
             HTML = HTML + """<CENTER>
