@@ -16,7 +16,7 @@ import appdata
 import eclassutils
 import uuid
 
-filenameRestrictedChars = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
+filenameRestrictedChars = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|", "'", "\""]
 
 def getStdErrorMessage(type = "IOError", args={}):
     if type == "IOError":
