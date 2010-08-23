@@ -474,6 +474,12 @@ class MainFrame2(sc.SizedFrame):
     def OnRefreshTheme(self, event):
         publisher = self.currentTheme.HTMLPublisher(self)
         result = publisher.Publish()
+        errors = publisher.GetErrors()
+        
+        if errors:
+            errorString = '\n\n'.join(errors)
+            publishErrorsDialog = gui.error_viewer.PublishErrorLogViewer(self, errorString)
+            publishErrorsDialog.Show()
 
     def OnImportFile(self, event):
         parent = self.projectTree.GetCurrentTreeItem()
@@ -1149,6 +1155,32 @@ class MainFrame2(sc.SizedFrame):
                     firstItem = self.projectTree.GetFirstChild(self.projectTree.GetRootItem())[0]
                     self.projectTree.Expand(firstItem)
                     self.projectTree.SelectItem(firstItem, True)
+
+                # convert EClass pages into straight HTML
+                if eclassutils.IMSHasEClassPages(self.imscp):
+                    result = wx.MessageDialog(self, 
+                        _("In order to support modern formats such as ePub, the EClass Page format used in previous versions has been replaced with an inline document editor. This EClass needs to be converted to use the new format."), _("EClass Page Format No Longer Supported"), 
+                        wx.YES_NO | wx.ICON_INFORMATION).ShowModal()
+                    
+                    if result == wx.ID_NO:
+                        wx.MessageBox(_("Please open this course in the latest 2.5 version of EClass.Builder."))
+                        wx.GetApp().ExitMainLoop()
+                        sys.exit(0)
+                        return
+                        
+                    publisher = self.currentTheme.HTMLPublisher(self)
+                    result = publisher.Publish()
+                    errors = publisher.GetErrors()
+                
+                    if errors:
+                        errorString = '\n\n'.join(errors)
+                        publishErrorsDialog = gui.error_viewer.PublishErrorLogViewer(self, errorString)
+                        publishErrorsDialog.Show()
+                        
+                    shutil.copy(os.path.join(settings.ProjectDir, "imsmanifest.xml"), os.path.join(settings.ProjectDir, "imsmanifest-backup.xml"))
+                    
+                    eclassutils.IMSRemoveEClassPages(self.imscp)
+                    
         
         except:
             del busy
