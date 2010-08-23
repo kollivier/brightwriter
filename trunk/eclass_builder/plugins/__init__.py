@@ -288,6 +288,8 @@ class BaseHTMLPublisher:
         pass #overridden in child classes
 
     def ApplyTemplate(self, template="default.meld", data={}):
+        if not os.path.exists(template):
+            template = os.path.join(settings.AppDir, "themes", themes.FindTheme(settings.ProjectSettings["Theme"]).themename, "default.meld")
         temp = utils.openFile(template, "r")
         html = temp.read()
         temp.close()
