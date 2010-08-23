@@ -29,7 +29,20 @@ def getEClassPageForIMSResource(imsresource):
                 filename = file.attrs["href"]
     
     return filename
+
+def IMSHasEClassPages(imspackage):
+    for resource in imspackage.resources:
+        if getEClassPageForIMSResource(resource):
+            return True
+            
+    return False
     
+def IMSRemoveEClassPages(imspackage):
+    for resource in imspackage.resources:
+        for file in resource.files:
+            if "href" in file.attrs and os.path.splitext(file.attrs["href"])[1] == ".ecp":
+                resource.files.remove(file)
+
 def getEditableFileForIMSItem(imscp, imsitem):
     filename = None
     if imsitem:
