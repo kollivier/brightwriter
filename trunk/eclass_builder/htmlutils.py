@@ -13,6 +13,17 @@ import sys
 import urllib
 import utils
 
+def getCurrentEncoding():
+    import locale
+    encoding = locale.getdefaultlocale()[1]
+    if not encoding or encoding == 'ascii':
+        if sys.platform == "darwin":
+            encoding = "utf-8"
+        else:
+            encoding = "iso-8859-1" 
+    
+    return encoding
+
 def TextToHTMLChar(mytext):
     
     return TextToXMLChar(mytext)
@@ -66,32 +77,57 @@ def getUnicodeHTMLForFile(filename):
         
     return utils.makeUnicode(html, encoding)
 
-def cleanUpHTML(filename, options=None):
+def stripEmptyParagraphs(soup):
+    matches = soup.findAll(text=re.compile("^\s*&nbsp;\s*$"))
+    for match in matches:
+        match.extract()
+
+def removeVMLAttrs(soup):
+    matches = soup.findAll(attrs={"v:shapes": re.compile(".*")})
+    for match in matches:
+        del match["v:shapes"]
+
+def addMetaTag(soup, attrs):
+    """
+    This is used basically to re-add the stripped encoding meta tag caused
+    by running the document through HTMLTidy.
+    """
+    head = soup.find('head')
+    if head:
+        meta = soup.find(attrs={'http-equiv': 'Content-type'})
+        if meta:
+            meta.extract()
+        tag = BeautifulSoup.Tag(soup, "meta", attrs)
+        head.insert(0, tag)
+
+def cleanUpHTML(html, options=None):
     import tidylib
     tidylib.BASE_OPTIONS = {}
 
     default_options = { 
-                        "Word-2000" : 1,
                         "force-output" : 1,
                         "output-xhtml" : 1,
+                        "doctype" : "strict",
                         "drop-empty-paras": 1,
                         "output-encoding" : "utf8",
+                        "clean": 1,
+                        "bare": 1
                        }
     if options:
         default_options.extend(options)
-        
-    html = getUnicodeHTMLForFile(filename)
 
     # first fix up footnotes so that HTMLTidy won't ditch them
     soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
     footnoteFixer(soup) #html)
     stripEmptyParagraphs(soup)
+    removeVMLAttrs(soup)
     
     html, errors = tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
     
-    html = addMetaTag(html, [('http-equiv', 'Content-Type'), ('content', 'text/html; charset=utf-8')])
+    soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
+    addMetaTag(soup, [('http-equiv', 'Content-type'), ('content', 'text/html; charset=utf-8')])
     
-    return html.encode("utf8"), errors
+    return soup.prettify(encoding=None), errors
     
 
 
