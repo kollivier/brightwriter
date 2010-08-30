@@ -275,67 +275,32 @@ class PagePropertiesDialog (sc.SizedDialog):
             wx.MessageBox(_("Please select a file to provide the content for this page."))
             return 
 
-        if isinstance(self.node, conman.conman.ConNode):
-            self.content.metadata.keywords = self.txtKeywords.GetValue()
-            self.content.metadata.description = self.txtDescription.GetValue()
-            self.content.metadata.name = self.txtTitle.GetValue()
-            self.content.metadata.rights.description = self.txtCredit.GetValue()
-
-            if not self.txtDate.GetValue() == "":
-                for person in self.content.metadata.lifecycle.contributors:
-                    if person.role == "Author":
-                        person.date = self.txtDate.GetValue()
-            else:
-                #check if we can remove any empty contact info that might be there
-                for person in self.content.metadata.lifecycle.contributors:
-                    try:
-                        if person.role == "Author" and self.txtAuthor.GetValue() == "":
-                            self.content.metadata.lifecycle.contributors.remove(person)
-                        elif person.role == "Content Provider" and self.txtOrganization.GetValue() == "":
-                            self.content.metadata.lifecycle.contributors.remove(person)
-                    except:
-                        self.parent.log.error(_("Error removing empty contact."))
+        lang = appdata.projectLanguage
         
-            self.content.metadata.classification.categories = []
-            for num in range(0, self.lstCategories.GetCount()):
-                self.content.metadata.classification.categories.append(self.lstCategories.GetString(num))
-    
-            self.content.filename = self.txtExistingFile.GetValue()
-
-        elif isinstance(self.node, ims.contentpackage.Item):
-            lang = appdata.projectLanguage
+        assert self.txtTitle.GetValue() is not None and self.txtTitle.GetValue() != ""
+        self.node.title.text = self.txtTitle.GetValue()
+        self.content.metadata.lom.general.description[lang] = self.txtDescription.GetValue()
+        self.content.metadata.lom.general.keyword[lang] = self.txtKeywords.GetValue()
+        self.content.metadata.lom.rights.description[lang] = self.txtCredit.GetValue()
+        
+        filename = self.txtExistingFile.GetValue()            
+        self.content.setFilename(filename)
             
-            assert self.txtTitle.GetValue() is not None and self.txtTitle.GetValue() != ""
-            self.node.title.text = self.txtTitle.GetValue()
-            self.content.metadata.lom.general.description[lang] = self.txtDescription.GetValue()
-            self.content.metadata.lom.general.keyword[lang] = self.txtKeywords.GetValue()
-            self.content.metadata.lom.rights.description[lang] = self.txtCredit.GetValue()
-            
-            filename = self.txtExistingFile.GetValue()
-            if os.path.splitext(filename)[1] == ".ecp":
-                eclassutils.setEClassPageForIMSResource(self.content, filename)
-            else:
-                for item in self.content.files:
-                    if "href" in item.attrs and os.path.splitext(item.attrs["href"])[1] == ".ecp":
-                        self.content.files.remove(item)
-                    
-                self.content.setFilename(filename)
-                
-            for person in self.content.metadata.lom.lifecycle.contributors:
-                role = person.role.value.getKeyOrEmptyString(lang)
-                if role in ["Author", "Content Provider"]:
-                    if (role == "Author" and self.txtAuthor.GetValue() == "" and self.txtDate.GetValue() == "") \
-                        or (role == "Content Provider" and self.txtOrganization.GetValue() == ""):
-                        self.content.metadata.lom.lifecycle.contributors.remove(person)
+        for person in self.content.metadata.lom.lifecycle.contributors:
+            role = person.role.value.getKeyOrEmptyString(lang)
+            if role in ["Author", "Content Provider"]:
+                if (role == "Author" and self.txtAuthor.GetValue() == "" and self.txtDate.GetValue() == "") \
+                    or (role == "Content Provider" and self.txtOrganization.GetValue() == ""):
+                    self.content.metadata.lom.lifecycle.contributors.remove(person)
+                else:
+                    vcard = conman.vcard.VCard()
+                    vcard.parseString(person.centity.vcard.text)
+                    if role == "Author":
+                        vcard.fname.value = self.txtAuthor.GetValue()
+                        if self.txtDate.GetValue() != "":
+                            person.date.datetime.text = self.txtDate.GetValue()
                     else:
-                        vcard = conman.vcard.VCard()
-                        vcard.parseString(person.centity.vcard.text)
-                        if role == "Author":
-                            vcard.fname.value = self.txtAuthor.GetValue()
-                            if self.txtDate.GetValue() != "":
-                                person.date.datetime.text = self.txtDate.GetValue()
-                        else:
-                            vcard.fname.value = self.txtOrganization.GetValue()
+                        vcard.fname.value = self.txtOrganization.GetValue()
                     
 
         if not self.txtAuthor.GetValue() == "":
