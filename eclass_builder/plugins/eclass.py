@@ -52,7 +52,7 @@ plugin_info = { "Name":"eclass",
                 "Mime Type": "",
                 "IMS Type": "webcontent",
                 "Requires":"", 
-                "CanCreateNew":True}
+                "CanCreateNew":False}
 
 #-------------------------- DATA CLASSES ----------------------------
 

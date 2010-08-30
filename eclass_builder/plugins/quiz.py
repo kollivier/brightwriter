@@ -46,7 +46,7 @@ plugin_info = { "Name":"quiz",
                 "Mime Type": "",
                 "IMS Type": "imsqti_item_xmlv2p0",
                 "Requires":"",
-                "CanCreateNew":True}
+                "CanCreateNew":False}
 
 #-------------------------- DATA CLASSES ----------------------------
 

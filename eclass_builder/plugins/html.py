@@ -45,7 +45,7 @@ log = logging.getLogger('EClass')
 plugin_info = { "Name":"html", 
                 "FullName":"Web Page", 
                 "Directory": "Text", 
-                "Extension": ["htm", "html"], 
+                "Extension": ["xhtml", "htm", "html"], 
                 "Mime Type": "text/html",
                 "IMS Type": "webcontent",
                 "Requires":"", 
@@ -54,29 +54,29 @@ plugin_info = { "Name":"html",
 #-------------------------- DATA CLASSES ----------------------------
 
 htmlpage = """
-    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-    <html>
-    <head>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
+<head>
     <title>New Page</title>
-    </head>
-    <body></body>
-    </html>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+</head>
+<body>
+</body>
+</html>
 """
 
 def CreateNewFile(filename, name="New Page"):
-    try:
-        if os.path.exists(filename):
-            return False
-        file = htmlpage
-        file = file.replace("New Page", name)
-        output = open(filename, "w")
-        output.write(file)
-        output.close()
-        return True
-    except:
-        global log
-        log.error(_("Could not create new HTML file."))
-        return False
+    if os.path.exists(filename):
+        raise IOError, "File already exists!"
+    file = htmlpage
+    file = file.replace("New Page", name)
+    dirname = os.path.dirname(filename)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    output = open(filename, "w")
+    output.write(file)
+    output.close()
 
 #------------------------ PUBLISHER CLASSES -------------------------------------------
 #if this isn't the main script, then we're probably loading in EClass.Builder
