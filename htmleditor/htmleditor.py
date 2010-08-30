@@ -19,11 +19,18 @@ if not hasattr(sys, 'frozen'):
 import htmledit.htmlattrs as htmlattrs
 
 import editordelegate
+import edittoolbar
 import htmlutils
 import aboutdialog
 import cleanhtmldialog
 
 from constants import *
+
+ID_NEW = wx.NewId()
+ID_OPEN = wx.NewId()
+ID_SAVE = wx.NewId()
+ID_SAVE_AS = wx.NewId()
+ID_QUIT = wx.NewId()
 
 try:
     import wx.webview
@@ -173,6 +180,8 @@ class EditorFrame (sc.SizedFrame):
         self.insertmenu.Append(ID_INSERT_BOOKMARK, _("Bookmark") + "\tCTRL+SHIFT+B")
         self.insertmenu.AppendSeparator()
         self.insertmenu.Append(ID_INSERT_IMAGE, _("Image..."))
+        self.insertmenu.Append(ID_INSERT_TABLE, _("Insert Table"))
+        
 
         self.formatmenu = wx.Menu()
         textstylemenu = wx.Menu()
@@ -188,10 +197,7 @@ class EditorFrame (sc.SizedFrame):
         self.formatmenu.AppendMenu(wx.NewId(), _("Text Style"), textstylemenu)
         self.formatmenu.AppendSeparator()
         self.formatmenu.Append(ID_CLEANUP_HTML, _("Clean Up HTML"))
-        
-        self.tablemenu = wx.Menu()
-        self.tablemenu.Append(ID_INSERT_TABLE, _("Insert Table"))
-        
+                
         self.helpmenu = wx.Menu()
         self.helpmenu.Append(wx.ID_ABOUT, _("About %s" % wx.GetApp().GetAppName()))
 
@@ -199,7 +205,6 @@ class EditorFrame (sc.SizedFrame):
         self.menu.Append(self.editmenu, _("Edit"))
         self.menu.Append(self.insertmenu, _("Insert"))
         self.menu.Append(self.formatmenu, _("Format"))
-        self.menu.Append(self.tablemenu, _("Table"))
         self.menu.Append(self.helpmenu, _("Help"))
         
         self.SetMenuBar(self.menu)
@@ -216,28 +221,11 @@ class EditorFrame (sc.SizedFrame):
         icnNew = wx.Bitmap(os.path.join(icondir, "document-new.png"))
         icnOpen = wx.Bitmap(os.path.join(icondir, "document-open.png"))
         icnSave = wx.Bitmap(os.path.join(icondir, "document-save.png"))
-        icnBold = wx.Bitmap(os.path.join(icondir, "format-text-bold.png"))
-        icnItalic = wx.Bitmap(os.path.join(icondir, "format-text-italic.png"))
-        icnUnderline = wx.Bitmap(os.path.join(icondir, "format-text-underline.png"))
-
+        
         icnCut = wx.Bitmap(os.path.join(icondir, "edit-copy.png"))
         icnCopy = wx.Bitmap(os.path.join(icondir, "edit-cut.png"))
         icnPaste = wx.Bitmap(os.path.join(icondir, "edit-paste.png"))
         
-        icnAlignLeft = wx.Bitmap(os.path.join(icondir, "format-justify-left.png")) 
-        icnAlignCenter = wx.Bitmap(os.path.join(icondir, "format-justify-center.png"))
-        icnAlignRight = wx.Bitmap(os.path.join(icondir, "format-justify-right.png"))
-        icnAlignJustify = wx.Bitmap(os.path.join(icondir, "format-justify-fill.png"))
-
-        icnIndent = wx.Bitmap(os.path.join(icondir, "format-indent-more.png")) 
-        icnDedent = wx.Bitmap(os.path.join(icondir, "format-indent-less.png"))
-        icnBullets = wx.Bitmap(os.path.join(icondir, "fatcow", "text_list_bullets.png"))
-        icnNumbering = wx.Bitmap(os.path.join(icondir, "fatcow", "text_list_numbers.png"))
-
-        #icnColour = wx.Bitmap(os.path.join(icondir, "colour16.gif"))
-
-        icnLink = wx.Bitmap(os.path.join(icondir, "applications-internet.png"))
-        icnImage = wx.Bitmap(os.path.join(icondir, "image-x-generic.png")) 
         #icnHR = wx.Bitmap(os.path.join(icondir, "horizontal_line16.gif"))
         #create toolbar
 
@@ -262,41 +250,7 @@ class EditorFrame (sc.SizedFrame):
 
         self.SetToolBar(self.toolbar)
 
-        self.toolbar2 = wx.ToolBar(self.panel, -1)
-        self.toolbar2.SetSizerProps(expand=True, border=("all", 0))
-        self.toolbar2.SetToolBitmapSize(wx.Size(16,16))
-        self.fontlist = wx.ComboBox(self.toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
-
-        self.fontsizes = ["1", "2", "3", "4", "5", "6", "7"]
-        self.fontsizelist = wx.ComboBox(self.toolbar2, wx.NewId(), choices=self.fontsizes)
-        if self.fontsizelist.GetCount() > 0:
-            self.fontsizelist.SetSelection(0)
-
-        #self.toolbar2.AddControl(self.headinglist)
-        #self.toolbar2.AddSeparator()
-        self.toolbar2.AddControl(self.fontlist)
-        self.toolbar2.AddSeparator()
-        self.toolbar2.AddControl(self.fontsizelist)
-        self.toolbar2.AddSeparator()
-        
-        self.toolbar2.AddCheckTool(ID_BOLD, icnBold, shortHelp=_("Bold"))
-        self.toolbar2.AddCheckTool(ID_ITALIC, icnItalic, shortHelp=_("Italic"))
-        self.toolbar2.AddCheckTool(ID_UNDERLINE, icnUnderline, shortHelp=_("Underline"))
-        #self.toolbar2.AddSimpleTool(ID_FONT_COLOR, icnColour, _("Font Color"), _("Select a font color"))
-        self.toolbar2.AddSeparator()
-        self.toolbar2.AddCheckTool(ID_ALIGN_LEFT, icnAlignLeft, shortHelp=_("Left Align"))
-        self.toolbar2.AddCheckTool(ID_ALIGN_CENTER, icnAlignCenter, shortHelp=_("Center"))
-        self.toolbar2.AddCheckTool(ID_ALIGN_RIGHT, icnAlignRight, shortHelp=_("Right Align"))
-        self.toolbar2.AddSeparator()
-        self.toolbar2.AddSimpleTool(ID_DEDENT, icnDedent, _("Decrease Indent"), _("Decrease Indent"))
-        self.toolbar2.AddSimpleTool(ID_INDENT, icnIndent, _("Increase Indent"), _("Increase Indent"))
-        self.toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
-        self.toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
-        self.toolbar2.AddSeparator()
-        self.toolbar2.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
-        self.toolbar2.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
-        #self.toolbar.AddSimpleTool(ID_INSERT_HR, icnHR, _("Insert Horizontal Line"), _("Insert Horizontal Line"))
-        self.toolbar2.Realize()
+        self.toolbar2 = edittoolbar.editToolBar(self.panel)
 
         self.notebook = fnb.FlatNotebook(self.panel, -1, style=fnb.FNB_NODRAG)
         self.notebook.SetSizerProps(expand=True,proportion=1)
@@ -333,9 +287,9 @@ class EditorFrame (sc.SizedFrame):
         accelerators = wx.AcceleratorTable([(wx.ACCEL_CTRL, ord('B'), ID_BOLD),(wx.ACCEL_CTRL, ord('I'), ID_ITALIC), (wx.ACCEL_CTRL, ord('U'), ID_UNDERLINE), (wx.ACCEL_CTRL, ord('S'), ID_SAVE)]) 
         self.SetAcceleratorTable(accelerators)
 
-        self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
-        wx.EVT_TEXT_ENTER(self, self.fontlist.GetId(), self.OnFontSelect)
-        wx.EVT_COMBOBOX(self, self.fontsizelist.GetId(), self.OnFontSizeSelect)
+        # self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
+        # wx.EVT_TEXT_ENTER(self, self.fontlist.GetId(), self.OnFontSelect)
+        # wx.EVT_COMBOBOX(self, self.fontsizelist.GetId(), self.OnFontSizeSelect)
         self.Bind(wx.EVT_MENU, self.OnNew, id=ID_NEW)
         self.Bind(wx.EVT_MENU, self.OnOpen, id=ID_OPEN)
         self.Bind(wx.EVT_MENU, self.OnSave, id=ID_SAVE)

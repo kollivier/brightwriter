@@ -2,7 +2,7 @@ import wx
 
 from wx.lib.pubsub import Publisher
 
-from constants import *
+from editactions import *
 from editdialogs import *
 
 import htmledit.htmlattrs as htmlattrs
@@ -69,7 +69,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_TEXT_REMOVE_STYLES, self.OnRemoveStyle)
         
         self.webview.Bind(wx.EVT_CONTEXT_MENU, self.OnRightClick)
-        
+
     def RemoveHandlers(self):
         app = wx.GetApp()
         app.RemoveHandlerForID(ID_UNDO)
@@ -108,7 +108,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_TEXT_SUP)
         app.RemoveHandlerForID(ID_TEXT_SUB)
         app.RemoveHandlerForID(ID_TEXT_REMOVE_STYLES)
-        
+
     def OnDoSearch(self, message):
         if wx.GetTopLevelParent(self.webview).IsActive():
             self.webview.FindString(message.data)
