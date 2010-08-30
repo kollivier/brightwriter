@@ -224,9 +224,10 @@ class ftpService:
 
 #--------------------------- FTP Upload Dialog Class --------------------------------------
 class FTPUpload:
-    def __init__(self, parent):
+    def __init__(self, parent, rootdir):
         self.filelist = []
         self.dirlist = []
+        self.rootdir = rootdir
         self.parent = parent
         self.isDialog = False
         isPassive = False
@@ -265,10 +266,9 @@ class FTPUpload:
 
     def GetUploadDirName(self, indir):
         #first, strip out any hardcoded path reference
-        parentdir = settings.ProjectDir
         #print "Parentdir: " + parentdir
 
-        mydir = string.replace(indir, parentdir, "")
+        mydir = string.replace(indir, self.rootdir, "")
         if sys.platform.startswith("win"):
             mydir = string.replace(mydir, "\\", "/")
 
@@ -302,7 +302,7 @@ class FTPUpload:
             myitem = os.path.join(indir, item)
             
             if os.path.isfile(myitem) and not fileutils.isHidden(myitem) and string.find(item, "Karrigell") == -1 and string.find(item, "httpserver") == -1 and string.find(item, "ftppass.txt") == -1:
-                finalname = string.replace(myitem, settings.ProjectDir, "")
+                finalname = string.replace(myitem, self.rootdir, "")
                 if wx.Platform == "__WXMSW__":
                     finalname = string.replace(finalname, "\\", "/")
                 #finalname = string.replace(finalname, os.pathsep, "/")
@@ -326,7 +326,7 @@ class FTPUpload:
 
     def CreateDestFilename(self, sourcefile):
         destdir = self.ftpService.hostdir
-        inputfile = sourcefile.replace(settings.ProjectDir, "")
+        inputfile = sourcefile.replace(self.rootdir, "")
 
         adir, aname = os.path.split(inputfile)
         if adir != "":
@@ -353,7 +353,7 @@ class FTPUpload:
                     self.callback.uploadCanceled()
                     return
 
-                sourcename = settings.ProjectDir + os.sep + item
+                sourcename = self.rootdir + os.sep + item
                 destname = self.CreateDestFilename(item)
                 try:
                     success = self.ftpService.uploadFile(   sourcename, 
@@ -412,8 +412,8 @@ class FTPUpload:
                 
 
 class FTPUploadDialog(sc.SizedDialog, FTPUpload):
-    def __init__(self, parent):
-        FTPUpload.__init__(self, parent)
+    def __init__(self, parent, directory):
+        FTPUpload.__init__(self, parent, directory)
         self.isDialog = True
         sc.SizedDialog.__init__(self, parent, -1, _("Publish to web site"), 
                               wx.Point(100,100),wx.Size(400,440), 
@@ -560,7 +560,7 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
         #self.btnOK.Enable(False)
         #self.btnCancel.SetLabel(_("Cancel"))
         if self.makefilelist:
-            self.GenerateFileList(settings.ProjectDir)
+            self.GenerateFileList(self.rootdir)
             self.makefilelist = False
         self.LoadFileList()
         self.txtTotalProg.SetLabel(_("Total Progress: "))
