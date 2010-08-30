@@ -1,11 +1,5 @@
 import wx
 
-ID_NEW = wx.NewId()
-ID_OPEN = wx.NewId()
-ID_SAVE = wx.NewId()
-ID_SAVE_AS = wx.NewId()
-ID_QUIT = wx.NewId()
-
 ID_BOLD = wx.NewId()
 ID_ITALIC = wx.NewId()
 ID_UNDERLINE = wx.NewId()
