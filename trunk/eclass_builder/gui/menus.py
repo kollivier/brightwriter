@@ -6,7 +6,7 @@ def getFileMenu():
     FileMenu = wx.Menu()
     FileMenu.Append(ID_NEW, "&" + _("New"), _("Create a New Project"))
     FileMenu.Append(ID_OPEN, "&" +_("Open"), _("Open an Existing Project"))
-    FileMenu.Append(ID_SAVE, "&" + _("Save"), _("Save the Current Project"))
+    FileMenu.Append(ID_SAVE, "&" + _("Save") + "\tCTRL+S", _("Save the Current Project"))
     FileMenu.Append(ID_CLOSE, "&" + _("Close"), _("Close the Current Project"))
     FileMenu.AppendSeparator()
     
@@ -48,6 +48,32 @@ def getEditMenu():
     #EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
     
     return EditMenu
+    
+def getInsertMenu():
+    InsertMenu = wx.Menu()
+    InsertMenu.Append(ID_INSERT_LINK, _("Hyperlink") + "\tCTRL+L")
+    InsertMenu.Append(ID_INSERT_BOOKMARK, _("Bookmark") + "\tCTRL+SHIFT+B")
+    InsertMenu.AppendSeparator()
+    InsertMenu.Append(ID_INSERT_IMAGE, _("Image..."))
+    InsertMenu.Append(ID_INSERT_TABLE, _("Insert Table"))
+    return InsertMenu    
+
+def getFormatMenu():
+    FormatMenu = wx.Menu()
+    textstylemenu = wx.Menu()
+    textstylemenu.Append(ID_BOLD, _("Bold") + "\tCTRL+B")
+    textstylemenu.Append(ID_ITALIC, _("Italic") + "\tCTRL+I")
+    textstylemenu.Append(ID_UNDERLINE, _("Underline") + "\tCTRL+U")
+    textstylemenu.AppendSeparator()
+    textstylemenu.Append(ID_TEXT_SUP, _("Superscript"))
+    textstylemenu.Append(ID_TEXT_SUB, _("Subscript"))
+    textstylemenu.AppendSeparator()
+    textstylemenu.Append(ID_TEXT_REMOVE_STYLES, _("Remove Formatting"))
+    textstylemenu.Append(ID_REMOVE_LINK, _("Remove Link"))
+    FormatMenu.AppendMenu(wx.NewId(), _("Text Style"), textstylemenu)
+    FormatMenu.AppendSeparator()
+    FormatMenu.Append(ID_CLEANUP_HTML, _("Clean Up HTML"))
+    return FormatMenu
     
 def getPageMenu(openWithMenu=None):
     PageMenu = wx.Menu()
@@ -109,6 +135,8 @@ def getMenuBar():
     menuBar.Append(getFileMenu(), "&"+ _("File"))
     menuBar.Append(getEditMenu(), _("Edit"))
     menuBar.Append(getPageMenu(), "&" + _("Page"))
+    menuBar.Append(getInsertMenu(), _("Insert"))
+    menuBar.Append(getFormatMenu(), _("Format"))
     menuBar.Append(getToolsMenu(), "&" + _("Tools"))
     menuBar.Append(getWindowMenu(), _("Window"))
     menuBar.Append(getHelpMenu(), "&" + _("Help"))

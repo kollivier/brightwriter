@@ -4,6 +4,7 @@ import sys, urllib2, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
 import logging
 import tempfile
+import urllib
 import zipfile
 
 import wx
@@ -58,12 +59,21 @@ except:
 EXPERIMENTAL_WXWEBKIT = False
 
 try:
-    if settings.webkit:
-        pass
-        #import wx.webview
-        #EXPERIMENTAL_WXWEBKIT = True
+    import wx.webview
+    EXPERIMENTAL_WXWEBKIT = True
+    
 except:
     pass
+
+if EXPERIMENTAL_WXWEBKIT:
+    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "htmleditor"))
+    import htmledit.htmlattrs as htmlattrs
+
+    import editordelegate
+    import htmlutils
+    import aboutdialog
+    import cleanhtmldialog
+
 
 # Import the gui dialogs. They used to be embedded in editor.py
 # so we will just import their contents for now to avoid conflicts.
@@ -99,6 +109,12 @@ settings.plugins = plugins.pluginList
 from constants import *
 from gui.ids import *
 
+def getMimeTypeForHTML(html):
+    mimetype = 'text/html'
+    if html.find("//W3C//DTD XHTML") != -1:
+        mimetype = 'application/xhtml+xml'
+    return mimetype
+
 class GUIIndexingCallback:
     def __init__(self, parent):
         self.parent = parent
@@ -131,6 +147,7 @@ class MainFrame2(sc.SizedFrame):
         self.imscp = None
         #dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
         self.dirtyNodes = []
+        self.dirty = False
 
         settings.ThirdPartyDir = os.path.join(settings.AppDir, "3rdparty", utils.getPlatformName())
         langdict = {"English":"en", "Espanol": "sp", "Francais":"fr"}
@@ -139,6 +156,8 @@ class MainFrame2(sc.SizedFrame):
             lang = settings.AppSettings["Language"]
         settings.LangDirName = langdict[lang]
         self.errorPrompts = prompts.errorPrompts
+        
+        pane = self.GetContentsPane()
 
         # These are used for copy and paste, and drag and drop
         self.DragItem = None
@@ -206,12 +225,64 @@ class MainFrame2(sc.SizedFrame):
 
         self.toolbar.Realize()
 
+        icnBold = wx.Bitmap(os.path.join(imagepath, "format-text-bold.png"))
+        icnItalic = wx.Bitmap(os.path.join(imagepath, "format-text-italic.png"))
+        icnUnderline = wx.Bitmap(os.path.join(imagepath, "format-text-underline.png"))
+        
+        icnAlignLeft = wx.Bitmap(os.path.join(imagepath, "format-justify-left.png")) 
+        icnAlignCenter = wx.Bitmap(os.path.join(imagepath, "format-justify-center.png"))
+        icnAlignRight = wx.Bitmap(os.path.join(imagepath, "format-justify-right.png"))
+        icnAlignJustify = wx.Bitmap(os.path.join(imagepath, "format-justify-fill.png"))
+        
+        icnIndent = wx.Bitmap(os.path.join(imagepath, "format-indent-more.png")) 
+        icnDedent = wx.Bitmap(os.path.join(imagepath, "format-indent-less.png"))
+        icnBullets = wx.Bitmap(os.path.join(imagepath, "fatcow", "text_list_bullets.png"))
+        icnNumbering = wx.Bitmap(os.path.join(imagepath, "fatcow", "text_list_numbers.png"))
+        
+        #icnColour = wx.Bitmap(os.path.join(imagepath, "colour16.gif"))
+        
+        icnLink = wx.Bitmap(os.path.join(imagepath, "applications-internet.png"))
+        icnImage = wx.Bitmap(os.path.join(imagepath, "image-x-generic.png"))
+
+        
+        self.toolbar2 = toolbar2 = wx.ToolBar(pane, -1)
+        toolbar2.SetSizerProps(expand=True, border=("all", 0))
+        toolbar2.SetToolBitmapSize(wx.Size(16,16))
+        self.fonts = ["Times New Roman, Times, serif", "Helvetica, Arial, sans-serif", "Courier New, Courier, monospace"]
+        self.fontlist = wx.ComboBox(toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
+    
+        fontsizes = ["1", "2", "3", "4", "5", "6", "7"]
+        self.fontsizelist = wx.ComboBox(toolbar2, wx.NewId(), choices=fontsizes)
+        
+        toolbar2.AddControl(self.fontlist)
+        toolbar2.AddSeparator()
+        toolbar2.AddControl(self.fontsizelist)
+        toolbar2.AddSeparator()
+            
+        toolbar2.AddCheckTool(ID_BOLD, icnBold, shortHelp=_("Bold"))
+        toolbar2.AddCheckTool(ID_ITALIC, icnItalic, shortHelp=_("Italic"))
+        toolbar2.AddCheckTool(ID_UNDERLINE, icnUnderline, shortHelp=_("Underline"))
+            #self.toolbar2.AddSimpleTool(ID_FONT_COLOR, icnColour, _("Font Color"), _("Select a font color"))
+        toolbar2.AddSeparator()
+        toolbar2.AddCheckTool(ID_ALIGN_LEFT, icnAlignLeft, shortHelp=_("Left Align"))
+        toolbar2.AddCheckTool(ID_ALIGN_CENTER, icnAlignCenter, shortHelp=_("Center"))
+        toolbar2.AddCheckTool(ID_ALIGN_RIGHT, icnAlignRight, shortHelp=_("Right Align"))
+        toolbar2.AddSeparator()
+        toolbar2.AddSimpleTool(ID_DEDENT, icnDedent, _("Decrease Indent"), _("Decrease Indent"))
+        toolbar2.AddSimpleTool(ID_INDENT, icnIndent, _("Increase Indent"), _("Increase Indent"))
+        toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
+        toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
+        toolbar2.AddSeparator()
+        toolbar2.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
+        toolbar2.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
+            #self.toolbar.AddSimpleTool(ID_INSERT_HR, icnHR, _("Insert Horizontal Line"), _("Insert Horizontal Line"))
+        toolbar2.Realize()
+
         if sys.platform.startswith("darwin"):
             wx.App.SetMacPreferencesMenuItemId(ID_SETTINGS)
 
         self.SetMenuBar(menus.getMenuBar())
         
-        pane = self.GetContentsPane()
         #split the window into two - Treeview on one side, browser on the other
         self.splitter1 = wx.SplitterWindow(pane, -1, style=wx.NO_BORDER)
         self.splitter1.SetSashSize(7)
@@ -232,9 +303,15 @@ class MainFrame2(sc.SizedFrame):
             self.browser = wxbrowser.wxBrowser(self.splitter1, -1)
         else:
             self.browser = wx.webview.WebView(self.splitter1, -1, size=(200,200))
+            self.browser.MakeEditable(True)
             self.browser.LoadPage = self.browser.LoadURL
             self.browser.SetPage = self.browser.SetPageSource
             self.browser.browser = self.browser
+            self.webdelegate = editordelegate.HTMLEditorDelegate(source=self.browser)
+            
+            self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
+            self.browser.Bind(wx.EVT_MOUSE_EVENTS, self.UpdateStatus)
+            self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
         
         self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
@@ -242,11 +319,15 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
         
         self.Bind(wx.EVT_IDLE, self.OnIdle)
-        
+
+        self.Bind(wx.EVT_TREE_SEL_CHANGING, self.OnTreeSelChanging, self.projectTree)        
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_BEGIN_LABEL_EDIT, self.OnTreeLabelWillChange, self.projectTree)
         self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
+        self.fontsizelist.Bind(wx.EVT_COMBOBOX, self.OnFontSizeSelect)
+        self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
+
         self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
         
         self.SetMinSize(self.GetSizer().GetMinSize())
@@ -269,7 +350,11 @@ class MainFrame2(sc.SizedFrame):
 
         if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
             self.LoadEClass(settings.AppSettings["LastOpened"])
-                
+
+    def OnChanged(self, event):
+        print "OnChanged fired!"
+        self.dirty = True
+        
     def OnActivityMonitor(self, evt):
         self.activityMonitor.Show()
 
@@ -283,11 +368,40 @@ class MainFrame2(sc.SizedFrame):
         #else:
         #    self.RemoveHandlers()
 
+    def GetCommandState(self, command):
+        if self.FindFocus() == self.browser:
+            state = self.browser.GetEditCommandState(command) 
+            if state in [wx.webview.EditStateMixed, wx.webview.EditStateTrue]:
+                return True
+        
+        return False
+
+    def OnFontSizeSelect(self, evt):
+        self.browser.ExecuteEditCommand("FontSize", self.fontsizelist.GetStringSelection())
+
+    def OnFontSelect(self, evt):
+        self.browser.ExecuteEditCommand("FontName", self.fontlist.GetStringSelection())
+
+    def UpdateStatus(self, evt):
+        self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
+        self.toolbar2.ToggleTool(ID_ITALIC, self.GetCommandState("Italic"))
+        self.toolbar2.ToggleTool(ID_UNDERLINE, self.GetCommandState("Underline"))
+        self.toolbar2.ToggleTool(ID_BULLETS, self.GetCommandState("InsertUnorderedList"))
+        self.toolbar2.ToggleTool(ID_NUMBERING, self.GetCommandState("InsertOrderedList"))
+        self.toolbar2.ToggleTool(ID_ALIGN_LEFT, self.GetCommandState("AlignLeft"))
+        self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("AlignCenter"))
+        self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("AlignRight"))
+        self.toolbar2.ToggleTool(ID_ALIGN_JUSTIFY, self.GetCommandState("AlignJustify"))
+        self.fontsizelist.SetValue(self.browser.GetEditCommandValue("FontSize"))
+        self.fontlist.SetValue(self.browser.GetEditCommandValue("FontName"))
+        
+        evt.Skip()
+
     def RegisterHandlers(self):
         app = wx.GetApp()
         app.AddHandlerForID(ID_NEW, self.OnNewContentPackage)
         app.AddHandlerForID(ID_OPEN, self.OnOpen)
-        app.AddHandlerForID(ID_SAVE, self.SaveProject)
+        app.AddHandlerForID(ID_SAVE, self.OnSave)
         app.AddHandlerForID(ID_CLOSE, self.OnCloseProject)
         app.AddHandlerForID(ID_PROPS, self.OnProjectProps)
         app.AddHandlerForID(ID_TREE_REMOVE, self.RemoveItem)
@@ -471,6 +585,23 @@ class MainFrame2(sc.SizedFrame):
         dlg = pfdlg.ProjectFindDialog(self)
         dlg.Show()
 
+    def OnCleanHTML(self, event):
+        try:
+            import tidylib
+        except:
+            wx.MessageBox(_("Your system appears not to have the HTMLTidy library installed. Cannot run HTML clean up."))
+            return
+        
+        html, errors = htmlutils.cleanUpHTML(self.browser.GetPageSource())
+    
+        dialog = cleanhtmldialog.HTMLCleanUpDialog(self, -1, size=(600,400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        dialog.SetOriginalHTML(self.browser.GetPageSource())
+        dialog.SetCleanedHTML(html)
+        dialog.log.SetValue(errors)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
+            self.dirty = True
+
     def OnRefreshTheme(self, event):
         publisher = self.currentTheme.HTMLPublisher(self)
         result = publisher.Publish()
@@ -620,6 +751,8 @@ class MainFrame2(sc.SizedFrame):
 
         for item in dirtyNodes:
             self.Update(item)
+            
+        self.SaveProject()
 
     def CopyChildrenRecursive(self, sel_item, new_item):
         thisnode = self.projectTree.GetFirstChild(sel_item)[0]
@@ -674,6 +807,8 @@ class MainFrame2(sc.SizedFrame):
                 self.projectTree.SelectItem(newitem)
                 self.Update()
                 
+                self.SaveProject()
+                
     def OnMoveItemDown(self, event):
         selection = self.projectTree.GetCurrentTreeItem()
         selitem = self.projectTree.GetCurrentTreeItemData()
@@ -696,6 +831,8 @@ class MainFrame2(sc.SizedFrame):
                     self.AddIMSChildItemsToTree(selection, selitem.items)
                 self.projectTree.SelectItem(newitem)
                 self.Update()
+                
+                self.SaveProject()
 
     def OnOpen(self,event):
         """
@@ -741,7 +878,18 @@ class MainFrame2(sc.SizedFrame):
     def OnReportBug(self, event):
         import webbrowser
         webbrowser.open_new("http://sourceforge.net/tracker/?group_id=67634")
-        
+
+    def OnTreeSelChanging(self, event):
+        if self.dirty:
+            result = wx.MessageDialog(self, _("This document contains unsaved changes. Would you like to save them now?"), _("Save Changes?"), wx.YES | wx.NO | wx.CANCEL).ShowModal()
+            
+            if result == wx.ID_CANCEL:
+                event.Veto()
+            elif result == wx.ID_NO:
+                self.dirty = False
+            elif result == wx.ID_YES:
+                self.SaveWebPage()
+                
     def OnTreeSelChanged(self, event):
         self.Preview()
         event.Skip()
@@ -902,46 +1050,39 @@ class MainFrame2(sc.SizedFrame):
             dialog.txtTitle.SetValue(name)
 
         if dialog.ShowModal() == wx.ID_OK:
-            pluginName = dialog.cmbType.GetStringSelection()
+            pluginName = "Web Page"
             plugin = plugins.GetPlugin(pluginName)
             if plugin:
-                filename = os.path.join(plugin.plugin_info["Directory"], dialog.txtFilename.GetValue())
-                    
-                created = plugin.CreateNewFile(dialog.txtTitle.GetValue(), os.path.join(settings.ProjectDir, filename))
-                if created:
-                    newresource = ims.contentpackage.Resource()
+                filename = dialog.txtFilename.GetValue()
+                plugin.CreateNewFile(os.path.join(settings.ProjectDir, filename), dialog.txtTitle.GetValue())
+                newresource = ims.contentpackage.Resource()
 
-                    if os.path.splitext(filename)[1] == ".ecp":
-                        eclassutils.setEClassPageForIMSResource(newresource, filename)
-                    else:
-                        newresource.setFilename(filename)
-                    
-                    newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
-                    newresource.attrs["type"] = plugin.plugin_info["IMS Type"]
-                    
-                    self.imscp.resources.append(newresource)
-                    
-                    newitem = ims.contentpackage.Item()
-                    title = dialog.txtTitle.GetValue()
-                    assert title is not None and title != ""
-                    newitem.title.text = title
-                    newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
-                    newitem.attrs["identifierref"] = newresource.attrs["identifier"]
-                    
-                    parentitem = self.projectTree.GetCurrentTreeItemData()
-                    if parentitem:
-                        parentitem.items.append(newitem)
-                    else: 
-                        self.imscp.organizations[0].items.append(newitem)
+                newresource.setFilename(filename)
+                
+                newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+                newresource.attrs["type"] = plugin.plugin_info["IMS Type"]
+                
+                self.imscp.resources.append(newresource)
+                
+                newitem = ims.contentpackage.Item()
+                title = dialog.txtTitle.GetValue()
+                assert title is not None and title != ""
+                newitem.title.text = title
+                newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+                newitem.attrs["identifierref"] = newresource.attrs["identifier"]
+                
+                parentitem = self.projectTree.GetCurrentTreeItemData()
+                if parentitem:
+                    parentitem.items.append(newitem)
+                else: 
+                    self.imscp.organizations[0].items.append(newitem)
 
-                    newtreeitem = self.projectTree.AddIMSItemUnderCurrentItem(newitem)
+                newtreeitem = self.projectTree.AddIMSItemUnderCurrentItem(newitem)
 
-                    if not self.projectTree.GetSelection().IsOk() and self.projectTree.GetCount() == 1:
-                        self.projectTree.SelectItem(self.projectTree.GetRootItem())
+                if not self.projectTree.GetSelection().IsOk() and self.projectTree.GetCount() == 1:
+                    self.projectTree.SelectItem(self.projectTree.GetRootItem())
 
-                    self.EditItem(newitem)
-                    self.PublishPage(newitem)
-                    self.UpdateEClassDataFiles()
+                self.SaveProject()
     
                 self.isNewCourse = False
             dialog.Destroy()
@@ -995,17 +1136,8 @@ class MainFrame2(sc.SizedFrame):
         """
         filename = self.imscp.filename
         if not filename or not os.path.exists(filename):
-            defaultdir = ""
-            if settings.AppSettings["CourseFolder"] != "" and os.path.exists(settings.AppSettings["CourseFolder"]):
-                defaultdir = settings.AppSettings["CourseFolder"]
-            
-            f = wx.FileDialog(self, _("Select a file"), defaultdir, "", "XML Files (*.xml)|*.xml", wx.SAVE)
-            if f.ShowModal() == wx.ID_OK:
-                filename = f.GetPath()
-            f.Destroy()
+            filename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
         
-        #self.CreateDocumancerBook()
-        #self.CreateDevHelpBook()
 
         if os.path.exists(filename):
             # check for references to resources no longer in the project, so we can clean them up
@@ -1044,17 +1176,36 @@ class MainFrame2(sc.SizedFrame):
                             
                         self.imscp.resources.remove(resource)
         
-            try:
-                if not self.imscp.saveAsXML(filename):
-                    wx.MessageBox(_("Unable to save project file. Make sure you have permission to write to the project directory."))
+        try:
+            if not self.imscp.saveAsXML(filename):
+                wx.MessageBox(_("Unable to save project file. Make sure you have permission to write to the project directory."))
                 
-                if settings.ProjectSettings:
-                    settings.ProjectSettings.SaveAsXML(os.path.join(settings.ProjectDir, "settings.xml"))
-            except IOError, e:
-                message = _("Could not save EClass project file. Error Message is:")
-                self.log.error(message)
-                wx.MessageBox(message + str(e), _("Could Not Save File"))
-        
+            if settings.ProjectSettings:
+                settings.ProjectSettings.SaveAsXML(os.path.join(settings.ProjectDir, "settings.xml"))
+        except IOError, e:
+            message = _("Could not save EClass project file. Error Message is:")
+            self.log.error(message)
+            wx.MessageBox(message + str(e), _("Could Not Save File"))
+
+    def OnSave(self, event):
+        self.SaveWebPage()
+
+    def SaveWebPage(self):
+        source = self.browser.GetPageSource()
+            
+        encoding = htmlutils.GetEncoding(source)
+        try:
+            if not encoding:
+                encoding = htmlutils.getCurrentEncoding()
+            source = source.encode(encoding)
+        except:
+            raise
+                
+        afile = open(self.filename, "wb")
+        afile.write(source)
+        afile.close()
+        self.dirty = False
+
     def NewContentPackage(self):
         """
         Routine to create a new project. 
@@ -1081,7 +1232,9 @@ class MainFrame2(sc.SizedFrame):
                 self.browser.LoadPage("about:blank")
         
                 settings.ProjectDir = newdialog.eclassdir.strip()
-                eclassutils.createEClass(settings.ProjectDir)
+                contentDir = os.path.join(settings.ProjectDir, "Content")
+                if not os.path.exists(contentDir):
+                    os.makedirs(contentDir)
                 
                 filename = os.path.join(settings.ProjectDir, "imsmanifest.xml")
                 lang = appdata.projectLanguage = "en-US"
@@ -1207,6 +1360,7 @@ class MainFrame2(sc.SizedFrame):
             result = PagePropertiesDialog(self, selitem, None, os.path.join(settings.ProjectDir, "Text")).ShowModal()
             self.projectTree.SetItemText(seltreeitem, selitem.title.text)
             self.Update()
+            self.SaveProject()
 
     def RemoveItem(self, event):
         selection = self.projectTree.GetCurrentTreeItem()
@@ -1240,8 +1394,8 @@ class MainFrame2(sc.SizedFrame):
                             break
                 
                 self.projectTree.Delete(selection)
-                self.UpdateEClassDataFiles()
                 self.Update()
+                self.SaveProject()
 
     def GetContentFilenameForSelectedItem(self):
         if self.projectTree:
@@ -1263,36 +1417,34 @@ class MainFrame2(sc.SizedFrame):
             except:
                 self.selectedFileLastModifiedTime = 0
             
-            publisher = plugins.GetPublisherForFilename(filename)
-            filelink = publisher.GetFileLink(filename).replace("/", os.sep)
-            filename = os.path.join(settings.ProjectDir, filelink)
+            filename = os.path.join(settings.ProjectDir, filename)
     
             #we shouldn't preview files that EClass can't view
-            ok_fileTypes = ["htm", "html", "jpg", "jpeg", "gif"]
+            ok_fileTypes = ["htm", "html", "gif", "jpg", "jpeg", "xhtml"]
             if sys.platform == "win32":
                 ok_fileTypes.append("pdf")
     
-            if os.path.exists(filename) and os.path.splitext(filename)[1][1:] in ok_fileTypes:
-                self.browser.LoadPage(filename)
+            ext = os.path.splitext(filename)[1][1:]
+            if os.path.exists(filename) and ext in ok_fileTypes:
+                if ext.find("htm") != -1: 
+                    fileurl = urllib.quote(os.path.dirname(filename)) + "/"
+                    self.baseurl = 'file://' + fileurl
+                    html = htmlutils.getUnicodeHTMLForFile(filename)
+            
+                    self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
+                    self.SetTitle(os.path.basename(filename))
+                    self.filename = filename
+                else:
+                    self.browser.LoadPage(filename)
             else:
                 self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
                     
         else:
             self.browser.SetPage(utils.createHTMLPageWithBody(""))
 
-    def PublishPage(self, imsitem):
-        if imsitem != None:
-            filename = eclassutils.getEditableFileForIMSItem(self.imscp, imsitem)
-            publisher = plugins.GetPublisherForFilename(filename)
-            if publisher:
-                publisher.Publish(self, imsitem, settings.ProjectDir)
-
     def Update(self, imsitem = None):
         if imsitem == None:
             imsitem = self.projectTree.GetCurrentTreeItemData()
-            
-        self.UpdateEClassDataFiles()
-        self.PublishPage(imsitem)
 
         self.Preview()
         self.dirtyNodes.append(imsitem)

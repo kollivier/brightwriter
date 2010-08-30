@@ -83,17 +83,14 @@ class NewPageDialog(sc.SizedDialog):
 		self.txtFilename.SetSizerProp("expand", True)
 		self.filenameEdited = False
 		
-		extension = ".ecp"
+		extension = ".xhtml"
 		for plugin in plugins.pluginList:
 			if plugin.plugin_info["CanCreateNew"]:
 				self.cmbType.Append(plugin.plugin_info["FullName"])
 			if plugin.plugin_info["FullName"] == settings.AppSettings["DefaultPlugin"]:
 				extension = "." + plugin.plugin_info["Extension"][0]
 		
-		if settings.AppSettings["DefaultPlugin"] != "":
-			self.cmbType.SetStringSelection(settings.AppSettings["DefaultPlugin"])
-		else:
-			self.cmbType.SetStringSelection("EClass Page")
+		self.cmbType.SetSelection(0)
 		self.txtFilename.SetValue(self.txtTitle.GetValue())
 		self.UpdateFilename(None)
 
@@ -132,7 +129,7 @@ class NewPageDialog(sc.SizedDialog):
 			title = title[:string.rfind(title, ".")]
 
 		pluginname = self.cmbType.GetStringSelection()
-		extension = ".ecp"
+		extension = ".xhtml"
 		for plugin in plugins.pluginList:
 			if plugin.plugin_info["FullName"] == pluginname:
 				extension = "." + plugin.plugin_info["Extension"][0]
@@ -146,13 +143,7 @@ class NewPageDialog(sc.SizedDialog):
 		filename = title + extension
 		counter = 2
 		oldtitle = title
-		import glob
-		while len(glob.glob(os.path.join(settings.ProjectDir, "EClass", title + ".*"))) > 0 or len(glob.glob(os.path.join(settings.ProjectDir, "Text", title + ".*"))) > 0:
-			#name = "New Page " + `counter`
-			title = oldtitle + " " + `counter`
-			filename = title + extension
-			counter = counter + 1
-		self.txtFilename.SetValue(filename)
+		self.txtFilename.SetValue(os.path.join('Content', filename))
 
 
 	def btnCancelClicked(self, event):
