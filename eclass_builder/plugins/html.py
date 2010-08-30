@@ -53,15 +53,15 @@ plugin_info = { "Name":"html",
 
 #-------------------------- DATA CLASSES ----------------------------
 
-htmlpage = """
+htmlpage = u"""
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<html>
 <head>
     <title>New Page</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 </head>
 <body>
+    <h1>New Page</h1>
 </body>
 </html>
 """
@@ -75,7 +75,7 @@ def CreateNewFile(filename, name="New Page"):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
     output = open(filename, "w")
-    output.write(file)
+    output.write(file.encode("utf-8"))
     output.close()
 
 #------------------------ PUBLISHER CLASSES -------------------------------------------
