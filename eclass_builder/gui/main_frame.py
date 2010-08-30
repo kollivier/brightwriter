@@ -213,7 +213,6 @@ class MainFrame2(sc.SizedFrame):
         self.toolbar.AddSimpleTool(ID_TREE_EDIT, icnPageProps, _("Page Properties"), _("View and Edit Page Properties"))
         self.toolbar.AddSimpleTool(ID_TREE_REMOVE, icnDeletePage, _("Delete Page"), _("Delete Currently Selected Page"))
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(ID_PREVIEW, icnPreview, _("Preview EClass"), _("Preview EClass in Browser"))
         self.toolbar.AddSimpleTool(ID_PUBLISH_CD, icnPublishCD, _("Publish to CD-ROM"), _("Publish to CD-ROM"))
         self.toolbar.AddSimpleTool(ID_PUBLISH, icnPublishWeb, _("Publish to web site"), _("Publish to web site"))
         #self.toolbar.AddSimpleTool(ID_PUBLISH_PDF, icnPublishPDF, _("Publish to PDF"), _("Publish to PDF"))
@@ -408,7 +407,6 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_TREE_EDIT, self.OnEditItemProps) 
         app.AddHandlerForID(ID_EDIT_ITEM, self.EditItem)
         app.AddHandlerForID(ID_IMPORT_PACKAGE, self.OnImportIMS)
-        app.AddHandlerForID(ID_PREVIEW, self.OnPreviewEClass) 
         app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
         #app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
@@ -482,7 +480,6 @@ class MainFrame2(sc.SizedFrame):
         app.RemoveHandlerForID(ID_TREE_REMOVE)
         app.RemoveHandlerForID(ID_TREE_EDIT) 
         app.RemoveHandlerForID(ID_EDIT_ITEM)
-        app.RemoveHandlerForID(ID_PREVIEW)
         app.RemoveHandlerForID(ID_IMPORT_PACKAGE)
         app.RemoveHandlerForID(ID_PUBLISH)
         app.RemoveHandlerForID(ID_PUBLISH_CD)
@@ -864,11 +861,6 @@ class MainFrame2(sc.SizedFrame):
 
     def OnNewContentPackage(self, event):
         self.NewContentPackage()
-
-    def OnPreviewEClass(self, event):
-        self.UpdateEClassDataFiles()
-        import webbrowser
-        webbrowser.open_new("file://" + os.path.join(settings.ProjectDir, "index.htm")) 
 
     def OnProjectProps(self, event):
         props = ProjectPropsDialog(self)
