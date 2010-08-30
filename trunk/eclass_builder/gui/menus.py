@@ -10,13 +10,6 @@ def getFileMenu():
     FileMenu.Append(ID_CLOSE, "&" + _("Close"), _("Close the Current Project"))
     FileMenu.AppendSeparator()
     
-    PrevMenu = wx.Menu()
-    PrevMenu.Append(ID_PREVIEW, _("Web Browser"),  _("Preview EClass in web browser"))
-    FileMenu.AppendMenu(wx.NewId(), _("Preview"), PrevMenu)
-    
-    FileMenu.Append(ID_REFRESH_THEME, _("Refresh Theme"), "Reapply current theme to pages.")
-    FileMenu.AppendSeparator()
-    
     FileMenu.Append(ID_IMPORT_PACKAGE, _("Import Package"))
     
     PubMenu = wx.Menu()
