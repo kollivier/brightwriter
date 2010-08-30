@@ -43,3 +43,5 @@ ID_CONTACTS = wx.NewId()
 ID_ERRORLOG = wx.NewId()
 ID_ACTIVITY = wx.NewId()
 ID_FIND_IN_PROJECT = wx.NewId()
+
+from editactions import *
