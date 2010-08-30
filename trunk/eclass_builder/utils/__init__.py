@@ -92,14 +92,11 @@ def AddiPhoneItems(node, isroot=False):
 
 
     resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, node)
-    filename = eclassutils.getEClassPageForIMSResource(resource)
-    if not filename:
-        filename = resource.getFilename()
-    filename = GetFileLink(filename)
+    filename = resource.getFilename()
     pages += """<iframe id="%s" frameborder="0" width="100%%" height="95%%" src="%s"></iframe>""" % (name.replace(" ", ""), filename)
     return links, pages
 
-def CreateiPhoneNavigation(rootItem):
+def CreateiPhoneNavigation(rootItem, output_dir):
     html = """
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -108,8 +105,8 @@ def CreateiPhoneNavigation(rootItem):
 <head>
 <title>%s</title>
 <meta name="viewport" content="width=320; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
-<style type="text/css" media="screen">@import "pub/iui/iui.css";</style>
-<script type="application/x-javascript" src="pub/iui/iui.js"></script>
+<style type="text/css" media="screen">@import "iui/iui.css";</style>
+<script type="application/x-javascript" src="iui/iui.js"></script>
 </head>
 <body>
     <div class="toolbar">
@@ -125,22 +122,19 @@ def CreateiPhoneNavigation(rootItem):
 </html>
 """
     
-    afile = open(os.path.join(settings.ProjectDir, "iPhone.html"), "w")
+    afile = open(os.path.join(output_dir, "iPhone.html"), "w")
     afile.write(html.encode("utf-8"))
     afile.close()
     
-    destdir = os.path.join(settings.ProjectDir, "pub", "iui")
+    destdir = os.path.join(output_dir, "iui")
     if os.path.exists(destdir):
         shutil.rmtree(destdir)
     shutil.copytree(os.path.join(settings.AppDir, "externals", "iui-0.13", "iui"), destdir)
 
-def CreateJoustJavascript(pub):
+def CreateJoustJavascript(pub, output_dir):
     name = pub.title.text
     resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, pub)
-    filename = eclassutils.getEClassPageForIMSResource(resource)
-    if not filename:
-        filename = resource.getFilename()
-    filename = GetFileLink(filename)
+    filename = resource.getFilename()
     text = u"""
 function addJoustItems(theMenu){
 var level1ID = -1;
@@ -152,7 +146,7 @@ var level3ID = -1;
     text = text + "theMenu.openAll();\n"
     text = text + "return theMenu; \n}"
 
-    afile = open(os.path.join(settings.ProjectDir, "joustitems.js"), "w")
+    afile = open(os.path.join(output_dir, "joustitems.js"), "w")
     afile.write(text.encode("utf-8"))
     afile.close()
     
@@ -169,10 +163,7 @@ def AddJoustItems(nodes, level):
         if not name:
             name = ""
         resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, root)
-        filename = eclassutils.getEClassPageForIMSResource(resource)
-        if not filename:
-            filename = resource.getFilename()
-        filename = GetFileLink(filename)
+        filename = resource.getFilename()
 
         if isinstance(root, ims.contentpackage.Item) and len(root.items) > 0:
             nodeType = "Book"
@@ -183,17 +174,7 @@ def AddJoustItems(nodes, level):
         if len(root.children) > 0:
             text = text + AddJoustItems(root, level + 1)
 
-    return text 
-
-def GetFileLink(filename):
-    try:
-        import plugins
-        publisher = plugins.GetPluginForFilename(filename).HTMLPublisher()
-        filename = publisher.GetFileLink(filename)
-    except: 
-        filename = string.replace(filename, "\\", "/")
-
-    return filename
+    return text
     
 def guessEncodingForText(text):
     encoding = chardet.detect(text)['encoding']

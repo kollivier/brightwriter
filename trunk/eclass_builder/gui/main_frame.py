@@ -980,10 +980,38 @@ class MainFrame2(sc.SizedFrame):
         return msg.ShowModal()
 
     def PublishToWeb(self, event):
-        # Turn off search features before uploading.
-        mydialog = FTPUploadDialog(self)
-        mydialog.ShowModal()
-        mydialog.Destroy()
+        folder = settings.ProjectDir
+        if settings.ProjectSettings["WebSaveDir"] == "":
+            result = wx.MessageDialog(self, _("You need to specify a directory in which to store the web files.\nWould you like to do so now?"), _("Specify Web Save Directory?"), wx.YES_NO).ShowModal()
+            if result == wx.ID_YES:
+                dialog = wx.DirDialog(self, _("Choose a folder to store web files."), style=wx.DD_NEW_DIR_BUTTON)
+                if dialog.ShowModal() == wx.ID_OK:
+                    folder = settings.ProjectSettings["WebSaveDir"] = dialog.GetPath()
+            else:
+                return
+        else:
+            folder = settings.ProjectSettings["WebSaveDir"]
+            
+        self.SaveProject()
+        
+        callback = GUIFileCopyCallback(self)
+        maxfiles = fileutils.getNumFiles(settings.ProjectDir)
+        self.filesCopied = 0
+        self.dialog = wx.ProgressDialog(_("Copying Web Files"), _("Preparing to copy Web files...") + "                            ", maxfiles, style=wx.PD_APP_MODAL)
+
+        fileutils.CopyFiles(settings.ProjectDir, folder, 1, callback)
+        
+        self.dialog.Destroy()
+        self.dialog = None
+        
+        self.CopyWebFiles(folder)
+        
+        result = wx.MessageDialog(self, "Would you like to upload the web files to the server via FTP now?", _("Upload to web site?"), wx.YES_NO).ShowModal()
+        
+        if result == wx.ID_YES:
+            mydialog = FTPUploadDialog(self, folder)
+            mydialog.ShowModal()
+            mydialog.Destroy()
 
     def PublishToCD(self,event):
         folder = settings.ProjectDir
@@ -998,16 +1026,12 @@ class MainFrame2(sc.SizedFrame):
         else:
             folder = settings.ProjectSettings["CDSaveDir"]
 
-        self.UpdateEClassDataFiles()
-        #self.UpdateTextIndex()
-        self.CopyCDFiles()
+        self.SaveProject()
+        
+        self.CopyWebFiles(folder)
+        self.CopyCDFiles(folder)
         message = _("A window will now appear with all files that must be published to CD-ROM. Start your CD-Recording program and copy all files in this window to that program, and your CD will be ready for burning.")
         dialog = wx.MessageBox(message, _("Export to CD Finished"))
-
-        #Open the explorer/finder window
-        if sys.platform.startswith("win"):
-            if settings.ProjectSettings["SearchProgram"] == "Greenstone":
-                folder = os.path.join(settings.AppSettings["GSDL"], "tmp", "exported_collections")
         
         guiutils.openFolderInGUI(folder)
 
@@ -1079,26 +1103,11 @@ class MainFrame2(sc.SizedFrame):
                 self.isNewCourse = False
             dialog.Destroy()
             
-    def CopyCDFiles(self):
+    def CopyCDFiles(self, pubdir):
         #cleanup after old EClass versions
         fileutils.DeleteFiles(os.path.join(settings.ProjectDir, "*.pyd"))
         fileutils.DeleteFiles(os.path.join(settings.ProjectDir, "*.dll"))
         fileutils.DeleteFiles(os.path.join(settings.ProjectDir, "*.exe"))
-
-        pubdir = settings.ProjectDir
-        if settings.ProjectSettings["CDSaveDir"] != "":
-            pubdir = settings.ProjectSettings["CDSaveDir"]
-
-        if pubdir != settings.ProjectDir:
-            callback = GUIFileCopyCallback(self)
-            maxfiles = fileutils.getNumFiles(settings.ProjectDir) + 1
-            self.filesCopied = 0
-            self.dialog = wx.ProgressDialog(_("Copying CD Files"), _("Preparing to copy CD files...") + "                            ", maxfiles, style=wx.PD_APP_MODAL)
-
-            fileutils.CopyFiles(settings.ProjectDir, pubdir, 1, callback)
-
-            self.dialog.Destroy()
-            self.dialog = None
 
         fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
 
@@ -1443,23 +1452,15 @@ class MainFrame2(sc.SizedFrame):
         if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
             self.UploadPage()
             
-    def UpdateEClassDataFiles(self):
+    def CopyWebFiles(self, output_dir):
         result = False
         busy = wx.BusyCursor()
-        utils.CreateJoustJavascript(self.imscp.organizations[0].items[0])
-        utils.CreateiPhoneNavigation(self.imscp.organizations[0].items[0])
+        utils.CreateJoustJavascript(self.imscp.organizations[0].items[0], output_dir)
+        utils.CreateiPhoneNavigation(self.imscp.organizations[0].items[0], output_dir)
         self.currentTheme = self.themes.FindTheme(settings.ProjectSettings["Theme"])
         if self.currentTheme:
-            self.currentTheme.HTMLPublisher(self).CopySupportFiles()
+            self.currentTheme.HTMLPublisher(self, output_dir).CopySupportFiles()
             
-        index_config_file = os.path.join(settings.ProjectDir, "index_settings.cfg")
-        # if an index settings file doesn't exist, create one with some common defaults
-        if not os.path.exists(index_config_file):
-            import ConfigParser
-            config = ConfigParser.ConfigParser()
-            config.add_section("Settings")
-            config.set("Settings", "IgnoreFileTypes", "ecp,quiz,gif,jpg,png,bmp,swf,avi,mov,wmv,rm,wav,mp3")
-            config.write(utils.openFile(index_config_file, "w"))
         del busy
 
         return True
@@ -1484,10 +1485,9 @@ class MainFrame2(sc.SizedFrame):
             imsdir = os.path.dirname(os.path.join(tempdir, "IMSPackage"))
             if not os.path.exists(imsdir):
                 os.makedirs(imsdir)
-            imstheme = self.themes.FindTheme("IMS Package")
-            publisher = imstheme.HTMLPublisher(self, imsdir)
-            publisher.Publish()
-            fileutils.CopyFiles(os.path.join(settings.ProjectDir, "File"), os.path.join(imsdir, "File"), 1)
+            #imstheme = self.themes.FindTheme("IMS Package")
+            #publisher = imstheme.HTMLPublisher(self, imsdir)
+            #publisher.Publish()
 
             handle, zipname = tempfile.mkstemp()
             os.close(handle)

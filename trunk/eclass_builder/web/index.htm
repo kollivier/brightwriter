@@ -872,7 +872,7 @@ var JoustFrameset = true;
 var statusTimeout = 0;
 var index1 = 'index.htm';
 var index2 = 'index2.htm';
-var index3 = 'pub/index.htm';
+var index3 = 'index.htm';
 var smCallerWin;
 var smNewMode;
 var oldErrorHandler;
@@ -933,7 +933,7 @@ function initialise() {
 	// Tell joust where to find the various index files it needs
 	index1 = 'index.htm';
 	index2 = 'index2.htm';
-	index3 = 'pub/index.htm';
+	index3 = 'index.htm';
 	
 	// Set up parameters to control menu behaviour
 	theMenu.autoScrolling = true;	
@@ -971,7 +971,7 @@ if (self.name == 'menu') {
 	self.location.href = "menu.htm";
 } else {
 	initialise();
-	var thePage = theMenu.entry[theMenu.firstEntry].url; //pageFromSearch('pub/index.htm', theMenu, true);
+	var thePage = theMenu.entry[theMenu.firstEntry].url; //pageFromSearch('index.htm', theMenu, true);
         theMenu.selectEntry(theMenu.firstEntry);
 	
 	if (floatingMode) {
@@ -1013,8 +1013,6 @@ which prevents the menu system on this site from working.  Opera 3.2 fixes the p
 if you have the local cache turned off.</I></P>
 
 <P>If you have any problems with this site, please contact the Webmaster.</P>
-
-<P>Click <a HREF="pub/index.htm">here</a> to see the non-JavaScript version of this site.</P>
 
 <A HREF="robots.htm"> </A>
 </BODY>
