@@ -89,11 +89,11 @@ try:
     tarball = "eclass.builder-%s.tar.gz" % config.BUILD_VERSION
     print "tempdir = %s" % tempdir
     os.chdir(tempdir)
-    run('svn co https://eclass.svn.sourceforge.net/svnroot/eclass/trunk/eclass_builder')
-    os.chdir('eclass_builder')
-    run('python publish.py docs/en/manual')
-    os.chdir('..')
-    run("tar czvf %s eclass_builder" % tarball)
+    run('svn co https://eclass.svn.sourceforge.net/svnroot/eclass/trunk')
+    #os.chdir('eclass_builder')
+    #run('python publish.py docs/en/manual')
+    #os.chdir('..')
+    run("tar czvf %s trunk" % tarball)
     shutil.copy(tarball, abs_staging_dir)
 
 finally:

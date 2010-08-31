@@ -23,7 +23,7 @@ if [ "$skipmac" != "yes" ]; then
      ssh $MAC_HOST "cd $MAC_BUILD && $cmd $tarball"
      
      echo "Running build script on $MAC_HOST..."
-     dir=$MAC_BUILD/eclass_builder
+     dir=$MAC_BUILD/trunk/eclass_builder
      
      # run unit tests
      ssh $MAC_HOST "cd $dir"
