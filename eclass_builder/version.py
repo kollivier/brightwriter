@@ -1,9 +1,9 @@
 #Version.py - controls the EClass Version
 
-major = 2
-minor = 5
-release = 6
-#build = 14
+major = 3
+minor = 0
+release = 0
+build = alpha1
 
 def asString():
-	return `major` + "." + `minor` + "." + `release` #+ "." + `build`
+    return `major` + "." + `minor` + "." + `release` + "-" + `build`
