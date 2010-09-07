@@ -181,21 +181,19 @@ class MainFrame2(sc.SizedFrame):
             self.SetIcon(wx.Icon(os.path.join(settings.AppDir, "icons", "eclass_builder.ico"), wx.BITMAP_TYPE_ICO))
 
         #load icons
-        imagepath = os.path.join(settings.AppDir, "icons")
-        icnNewProject = wx.Bitmap(os.path.join(imagepath, "book_green16.gif"), wx.BITMAP_TYPE_GIF)
-        icnOpenProject = wx.Bitmap(os.path.join(imagepath, "open16.gif"), wx.BITMAP_TYPE_GIF)
-        icnSaveProject = wx.Bitmap(os.path.join(imagepath, "save16.gif"), wx.BITMAP_TYPE_GIF)
+        imagepath = os.path.join(settings.AppDir, "icons", "fatcow")
+        icnNewProject = wx.Bitmap(os.path.join(imagepath, "book_add.png"))
+        icnOpenProject = wx.Bitmap(os.path.join(imagepath, "book_open.png"))
+        icnSaveProject = wx.Bitmap(os.path.join(imagepath, "book_save.png"))
 
-        icnNewPage = wx.Bitmap(os.path.join(imagepath, "new16.gif"), wx.BITMAP_TYPE_GIF)
-        icnEditPage = wx.Bitmap(os.path.join(imagepath, "edit16.gif"), wx.BITMAP_TYPE_GIF)
-        icnPageProps = wx.Bitmap(os.path.join(imagepath, "properties16.gif"), wx.BITMAP_TYPE_GIF)
-        icnDeletePage = wx.Bitmap(os.path.join(imagepath, "delete16.gif"), wx.BITMAP_TYPE_GIF)
+        icnNewPage = wx.Bitmap(os.path.join(imagepath, "page_add.png"))
+        icnEditPage = wx.Bitmap(os.path.join(imagepath, "page_edit.png"))
+        icnPageProps = wx.Bitmap(os.path.join(imagepath, "page_gear.png"))
+        icnDeletePage = wx.Bitmap(os.path.join(imagepath, "page_delete.png"))
 
-        icnPreview = wx.Bitmap(os.path.join(imagepath, "doc_map16.gif"), wx.BITMAP_TYPE_GIF)
-        icnPublishWeb = wx.Bitmap(os.path.join(imagepath, "ftp_upload16.gif"), wx.BITMAP_TYPE_GIF)
-        icnPublishCD = wx.Bitmap(os.path.join(imagepath, "cd16.gif"), wx.BITMAP_TYPE_GIF)
-        icnPublishPDF = wx.Bitmap(os.path.join(imagepath, "pdf.gif"), wx.BITMAP_TYPE_GIF)
-        icnHelp = wx.Bitmap(os.path.join(imagepath, "help16.gif"), wx.BITMAP_TYPE_GIF)
+        icnPublishWeb = wx.Bitmap(os.path.join(imagepath, "server_go.png"))
+        icnPublishCD = wx.Bitmap(os.path.join(imagepath, "cd_go.png"))
+        icnHelp = wx.Bitmap(os.path.join(imagepath, "help.png"))
 
         self.treeimages = wx.ImageList(15, 15)
         #self.treeimages.Add(wxBitmap(os.path.join(imagepath, "bookclosed.gif"), wxBITMAP_TYPE_GIF))
@@ -219,29 +217,26 @@ class MainFrame2(sc.SizedFrame):
         self.toolbar.AddSeparator()
         self.toolbar.AddSimpleTool(ID_HELP, icnHelp, _("View Help"), _("View Help File"))
 
-        if not sys.platform.startswith("darwin"):
-            self.toolbar.SetToolBitmapSize(wx.Size(16,16))
+        self.toolbar.SetToolBitmapSize(wx.Size(32,32))
 
         self.toolbar.Realize()
 
-        icnBold = wx.Bitmap(os.path.join(imagepath, "format-text-bold.png"))
-        icnItalic = wx.Bitmap(os.path.join(imagepath, "format-text-italic.png"))
-        icnUnderline = wx.Bitmap(os.path.join(imagepath, "format-text-underline.png"))
+        icnBold = wx.Bitmap(os.path.join(imagepath, "text_bold.png"))
+        icnItalic = wx.Bitmap(os.path.join(imagepath, "text_italic.png"))
+        icnUnderline = wx.Bitmap(os.path.join(imagepath, "text_underline.png"))
         
-        icnAlignLeft = wx.Bitmap(os.path.join(imagepath, "format-justify-left.png")) 
-        icnAlignCenter = wx.Bitmap(os.path.join(imagepath, "format-justify-center.png"))
-        icnAlignRight = wx.Bitmap(os.path.join(imagepath, "format-justify-right.png"))
-        icnAlignJustify = wx.Bitmap(os.path.join(imagepath, "format-justify-fill.png"))
+        icnAlignLeft = wx.Bitmap(os.path.join(imagepath, "text_align_left.png")) 
+        icnAlignCenter = wx.Bitmap(os.path.join(imagepath, "text_align_center.png"))
+        icnAlignRight = wx.Bitmap(os.path.join(imagepath, "text_align_right.png"))
+        icnAlignJustify = wx.Bitmap(os.path.join(imagepath, "text_align_justify.png"))
         
-        icnIndent = wx.Bitmap(os.path.join(imagepath, "format-indent-more.png")) 
-        icnDedent = wx.Bitmap(os.path.join(imagepath, "format-indent-less.png"))
-        icnBullets = wx.Bitmap(os.path.join(imagepath, "fatcow", "text_list_bullets.png"))
-        icnNumbering = wx.Bitmap(os.path.join(imagepath, "fatcow", "text_list_numbers.png"))
+        icnIndent = wx.Bitmap(os.path.join(imagepath, "text_indent.png")) 
+        icnDedent = wx.Bitmap(os.path.join(imagepath, "text_indent_remove.png"))
+        icnBullets = wx.Bitmap(os.path.join(imagepath, "text_list_bullets.png"))
+        icnNumbering = wx.Bitmap(os.path.join(imagepath, "text_list_numbers.png"))
         
-        #icnColour = wx.Bitmap(os.path.join(imagepath, "colour16.gif"))
-        
-        icnLink = wx.Bitmap(os.path.join(imagepath, "applications-internet.png"))
-        icnImage = wx.Bitmap(os.path.join(imagepath, "image-x-generic.png"))
+        icnLink = wx.Bitmap(os.path.join(imagepath, "world_link.png"))
+        icnImage = wx.Bitmap(os.path.join(imagepath, "image_add.png"))
 
         
         self.toolbar2 = toolbar2 = wx.ToolBar(pane, -1)
@@ -308,6 +303,8 @@ class MainFrame2(sc.SizedFrame):
             self.browser.browser = self.browser
             self.webdelegate = editordelegate.HTMLEditorDelegate(source=self.browser)
             
+            self.browser.ToggleContinuousSpellChecking()
+            
             self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
             self.browser.Bind(wx.EVT_MOUSE_EVENTS, self.UpdateStatus)
             self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
@@ -351,7 +348,6 @@ class MainFrame2(sc.SizedFrame):
             self.LoadEClass(settings.AppSettings["LastOpened"])
 
     def OnChanged(self, event):
-        print "OnChanged fired!"
         self.dirty = True
         
     def OnActivityMonitor(self, evt):

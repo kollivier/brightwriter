@@ -3,7 +3,7 @@
 major = 3
 minor = 0
 release = 0
-build = "preview1"
+build = "Preview 1"
 
 def asString():
-    return `major` + "." + `minor` + "." + `release` + "-" + `build`
+    return "%d.%d.%d %s" % (major, minor, release, build)
