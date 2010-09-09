@@ -248,7 +248,7 @@ class MainFrame2(sc.SizedFrame):
         self.fontsizes = {"10px": "1", "13px": "2", "16px": "3", "18px": "4", "24px": "5", "32px": "6", "48px": "7"}
         keys = self.fontsizes.keys()
         keys.sort()
-        self.fontsizelist = wx.ComboBox(toolbar2, wx.NewId(), choices=keys)
+        self.fontsizelist = wx.Choice(toolbar2, wx.NewId(), choices=keys)
         
         toolbar2.AddControl(self.fontlist)
         toolbar2.AddSeparator()
@@ -323,7 +323,7 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_TREE_BEGIN_LABEL_EDIT, self.OnTreeLabelWillChange, self.projectTree)
         self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
-        self.fontsizelist.Bind(wx.EVT_COMBOBOX, self.OnFontSizeSelect)
+        self.fontsizelist.Bind(wx.EVT_CHOICE, self.OnFontSizeSelect)
         self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
 
         self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
@@ -390,7 +390,7 @@ class MainFrame2(sc.SizedFrame):
         self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("AlignCenter"))
         self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("AlignRight"))
         self.toolbar2.ToggleTool(ID_ALIGN_JUSTIFY, self.GetCommandState("AlignJustify"))
-        self.fontsizelist.SetValue(self.browser.GetEditCommandValue("FontSize"))
+        self.fontsizelist.SetStringSelection(self.browser.GetEditCommandValue("FontSize"))
         self.fontlist.SetValue(self.browser.GetEditCommandValue("FontName"))
         
         evt.Skip()
