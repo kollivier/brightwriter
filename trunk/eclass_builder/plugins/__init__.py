@@ -215,7 +215,7 @@ class BaseHTMLPublisher:
         self.data['name'] = TextToXMLChar(name)
         self.data['description'] = TextToXMLAttr(description)
         self.data['keywords'] = TextToXMLAttr(keywords)
-        self.data['URL'] = utils.GetFileLink(filename)
+        self.data['URL'] = self.GetFileLink(filename)
         self.data['SourceFile'] = filename
         filename = os.path.join(self.dir, "Text", filename)
         filename = self.GetFilename(filename)
