@@ -14,6 +14,8 @@ import settings
 import constants
 import conman
 
+import eclassutils
+
 isPublic = True
 from StringIO import StringIO
 
@@ -140,7 +142,11 @@ class BaseHTMLPublisher:
                 return
         self.counter = self.counter + 1
 
-        self.parent.PublishPage(node)
+        if node != None:
+            filename = eclassutils.getEditableFileForIMSItem(self.parent.imscp, node)
+            publisher = plugins.GetPublisherForFilename(filename)
+            if publisher:
+                publisher.Publish(self.parent, node, settings.ProjectDir)
             
         if len(node.items) > 0:
             for child in node.items:
