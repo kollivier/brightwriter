@@ -4,10 +4,9 @@ from gui.ids import *
 def getFileMenu():
     # File menu
     FileMenu = wx.Menu()
-    FileMenu.Append(ID_NEW, "&" + _("New"), _("Create a New Project"))
-    FileMenu.Append(ID_OPEN, "&" +_("Open"), _("Open an Existing Project"))
-    FileMenu.Append(ID_SAVE, "&" + _("Save") + "\tCTRL+S", _("Save the Current Project"))
-    FileMenu.Append(ID_CLOSE, "&" + _("Close"), _("Close the Current Project"))
+    FileMenu.Append(ID_NEW, "&" + _("New eBook"), _("Create a New Project"))
+    FileMenu.Append(ID_OPEN, "&" +_("Open eBook"), _("Open an Existing Project"))
+    FileMenu.Append(ID_CLOSE, "&" + _("Close eBook"), _("Close the Current Project"))
     FileMenu.AppendSeparator()
     
     FileMenu.Append(ID_IMPORT_PACKAGE, _("Import Package"))
@@ -68,26 +67,25 @@ def getFormatMenu():
     FormatMenu.Append(ID_CLEANUP_HTML, _("Clean Up HTML"))
     return FormatMenu
     
-def getPageMenu(openWithMenu=None):
+def getPageMenu(openWithMenu=None, isPopup=False):
     PageMenu = wx.Menu()
-    PageMenu.Append(ID_ADD_MENU, _("Add New"))
+    PageMenu.Append(ID_ADD_MENU, _("New Page"))
+    if openWithMenu:
+        PageMenu.AppendMenu(ID_OPEN_ITEM, _("Open With"), openWithMenu)
+    PageMenu.Append(ID_SAVE, "&" + _("Save Page") + "\tCTRL+S", _("Save the Current Page"))
     PageMenu.Append(ID_TREE_REMOVE, _("Remove Page"), _("Remove the current page"))     
     PageMenu.AppendSeparator()
     PageMenu.Append(ID_IMPORT_FILE, _("Import file..."))
     PageMenu.AppendSeparator()
-    PageMenu.Append(ID_CUT, _("Cut")+"\tCTRL+X")
-    PageMenu.Append(ID_COPY, _("Copy")+"\tCTRL+C")
+
+    if isPopup:
+        PageMenu.Append(ID_CUT, _("Cut")+"\tCTRL+X")
+        PageMenu.Append(ID_COPY, _("Copy")+"\tCTRL+C")
     
-    PasteMenu2 = wx.Menu()
-    PasteMenu2.Append(ID_PASTE_BELOW, _("Paste After")+"\tCTRL+V")
-    PasteMenu2.Append(ID_PASTE_CHILD, _("Paste As Child"))
-    PageMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu2)
-    
-    PageMenu.AppendSeparator()
-    PageMenu.Append(ID_EDIT_ITEM, _("Edit Page"), _("Edit the currently selected page"))
-    
-    if openWithMenu:
-        PageMenu.AppendMenu(ID_OPEN_ITEM, _("Open With"), openWithMenu)
+        PasteMenu2 = wx.Menu()
+        PasteMenu2.Append(ID_PASTE_BELOW, _("Paste After")+"\tCTRL+V")
+        PasteMenu2.Append(ID_PASTE_CHILD, _("Paste As Child"))
+        PageMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu2)
     
     PageMenu.Append(ID_TREE_MOVEUP, _("Move Page Up"), _("Move the selected page higher in the tree"))
     PageMenu.Append(ID_TREE_MOVEDOWN, _("Move Page Down"), _("Move the selected page lower in the tree"))   

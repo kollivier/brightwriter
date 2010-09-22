@@ -187,7 +187,7 @@ class MainFrame2(sc.SizedFrame):
         icnSaveProject = wx.Bitmap(os.path.join(imagepath, "book_save.png"))
 
         icnNewPage = wx.Bitmap(os.path.join(imagepath, "page_add.png"))
-        icnEditPage = wx.Bitmap(os.path.join(imagepath, "page_edit.png"))
+        icnSavePage = wx.Bitmap(os.path.join(imagepath, "page_save.png"))
         icnPageProps = wx.Bitmap(os.path.join(imagepath, "page_gear.png"))
         icnDeletePage = wx.Bitmap(os.path.join(imagepath, "page_delete.png"))
 
@@ -204,11 +204,10 @@ class MainFrame2(sc.SizedFrame):
         self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
         self.toolbar.AddSimpleTool(ID_NEW, icnNewProject, _("New"), _("Create a New Project"))
         self.toolbar.AddSimpleTool(ID_OPEN, icnOpenProject, _("Open"), _("Open an Existing Project")) 
-        self.toolbar.AddSimpleTool(ID_SAVE, icnSaveProject, _("Save"), _("Save Current Project"))
         self.toolbar.AddSeparator()
         self.toolbar.AddSimpleTool(ID_ADD_MENU, icnNewPage, _("New Page"), _("Adds a New EClass Page"))
-        self.toolbar.AddSimpleTool(ID_EDIT_ITEM, icnEditPage, _("Edit Page"), _("Edits the Currently Selected Eclass Page"))
         self.toolbar.AddSimpleTool(ID_TREE_EDIT, icnPageProps, _("Page Properties"), _("View and Edit Page Properties"))
+        self.toolbar.AddSimpleTool(ID_SAVE, icnSavePage, _("Save Page"), _("Save the current page"))
         self.toolbar.AddSimpleTool(ID_TREE_REMOVE, icnDeletePage, _("Delete Page"), _("Delete Currently Selected Page"))
         self.toolbar.AddSeparator()
         self.toolbar.AddSimpleTool(ID_PUBLISH_CD, icnPublishCD, _("Publish to CD-ROM"), _("Publish to CD-ROM"))
@@ -848,13 +847,13 @@ class MainFrame2(sc.SizedFrame):
         if settings.AppSettings["CourseFolder"] != "" and os.path.exists(settings.AppSettings["CourseFolder"]):
             defaultdir = settings.AppSettings["CourseFolder"]
 
-        dialog = wx.DirDialog(self, _("Choose an EClass Project directory."), settings.AppSettings["CourseFolder"], style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dialog = wx.DirDialog(self, _("Choose a directory."), settings.AppSettings["CourseFolder"], style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dialog.ShowModal() == wx.ID_OK:
             manifest = os.path.join(dialog.GetPath(), "imsmanifest.xml")
             if os.path.exists(manifest):
                 self.LoadEClass(manifest)
             else:
-                wx.MessageBox(_("This directory does not contain an EClass Project."))
+                wx.MessageBox(_("This directory does not contain an eBook Project."))
         
         dialog.Destroy()
 
@@ -918,7 +917,7 @@ class MainFrame2(sc.SizedFrame):
                 else:
                     submenu = None
             
-            self.pageMenu = menus.getPageMenu(openWithMenu=submenu)
+            self.pageMenu = menus.getPageMenu(openWithMenu=submenu, isPopup=True)
             
             self.PopupMenu(self.pageMenu, pt)
             self.launchapps = None
