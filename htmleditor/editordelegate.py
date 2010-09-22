@@ -1,4 +1,5 @@
 import wx
+import wx.webview
 
 from wx.lib.pubsub import Publisher
 
@@ -67,8 +68,9 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_TEXT_SUP, self.OnSuperscript)
         app.AddHandlerForID(ID_TEXT_SUB, self.OnSubscript)
         app.AddHandlerForID(ID_TEXT_REMOVE_STYLES, self.OnRemoveStyle)
+        app.AddHandlerForID(ID_SPELLING_GUESS, self.OnSpellingGuessChosen)
         
-        self.webview.Bind(wx.EVT_CONTEXT_MENU, self.OnRightClick)
+        self.webview.Bind(wx.webview.EVT_WEBVIEW_CONTEXT_MENU, self.OnRightClick)
 
     def RemoveHandlers(self):
         app = wx.GetApp()
@@ -112,6 +114,12 @@ class HTMLEditorDelegate(wx.EvtHandler):
     def OnDoSearch(self, message):
         if wx.GetTopLevelParent(self.webview).IsActive():
             self.webview.FindString(message.data)
+
+    def OnSpellingGuessChosen(self, event):
+        menu = event.GetEventObject()
+        item = menu.FindItemById(event.GetId())
+        self.webview.ExecuteEditCommand("InsertText", item.GetItemLabelText())
+        self.webview.ExecuteEditCommand("Unselect")
 
     def OnSelectAll(self, evt):
         self.webview.ExecuteEditCommand("SelectAll")
@@ -202,26 +210,23 @@ class HTMLEditorDelegate(wx.EvtHandler):
             self.ShowEditorForTag("UL", ULPropsDialog)
 
     def GetParent(self, elementName):
-        elementName = elementName.upper()
+        elementName = elementName.lower()
         selection = self.webview.GetSelection().GetAsRange()
         if selection:                
             root = selection.startContainer()
-            print root.nodeName()
             children = root.childNodes()
             
             # when selecting, say, an image, the container is actually the tag above the
             # image, so we need to find the image in the children.
             for index in xrange(children.length()):
                 child = children.item(index)
-                print child
-                if isinstance(child, wx.webview.WebDOMElement) and child.tagName() == elementName:
+                if isinstance(child, wx.webview.WebDOMElement) and child.tagName().lower() == elementName:
                     return child
             
             parent = root
             while parent.impl():
-                print parent.nodeName()
                 if isinstance(parent, wx.webview.WebDOMElement):
-                    if parent.tagName() == elementName:
+                    if parent.tagName().lower() == elementName:
                         return parent
                 
                 parent = parent.parentNode()
@@ -283,6 +288,14 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
     def OnRightClick(self, evt):
         popupmenu = wx.Menu()
+
+        guesses = self.webview.GuessesForMisspelledSelection()
+        
+        for guess in guesses:
+            id = wx.NewId()
+            popupmenu.Append(id, guess)
+            self.webview.Bind(wx.EVT_MENU, self.OnSpellingGuessChosen, id=id)
+        
         if self.GetParent("IMG"):
             popupmenu.Append(ID_EDITIMAGE, "Image Properties")
         link = self.GetParent("A")

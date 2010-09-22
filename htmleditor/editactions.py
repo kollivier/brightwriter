@@ -55,3 +55,5 @@ ID_TEXT_CODE = wx.NewId()
 ID_TEXT_CITATION = wx.NewId()
 ID_TEXT_REMOVE_STYLES = wx.NewId()
 ID_CLEANUP_HTML = wx.NewId()
+
+ID_SPELLING_GUESS = wx.NewId()
