@@ -74,6 +74,7 @@ if EXPERIMENTAL_WXWEBKIT:
     import htmlutils
     import aboutdialog
     import cleanhtmldialog
+    import source_edit_dialog
 
 
 # Import the gui dialogs. They used to be embedded in editor.py
@@ -434,6 +435,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PASTE, self.OnPaste)
         app.AddHandlerForID(ID_IMPORT_FILE, self.OnImportFile)
         app.AddHandlerForID(ID_REFRESH_THEME, self.OnRefreshTheme)
+        app.AddHandlerForID(ID_EDIT_SOURCE, self.OnEditSource)
         #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
         app.AddHandlerForID(ID_ERRORLOG, self.OnErrorLog)
         app.AddHandlerForID(ID_ACTIVITY, self.OnActivityMonitor)
@@ -558,6 +560,14 @@ class MainFrame2(sc.SizedFrame):
         if not os.path.exists(url):
             url = os.path.join(settings.AppDir, "docs", "en", "manual", "index.htm")
         webbrowser.open_new("file://" + url)
+
+    def OnEditSource(self, event):
+        dialog = source_edit_dialog.SourceEditDialog(self, -1, _("Page Source"), size=(500, 500), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        dialog.SetSource(self.browser.GetPageSource())
+        dialog.ShowModal()
+        
+        html = dialog.GetSource()
+        self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
 
     def OnIdle(self, event):
         event.Skip()
