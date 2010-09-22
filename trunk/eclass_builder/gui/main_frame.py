@@ -49,6 +49,7 @@ import uuid
 import xmlrpclib
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
+from wx.lib.pubsub import Publisher
 
 try:
     import externals.taskrunner as taskrunner
@@ -215,6 +216,8 @@ class MainFrame2(sc.SizedFrame):
         #self.toolbar.AddSimpleTool(ID_PUBLISH_PDF, icnPublishPDF, _("Publish to PDF"), _("Publish to PDF"))
         self.toolbar.AddSeparator()
         self.toolbar.AddSimpleTool(ID_HELP, icnHelp, _("View Help"), _("View Help File"))
+        self.searchCtrl = wx.SearchCtrl(self.toolbar, -1, size=(200,-1))
+        self.toolbar.AddControl(self.searchCtrl)
 
         self.toolbar.SetToolBitmapSize(wx.Size(32,32))
 
@@ -324,6 +327,7 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
         self.fontsizelist.Bind(wx.EVT_CHOICE, self.OnFontSizeSelect)
         self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
+        self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
         self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
         
@@ -347,6 +351,11 @@ class MainFrame2(sc.SizedFrame):
 
         if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
             self.LoadEClass(settings.AppSettings["LastOpened"])
+
+    def OnDoSearch(self, event):
+        # wx bug: event.GetString() doesn't work on Windows 
+        text = event.GetEventObject().GetValue()
+        Publisher().sendMessage(('search', 'text', 'changed'), text)
 
     def OnChanged(self, event):
         self.dirty = True
@@ -1431,7 +1440,6 @@ class MainFrame2(sc.SizedFrame):
                     html = htmlutils.getUnicodeHTMLForFile(filename)
             
                     self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
-                    self.SetTitle(os.path.basename(filename))
                     self.filename = filename
                 else:
                     self.browser.LoadPage(filename)
