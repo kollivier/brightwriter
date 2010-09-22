@@ -115,7 +115,7 @@ class PagePropertiesDialog (sc.SizedDialog):
         
         combobox = wx.ComboBox(authorPanel, -1)
         combobox.SetSizerProps({"expand": True, "proportion":1})
-        peopleIcon = wx.Bitmap(os.path.join(settings.AppDir, "icons", "users16.gif"), wx.BITMAP_TYPE_GIF)
+        peopleIcon = wx.Bitmap(os.path.join(settings.AppDir, "icons", "fatcow", "book_addresses.png"))
         contactBtn = wx.BitmapButton(authorPanel, -1, peopleIcon)
         
         wx.EVT_BUTTON(contactBtn, contactBtn.GetId(), handler)

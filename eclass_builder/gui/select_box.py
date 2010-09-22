@@ -54,7 +54,7 @@ class SelectBox(sc.SizedPanel):
         self.SetSizerProp("expand", True)
         self.SetSizerProp("border", (["all"], 0))
         
-        icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wx.BITMAP_TYPE_GIF)
+        icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "fatcow", "folder.png"))
         self.textbox = wx.TextCtrl(self, -1, filename, size=textsize)
         if wx.Platform == "__WXMAC__":
             self.textbox.MacCheckSpelling(False)
