@@ -45,4 +45,11 @@ ID_ACTIVITY = wx.NewId()
 ID_FIND_IN_PROJECT = wx.NewId()
 ID_EDIT_SOURCE = wx.NewId()
 
+ID_FIND = wx.NewId()
+ID_FIND_NEXT = wx.NewId()
+ID_FIND_PREVIOUS = wx.NewId()
+ID_REPLACE = wx.NewId()
+ID_REPLACE_FIND = wx.NewId()
+ID_REPLACE_ALL = wx.NewId()
+
 from editactions import *
