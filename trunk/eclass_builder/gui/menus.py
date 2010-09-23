@@ -36,8 +36,8 @@ def getEditMenu():
     PasteMenu.Append(ID_PASTE_CHILD, _("Paste As Child"))
     EditMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu)
     
-    #EditMenu.AppendSeparator()
-    #EditMenu.Append(ID_FIND_IN_PROJECT, _("Find in Project"))
+    EditMenu.AppendSeparator()
+    EditMenu.Append(ID_FIND, _("Find and Replace") + "\tCTRL+F")
     
     return EditMenu
     

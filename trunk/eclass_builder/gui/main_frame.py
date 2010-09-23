@@ -168,9 +168,13 @@ class MainFrame2(sc.SizedFrame):
         self.inLabelEdit = False
         self.selectedFileLastModifiedTime = 0
         
+        # Note: themes are deprecated, code is left only until it can be removed safely.
         self.themes = themes.ThemeList(os.path.join(settings.AppDir, "themes"))
         self.currentTheme = self.themes.FindTheme("Default (frames)")
         self.launchApps = []
+        
+        # Modeless dialog
+        self.find_dialog = None
         
         wx.InitAllImageHandlers()
 
@@ -357,6 +361,16 @@ class MainFrame2(sc.SizedFrame):
         # wx bug: event.GetString() doesn't work on Windows 
         text = event.GetEventObject().GetValue()
         Publisher().sendMessage(('search', 'text', 'changed'), text)
+        
+    def OnFindReplace(self, event):
+        import find_replace_dialog
+        
+        if not self.find_dialog:
+            self.find_dialog = find_replace_dialog.FindReplaceDialog(self, -1, _("Find and Replace"))
+            self.find_dialog_controller = find_replace_dialog.WebViewFindReplaceController(self.browser)
+        
+        self.find_dialog.CentreOnScreen()
+        self.find_dialog.Show()
 
     def OnChanged(self, event):
         self.dirty = True
@@ -433,6 +447,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
         app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
         app.AddHandlerForID(ID_PASTE, self.OnPaste)
+        app.AddHandlerForID(ID_FIND, self.OnFindReplace)
         app.AddHandlerForID(ID_IMPORT_FILE, self.OnImportFile)
         app.AddHandlerForID(ID_REFRESH_THEME, self.OnRefreshTheme)
         app.AddHandlerForID(ID_EDIT_SOURCE, self.OnEditSource)
