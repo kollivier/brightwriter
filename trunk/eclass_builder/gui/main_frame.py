@@ -140,7 +140,7 @@ class MainFrame2(sc.SizedFrame):
     def __init__(self, parent, ID, title):
         busy = wx.BusyCursor()
         sc.SizedFrame.__init__(self, parent, ID, title, size=(780,580), 
-                      style=wx.DEFAULT_FRAME_STYLE|wx.CLIP_CHILDREN)
+                      style=wx.DEFAULT_FRAME_STYLE)
         
         # the default encoding isn't correct for Mac.
         if wx.Platform == "__WXMAC__":
@@ -305,7 +305,7 @@ class MainFrame2(sc.SizedFrame):
         if not EXPERIMENTAL_WXWEBKIT:
             self.browser = wxbrowser.wxBrowser(self.splitter1, -1)
         else:
-            self.browser = wx.webview.WebView(self.splitter1, -1, size=(200,200))
+            self.browser = wx.webview.WebView(self.splitter1, -1, size=(200,200), style=wx.WANTS_CHARS)
             self.browser.MakeEditable(True)
             self.browser.LoadPage = self.browser.LoadURL
             self.browser.SetPage = self.browser.SetPageSource
