@@ -1,13 +1,15 @@
 import wx
+import wx.lib.sized_controls as sc
 import wx.stc
 
 import sourcedelegate
 
-class SourceEditDialog(wx.Dialog):
+class SourceEditDialog(sc.SizedDialog):
     def __init__(self, *a, **kw):
-        wx.Dialog.__init__(self, *a, **kw)
+        sc.SizedDialog.__init__(self, *a, **kw)
         
-        self.source = wx.stc.StyledTextCtrl(self, -1)
+        self.source = wx.stc.StyledTextCtrl(self.GetContentsPane(), -1)
+        self.source.SetSizerProps(expand=True, proportion=1)
         
         self.isDirty = False
 
