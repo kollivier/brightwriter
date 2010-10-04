@@ -7,6 +7,8 @@ import tempfile
 import urllib
 import zipfile
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "htmleditor"))
+
 import wx
 import persistence
 import wx.lib.sized_controls as sc
@@ -67,7 +69,6 @@ except:
     pass
 
 if EXPERIMENTAL_WXWEBKIT:
-    sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "htmleditor"))
     import htmledit.htmlattrs as htmlattrs
 
     import editordelegate
@@ -725,7 +726,9 @@ class MainFrame2(sc.SizedFrame):
             self.CutNode = None #copy automatically cancels a cut operation
 
     def OnLinkCheck(self, event):
-        LinkChecker(self).ShowModal()
+        checker = LinkChecker(self)
+        checker.Show()
+        checker.CheckLinks(self.browser.GetPageSource())
 
     def OnPaste(self, event):
         if not wx.Window.FindFocus() == self.projectTree:
@@ -1366,6 +1369,8 @@ class MainFrame2(sc.SizedFrame):
                     shutil.copy(os.path.join(settings.ProjectDir, "imsmanifest.xml"), os.path.join(settings.ProjectDir, "imsmanifest-backup.xml"))
                     
                     eclassutils.IMSRemoveEClassPages(self.imscp)
+                
+                self.Preview()
                     
         
         except:
@@ -1470,7 +1475,9 @@ class MainFrame2(sc.SizedFrame):
                     self.browser.LoadPage(filename)
             else:
                 self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
-                    
+
+            self.browser.SetFocus()
+
         else:
             self.browser.SetPage(utils.createHTMLPageWithBody(""))
 
