@@ -460,7 +460,7 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_SETTINGS, self.OnAppPreferences)
         app.AddHandlerForID(wx.ID_ABOUT, self.OnAbout)
         
-        app.AddUIHandlerForID(ID_SAVE, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_SAVE, self.UpdatePageCommand)
         app.AddUIHandlerForID(ID_CLOSE, self.UpdateProjectCommand)
         app.AddUIHandlerForID(ID_PREVIEW, self.UpdateProjectCommand)
         app.AddUIHandlerForID(ID_REFRESH_THEME, self.UpdateProjectCommand)
@@ -995,14 +995,18 @@ class MainFrame2(sc.SizedFrame):
         
     def UpdatePageCommand(self, event):
         selection = self.projectTree.GetCurrentTreeItem()
-        if selection and event.Id == ID_TREE_REMOVE:
-            parent = self.projectTree.GetItemParent(selection)
-            if parent == self.projectTree.GetRootItem():
-                value = False
-            else:
-                value = True
-        else:
-            value = not selection is None
+
+        value = not selection is None
+        
+        if selection:
+            if event.Id == ID_TREE_REMOVE:
+                parent = self.projectTree.GetItemParent(selection)
+                if parent == self.projectTree.GetRootItem():
+                    value = False
+                else:
+                    value = True
+            elif event.Id == ID_SAVE:
+                value = self.dirty
         
         event.Enable(value)
             
