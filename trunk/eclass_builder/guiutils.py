@@ -181,11 +181,8 @@ def getDocumentsDir():
 
 	return docsfolder
 
-def getEClassProjectsDir():
-	if wx.Platform in ['__WXMAC__', '__WXMSW__']:
-		return os.path.join(getDocumentsDir(), "EClass Projects")
-	else:
-		return os.path.join(getDocumentsDir(), "eclass_projects")
+def getEBooksDir():
+	return os.path.join(getDocumentsDir(), "eBook Projects")
 
 def openFolderInGUI(folder):
 	if wx.Platform == "__WXMSW__":

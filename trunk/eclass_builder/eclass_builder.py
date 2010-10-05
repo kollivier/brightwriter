@@ -42,7 +42,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def OnInit(self):
         events.AppEventHandlerMixin.__init__(self)
         
-        self.SetAppName("EClass.Builder")
+        self.SetAppName("eBook Builder")
         
         global log
         if hasattr(sys, 'frozen'):
@@ -57,7 +57,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
             sys.stderr = open(settings.logfile, "w")
             sys.stdout = sys.stderr
         
-        log.info('Starting EClass.Builder.')
+        log.info('Starting %s.' % self.GetAppName())
         
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
         
@@ -69,7 +69,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         self.LoadVCards()
 
         import gui.main_frame
-        self.frame = gui.main_frame.MainFrame2(None, -1, "EClass.Builder")
+        self.frame = gui.main_frame.MainFrame2(None, -1, self.GetAppName())
         self.frame.CentreOnScreen()
 
         self.frame.Show(True)
@@ -116,21 +116,9 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def SetDefaultDirs(self):
         #check settings and if blank, apply defaults
         coursefolder = settings.AppSettings["CourseFolder"]
-        gsdlfolder = settings.AppSettings["GSDL"]
-        htmleditor = settings.AppSettings["HTMLEditor"]
 
         if coursefolder == "":
-            settings.AppSettings["CourseFolder"] = guiutils.getEClassProjectsDir()
-
-        if gsdlfolder == "":
-            if sys.platform.startswith("win"):
-                gsdlfolder = "C:\Program Files\gsdl"
-            
-            if os.path.exists(gsdlfolder):
-                settings.AppSettings["GSDL"] = gsdlfolder
-            
-            if os.path.exists(htmleditor):
-                settings.AppSettings["HTMLEditor"] = htmleditor
+            settings.AppSettings["CourseFolder"] = guiutils.getEBooksDir()
 
     def LoadVCards(self):
         #load the VCards
