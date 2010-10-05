@@ -31,17 +31,18 @@ if [ "$skipmac" != "yes" ]; then
      cmd="$PYTHON make-installer.py"
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
 
-     mkdir -p $DIST_DIR/dmg_files-$BUILD_TYPE
-     scp -r "$MAC_HOST:$dir/installer/dist/eBook\ Builder.app "  $DIST_DIR/dmg_files-$BUILD_TYPE
+     DMG_DIR=$DIST_DIR/dmg_files
+
+     mkdir -p $DMG_DIR
+     scp -r "$MAC_HOST:$dir/installer/dist/eBook\ Builder.app "  $DMG_DIR
      #cd $OLDDIR
 
      DMG_NAME=./deliver/ebook-builder-$BUILD_VERSION.dmg
-     DMG_DIR=$DIST_DIR/dmg_files-$BUILD_TYPE
      if [ -f $DMG_NAME ]; then
        rm $DMG_NAME
      fi
      
-     hdiutil create -srcfolder $DIST_DIR/dmg_files -volname "eBook Builder" -imagekey zlib-level=9 $DMG_NAME
+     hdiutil create -srcfolder $DMG_DIR -volname "eBook Builder" -imagekey zlib-level=9 $DMG_NAME
      
      rm -rf $DMG_DIR
 
