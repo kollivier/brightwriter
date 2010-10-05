@@ -32,7 +32,7 @@ if [ "$skipmac" != "yes" ]; then
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
 
      mkdir -p $DIST_DIR/dmg_files-$BUILD_TYPE
-     scp -r "$MAC_HOST:$dir/installer/dist/eBook Builder.app "  $DIST_DIR/dmg_files-$BUILD_TYPE
+     scp -r "$MAC_HOST:$dir/installer/dist/eBook\ Builder.app "  $DIST_DIR/dmg_files-$BUILD_TYPE
      #cd $OLDDIR
 
      DMG_NAME=./deliver/ebook-builder-$BUILD_VERSION.dmg
