@@ -16,7 +16,7 @@ if [ $skipwin != yes ]; then
      ssh $WIN_HOST "cd $WIN_BUILD && $cmd $tarball"
      
      echo "Running build script on $WIN_HOST..."
-     dir=$WIN_BUILD/eclass_builder
+     dir=$WIN_BUILD/trunk/eclass_builder
 
     #ssh $WIN_HOST "cd $dir/3rdparty/win32 && unzip -o win32extras.zip"
     # run unit tests
