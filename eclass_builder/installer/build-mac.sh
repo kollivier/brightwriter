@@ -32,16 +32,16 @@ if [ "$skipmac" != "yes" ]; then
      ssh $MAC_HOST "cd $dir/installer && rm -rf build dist && $cmd"
 
      mkdir -p $DIST_DIR/dmg_files-$BUILD_TYPE
-     scp -r "$MAC_HOST:$dir/installer/dist/EClass.Builder.app "  $DIST_DIR/dmg_files-$BUILD_TYPE
+     scp -r "$MAC_HOST:$dir/installer/dist/eBook Builder.app "  $DIST_DIR/dmg_files-$BUILD_TYPE
      #cd $OLDDIR
 
-     DMG_NAME=deliver/eclass-builder-$BUILD_VERSION.dmg
+     DMG_NAME=./deliver/ebook-builder-$BUILD_VERSION.dmg
      DMG_DIR=$DIST_DIR/dmg_files-$BUILD_TYPE
      if [ -f $DMG_NAME ]; then
        rm $DMG_NAME
      fi
      
-     hdiutil create -srcfolder $DIST_DIR/dmg_files-$BUILD_TYPE -volname "EClass.Builder" -imagekey zlib-level=9 $DMG_NAME
+     hdiutil create -srcfolder $DIST_DIR/dmg_files -volname "eBook Builder" -imagekey zlib-level=9 $DMG_NAME
      
      rm -rf $DMG_DIR
 
