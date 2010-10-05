@@ -1,55 +1,41 @@
-<html><head><base href="about:blank"></head><body>EClass.Builder is written entirely in the <a href="http://www.python.org" target="_blank">Python</a> programming language. Here's a high-level overview of the components of the system.<br>
-
-
-<br>
-
-<b>How EClass Works</b><br>
-
-<br>
-
-EClass.Builder is similar to a content management program in nature,
-although geared towards documentation and e-learning. It seeks to
-enable the user to accomplish three main tasks:<br>
-
-<ul>
-
-  <li>Import documentation data from many disparate locations and content formats</li>
-  <li>Edit and manage data via an easy-to-use interface</li>
-  <li>Publish the documentation in several popular formats</li>
-</ul>
-
-In short, allow users to work with disparate data formats
-transparently, while still achieving a consistent and clean final
-product. The only way to achieve this goal is to make EClass.Builder <b>extensible</b>.
-At every major level you can 'plug-in' to the system to support your
-own input and output formats. Here is how EClass.Builder can be
-extended by third-party developers:<br>
-
-<ul>
-
-  <li><b>Plugins</b> allow you to add support for importing and editing
-new and custom data formats. (Currently, the appropriate plugin for a
-data file is chosen by file extension.) A plugin contains the Python
-data objects, the wxPython-based content editor, and the HTMLPublisher
-that a plugin needs to interoperate with EClass.Builder.<br>
-  </li>
-  <li><b>Themes</b> allow you to change the look and feel of the HTML
-version of your EClass, and even lets you edit the publishing process (via the themes/&lt;theme_name&gt;.py file)
-to enable new functionality (i.e. breadcrumbs, navigation bars, etc.)</li>
-  <li><b>Publishers</b> manage the process of publishing an EClass to a
-particular format. Currently HTML and PDF publishers exist, but more
-can be created. (Note that the API for making Publishers "plug-in" to
-EClass isn't totally finished yet but is being worked on.)<br>
-  </li>
-</ul>
-
-For the most part, you can extend EClass.Builder without having to get
-into the guts of the program, and you can share your extensions with
-others as well. This makes for an interesting situation whereby the
-core EClass.Builder program need not grow considerably in complexity -
-users and developers simply "plug-in" the extra features they need to
-get their work done.<br>
-
-<br>
-
-</body></html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="HTML Tidy for Mac OS X (vers 31 October 2006 - Apple Inc. build 15.3), see www.w3.org" />
+  <base href="about:blank" />
+  <title>
+  </title>
+ </head>
+ <body>eBook Builder is written entirely in the
+  <a href="http://www.python.org" target="_blank">
+   Python
+  </a>
+  programming
+language. Here's a high-level overview of the components of the
+system.
+  <br />
+  <br />
+  <b>
+   How eBook Builder Works
+  </b>
+  <br />
+  <br />eBook Builder is similar to a content management program in
+nature, although geared towards documentation and e-learning. It
+seeks to enable the user to accomplish three main tasks:
+  <br />
+  <ul>
+   <li>
+    Import documentation data from many disparate locations and
+content formats
+   </li>
+   <li>
+    Edit and manage data via an easy-to-use interface
+   </li>
+   <li>
+    Publish the documentation in several popular formats
+   </li>
+  </ul>
+  <br />
+  <br />
+ </body>
+</html>
