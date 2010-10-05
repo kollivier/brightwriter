@@ -20,8 +20,8 @@ import glob
 import version
 
 myplist = dict(
-    CFBundleIdentifier='net.eclass.eclass_builder',
-    CFBundleDisplayName="EClass.Builder",
+    CFBundleIdentifier='net.eclass.ebook_builder',
+    CFBundleDisplayName="eBook Builder",
     CFBundleVersion=version.asString()
     )
  
@@ -60,7 +60,7 @@ for subdir in subdirs:
     source_files.extend(allFilesRecursive(rootdir + subdir))
 
 setup(
-    name="EClass.Builder",
+    name="eBook Builder",
     app=[rootdir + 'eclass_builder.py'],
     windows=[{"script": rootdir + 'eclass_builder.py', "icon_resources": [(1, rootdir + "icons/eclass_builder.ico")]}],
     data_files=source_files,
