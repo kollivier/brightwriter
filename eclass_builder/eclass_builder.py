@@ -5,6 +5,8 @@ import i18n
 lang_dict = i18n.installEClassGettext()
 
 import wx
+import wx.lib.pubsub
+
 import gui.error_viewer as error_viewer
 
 oldexcepthook = sys.excepthook 
