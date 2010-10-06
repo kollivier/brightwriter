@@ -51,6 +51,7 @@ import uuid
 import xmlrpclib
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
+import wx.lib.pubsub
 from wx.lib.pubsub import Publisher
 
 try:
