@@ -284,7 +284,7 @@ class MainFrame2(sc.SizedFrame):
         self.fontlist = wx.ComboBox(toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
     
         self.fontsizes = {"10px": "1", "13px": "2", "16px": "3", "18px": "4", "24px": "5", "32px": "6", "48px": "7"}
-        keys = self.fontsizes.keys()
+        keys = self.fontsizes.values()
         keys.sort()
         self.fontsizelist = wx.Choice(toolbar2, wx.NewId(), choices=keys)
         
@@ -425,7 +425,7 @@ class MainFrame2(sc.SizedFrame):
         return False
 
     def OnFontSizeSelect(self, evt):
-        value = self.fontsizes[self.fontsizelist.GetStringSelection()]
+        value = self.fontsizelist.GetStringSelection()
         self.browser.ExecuteEditCommand("FontSize", value)
 
     def OnFontSelect(self, evt):
