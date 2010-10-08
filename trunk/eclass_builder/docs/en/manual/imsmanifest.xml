@@ -15,7 +15,7 @@
 		<organization identifier="URN:IMS-PLIRID-V0:4B8E1A5FAA05484C98C2ECE68B0C5051">
 			<item identifier="URN:IMS-PLIRID-V0:E224935A7719403AA486352B67EC5EA0" identifierref="URN:IMS-PLIRID-V0:FEDEF7F54D6E41368CB30B8931045768">
 				<title>
-					eBook Builder Documentation
+					EClass.Builder Documentation
 				</title>
 				<item identifier="URN:IMS-PLIRID-V0:82398B2899A74C3388DF0DA470E59508" identifierref="URN:IMS-PLIRID-V0:9CC71042BAEE4D19AE73BF4666512758">
 					<title>
@@ -24,11 +24,11 @@
 				</item>
 				<item identifier="URN:IMS-PLIRID-V0:966CA18BBEED4900A060453D64B237D1" identifierref="URN:IMS-PLIRID-V0:AF2D2464C33D4806808C177F4E22A64A">
 					<title>
-						Getting Started
+						Why EClass.Builder?
 					</title>
 					<item identifier="URN:IMS-PLIRID-V0:A479EED45B1342109C15E1DB0A70088F" identifierref="URN:IMS-PLIRID-V0:476E1FC38A864EEA8E6DA04CEAB41D52">
 						<title>
-							Installing eBook Builder
+							Installing EClass.Builder
 						</title>
 					</item>
 					<item identifier="URN:IMS-PLIRID-V0:362A5DF60E4F464B859FF097F32F7082" identifierref="URN:IMS-PLIRID-V0:04DD88B77B1041B89F7566FA80C1507D">
@@ -38,7 +38,7 @@
 					</item>
 					<item identifier="URN:IMS-PLIRID-V0:03F9D383249949C9ACB9AF90A187C8CD" identifierref="URN:IMS-PLIRID-V0:D7FE756B661D430E824CBCF4FDBA4A86">
 						<title>
-							How eBook Builder Works
+							How EClass.Builder Works
 						</title>
 					</item>
 				</item>

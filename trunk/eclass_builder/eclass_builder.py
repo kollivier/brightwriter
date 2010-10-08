@@ -44,7 +44,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def OnInit(self):
         events.AppEventHandlerMixin.__init__(self)
         
-        self.SetAppName("eBook Builder")
+        self.SetAppName("EClass.Builder")
         
         global log
         if hasattr(sys, 'frozen'):
