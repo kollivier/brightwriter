@@ -78,6 +78,35 @@ if EXPERIMENTAL_WXWEBKIT:
     import cleanhtmldialog
     import source_edit_dialog
 
+    class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
+        def __init__(self, source, parent, *a, **kw):
+            editordelegate.HTMLEditorDelegate.__init__(self, source, *a, **kw)
+            # FIXME: An ugly hack to get to the current filename.
+            self.parent = parent
+            
+        def OnImageButton(self, evt):
+            imageFormats = _("Image files") +"|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
+            dialog = wx.FileDialog(self.webview, _("Select an image"), "","", imageFormats, wx.OPEN)
+            
+            
+            if dialog.ShowModal() == wx.ID_OK:
+                filepath = dialog.GetPath()
+                basepath = self.parent.baseurl.replace("file://", "")
+                imagepath = os.path.join(basepath, "images")
+                if not os.path.exists(imagepath):
+                    os.makedirs(imagepath)
+                if filepath.find(basepath) == -1:
+                    newpath = os.path.join(imagepath, os.path.basename(filepath))
+                    shutil.copy2(filepath, newpath)
+                    filepath = newpath.replace(basepath, "")
+                else:
+                    filepath = filepath.replace(basepath, "")
+                    
+                assert os.path.exists(os.path.join(basepath, filepath))
+                print filepath
+                self.webview.ExecuteEditCommand("InsertImage", filepath)
+            self.dirty = True
+
 
 # Import the gui dialogs. They used to be embedded in editor.py
 # so we will just import their contents for now to avoid conflicts.
@@ -312,7 +341,7 @@ class MainFrame2(sc.SizedFrame):
             self.browser.LoadPage = self.browser.LoadURL
             self.browser.SetPage = self.browser.SetPageSource
             self.browser.browser = self.browser
-            self.webdelegate = editordelegate.HTMLEditorDelegate(source=self.browser)
+            self.webdelegate = EClassHTMLEditorDelegate(source=self.browser, parent=self)
             
             self.browser.ToggleContinuousSpellChecking()
             
@@ -329,15 +358,12 @@ class MainFrame2(sc.SizedFrame):
 
         self.Bind(wx.EVT_TREE_SEL_CHANGING, self.OnTreeSelChanging, self.projectTree)        
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
-        self.Bind(wx.EVT_TREE_BEGIN_LABEL_EDIT, self.OnTreeLabelWillChange, self.projectTree)
         self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
         self.fontsizelist.Bind(wx.EVT_CHOICE, self.OnFontSizeSelect)
         self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
-        self.projectTree.Bind(wx.EVT_LEFT_DCLICK, self.OnTreeDoubleClick)
-        
         self.SetMinSize(self.GetSizer().GetMinSize())
 
         #if sys.platform.startswith("win"):
@@ -964,13 +990,6 @@ class MainFrame2(sc.SizedFrame):
             self.launchapps = None
             self.pageMenu = None
             
-    def OnTreeLabelWillChange(self, event):
-        # If you click at just the right speed, wx.TreeCtrl will fire both a edit label event and a
-        # double-click event. Unfortunately, my double-click handler brings up a new dialog, which
-        # causes the label edit event to lose the label and then finish with an empty label. So we
-        # keep track of whether or not we're in a label edit event to avoid this problem.
-        self.inLabelEdit = True
-        
     def OnTreeLabelChanged(self, event):
         item = self.projectTree.GetCurrentTreeItemData()
         if not event.IsEditCancelled():
@@ -978,17 +997,7 @@ class MainFrame2(sc.SizedFrame):
             assert label is not None and label != ""
             item.title.text = event.GetLabel()
             self.inLabelEdit = False
-            
-    def OnTreeDoubleClick(self, event):
-        if not self.inLabelEdit:
-            pt = event.GetPosition()
-            item = self.projectTree.GetCurrentTreeItemData()
-
-            if item:
-            # use wx.CallAfter because otherwise on OS X a tree control label edit event will get fired.
-                wx.CallAfter(self.EditItem, event)
-        
-        event.Skip()
+            self.SaveProject()
         
     def SkipNotebookEvent(self, evt):
         evt.Skip()
@@ -1156,12 +1165,8 @@ class MainFrame2(sc.SizedFrame):
 
     def ShutDown(self, event):
         if self.imscp and self.imscp.isDirty():
-            answer = self.PromptToSaveExistingProject()
-            if answer == wx.ID_YES:
-                self.SaveProject()
-            elif answer == wx.ID_CANCEL:
-                return
-        
+            self.SaveProject()
+
         settings.AppSettings.SaveAsXML(os.path.join(settings.PrefDir,"settings.xml"))
         
         # TODO: Make these utility windows and have their state saved and loaded
