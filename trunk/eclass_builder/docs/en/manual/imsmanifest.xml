@@ -19,12 +19,12 @@
 				</title>
 				<item identifier="URN:IMS-PLIRID-V0:82398B2899A74C3388DF0DA470E59508" identifierref="URN:IMS-PLIRID-V0:9CC71042BAEE4D19AE73BF4666512758">
 					<title>
-						Why eBook Builder?
+						Why EClass.Builder?
 					</title>
 				</item>
 				<item identifier="URN:IMS-PLIRID-V0:966CA18BBEED4900A060453D64B237D1" identifierref="URN:IMS-PLIRID-V0:AF2D2464C33D4806808C177F4E22A64A">
 					<title>
-						Why EClass.Builder?
+						Getting Started
 					</title>
 					<item identifier="URN:IMS-PLIRID-V0:A479EED45B1342109C15E1DB0A70088F" identifierref="URN:IMS-PLIRID-V0:476E1FC38A864EEA8E6DA04CEAB41D52">
 						<title>
@@ -58,7 +58,7 @@
 					</item>
 					<item identifier="URN:IMS-PLIRID-V0:1CCFCB0B4F214F029BFC94AACD406CD0" identifierref="URN:IMS-PLIRID-V0:288FE5EA2C804052B4886FF0E1C5E46B">
 						<title>
-							Publish Your eBook
+							Publish Your EClass
 						</title>
 					</item>
 				</item>
