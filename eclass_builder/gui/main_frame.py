@@ -596,7 +596,10 @@ class MainFrame2(sc.SizedFrame):
                     if os.path.exists(fullpath):
                         modifiedTime = os.path.getmtime(fullpath)
                         if not modifiedTime <= self.selectedFileLastModifiedTime:
-                            self.Update()
+                            self.selectedFileLastModifiedTime = modifiedTime
+                            result = wx.MessageBox(_("This page has been edited outside of EClass. Would you like to load the updated page? Any changes you've made since the last save will be lost."), _("Page Change Detected"), wx.YES_NO)
+                            if result == wx.YES:
+                                self.Update()
             except:
                 raise
 
@@ -1245,6 +1248,8 @@ class MainFrame2(sc.SizedFrame):
         afile = open(self.filename, "wb")
         afile.write(source)
         afile.close()
+        
+        self.selectedFileLastModifiedTime = os.path.getmtime(self.filename)
         self.dirty = False
 
     def NewContentPackage(self):
