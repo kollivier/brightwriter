@@ -5,7 +5,9 @@ import i18n
 lang_dict = i18n.installEClassGettext()
 
 import wx
-import wx.lib.pubsub
+import wx.lib.pubsub.setupv1
+from wx.lib.pubsub import pub
+publisher = pub.Publisher()
 
 import gui.error_viewer as error_viewer
 
