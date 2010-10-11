@@ -33,6 +33,9 @@ py2app_options = dict(
     plist=myplist,
     optimize=2,
     strip=False,
+    includes=[
+            "wx.lib.pubsub",
+        ],
 )
 
 def allFilesRecursive(dir):
@@ -60,7 +63,7 @@ for subdir in subdirs:
     source_files.extend(allFilesRecursive(rootdir + subdir))
 
 setup(
-    name="eBook Builder",
+    name="EClass.Builder",
     app=[rootdir + 'eclass_builder.py'],
     windows=[{"script": rootdir + 'eclass_builder.py', "icon_resources": [(1, rootdir + "icons/eclass_builder.ico")]}],
     data_files=source_files,
