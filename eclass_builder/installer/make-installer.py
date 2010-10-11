@@ -20,8 +20,8 @@ import glob
 import version
 
 myplist = dict(
-    CFBundleIdentifier='net.eclass.ebook_builder',
-    CFBundleDisplayName="eBook Builder",
+    CFBundleIdentifier='net.eclass.eclass_builder',
+    CFBundleDisplayName="EClass.Builder",
     CFBundleVersion=version.asString()
     )
  
@@ -33,9 +33,7 @@ py2app_options = dict(
     plist=myplist,
     optimize=2,
     strip=False,
-    includes=[
-            "wx.lib.pubsub",
-        ],
+    packages=["wx"],
 )
 
 def allFilesRecursive(dir):
