@@ -183,6 +183,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
             editcmd = wx.webview.WebEditCommand(self.webview.GetMainFrame())        
             for prop in return_props:
                 assert prop in all_attrs
+                if prop in ["href", "src"]:
+                    return_props[prop] = self.CopyFileIfNeeded(return_props[prop])
                 editcmd.SetNodeAttribute(tag, prop, return_props[prop])
             editcmd.Apply()
             self.dirty = True
@@ -208,6 +210,10 @@ class HTMLEditorDelegate(wx.EvtHandler):
         
         else:
             self.ShowEditorForTag("UL", ULPropsDialog)
+
+    # FIXME: Find out a way of getting the relative URL to the page and copy files in if needed
+    def CopyFIleIfNeeded(self, filepath):
+        return filepath
 
     def GetParent(self, elementName):
         elementName = elementName.lower()
@@ -238,7 +244,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         mydialog.CentreOnParent()
         if mydialog.ShowModal() == wx.ID_OK:
             props = mydialog.getProps()
-            self.webview.ExecuteEditCommand("CreateLink", props["href"])
+            self.webview.ExecuteEditCommand("CreateLink", self.CopyFileIfNeeded(props["href"]))
             if "target" in props:
                 url = self.GetParent("A")
                 if url:
@@ -260,7 +266,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         imageFormats = _("Image files") +"|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
         dialog = wx.FileDialog(self.webview, _("Select an image"), "","", imageFormats, wx.OPEN)
         if dialog.ShowModal() == wx.ID_OK:
-            self.webview.ExecuteEditCommand("InsertImage", 'file://' + dialog.GetPath())
+            self.webview.ExecuteEditCommand("InsertImage", self.CopyFileIfNeeded(dialog.GetPath()))
         self.dirty = True
 
     def OnHRButton(self, evt):
