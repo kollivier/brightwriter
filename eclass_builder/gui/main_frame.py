@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-import sys, urllib2, cPickle
+import sys, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
 import logging
 import tempfile
-import urllib
 import zipfile
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "htmleditor"))
@@ -89,7 +88,7 @@ if EXPERIMENTAL_WXWEBKIT:
             if not os.path.exists(filepath):
                 return filepath
                 
-            basepath = urllib.unquote(self.parent.baseurl.replace("file://", ""))
+            basepath = self.parent.baseurl.replace("file://", "")
             destdir = os.path.join(basepath, "files")
             if os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
                 destdir = os.path.join(basepath, "images")
@@ -1490,7 +1489,7 @@ class MainFrame2(sc.SizedFrame):
             ext = os.path.splitext(filename)[1][1:]
             if os.path.exists(filename) and ext in ok_fileTypes:
                 if ext.find("htm") != -1: 
-                    fileurl = urllib.quote(os.path.dirname(filename)) + "/"
+                    fileurl = os.path.dirname(filename) + "/"
                     self.baseurl = 'file://' + fileurl
                     html = htmlutils.getUnicodeHTMLForFile(filename)
             
