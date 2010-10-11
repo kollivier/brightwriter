@@ -89,7 +89,7 @@ if EXPERIMENTAL_WXWEBKIT:
             if not os.path.exists(filepath):
                 return filepath
                 
-            basepath = self.parent.baseurl.replace("file://", "")
+            basepath = urllib.unquote(self.parent.baseurl.replace("file://", ""))
             destdir = os.path.join(basepath, "files")
             if os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
                 destdir = os.path.join(basepath, "images")
