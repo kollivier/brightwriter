@@ -84,28 +84,38 @@ if EXPERIMENTAL_WXWEBKIT:
             # FIXME: An ugly hack to get to the current filename.
             self.parent = parent
             
-        def OnImageButton(self, evt):
-            imageFormats = _("Image files") +"|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
-            dialog = wx.FileDialog(self.webview, _("Select an image"), "","", imageFormats, wx.OPEN)
-            
-            
-            if dialog.ShowModal() == wx.ID_OK:
-                filepath = dialog.GetPath()
-                basepath = self.parent.baseurl.replace("file://", "")
-                imagepath = os.path.join(basepath, "images")
-                if not os.path.exists(imagepath):
-                    os.makedirs(imagepath)
-                if filepath.find(basepath) == -1:
-                    newpath = os.path.join(imagepath, os.path.basename(filepath))
-                    shutil.copy2(filepath, newpath)
-                    filepath = newpath.replace(basepath, "")
-                else:
-                    filepath = filepath.replace(basepath, "")
+        def CopyFileIfNeeded(self, filepath):
+            # if it's not an absolute path to a file, we assume it's a URL or relative path
+            if not os.path.exists(filepath):
+                return filepath
+                
+            basepath = self.parent.baseurl.replace("file://", "")
+            destdir = os.path.join(basepath, "files")
+            if os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
+                destdir = os.path.join(basepath, "images")
+                
+            if not os.path.exists(destdir):
+                os.makedirs(destdir)
+            if filepath.find(basepath) == -1:
+                newpath = os.path.join(destdir, os.path.basename(filepath))
+                copy = True
+                if os.path.exists(newpath):
+                    result = wx.MessageBox(_("The file %s already exists. Would you like to overwrite the existing file?") % newpath, _("Overwrite existing file?"), wx.YES_NO)
+                    if result == wx.YES:
+                        copy = True
+                    else:
+                        copy = False
                     
-                assert os.path.exists(os.path.join(basepath, filepath))
-                print filepath
-                self.webview.ExecuteEditCommand("InsertImage", filepath)
-            self.dirty = True
+                if copy:
+                    shutil.copy2(filepath, newpath)
+                
+                filepath = newpath.replace(basepath, "")
+            else:
+                filepath = filepath.replace(basepath, "")
+                
+            assert os.path.exists(os.path.join(basepath, filepath))
+            
+            return filepath
 
 
 # Import the gui dialogs. They used to be embedded in editor.py
