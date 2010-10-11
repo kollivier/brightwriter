@@ -34,15 +34,15 @@ if [ "$skipmac" != "yes" ]; then
      DMG_DIR=$DIST_DIR/dmg_files
 
      mkdir -p $DMG_DIR
-     scp -r "$MAC_HOST:$dir/installer/dist/eBook\ Builder.app "  $DMG_DIR
+     scp -r "$MAC_HOST:$dir/installer/dist/EClass.Builder.app "  $DMG_DIR
      #cd $OLDDIR
 
-     DMG_NAME=./deliver/ebook-builder-$BUILD_VERSION.dmg
+     DMG_NAME=./deliver/eclass-builder-$BUILD_VERSION.dmg
      if [ -f $DMG_NAME ]; then
        rm $DMG_NAME
      fi
      
-     hdiutil create -srcfolder $DMG_DIR -volname "eBook Builder" -imagekey zlib-level=9 $DMG_NAME
+     hdiutil create -srcfolder $DMG_DIR -volname "EClass.Builder" -imagekey zlib-level=9 $DMG_NAME
      
      rm -rf $DMG_DIR
 
