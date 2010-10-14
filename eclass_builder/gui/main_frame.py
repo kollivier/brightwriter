@@ -374,6 +374,9 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
         self.SetMinSize(self.GetSizer().GetMinSize())
+        
+        self.projectTree.Bind(wx.EVT_SET_FOCUS, self.OnTreeFocus)
+        self.projectTree.Bind(wx.EVT_KILL_FOCUS, self.OnTreeLoseFocus)
 
         #if sys.platform.startswith("win"):
         # this nasty hack is needed because on Windows, the controls won't
@@ -455,6 +458,32 @@ class MainFrame2(sc.SizedFrame):
         
         evt.Skip()
 
+    def OnTreeFocus(self, evt):
+        print "Registering tree handlers"
+        self.RegisterTreeHandlers()
+        evt.Skip()
+        
+    def OnTreeLoseFocus(self, evt):
+        print "Removing tree handlers"
+        self.RemoveTreeHandlers()
+        evt.Skip()
+
+    def RegisterTreeHandlers(self):
+        app = wx.GetApp()
+        app.AddHandlerForID(ID_CUT, self.OnCut)
+        app.AddHandlerForID(ID_COPY, self.OnCopy)
+        app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
+        app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
+        app.AddHandlerForID(ID_PASTE, self.OnPaste)
+
+    def RemoveTreeHandlers(self):
+        app = wx.GetApp()
+        app.RemoveHandlerForID(ID_CUT)
+        app.RemoveHandlerForID(ID_COPY)
+        app.RemoveHandlerForID(ID_PASTE_BELOW)
+        app.RemoveHandlerForID(ID_PASTE_CHILD)
+        app.RemoveHandlerForID(ID_PASTE)
+
     def RegisterHandlers(self):
         app = wx.GetApp()
         app.AddHandlerForID(ID_NEW, self.OnNewContentPackage)
@@ -479,11 +508,6 @@ class MainFrame2(sc.SizedFrame):
         app.AddHandlerForID(ID_TREE_MOVEDOWN, self.OnMoveItemDown)
         app.AddHandlerForID(ID_HELP, self.OnHelp)
         app.AddHandlerForID(ID_LINKCHECK, self.OnLinkCheck)
-        app.AddHandlerForID(ID_CUT, self.OnCut)
-        app.AddHandlerForID(ID_COPY, self.OnCopy)
-        app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
-        app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
-        app.AddHandlerForID(ID_PASTE, self.OnPaste)
         app.AddHandlerForID(ID_FIND, self.OnFindReplace)
         app.AddHandlerForID(ID_IMPORT_FILE, self.OnImportFile)
         app.AddHandlerForID(ID_REFRESH_THEME, self.OnRefreshTheme)
@@ -584,9 +608,6 @@ class MainFrame2(sc.SizedFrame):
         app.RemoveUIHandlerForID(ID_THEME)
         app.RemoveUIHandlerForID(ID_LINKCHECK)
         
-        app.RemoveUIHandlerForID(ID_CUT)
-        app.RemoveUIHandlerForID(ID_COPY)
-        app.RemoveUIHandlerForID(ID_PASTE)
         app.RemoveUIHandlerForID(ID_FIND_IN_PROJECT)
         
         app.RemoveUIHandlerForID(ID_ADD_MENU)
@@ -603,8 +624,6 @@ class MainFrame2(sc.SizedFrame):
         app.RemoveUIHandlerForID(pagemenu)
         app.RemoveUIHandlerForID(self.GetMenuBar().FindMenu(_("Edit")))
         #wx.EVT_MENU(self, ID_FIND_IN_PROJECT, self.OnFindInProject)
-
-        #app.RemoveHandlerForID(ID_EXIT, self.OnCloseWindow)
 
     def OnHelp(self, event):
         import webbrowser
@@ -668,8 +687,11 @@ class MainFrame2(sc.SizedFrame):
         dialog.SetCleanedHTML(html)
         dialog.log.SetValue(errors)
         if dialog.ShowModal() == wx.ID_OK:
+            html = dialog.newSource.GetText()
             self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
             self.dirty = True
+            
+        dialog.Destroy()
 
     def OnRefreshTheme(self, event):
         publisher = self.currentTheme.HTMLPublisher(self)
@@ -693,17 +715,18 @@ class MainFrame2(sc.SizedFrame):
                 newresource = ims.contentpackage.Resource()
                 newresource.setFilename(packagefile)
                 newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
-                plugin = plugins.GetPluginForFilename(packagefile)
-                newresource.attrs["type"] = plugin.plugin_info["IMS Type"]
+                newresource.attrs["type"] = "webcontent"
                 
                 self.imscp.resources.append(newresource)
                 
                 newitem = ims.contentpackage.Item()
                 assert os.path.basename(packagefile) is not None and os.path.basename(packagefile) != ""
                 
-                titleString = htmlutils.getTitleForPage(os.path.join(settings.ProjectDir, packagefile))
-                if not titleString or titleString == "":
-                    titleString = os.path.basename(packagefile)
+                titleString = os.path.basename(packagefile)
+                
+                if os.path.splitext(packagefile)[1].find("htm") != -1:
+                    titleString = htmlutils.getTitleForPage(os.path.join(settings.ProjectDir, packagefile))
+                
                 newitem.title.text = titleString
                 newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
                 newitem.attrs["identifierref"] = newresource.attrs["identifier"]
