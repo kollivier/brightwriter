@@ -56,7 +56,7 @@ def getTitleForPage(filename):
         if title:
             return title.string
             
-    return None
+    return os.path.splitext(os.path.basename(filename))[0]
     
 def footnoteFixer(soup):
      matches = soup.findAll(style=re.compile("^mso-footnote-id:"))
