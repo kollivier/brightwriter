@@ -9,6 +9,8 @@ import ims
 import ims.contentpackage
 import appdata
 
+import select_box as picker
+
 class ProjectPropsDialog(sc.SizedDialog):
     def __init__(self, parent):
         """
@@ -66,11 +68,6 @@ class ProjectPropsDialog(sc.SizedDialog):
             self.project.metadata.lom.general.description[lang] = self.generalPanel.txtdescription.GetValue()
             self.project.metadata.lom.general.keyword[lang] = self.generalPanel.txtkeywords.GetValue()
 
-        if self.publishPanel.chkFilename.GetValue() == True:
-            settings.ProjectSettings["ShortenFilenames"] = "Yes"
-        else:
-            settings.ProjectSettings["ShortenFilenames"] = "No"
-
         settings.ProjectSettings["FTPHost"] = self.ftpPanel.txtFTPSite.GetValue()
         settings.ProjectSettings["FTPDirectory"] = self.ftpPanel.txtDirectory.GetValue()
         settings.ProjectSettings["FTPUser"] = self.ftpPanel.txtUsername.GetValue()
@@ -87,6 +84,7 @@ class ProjectPropsDialog(sc.SizedDialog):
             settings.ProjectSettings["UploadOnSave"] = "No"
 
         settings.ProjectSettings["CDSaveDir"] = self.publishPanel.txtCDDir.GetValue()
+        settings.ProjectSettings["WebSaveDir"] = self.publishPanel.txtWebDir.GetValue()
 
         self.parent.isDirty = True
         self.EndModal(wx.ID_OK)
@@ -130,23 +128,9 @@ class SearchPanel(sc.SizedPanel):
         if not appdata.hasPyLucene:
             self.chkSearch.Enable(False)
         
-        #self.options = [_("Use Lucene for searching (Default)"), _("Use Greenstone for searching")]
-        #self.whichSearch = wx.RadioBox(self, -1, _("Search Engine"), wx.DefaultPosition, wx.DefaultSize, self.options, 1)
-        
-        #self.useGSDL = wxRadioBox(panel, -1, )
-        #pubid = ""
-        #if isinstance(project, conman.conman.ConMan):
-        #    pubid = project.pubid
-            
-        #self.lblpubid = wx.StaticText(self, -1, _("Greenstone Collection ID"))
-        #self.txtpubid = wx.TextCtrl(self, -1, pubid)
-        #self.lblpubidhelp = wx.StaticText(self, -1, _("ID must be 8 chars or less, no spaces, all letters\n and/or numbers."))
-        
         self.LoadSettings()
-        #self.updatePubIdState()
 
         wx.EVT_CHECKBOX(self, self.chkSearch.GetId(), self.chkSearchClicked)
-        #wx.EVT_RADIOBOX(self, self.whichSearch.GetId(), self.whichSearchClicked)
         
     def whichSearchClicked(self, event):
         self.updatePubIdState()
@@ -192,9 +176,7 @@ class SearchPanel(sc.SizedPanel):
 class PublishPanel(sc.SizedPanel):
     def __init__(self, parent):
         sc.SizedPanel.__init__(self, parent, -1)
-        self.chkFilename = wx.CheckBox(self, -1, _("Restrict filenames to 31 characters"))
-
-        self.lblCDDir = wx.StaticText(self, -1, _("Directory to save CD files:"))
+        self.lblCDDir = wx.StaticText(self, -1, _("CD Export Directory:"))
         
         cdpanel = sc.SizedPanel(self, -1)
         cdpanel.SetSizerType("horizontal")
@@ -202,9 +184,13 @@ class PublishPanel(sc.SizedPanel):
         self.txtCDDir = wx.TextCtrl(cdpanel, -1, "")
         self.txtCDDir.SetSizerProps({"expand":True, "proportion":1})
         
-        icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "Open.gif"), wx.BITMAP_TYPE_GIF)
+        icnFolder = wx.Bitmap(os.path.join(settings.AppDir, "icons", "fatcow", "folder.png"))
         self.btnSelectFile = wx.BitmapButton(cdpanel, -1, icnFolder)
         self.btnSelectFile.SetSizerProp("valign", "center")
+
+        wx.StaticText(self, -1, _("Web Export Directory:"))
+
+        self.txtWebDir = picker.SelectBox(self, "", type="Directory")
 
         self.LoadSettings()
 
@@ -214,9 +200,9 @@ class PublishPanel(sc.SizedPanel):
         if settings.ProjectSettings["CDSaveDir"] != "":
             self.txtCDDir.SetValue(settings.ProjectSettings["CDSaveDir"])
             
-        if settings.ProjectSettings["ShortenFilenames"] == "Yes":
-            self.chkFilename.SetValue(1)
-        
+        if settings.ProjectSettings["WebSaveDir"] != "":
+            self.txtWebDir.SetValue(settings.ProjectSettings["WebSaveDir"])
+            
     def btnSelectFileClicked(self, event):
         dialog = wx.DirDialog(self, _("Choose a folder to store CD files."), style=wx.DD_NEW_DIR_BUTTON)
         if dialog.ShowModal() == wx.ID_OK:
