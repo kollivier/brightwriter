@@ -31,10 +31,9 @@ def getEditMenu():
     EditMenu.Append(ID_CUT, _("Cut")+"\tCTRL+X")
     EditMenu.Append(ID_COPY, _("Copy")+"\tCTRL+C")
 
-    PasteMenu = wx.Menu()
-    PasteMenu.Append(ID_PASTE_BELOW, _("Paste After")+"\tCTRL+V")
-    PasteMenu.Append(ID_PASTE_CHILD, _("Paste As Child"))
-    EditMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu)
+    EditMenu.Append(ID_PASTE, _("Paste") + "\tCTRL+V")
+    EditMenu.Append(ID_PASTE_BELOW, _("Paste Page After")+"\tCTRL+SHIFT+V")
+    EditMenu.Append(ID_PASTE_CHILD, _("Paste Page As Child"))
     
     EditMenu.AppendSeparator()
     EditMenu.Append(ID_FIND, _("Find and Replace") + "\tCTRL+F")
@@ -45,10 +44,11 @@ def getInsertMenu():
     InsertMenu = wx.Menu()
     InsertMenu.Append(ID_INSERT_LINK, _("Hyperlink") + "\tCTRL+L")
     InsertMenu.Append(ID_INSERT_BOOKMARK, _("Bookmark") + "\tCTRL+SHIFT+B")
+    InsertMenu.Append(ID_INSERT_HR, _("Horizontal Rule"))
     InsertMenu.AppendSeparator()
     InsertMenu.Append(ID_INSERT_IMAGE, _("Image..."))
-    InsertMenu.Append(ID_INSERT_TABLE, _("Insert Table"))
-    return InsertMenu    
+    InsertMenu.Append(ID_INSERT_TABLE, _("Table"))
+    return InsertMenu
 
 def getFormatMenu():
     FormatMenu = wx.Menu()
@@ -59,6 +59,9 @@ def getFormatMenu():
     textstylemenu.AppendSeparator()
     textstylemenu.Append(ID_TEXT_SUP, _("Superscript"))
     textstylemenu.Append(ID_TEXT_SUB, _("Subscript"))
+    textstylemenu.AppendSeparator()
+    textstylemenu.Append(ID_FONT_COLOR, _("Text Color"))
+    textstylemenu.Append(ID_BACK_COLOR, _("Background Color"))    
     textstylemenu.AppendSeparator()
     textstylemenu.Append(ID_TEXT_REMOVE_STYLES, _("Remove Formatting"))
     textstylemenu.Append(ID_REMOVE_LINK, _("Remove Link"))
