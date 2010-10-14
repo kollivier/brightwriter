@@ -85,8 +85,8 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         if not os.path.exists(contactsdir):
             os.mkdir(contactsdir)
             
-        if not os.path.exists(settings.AppSettings["CourseFolder"]):
-            os.makedirs(settings.AppSettings["CourseFolder"])
+        if not os.path.exists(settings.AppSettings["EClass3Folder"]):
+            os.makedirs(settings.AppSettings["EClass3Folder"])
     
     def LoadPrefs(self):
         settings.PrefDir = guiutils.getAppDataDir()
@@ -116,10 +116,10 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
 
     def SetDefaultDirs(self):
         #check settings and if blank, apply defaults
-        coursefolder = settings.AppSettings["CourseFolder"]
+        coursefolder = settings.AppSettings["EClass3Folder"]
 
         if coursefolder == "":
-            settings.AppSettings["CourseFolder"] = guiutils.getEBooksDir()
+            settings.AppSettings["EClass3Folder"] = guiutils.getEClass3Dir()
 
     def LoadVCards(self):
         #load the VCards

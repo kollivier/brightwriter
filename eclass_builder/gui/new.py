@@ -53,7 +53,7 @@ class NewPubDialog(sc.SizedDialog):
 		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 	
 	def btnOKClicked(self, event):
-		self.eclassdir = os.path.join(settings.AppSettings["CourseFolder"], 
+		self.eclassdir = os.path.join(settings.AppSettings["EClass3Folder"], 
 		                        utils.createSafeFilename(self.txtTitle.GetValue()))
 
 		if not os.path.exists(self.eclassdir):
