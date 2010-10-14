@@ -52,7 +52,7 @@ def allFilesRecursive(dir):
 py2exe_options = dict(skip_archive=True)
 
 subdirs = ['3rdparty/src/flash_flv_player', '3rdparty/src/flash_mp3_player', '3rdparty/' + platform, 'about', 'autorun', 'convert', 
-                '3rdparty/bin', 'docs', 'externals', 'greenstone', 'icons', 'locale', 'license',
+                '3rdparty/bin', 'docs/en/web', 'externals', 'greenstone', 'icons', 'locale', 'license',
                 'mmedia', 'plugins', 'themes', 'web']
 
 source_files = []
