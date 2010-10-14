@@ -627,9 +627,7 @@ class MainFrame2(sc.SizedFrame):
 
     def OnHelp(self, event):
         import webbrowser
-        url = os.path.join(settings.AppDir, "docs", settings.LangDirName, "index.htm")
-        if not os.path.exists(url):
-            url = os.path.join(settings.AppDir, "docs", "en", "manual", "index.htm")
+        url = os.path.join(settings.AppDir, "docs", settings.LangDirName, "web", "index.htm")
         webbrowser.open_new("file://" + url)
 
     def OnEditSource(self, event):
