@@ -72,10 +72,6 @@ class NewPageDialog(sc.SizedDialog):
 		self.lblTitle.SetSizerProp("valign", "center")
 		self.txtTitle = wx.TextCtrl(pane, -1, _("New Page"), size=(180, -1))
 		self.txtTitle.SetSizerProp("expand", True)
-		self.lblType = wx.StaticText(pane, -1, "Type")
-		self.lblType.SetSizerProp("valign", "center")
-		self.cmbType = wx.Choice(pane, -1)
-		self.cmbType.SetSizerProp("expand", True)
 
 		self.lblFilename = wx.StaticText(pane, -1, "Filename")
 		self.lblFilename.SetSizerProp("valign", "center")
@@ -84,13 +80,6 @@ class NewPageDialog(sc.SizedDialog):
 		self.filenameEdited = False
 		
 		extension = ".xhtml"
-		for plugin in plugins.pluginList:
-			if plugin.plugin_info["CanCreateNew"]:
-				self.cmbType.Append(plugin.plugin_info["FullName"])
-			if plugin.plugin_info["FullName"] == settings.AppSettings["DefaultPlugin"]:
-				extension = "." + plugin.plugin_info["Extension"][0]
-		
-		self.cmbType.SetSelection(0)
 		self.txtFilename.SetValue(self.txtTitle.GetValue())
 		self.UpdateFilename(None)
 
@@ -111,7 +100,6 @@ class NewPageDialog(sc.SizedDialog):
 
 		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 		wx.EVT_BUTTON(self.btnCancel, self.btnCancel.GetId(), self.btnCancelClicked)
-		wx.EVT_CHOICE(self, self.cmbType.GetId(), self.UpdateFilename)
 		wx.EVT_CHAR(self.txtFilename, self.CheckFilename)
 		wx.EVT_TEXT(self, self.txtTitle.GetId(), self.UpdateFilename)
 
@@ -128,12 +116,7 @@ class NewPageDialog(sc.SizedDialog):
 		if string.find(title, ".") != -1:
 			title = title[:string.rfind(title, ".")]
 
-		pluginname = self.cmbType.GetStringSelection()
 		extension = ".xhtml"
-		for plugin in plugins.pluginList:
-			if plugin.plugin_info["FullName"] == pluginname:
-				extension = "." + plugin.plugin_info["Extension"][0]
-				break
 
 		if not self.filenameEdited:
 			title = MakeFileName2(self.txtTitle.GetValue())
@@ -150,12 +133,7 @@ class NewPageDialog(sc.SizedDialog):
 		self.EndModal(wx.ID_CANCEL)
 
 	def btnOKClicked(self, event):
-		pluginname = self.cmbType.GetStringSelection()
-		for plugin in plugins.pluginList:
-			if plugin.plugin_info["FullName"] == pluginname:
-				break
-
-		if os.path.exists(os.path.join(settings.ProjectDir, plugin.plugin_info["Directory"], self.txtFilename.GetValue())):
+		if os.path.exists(os.path.join(settings.ProjectDir, self.txtFilename.GetValue())):
 			wx.MessageBox(_("Filename already exists. Please rename the file and try again."))
 		else:
 			self.EndModal(wx.ID_OK)
