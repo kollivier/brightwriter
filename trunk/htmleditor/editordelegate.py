@@ -64,6 +64,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_EDITTABLE, self.OnTableProps)
         app.AddHandlerForID(ID_EDITROW, self.OnRowProps)
         app.AddHandlerForID(ID_EDITCELL, self.OnCellProps)
+        
+        app.AddHandlerForID(ID_BACK_COLOR, self.OnBackColorButton)
 
         app.AddHandlerForID(ID_TEXT_SUP, self.OnSuperscript)
         app.AddHandlerForID(ID_TEXT_SUB, self.OnSubscript)
@@ -273,22 +275,34 @@ class HTMLEditorDelegate(wx.EvtHandler):
         self.webview.ExecuteEditCommand("InsertHorizontalRule")
         self.dirty = True
 
+    def getHexColorFromRGB(self, color):
+        red = str(hex(color[0])).replace("0x", "")
+        if len(red) == 1:
+            red = "0" + red
+        green = str(hex(color[1])).replace("0x", "")
+        if len(green) == 1:
+            green = "0" + green
+        blue = str(hex(color[2])).replace("0x", "")
+        if len(blue) == 1:
+            blue = "0" + blue
+        value = "#" + red + green + blue
+        return value
+
     def OnFontColorButton(self, evt):
         dlg = wx.ColourDialog(self.webview)
         dlg.GetColourData().SetChooseFull(True)
         if dlg.ShowModal() == wx.ID_OK:
-            data = dlg.GetColourData().GetColour().Get() #RGB tuple
-            red = str(hex(data[0])).replace("0x", "")
-            if len(red) == 1:
-                red = "0" + red
-            green = str(hex(data[1])).replace("0x", "")
-            if len(green) == 1:
-                green = "0" + green
-            blue = str(hex(data[2])).replace("0x", "")
-            if len(blue) == 1:
-                blue = "0" + blue
-            value = "#" + red + green + blue
+            value = self.getHexColorFromRGB(dlg.GetColourData().GetColour().Get()) #RGB tuple
             self.webview.ExecuteEditCommand("ForeColor", value)
+        dlg.Destroy()
+        self.dirty = True
+
+    def OnBackColorButton(self, evt):
+        dlg = wx.ColourDialog(self.webview)
+        dlg.GetColourData().SetChooseFull(True)
+        if dlg.ShowModal() == wx.ID_OK:
+            value = self.getHexColorFromRGB(dlg.GetColourData().GetColour().Get()) #RGB tuple
+            self.webview.ExecuteEditCommand("BackColor", value)
         dlg.Destroy()
         self.dirty = True
 
