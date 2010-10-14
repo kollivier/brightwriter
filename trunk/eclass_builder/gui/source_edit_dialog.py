@@ -20,6 +20,7 @@ class SourceEditDialog(sc.SizedDialog):
         self.source.StyleSetSpec(wx.stc.STC_H_ATTRIBUTE, "fore:#009900")
         self.source.StyleSetSpec(wx.stc.STC_H_VALUE, "fore:#009900")
         self.source.SetProperty("fold.html", "1")
+        self.source.SetWrapMode(wx.stc.STC_WRAP_WORD)
 
         self.sourceDelegate = sourcedelegate.HTMLSourceEditorDelegate(self.source)
 
