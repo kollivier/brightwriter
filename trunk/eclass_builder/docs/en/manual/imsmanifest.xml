@@ -41,6 +41,11 @@
 							How EClass.Builder Works
 						</title>
 					</item>
+					<item identifier="URN:IMS-PLIRID-V0:a81ee7b2-5c87-4efe-ab22-fb919ec24342" identifierref="URN:IMS-PLIRID-V0:5d6f2782-f1dd-447d-af12-b7c2555cbd44">
+						<title>
+							Thinking Outside the Page
+						</title>
+					</item>
 				</item>
 				<item identifier="URN:IMS-PLIRID-V0:6BF4973F98674196BF1B7C70D16ABCAB" identifierref="URN:IMS-PLIRID-V0:FA0A7EA47C4D425BA6EF9D69C6D777FC">
 					<title>
@@ -48,12 +53,12 @@
 					</title>
 					<item identifier="URN:IMS-PLIRID-V0:657C9C6943404B47B64F027934FC310F" identifierref="URN:IMS-PLIRID-V0:97D62C7F134341E985819F6761BF2B7D">
 						<title>
-							Create a New Project
+							Creating a New Project
 						</title>
 					</item>
 					<item identifier="URN:IMS-PLIRID-V0:AF5195C27557481A8F95C09E99FD99E1" identifierref="URN:IMS-PLIRID-V0:A3D1F9CBF43D4E0FAD4F3CCBEE621A83">
 						<title>
-							Add and Edit Pages
+							Adding Pages
 						</title>
 					</item>
 					<item identifier="URN:IMS-PLIRID-V0:1CCFCB0B4F214F029BFC94AACD406CD0" identifierref="URN:IMS-PLIRID-V0:288FE5EA2C804052B4886FF0E1C5E46B">
@@ -81,14 +86,9 @@
 					<title>
 						For Developers
 					</title>
-					<item identifier="URN:IMS-PLIRID-V0:3A939936BA6C4E5ABC5D4D5B5F995674" identifierref="URN:IMS-PLIRID-V0:DAEDFA73F6AC48218B2C73B64C0CD34E">
-						<title>
-							Base Concepts
-						</title>
-					</item>
 					<item identifier="URN:IMS-PLIRID-V0:F5C38075E50D4436A957C1AD34E3681E" identifierref="URN:IMS-PLIRID-V0:38471C43538E44FD936820BBD4B9DA9F">
 						<title>
-							Localizing EClass
+							Localizing EClass.Builder
 						</title>
 					</item>
 				</item>
@@ -114,9 +114,6 @@
 		<resource adlcp:scormtype="asset" href="Text/For Developers 1.htm" identifier="URN:IMS-PLIRID-V0:451BA54D47FB4F1BBFFBC2B5B4592708" type="webcontent">
 			<file href="Text/For Developers 1.htm"/>
 		</resource>
-		<resource adlcp:scormtype="asset" href="Text/Architecture 1.htm" identifier="URN:IMS-PLIRID-V0:DAEDFA73F6AC48218B2C73B64C0CD34E" type="webcontent">
-			<file href="Text/Architecture 1.htm"/>
-		</resource>
 		<resource adlcp:scormtype="asset" href="Text/Walkthrough 1.htm" identifier="URN:IMS-PLIRID-V0:FA0A7EA47C4D425BA6EF9D69C6D777FC" type="webcontent">
 			<file href="Text/Walkthrough 1.htm"/>
 		</resource>
@@ -124,6 +121,17 @@
 			<file href="Text/Create a New Project 1.htm"/>
 		</resource>
 		<resource adlcp:scormtype="asset" href="Text/Add and Edit Pages 1.htm" identifier="URN:IMS-PLIRID-V0:A3D1F9CBF43D4E0FAD4F3CCBEE621A83" type="webcontent">
+			<metadata>
+				<imsmd:lom>
+					<imsmd:general>
+						<imsmd:description/>
+						<imsmd:keyword/>
+					</imsmd:general>
+					<imsmd:rights>
+						<imsmd:description/>
+					</imsmd:rights>
+				</imsmd:lom>
+			</metadata>
 			<file href="Text/Add and Edit Pages 1.htm"/>
 		</resource>
 		<resource adlcp:scormtype="asset" href="Text/Advanced Options 1.htm" identifier="URN:IMS-PLIRID-V0:F1A086B9B4A34682A49CB4470B8CD9BF" type="webcontent">
@@ -143,6 +151,9 @@
 		</resource>
 		<resource adlcp:scormtype="asset" href="Text/translating.htm" identifier="URN:IMS-PLIRID-V0:38471C43538E44FD936820BBD4B9DA9F" type="webcontent">
 			<file href="Text/translating.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Thinking_Outside_the_Page.xhtml" identifier="URN:IMS-PLIRID-V0:5d6f2782-f1dd-447d-af12-b7c2555cbd44" type="webcontent">
+			<file href="Content/Thinking_Outside_the_Page.xhtml"/>
 		</resource>
 	</resources>
 </manifest>
