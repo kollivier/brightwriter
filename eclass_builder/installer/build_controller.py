@@ -2,11 +2,15 @@ import sys, os, string, time, shutil
 import tempfile
 #import ReleaseForge
 
-externals_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../externals"))
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+externals_dir = os.path.join(root_dir, "externals")
+sys.path.append(root_dir)
 sys.path.append(externals_dir)
 
 from taskrunner import Job, Task, TaskRunner, TaskRunnerThread, Config
 import glob
+
+import version
 
 # read in the build settings...
 
@@ -52,6 +56,8 @@ if not os.path.exists(config.STAGING_DIR):
 
 abs_staging_dir = os.path.abspath(config.STAGING_DIR)
 
+config.BUILD_VERSION = version.asString().replace(" ", "-")
+
 # Figure out the wxPython version number, possibly adjusted for being a daily build
 if config.KIND == "daily":
     t = time.localtime()
@@ -78,8 +84,6 @@ config_env = config.asDict()
 config_env.update(os.environ)
 if myconfig:
     config_env.update(myconfig.asDict())
-    
-print os.environ
 
 olddir = os.getcwd()
 start_time = time.time()
