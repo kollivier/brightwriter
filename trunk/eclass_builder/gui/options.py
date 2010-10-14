@@ -26,7 +26,7 @@ class PreferencesEditor(sc.SizedDialog):
 		pane.SetSizerType("form")
 		
 		wx.StaticText(pane, -1, _("Course Folder"))
-		self.pickCourseFolder = picker.SelectBox(pane, settings.AppSettings["CourseFolder"], "Directory")
+		self.pickCourseFolder = picker.SelectBox(pane, settings.AppSettings["EClass3Folder"], "Directory")
 		
 		wx.StaticText(pane, -1, _("Language"))
 		self.languages = ["English", "Francais", "Espanol"]
@@ -49,7 +49,7 @@ class PreferencesEditor(sc.SizedDialog):
 			self.cmbLanguage.SetStringSelection(settings.AppSettings["Language"])
 
 	def btnOKClicked(self, event):
-		settings.AppSettings["CourseFolder"] = self.pickCourseFolder.GetValue()
+		settings.AppSettings["EClass3Folder"] = self.pickCourseFolder.GetValue()
 		
 		language = settings.AppSettings["Language"]
 		if language != self.cmbLanguage.GetStringSelection():

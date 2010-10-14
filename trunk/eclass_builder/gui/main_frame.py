@@ -753,7 +753,7 @@ class MainFrame2(sc.SizedFrame):
             log.debug("Load cancelled, result is %r" % result)
 
     def OpenIMSPackage(self, zip, subdir):
-        eclassdir = os.path.join(settings.AppSettings["CourseFolder"], subdir)
+        eclassdir = os.path.join(settings.AppSettings["EClass3Folder"], subdir)
         if os.path.exists(eclassdir):
             result = wx.MessageBox(_("It appears you already have imported this package. Would you like to overwrite the existing package?"), _("Overwrite Package?"), wx.YES_NO)
             if result == wx.YES:
@@ -943,10 +943,10 @@ class MainFrame2(sc.SizedFrame):
                 self.imscp.clearDirtyBit()
         
         defaultdir = ""
-        if settings.AppSettings["CourseFolder"] != "" and os.path.exists(settings.AppSettings["CourseFolder"]):
-            defaultdir = settings.AppSettings["CourseFolder"]
+        if settings.AppSettings["EClass3Folder"] != "" and os.path.exists(settings.AppSettings["EClass3Folder"]):
+            defaultdir = settings.AppSettings["EClass3Folder"]
 
-        dialog = wx.DirDialog(self, _("Choose a directory."), settings.AppSettings["CourseFolder"], style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dialog = wx.DirDialog(self, _("Choose a directory."), settings.AppSettings["EClass3Folder"], style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dialog.ShowModal() == wx.ID_OK:
             manifest = os.path.join(dialog.GetPath(), "imsmanifest.xml")
             if os.path.exists(manifest):
@@ -1301,7 +1301,7 @@ class MainFrame2(sc.SizedFrame):
                 return
 
         defaultdir = ""
-        if settings.AppSettings["CourseFolder"] == "" or not os.path.exists(settings.AppSettings["CourseFolder"]):
+        if settings.AppSettings["EClass3Folder"] == "" or not os.path.exists(settings.AppSettings["EClass3Folder"]):
             msg = wx.MessageBox(_("You need to specify a folder to store your course packages. To do so, select Options->Preferences from the main menu."),_("Course Folder not specified"))
             return
         else:

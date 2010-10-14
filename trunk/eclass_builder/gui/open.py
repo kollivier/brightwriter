@@ -14,7 +14,7 @@ class OpenPubDialog(sc.SizedDialog):
 		self.lblSelect = wx.StaticText(pane, -1, _("Select a publication:"))
 		self.cmbpubs = wx.ListBox(pane, -1)
 		self.cmbpubs.SetSizerProps({"expand": True, "proportion": 1})
-		self.coursedir = settings.AppSettings["CourseFolder"]
+		self.coursedir = settings.AppSettings["EClass3Folder"]
 
 		btnPane = sc.SizedPanel(pane, -1)
 		btnPane.SetSizerType("horizontal")
