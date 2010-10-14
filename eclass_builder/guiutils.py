@@ -21,10 +21,13 @@ def getOpenCommandForFilename(filename):
 def importFile(filename):
     dir = os.path.dirname(filename)
     basename = os.path.basename(filename)
-        
+    
+    if filename.find(settings.ProjectDir) != -1:
+        return filename.replace(settings.ProjectDir + os.sep, "")
+    
     plugin = plugins.GetPluginForFilename(filename)
-    copyfile = False 
-    destdir = os.path.join(settings.ProjectDir, plugin.plugin_info["Directory"])
+    copyfile = False
+    destdir = os.path.join(settings.ProjectDir, "files")
     # Don't do anything if the user selected the same file
     destfile = os.path.join(destdir, basename) 
     if destfile == filename:
@@ -40,8 +43,10 @@ def importFile(filename):
         copyfile = True
         
     if copyfile:
+        if not os.path.exists(destdir):
+            os.makedirs(destdir)
         fileutils.CopyFile(basename, dir, destdir)
-        if os.path.splitext(basename)[1] in [".htm", ".html"]:
+        if os.path.splitext(basename)[1].find("htm") != -1:
             htmlutils.copyDependentFilesAndUpdateLinks(filename, os.path.join(destdir, basename))
 
     return os.path.join(plugin.plugin_info["Directory"], basename)
