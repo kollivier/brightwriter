@@ -18,6 +18,7 @@ ID_NUMBERING = wx.NewId()
 ID_EDITOL = wx.NewId()
 
 ID_FONT_COLOR = wx.NewId()
+ID_BACK_COLOR = wx.NewId()
 
 ID_INSERT_IMAGE = wx.NewId()
 ID_INSERT_LINK = wx.NewId()
