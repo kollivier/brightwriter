@@ -61,7 +61,7 @@ htmlpage = u"""
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 </head>
 <body>
-    <h1>New Page</h1>
+    <h1 align="center">New Page</h1>
 </body>
 </html>
 """
@@ -70,7 +70,7 @@ def CreateNewFile(filename, name="New Page"):
     if os.path.exists(filename):
         raise IOError, "File already exists!"
     file = htmlpage
-    file = file.replace("New Page", name)
+    file = file.replace("New Page", TextToHTMLChar(name))
     dirname = os.path.dirname(filename)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
