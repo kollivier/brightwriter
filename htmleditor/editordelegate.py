@@ -74,9 +74,6 @@ class HTMLEditorDelegate(wx.EvtHandler):
         
         app.AddUIHandlerForID(ID_UNDO, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_REDO, self.UpdateEditCommand)
-        app.AddUIHandlerForID(ID_CUT, self.UpdateEditCommand)
-        app.AddUIHandlerForID(ID_COPY, self.UpdateEditCommand)
-        app.AddUIHandlerForID(ID_PASTE, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_REMOVE_LINK, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_BOLD, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_ITALIC, self.UpdateEditCommand)
