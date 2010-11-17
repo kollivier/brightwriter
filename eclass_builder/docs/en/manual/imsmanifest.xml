@@ -22,6 +22,11 @@
 						Why EClass.Builder?
 					</title>
 				</item>
+				<item identifier="URN:IMS-PLIRID-V0:936a4c3d-7e36-4dc9-9a54-e1a7f8b071c2" identifierref="URN:IMS-PLIRID-V0:920f065b-21b7-4d77-a739-2acb0b56681e">
+					<title>
+						Upgrading From 2.x
+					</title>
+				</item>
 				<item identifier="URN:IMS-PLIRID-V0:966CA18BBEED4900A060453D64B237D1" identifierref="URN:IMS-PLIRID-V0:AF2D2464C33D4806808C177F4E22A64A">
 					<title>
 						Getting Started
@@ -143,6 +148,9 @@
 		</resource>
 		<resource adlcp:scormtype="asset" href="Content/Thinking_Outside_the_Page.xhtml" identifier="URN:IMS-PLIRID-V0:5d6f2782-f1dd-447d-af12-b7c2555cbd44" type="webcontent">
 			<file href="Content/Thinking_Outside_the_Page.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Upgrading_From_2.x.xhtml" identifier="URN:IMS-PLIRID-V0:920f065b-21b7-4d77-a739-2acb0b56681e" type="webcontent">
+			<file href="Content/Upgrading_From_2.x.xhtml"/>
 		</resource>
 	</resources>
 </manifest>
