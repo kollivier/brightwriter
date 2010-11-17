@@ -26,7 +26,7 @@ import sourcedelegate
 import aboutdialog
 import cleanhtmldialog
 
-from constants import *
+from editactions import *
 
 ID_NEW = wx.NewId()
 ID_OPEN = wx.NewId()
@@ -273,8 +273,8 @@ class EditorFrame (sc.SizedFrame):
         self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("AlignCenter"))
         self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("AlignRight"))
         self.toolbar2.ToggleTool(ID_ALIGN_JUSTIFY, self.GetCommandState("AlignJustify"))
-        self.fontsizelist.SetValue(self.webview.GetEditCommandValue("FontSize"))
-        self.fontlist.SetValue(self.webview.GetEditCommandValue("FontName"))
+        #self.fontsizelist.SetValue(self.webview.GetEditCommandValue("FontSize"))
+        #self.fontlist.SetValue(self.webview.GetEditCommandValue("FontName"))
         
         evt.Skip()
 
@@ -291,7 +291,7 @@ class EditorFrame (sc.SizedFrame):
         self.dirty = True
 
     def OnFontSizeSelect(self, evt):
-        self.webview.ExecuteEditCommand("FontSize", self.fontsizelist.GetStringSelection())
+        #self.webview.ExecuteEditCommand("FontSize", self.fontsizelist.GetStringSelection())
         self.dirty = True
 
     def LoadPage(self, filename):
