@@ -94,9 +94,9 @@ try:
     print "tempdir = %s" % tempdir
     os.chdir(tempdir)
     run('svn co https://eclass.svn.sourceforge.net/svnroot/eclass/trunk')
-    os.chdir('eclass_builder')
+    os.chdir('trunk/eclass_builder')
     run('python publish.py -o docs/en/web docs/en/manual')
-    os.chdir('..')
+    os.chdir('../..')
     run("tar czvf %s trunk" % tarball)
     shutil.copy(tarball, abs_staging_dir)
 
