@@ -1,6 +1,8 @@
 import wx
 from wx.lib.pubsub import Publisher
 
+from editactions import *
+
 class STCFindReplaceController(wx.EvtHandler):
     '''
     This class controls Find and Replace behaviors for wxSTC, e.g. adding
