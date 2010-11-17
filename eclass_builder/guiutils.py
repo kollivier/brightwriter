@@ -27,7 +27,7 @@ def importFile(filename):
     
     plugin = plugins.GetPluginForFilename(filename)
     copyfile = False
-    destdir = os.path.join(settings.ProjectDir, "files")
+    destdir = os.path.join(settings.ProjectDir, "Content")
     # Don't do anything if the user selected the same file
     destfile = os.path.join(destdir, basename) 
     if destfile == filename:
@@ -49,7 +49,7 @@ def importFile(filename):
         if os.path.splitext(basename)[1].find("htm") != -1:
             htmlutils.copyDependentFilesAndUpdateLinks(filename, os.path.join(destdir, basename))
 
-    return os.path.join(plugin.plugin_info["Directory"], basename)
+    return os.path.join(destdir, basename)
 	
 def openInHTMLEditor(filename):
     htmleditor = settings.AppSettings["HTMLEditor"]
