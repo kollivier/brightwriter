@@ -72,6 +72,46 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_TEXT_REMOVE_STYLES, self.OnRemoveStyle)
         app.AddHandlerForID(ID_SPELLING_GUESS, self.OnSpellingGuessChosen)
         
+        app.AddUIHandlerForID(ID_UNDO, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_REDO, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_CUT, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_COPY, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_PASTE, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_REMOVE_LINK, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_BOLD, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_ITALIC, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_UNDERLINE, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_FONT_COLOR, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_ALIGN_LEFT, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_ALIGN_CENTER, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_ALIGN_RIGHT, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_INDENT, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_DEDENT, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_BULLETS, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_NUMBERING, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_SELECTALL, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_SELECTNONE, self.UpdateEditCommand)
+
+        app.AddUIHandlerForID(ID_INSERT_IMAGE, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_INSERT_LINK, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_INSERT_HR, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_INSERT_TABLE, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_INSERT_BOOKMARK, self.UpdateEditCommand)
+
+        app.AddUIHandlerForID(ID_EDITIMAGE, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_EDITLINK, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_EDITOL, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_EDITTABLE, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_EDITROW, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_EDITCELL, self.UpdateEditCommand)
+        
+        app.AddUIHandlerForID(ID_BACK_COLOR, self.UpdateEditCommand)
+
+        app.AddUIHandlerForID(ID_TEXT_SUP, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_TEXT_SUB, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_TEXT_REMOVE_STYLES, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_SPELLING_GUESS, self.UpdateEditCommand)
+        
         self.webview.Bind(wx.webview.EVT_WEBVIEW_CONTEXT_MENU, self.OnRightClick)
 
     def RemoveHandlers(self):
@@ -112,6 +152,12 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_TEXT_SUP)
         app.RemoveHandlerForID(ID_TEXT_SUB)
         app.RemoveHandlerForID(ID_TEXT_REMOVE_STYLES)
+        
+    def UpdateEditCommand(self, event):
+        if self.webview.FindFocus() == self.webview:
+            event.Enable(True)
+        else:
+            event.Enable(False)
 
     def OnDoSearch(self, message):
         if wx.GetTopLevelParent(self.webview).IsActive():

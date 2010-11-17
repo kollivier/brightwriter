@@ -370,7 +370,9 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
         self.fontsizelist.Bind(wx.EVT_CHOICE, self.OnFontSizeSelect)
+        self.fontsizelist.Bind(wx.EVT_UPDATE_UI, self.UpdateEditCommand)
         self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
+        self.fontlist.Bind(wx.EVT_UPDATE_UI, self.UpdateEditCommand)
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
         self.SetMinSize(self.GetSizer().GetMinSize())
@@ -530,8 +532,7 @@ class MainFrame2(sc.SizedFrame):
         #app.AddUIHandlerForID(ID_PUBLISH_PDF, self.UpdateProjectCommand)
         
         app.AddUIHandlerForID(ID_PROPS, self.UpdateProjectCommand)
-        app.AddUIHandlerForID(ID_THEME, self.UpdateProjectCommand)
-        app.AddUIHandlerForID(ID_LINKCHECK, self.UpdateProjectCommand)
+        app.AddUIHandlerForID(ID_LINKCHECK, self.UpdatePageCommand)
         
         app.AddUIHandlerForID(ID_CUT, self.UpdatePageCommand)
         app.AddUIHandlerForID(ID_COPY, self.UpdatePageCommand)
@@ -1052,7 +1053,13 @@ class MainFrame2(sc.SizedFrame):
                 value = self.dirty
         
         event.Enable(value)
-            
+
+    def UpdateEditCommand(self, event):
+        if self.browser.FindFocus() == self.browser:
+            event.Enable(True)
+        else:
+            event.Enable(False)
+
     def OnCloseWindow(self, event):
         self.ShutDown(event)
 
