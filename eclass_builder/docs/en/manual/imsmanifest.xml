@@ -121,17 +121,6 @@
 			<file href="Text/Create a New Project 1.htm"/>
 		</resource>
 		<resource adlcp:scormtype="asset" href="Text/Add and Edit Pages 1.htm" identifier="URN:IMS-PLIRID-V0:A3D1F9CBF43D4E0FAD4F3CCBEE621A83" type="webcontent">
-			<metadata>
-				<imsmd:lom>
-					<imsmd:general>
-						<imsmd:description/>
-						<imsmd:keyword/>
-					</imsmd:general>
-					<imsmd:rights>
-						<imsmd:description/>
-					</imsmd:rights>
-				</imsmd:lom>
-			</metadata>
 			<file href="Text/Add and Edit Pages 1.htm"/>
 		</resource>
 		<resource adlcp:scormtype="asset" href="Text/Advanced Options 1.htm" identifier="URN:IMS-PLIRID-V0:F1A086B9B4A34682A49CB4470B8CD9BF" type="webcontent">
