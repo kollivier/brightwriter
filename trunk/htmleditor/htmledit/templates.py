@@ -26,7 +26,7 @@ html5video = """
 
 jwplayer = """
 <script type="text/javascript" src="jwplayer.js"></script>
-<div id="container">Loading the player ...</div>
+<div id="container"></div><div><p> </p></div>
 <script type="text/javascript">
 <![CDATA[
     var loc = new String(window.parent.document.location);

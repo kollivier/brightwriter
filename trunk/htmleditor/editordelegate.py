@@ -226,7 +226,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
             for counter in range(0, int(trows)):
                 tablehtml = tablehtml + "<tr>"
                 for counter in range(0, int(tcolumns)):
-                    tablehtml = tablehtml + "<td>&nbsp</td>"
+                    tablehtml = tablehtml + "<td>&#160;</td>"
                 tablehtml = tablehtml + "</tr>"
             tablehtml = tablehtml + "</table>"
             self.webview.ExecuteEditCommand("InsertHTML", tablehtml)
