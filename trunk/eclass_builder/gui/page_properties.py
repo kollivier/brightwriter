@@ -284,7 +284,7 @@ class PagePropertiesDialog (sc.SizedDialog):
         self.content.metadata.lom.rights.description[lang] = self.txtCredit.GetValue()
         
         filename = self.txtExistingFile.GetValue()            
-        self.content.setFilename(filename)
+        self.content.setFilename(filename.replace("\\", "/"))
             
         for person in self.content.metadata.lom.lifecycle.contributors:
             role = person.role.value.getKeyOrEmptyString(lang)
