@@ -70,12 +70,14 @@ except:
 
 if EXPERIMENTAL_WXWEBKIT:
     import htmledit.htmlattrs as htmlattrs
+    import htmledit.templates as templates
 
     import editordelegate
     import htmlutils
     import aboutdialog
     import cleanhtmldialog
     import source_edit_dialog
+    import gui.embed_video_dialog
 
     class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
         def __init__(self, source, parent, *a, **kw):
@@ -83,16 +85,49 @@ if EXPERIMENTAL_WXWEBKIT:
             # FIXME: An ugly hack to get to the current filename.
             self.parent = parent
             
+        def OnInsertVideo(self, evt):
+            dlg = gui.embed_video_dialog.EmbedVideoDialog(self.webview, -1, _("Video Properties"), size=(400,400))
+            if dlg.ShowModal() == wx.ID_OK:
+                mp4video = dlg.mp4_text.GetValue()
+                oggvideo = dlg.ogg_text.GetValue()
+                poster = dlg.poster_text.GetValue()
+                
+                if dlg.useJWPlayer:
+                    videoHTML = templates.jwplayer
+                    jwplayer_dir = os.path.join(settings.ThirdPartyDir, "..", "mediaplayer-5.3")
+                    for afile in ["jwplayer.js", "license.txt", "swfobject.js", "player.swf", "yt.swf"]:
+                        self.CopyFileIfNeeded(os.path.join(jwplayer_dir, afile))
+                else:
+                    videoHTML = templates.html5video
+                    
+                if os.path.exists(mp4video):
+                    mp4video = self.CopyFileIfNeeded(mp4video)
+                
+                if os.path.exists(oggvideo):
+                    oggvideo = self.CopyFileIfNeeded(oggvideo)
+                    
+                videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
+                videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
+                videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
+                videoHTML = videoHTML.replace("__USE_HTTP_STREAMING__", `dlg.http_streaming_check.IsChecked()`.lower())
+                print "Inserting %s" % videoHTML
+                self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
+            dlg.Destroy()
+        
         def CopyFileIfNeeded(self, filepath):
             # if it's not an absolute path to a file, we assume it's a URL or relative path
             if not os.path.exists(filepath):
+                print "File %s does not exist." % filepath
                 return filepath
                 
             basepath = self.parent.baseurl.replace("file://", "")
-            destdir = os.path.join(basepath, "files")
+            subdir = ""
+            
             if os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
                 destdir = os.path.join(basepath, "images")
-                
+               
+            destdir = os.path.join(basepath, subdir)
+            
             if not os.path.exists(destdir):
                 os.makedirs(destdir)
             if filepath.find(basepath) == -1:
@@ -1494,7 +1529,7 @@ class MainFrame2(sc.SizedFrame):
                 import ims.utils
                 resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
                 if resource:
-                    return resource.getFilename()
+                    return resource.getFilename().replace("\\", "/")
         
         return None
 

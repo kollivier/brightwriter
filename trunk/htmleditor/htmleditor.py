@@ -95,6 +95,7 @@ class EditorFrame (sc.SizedFrame):
         self.insertmenu.AppendSeparator()
         self.insertmenu.Append(ID_INSERT_IMAGE, _("Image..."))
         self.insertmenu.Append(ID_INSERT_TABLE, _("Insert Table"))
+        self.insertmenu.Append(ID_INSERT_VIDEO, _("Insert Video"))
         
 
         self.formatmenu = wx.Menu()

@@ -6,7 +6,10 @@ from wx.lib.pubsub import Publisher
 from editactions import *
 from editdialogs import *
 
+import embed_video_dialog
+
 import htmledit.htmlattrs as htmlattrs
+import htmledit.templates as templates
 
 def _(text):
     return text
@@ -57,6 +60,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_INSERT_HR, self.OnHRButton)
         app.AddHandlerForID(ID_INSERT_TABLE, self.OnTableButton)
         app.AddHandlerForID(ID_INSERT_BOOKMARK, self.OnBookmarkButton)
+        app.AddHandlerForID(ID_INSERT_VIDEO, self.OnInsertVideo)
 
         app.AddHandlerForID(ID_EDITIMAGE, self.OnImageProps)
         app.AddHandlerForID(ID_EDITLINK, self.OnLinkProps)
@@ -90,6 +94,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddUIHandlerForID(ID_SELECTNONE, self.UpdateEditCommand)
 
         app.AddUIHandlerForID(ID_INSERT_IMAGE, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_INSERT_VIDEO, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_INSERT_LINK, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_INSERT_HR, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_INSERT_TABLE, self.UpdateEditCommand)
@@ -138,6 +143,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_INSERT_HR)
         app.RemoveHandlerForID(ID_INSERT_TABLE)
         app.RemoveHandlerForID(ID_INSERT_BOOKMARK)
+        app.RemoveHandlerForID(ID_INSERT_VIDEO)
 
         app.RemoveHandlerForID(ID_EDITIMAGE)
         app.RemoveHandlerForID(ID_EDITLINK)
@@ -183,6 +189,32 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
     def OnPaste(self, evt):
         self.RunCommand("Paste", evt)
+        
+    def OnInsertVideo(self, evt):
+
+        dlg = embed_video_dialog.EmbedVideoDialog(self.webview, -1, _("Video Properties"), size=(400,400))
+        if dlg.ShowModal() == wx.ID_OK:
+            mp4video = dlg.mp4_text.GetValue()
+            oggvideo = dlg.ogg_text.GetValue()
+            poster = dlg.poster_text.GetValue()
+            
+            if dlg.useJWPlayer:
+                videoHTML = templates.jwplayer
+            else:
+                videoHTML = templates.html5video
+                
+            if os.path.exists(mp4video):
+                mp4video = self.CopyFileIfNeeded(mp4video)
+            
+            if os.path.exists(oggvideo):
+                oggvideo = self.CopyFileIfNeeded(oggvideo)
+                
+            videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
+            videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
+            videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
+        
+            self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
+        dlg.Destroy()
 
     def OnTableButton(self, evt):
         tableProps = []
