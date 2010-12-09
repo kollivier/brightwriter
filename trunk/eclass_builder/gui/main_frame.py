@@ -96,7 +96,7 @@ if EXPERIMENTAL_WXWEBKIT:
                     videoHTML = templates.jwplayer
                     jwplayer_dir = os.path.join(settings.ThirdPartyDir, "..", "mediaplayer-5.3")
                     for afile in ["jwplayer.js", "license.txt", "swfobject.js", "player.swf", "yt.swf"]:
-                        self.CopyFileIfNeeded(os.path.join(jwplayer_dir, afile))
+                        self.CopyFileIfNeeded(os.path.join(jwplayer_dir, afile), overwrite="always")
                 else:
                     videoHTML = templates.html5video
                     
@@ -114,7 +114,7 @@ if EXPERIMENTAL_WXWEBKIT:
                 self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
             dlg.Destroy()
         
-        def CopyFileIfNeeded(self, filepath):
+        def CopyFileIfNeeded(self, filepath, overwrite="ask"):
             # if it's not an absolute path to a file, we assume it's a URL or relative path
             if not os.path.exists(filepath):
                 print "File %s does not exist." % filepath
@@ -133,7 +133,9 @@ if EXPERIMENTAL_WXWEBKIT:
             if filepath.find(basepath) == -1:
                 newpath = os.path.join(destdir, os.path.basename(filepath))
                 copy = True
-                if os.path.exists(newpath):
+                if overwrite == "never":
+                    copy = False
+                if os.path.exists(newpath) and overwrite == "ask" :
                     result = wx.MessageBox(_("The file %s already exists. Would you like to overwrite the existing file?") % newpath, _("Overwrite existing file?"), wx.YES_NO)
                     if result == wx.YES:
                         copy = True
