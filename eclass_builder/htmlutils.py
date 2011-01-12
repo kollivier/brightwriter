@@ -121,13 +121,9 @@ def cleanUpHTML(html, options=None):
     footnoteFixer(soup) #html)
     stripEmptyParagraphs(soup)
     removeVMLAttrs(soup)
-    
-    html, errors = tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
-    
-    soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
     addMetaTag(soup, [('http-equiv', 'Content-type'), ('content', 'text/html; charset=utf-8')])
     
-    return soup.prettify(encoding=None), errors
+    return tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
     
 
 
@@ -175,29 +171,29 @@ def convNotSoSmartQuotesToHtmlEntity(x):
     """
     Found at http://myzope.kedai.com.my/blogs/kedai/128
     """ 
-    d =      {  u"\x82":"&sbquo;",
-                u"\x83":"&fnof;",
-                u"\x84":"&bdquo;",
-                u"\x85":"&hellip;",
-                u"\x86":"&dagger;",
-                u"\x87":"&Dagger;",
-                u"\x88":"&circ;",
-                u"\x89":"&permil;",
-                u"\x8A":"&Scaron;",
-                u"\x8B":"&lsaquo;",
-                u"\x8C":"&OElig;",
-                u"\x91":"&lsquo;",
-                u"\x92":"&rsquo;",
-                u"\x93":"&ldquo;",
-                u"\x94":"&rdquo;",
-                u"\x95":"&bull;",
-                u"\x96":"&ndash;",
-                u"\x97":"&mdash;",
-                u"\x98":"&tilde;",
-                u"\x99":"&trade;",
-                u"\x9A":"&scaron;",
-                u"\x9B":"&rsaquo;",
-                u"\x9C":"&oelig;"}
+    d =      {  "\x82":"&sbquo;",
+                "\x83":"&fnof;",
+                "\x84":"&bdquo;",
+                "\x85":"&hellip;",
+                "\x86":"&dagger;",
+                "\x87":"&Dagger;",
+                "\x88":"&circ;",
+                "\x89":"&permil;",
+                "\x8A":"&Scaron;",
+                "\x8B":"&lsaquo;",
+                "\x8C":"&OElig;",
+                "\x91":"&lsquo;",
+                "\x92":"&rsquo;",
+                "\x93":"&ldquo;",
+                "\x94":"&rdquo;",
+                "\x95":"&bull;",
+                "\x96":"&ndash;",
+                "\x97":"&mdash;",
+                "\x98":"&tilde;",
+                "\x99":"&trade;",
+                "\x9A":"&scaron;",
+                "\x9B":"&rsaquo;",
+                "\x9C":"&oelig;"}
     for i in d.keys():
         x=x.replace(i,d[i])
     return x
