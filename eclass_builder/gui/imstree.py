@@ -33,6 +33,7 @@ class IMSCPTreeControl(wx.TreeCtrl):
                     -1,-1,
                     wx.TreeItemData(child))
             # Recurisive call to insert children of each child
+            self.SetItemText(childnode, text)
             self.AddIMSChildItemsToTree(childnode, child.items)
             #self.Expand(NewwxNode)
         self.Refresh()
