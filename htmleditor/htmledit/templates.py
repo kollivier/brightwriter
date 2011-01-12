@@ -6,20 +6,18 @@ html5video = """
 <video controls="controls">
     <!-- MP4 must be first for iPad! -->
     <source src="__VIDEO__.MP4" /><!-- WebKit video    -->
-    <source src="__VIDEO__.OGV" type="video/ogg" /><!-- Firefox / Opera -->
+    __VIDEO__.OGV
     <!-- fallback to Flash: -->
     <object type="application/x-shockwave-flash" data="flvplayer.swf?file=_filename_&autoStart=_autostart_">
         <!-- Firefox uses the `data` attribute above, IE/Safari uses the param below -->
         <param name="Movie" value="flvplayer.swf?file=_filename_&autoStart=_autostart_">
         <param name="Src" value="flvplayer.swf?file=_filename_&autoStart=_autostart_">
-        <!-- fallback image. note the title field below, put the title of the video there -->
-        <img src="__VIDEO__.JPG" width="640" height="360" alt="__TITLE__"
-             title="No video playback capabilities, please download the video below" />
+        __VIDEO__.JPG
     </object>
 </video>
 <!-- you *must* offer a download link as they may be able to play the file locally. customise this bit all you want -->
 <p> <strong>Download Video:</strong>
-    <a href="__VIDEO__.MP4">MP4 format</a> <a href="__VIDEO__.OGV">Ogg Format</a>
+    <a href="__VIDEO__.MP4">MP4 format</a>
 </p>
 
 """
@@ -39,9 +37,7 @@ jwplayer = """
         flashplayer: "player.swf",
         file: "__VIDEO__.MP4",
         poster: "__VIDEO__.JPG",
-        height: 480,
-        width: 640,
-        provider: provider,
+        provider: provider,__DIMENSIONS__
     });
 ]]>
 </script>

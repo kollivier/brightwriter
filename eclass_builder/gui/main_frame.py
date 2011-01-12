@@ -99,17 +99,36 @@ if EXPERIMENTAL_WXWEBKIT:
                         self.CopyFileIfNeeded(os.path.join(jwplayer_dir, afile), overwrite="always")
                 else:
                     videoHTML = templates.html5video
+                    if os.path.exists(poster):
+                        poster = self.CopyFileIfNeeded(poster)
+                        
+                    if poster != "":
+                        poster = """
+                        <img src="%s" alt="No video playback capabilities, please download the video below"
+             title="No video playback capabilities, please download the video below" />
+                        """ % poster
                     
+                    if os.path.exists(oggvideo):
+                        oggvideo = self.CopyFileIfNeeded(oggvideo)
+                    
+                    if oggvideo != "":
+                        oggvideo = """<source src="%s" type="video/ogg" /><!-- Firefox / Opera -->""" % oggvideo
+                        
                 if os.path.exists(mp4video):
                     mp4video = self.CopyFileIfNeeded(mp4video)
-                
-                if os.path.exists(oggvideo):
-                    oggvideo = self.CopyFileIfNeeded(oggvideo)
                     
                 videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
                 videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
                 videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
                 videoHTML = videoHTML.replace("__USE_HTTP_STREAMING__", `dlg.http_streaming_check.IsChecked()`.lower())
+                dimensions = ""
+                if dlg.width_text.GetValue() != "":
+                    dimensions += "width: %s,\n" % dlg.width_text.GetValue()
+                    
+                if dlg.height_text.GetValue() != "":
+                    dimensions += "height: %s,\n" % dlg.height_text.GetValue()
+                    
+                videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
                 print "Inserting %s" % videoHTML
                 self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
             dlg.Destroy()
