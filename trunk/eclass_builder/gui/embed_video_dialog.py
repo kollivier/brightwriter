@@ -76,7 +76,7 @@ class EmbedVideoDialog(sc.SizedDialog):
         video_panel.SetSizerType("form")
         
         wx.StaticText(video_panel, -1, "MP4 Video").SetSizerProps(halign="right")
-        self.mp4_text = filebrowse.FileBrowseButton(video_panel, -1, labelText="")
+        self.mp4_text = filebrowse.FileBrowseButton(video_panel, -1, labelText="", fileMask="MP4 Video (*.mp4,*.m4v)|*.mp4;*.m4v")
         self.mp4_text.SetSizerProps(expand=True)
         
         wx.StaticText(video_panel, -1, _("Poster Image")).SetSizerProps(halign="right")
@@ -85,7 +85,7 @@ class EmbedVideoDialog(sc.SizedDialog):
 
         self.ogg_label = wx.StaticText(video_panel, -1, "OGG Video")
         self.ogg_label.SetSizerProps(halign="right")
-        self.ogg_text = filebrowse.FileBrowseButton(video_panel, -1, labelText="")
+        self.ogg_text = filebrowse.FileBrowseButton(video_panel, -1, labelText="", fileMask="OGG Video (*.ogg,*.ogv)|*.ogg;*.ogv")
         self.ogg_text.SetSizerProps(expand=True)
         
         wx.StaticText(video_panel, -1, _("Width")).SetSizerProps(halign="right")
