@@ -87,6 +87,7 @@ if EXPERIMENTAL_WXWEBKIT:
             
         def OnInsertVideo(self, evt):
             dlg = gui.embed_video_dialog.EmbedVideoDialog(self.webview, -1, _("Video Properties"), size=(400,400))
+            dlg.CentreOnScreen()
             if dlg.ShowModal() == wx.ID_OK:
                 mp4video = dlg.mp4_text.GetValue()
                 oggvideo = dlg.ogg_text.GetValue()
@@ -118,15 +119,16 @@ if EXPERIMENTAL_WXWEBKIT:
                     mp4video = self.CopyFileIfNeeded(mp4video)
                     
                 videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
+                videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.splitext(os.path.basename(mp4video))[0])
                 videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
                 videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
                 videoHTML = videoHTML.replace("__USE_HTTP_STREAMING__", `dlg.http_streaming_check.IsChecked()`.lower())
                 dimensions = ""
                 if dlg.width_text.GetValue() != "":
-                    dimensions += "width: %s,\n" % dlg.width_text.GetValue()
+                    dimensions += "\nwidth: %s," % dlg.width_text.GetValue()
                     
                 if dlg.height_text.GetValue() != "":
-                    dimensions += "height: %s,\n" % dlg.height_text.GetValue()
+                    dimensions += "\nheight: %s," % dlg.height_text.GetValue()
                     
                 videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
                 print "Inserting %s" % videoHTML

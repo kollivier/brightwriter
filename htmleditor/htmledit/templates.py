@@ -23,8 +23,9 @@ html5video = """
 """
 
 jwplayer = """
+<span class="jwplayer_container">
 <script type="text/javascript" src="jwplayer.js"></script>
-<div id="container"></div><div><p> </p></div>
+<div id="__VIDEO_ID___container"></div><div><p> </p></div>
 <script type="text/javascript">
 <![CDATA[
     var loc = new String(window.parent.document.location);
@@ -33,7 +34,7 @@ jwplayer = """
     if (loc.indexOf("http://") != -1 && useHTTPStreaming) {
         provider = "http";
     }
-    jwplayer("container").setup({
+    jwplayer("__VIDEO_ID___container").setup({
         flashplayer: "player.swf",
         file: "__VIDEO__.MP4",
         poster: "__VIDEO__.JPG",
@@ -41,4 +42,5 @@ jwplayer = """
     });
 ]]>
 </script>
+</span>
 """

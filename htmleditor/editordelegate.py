@@ -210,15 +210,16 @@ class HTMLEditorDelegate(wx.EvtHandler):
                 oggvideo = self.CopyFileIfNeeded(oggvideo)
                 
             videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
+            videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.basename(mp4video))
             videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
             videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
             
             dimensions = ""
             if dlg.width_text.GetValue() != "":
-                dimensions += "width: %s, " % dlg.width_text.GetValue()
+                dimensions += "\nwidth: %s," % dlg.width_text.GetValue()
                 
             if dlg.height_text.GetValue() != "":
-                dimensions += "height: %s," % dlg.height_text.GetValue()
+                dimensions += "\nheight: %s," % dlg.height_text.GetValue()
                 
             videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
             self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
