@@ -1334,6 +1334,22 @@ class MainFrame2(sc.SizedFrame):
 
     def SaveWebPage(self):
         source = self.browser.GetPageSource()
+        
+        if source.find("-//W3C//DTD XHTML 1.0 Strict//EN") != -1 and not self.filename.endswith(".xhtml"):
+            wx.MessageBox("This is an XHTML file but the file extension is not .xhtml. To avoid problems with some features not working, EClass will change the extension to .xhtml.")
+            basename, ext = os.path.splitext(self.filename)
+            newfile = basename + ".xhtml"
+            
+            os.rename(self.filename, newfile)
+            self.filename = newfile
+            
+            if self.projectTree:
+                imsitem = self.projectTree.GetCurrentTreeItemData()
+                if imsitem:
+                    import ims.utils
+                    resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
+                    if resource:
+                        resource.setFilename(self.filename.replace(settings.ProjectDir + os.sep, "").replace("\\", "/"))
             
         encoding = htmlutils.GetEncoding(source)
         try:
