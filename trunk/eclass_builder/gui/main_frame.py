@@ -419,7 +419,6 @@ class MainFrame2(sc.SizedFrame):
         self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
-        self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
         
         self.Bind(wx.EVT_IDLE, self.OnIdle)
 
@@ -434,9 +433,6 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
         self.SetMinSize(self.GetSizer().GetMinSize())
-        
-        self.projectTree.Bind(wx.EVT_SET_FOCUS, self.OnTreeFocus)
-        self.projectTree.Bind(wx.EVT_KILL_FOCUS, self.OnTreeLoseFocus)
 
         #if sys.platform.startswith("win"):
         # this nasty hack is needed because on Windows, the controls won't
@@ -453,6 +449,9 @@ class MainFrame2(sc.SizedFrame):
         
         self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
         self.errorViewer.LoadState("ErrorLogViewer", dialogIsModal=False)
+        
+        # we make this the fallback handler in case no other handlers are set.
+        self.RegisterTreeHandlers()
 
         if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
             self.LoadEClass(settings.AppSettings["LastOpened"])
@@ -480,13 +479,6 @@ class MainFrame2(sc.SizedFrame):
 
     def OnAbout(self, event):
         EClassAboutDialog(self).ShowModal()
-        
-    def OnActivate(self, event):
-        if event.Active:
-            self.RegisterHandlers()
-        # FIXME: This leads to a crash on shutdown on Windows.
-        #else:
-        #    self.RemoveHandlers()
 
     def GetCommandState(self, command):
         if self.FindFocus() == self.browser:
@@ -516,16 +508,6 @@ class MainFrame2(sc.SizedFrame):
         self.fontsizelist.SetStringSelection(self.browser.GetEditCommandValue("FontSize"))
         self.fontlist.SetValue(self.browser.GetEditCommandValue("FontName"))
         
-        evt.Skip()
-
-    def OnTreeFocus(self, evt):
-        print "Registering tree handlers"
-        self.RegisterTreeHandlers()
-        evt.Skip()
-        
-    def OnTreeLoseFocus(self, evt):
-        print "Removing tree handlers"
-        self.RemoveTreeHandlers()
         evt.Skip()
 
     def RegisterTreeHandlers(self):
@@ -827,8 +809,10 @@ class MainFrame2(sc.SizedFrame):
         self.LoadEClass(os.path.join(eclassdir, "imsmanifest.xml"))
                 
     def OnCut(self, event):
-        if not wx.Window.FindFocus() == self.projectTree:
-            event.Skip()
+        focus = wx.Window.FindFocus()
+        if not focus == self.projectTree:
+            if hasattr(focus, "Cut"):
+                focus.Cut()
             return
             
         sel_item = self.projectTree.GetSelection()
@@ -838,7 +822,10 @@ class MainFrame2(sc.SizedFrame):
             self.CopyNode = None
 
     def OnCopy(self, event):
-        if not wx.Window.FindFocus() == self.projectTree:
+        focus = wx.Window.FindFocus()
+        if not focus == self.projectTree:
+            if hasattr(focus, "Copy"):
+                focus.Copy()
             event.Skip()
             return
         sel_item = self.projectTree.GetSelection()
@@ -853,8 +840,10 @@ class MainFrame2(sc.SizedFrame):
         checker.CheckLinks(self.browser.GetPageSource())
 
     def OnPaste(self, event):
-        if not wx.Window.FindFocus() == self.projectTree:
-            event.Skip()
+        focus = wx.Window.FindFocus()
+        if not focus == self.projectTree:
+            if hasattr(focus, "Paste"):
+                focus.Paste()
             return
         dirtyNodes = []
         sel_item = self.projectTree.GetSelection()
@@ -867,15 +856,17 @@ class MainFrame2(sc.SizedFrame):
 
         newparent = None
 
-        newitem = None            
-        if event.GetId() == ID_PASTE_BELOW or event.GetId() == ID_PASTE:
+        newitem = None
+        
+        # we need to check this before we actually paste the item
+        hasChildren = self.projectTree.GetChildrenCount(pastenode, False) > 0
+
+        if event.GetId() in [ID_PASTE_BELOW, ID_PASTE]:
             newitem = self.projectTree.InsertItem(self.projectTree.GetItemParent(sel_item), 
                                          sel_item, self.projectTree.GetItemText(pastenode), 
                                        -1, -1, wx.TreeItemData(self.projectTree.GetPyData(pastenode)))
-            
-            parent = self.projectTree.GetItemParent(sel_item)
+
             parentitem = self.projectTree.GetPyData(parent)
-        
             beforeitem = self.projectTree.GetPyData(sel_item)
             assert(beforeitem)
             previndex = parentitem.items.index(beforeitem) + 1
@@ -890,7 +881,7 @@ class MainFrame2(sc.SizedFrame):
             parentitem.children.append(pasteitem)
         
         assert(newitem)
-        if not self.projectTree.GetChildrenCount(pastenode, False) == 0:
+        if hasChildren:
             self.CopyChildrenRecursive(pastenode, newitem)
 
         dirtyNodes.append(pasteitem)
