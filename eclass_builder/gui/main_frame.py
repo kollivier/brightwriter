@@ -695,7 +695,10 @@ class MainFrame2(sc.SizedFrame):
         dialog.ShowModal()
         
         html = dialog.GetSource()
-        self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
+        
+        if not html == self.browser.GetPageSource():
+            self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
+            self.dirty = True
 
     def OnIdle(self, event):
         event.Skip()
