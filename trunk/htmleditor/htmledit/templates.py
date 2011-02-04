@@ -31,7 +31,8 @@ jwplayer = """
     var loc = new String(window.parent.document.location);
     var provider = "video";
     var useHTTPStreaming = __USE_HTTP_STREAMING__;
-    if (loc.indexOf("http://") != -1 && useHTTPStreaming) {
+    /* enables us to play video when we use streaming server support, but are previewing the video on disk */
+    if ("__VIDEO__.MP4".indexOf("http://") == -1 && loc.indexOf("http://") != -1 && useHTTPStreaming) {
         provider = "http";
     }
     jwplayer("__VIDEO_ID___container").setup({
