@@ -97,6 +97,7 @@ class NewPageDialog(sc.SizedDialog):
 		
 		self.Fit()
 		self.SetMinSize(self.GetSize())
+		self.SetMaxSize((-1, self.GetSize().y))
 
 		wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
 		wx.EVT_BUTTON(self.btnCancel, self.btnCancel.GetId(), self.btnCancelClicked)
@@ -104,12 +105,8 @@ class NewPageDialog(sc.SizedDialog):
 		wx.EVT_TEXT(self, self.txtTitle.GetId(), self.UpdateFilename)
 
 	def CheckFilename(self, event):
-		if len(self.txtFilename.GetValue()) >= 31 and not event.GetKeyCode() == wx.WXK_BACK:
-			return
-		else: 
-			self.filenameEdited = True
-			event.Skip()
-		
+		self.filenameEdited = True
+		event.Skip()
 	
 	def UpdateFilename(self, event):
 		title = self.txtFilename.GetValue()
@@ -121,12 +118,12 @@ class NewPageDialog(sc.SizedDialog):
 		if not self.filenameEdited:
 			title = MakeFileName2(self.txtTitle.GetValue())
 		
-		title = title[:31-len(extension)]
-
-		filename = title + extension
-		counter = 2
-		oldtitle = title
-		self.txtFilename.SetValue(os.path.join('Content', filename))
+			title = title[:31-len(extension)]
+	
+			filename = title + extension
+			counter = 2
+			oldtitle = title
+			self.txtFilename.SetValue(os.path.join('Content', filename))
 
 
 	def btnCancelClicked(self, event):
