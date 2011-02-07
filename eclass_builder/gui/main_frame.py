@@ -450,6 +450,8 @@ class MainFrame2(sc.SizedFrame):
         self.errorViewer = gui.error_viewer.ErrorLogViewer(self)
         self.errorViewer.LoadState("ErrorLogViewer", dialogIsModal=False)
         
+        self.RegisterHandlers()
+        
         # we make this the fallback handler in case no other handlers are set.
         self.RegisterTreeHandlers()
 
