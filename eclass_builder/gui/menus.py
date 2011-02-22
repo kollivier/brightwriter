@@ -46,6 +46,7 @@ def getInsertMenu():
     InsertMenu.Append(ID_INSERT_BOOKMARK, _("Bookmark") + "\tCTRL+SHIFT+B")
     InsertMenu.Append(ID_INSERT_HR, _("Horizontal Rule"))
     InsertMenu.AppendSeparator()
+    InsertMenu.Append(ID_INSERT_AUDIO, _("Audio"))
     InsertMenu.Append(ID_INSERT_IMAGE, _("Image"))
     InsertMenu.Append(ID_INSERT_VIDEO, _("Video"))
     InsertMenu.Append(ID_INSERT_TABLE, _("Table"))
