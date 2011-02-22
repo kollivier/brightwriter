@@ -28,20 +28,19 @@ jwplayer = """
 <div id="__VIDEO_ID___container"></div><div><p> </p></div>
 <script type="text/javascript">
 <![CDATA[
-    var loc = new String(window.parent.document.location);
-    var provider = "video";
-    var useHTTPStreaming = __USE_HTTP_STREAMING__;
-    /* enables us to play video when we use streaming server support, but are previewing the video on disk */
-    if ("__VIDEO__.MP4".indexOf("http://") == -1 && loc.indexOf("http://") != -1 && useHTTPStreaming) {
-        provider = "http";
-    }
     jwplayer("__VIDEO_ID___container").setup({
         flashplayer: "player.swf",
         file: "__VIDEO__.MP4",
-        poster: "__VIDEO__.JPG",
-        provider: provider,__DIMENSIONS__
+        poster: "__VIDEO__.JPG",__DIMENSIONS__
+        provider: "__PROVIDER__"
     });
 ]]>
 </script>
 </span>
+"""
+
+jmediaplayer_audio = """
+<script src="jsmediaelement/jquery.js"></script>
+<script type="text/javascript" src="jsmediaelement/mediaelement.js"></script>
+<audio type="audio/mp3" controls="controls" src="__AUDIO__.MP3"></audio>
 """

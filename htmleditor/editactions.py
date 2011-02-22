@@ -27,6 +27,7 @@ ID_INSERT_TABLE = wx.NewId()
 ID_INSERT_BOOKMARK = wx.NewId()
 ID_INSERT_FLASH = wx.NewId()
 ID_INSERT_VIDEO = wx.NewId()
+ID_INSERT_AUDIO = wx.NewId()
 
 ID_EDITIMAGE = wx.NewId()
 ID_EDITLINK = wx.NewId()

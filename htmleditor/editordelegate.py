@@ -61,6 +61,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_INSERT_TABLE, self.OnTableButton)
         app.AddHandlerForID(ID_INSERT_BOOKMARK, self.OnBookmarkButton)
         app.AddHandlerForID(ID_INSERT_VIDEO, self.OnInsertVideo)
+        app.AddHandlerForID(ID_INSERT_AUDIO, self.OnInsertAudio)
 
         app.AddHandlerForID(ID_EDITIMAGE, self.OnImageProps)
         app.AddHandlerForID(ID_EDITLINK, self.OnLinkProps)
@@ -95,6 +96,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
         app.AddUIHandlerForID(ID_INSERT_IMAGE, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_INSERT_VIDEO, self.UpdateEditCommand)
+        app.AddUIHandlerForID(ID_INSERT_AUDIO, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_INSERT_LINK, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_INSERT_HR, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_INSERT_TABLE, self.UpdateEditCommand)
@@ -144,6 +146,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_INSERT_TABLE)
         app.RemoveHandlerForID(ID_INSERT_BOOKMARK)
         app.RemoveHandlerForID(ID_INSERT_VIDEO)
+        app.RemoveHandlerForID(ID_INSERT_AUDIO)
 
         app.RemoveHandlerForID(ID_EDITIMAGE)
         app.RemoveHandlerForID(ID_EDITLINK)
@@ -224,6 +227,9 @@ class HTMLEditorDelegate(wx.EvtHandler):
             videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
             self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
         dlg.Destroy()
+
+    def OnInsertAudio(self, evt):
+        print "Calling OnInsertAudio"
 
     def OnTableButton(self, evt):
         tableProps = []
