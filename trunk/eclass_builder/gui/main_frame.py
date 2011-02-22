@@ -77,6 +77,7 @@ if EXPERIMENTAL_WXWEBKIT:
     import aboutdialog
     import cleanhtmldialog
     import source_edit_dialog
+    import gui.embed_audio_dialog
     import gui.embed_video_dialog
 
     class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
@@ -122,30 +123,53 @@ if EXPERIMENTAL_WXWEBKIT:
                 videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.splitext(os.path.basename(mp4video))[0])
                 videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
                 videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
-                videoHTML = videoHTML.replace("__USE_HTTP_STREAMING__", `dlg.http_streaming_check.IsChecked()`.lower())
+                provider = "video"
+                if dlg.http_streaming_check.IsChecked():
+                    provider = "http"
+                videoHTML = videoHTML.replace("__PROVIDER__", provider)
                 dimensions = ""
                 if dlg.width_text.GetValue() != "":
-                    dimensions += "\nwidth: %s," % dlg.width_text.GetValue()
+                    dimensions += "\n        width: %s," % dlg.width_text.GetValue()
                     
                 if dlg.height_text.GetValue() != "":
-                    dimensions += "\nheight: %s," % dlg.height_text.GetValue()
+                    dimensions += "\n        height: %s," % dlg.height_text.GetValue()
                     
                 videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
                 print "Inserting %s" % videoHTML
                 self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
             dlg.Destroy()
         
-        def CopyFileIfNeeded(self, filepath, overwrite="ask"):
+        def OnInsertAudio(self, event):
+            dlg = gui.embed_audio_dialog.EmbedAudioDialog(self.webview, -1, _("Audio Properties"), size=(400,400))
+            dlg.CentreOnScreen()
+            if dlg.ShowModal() == wx.ID_OK:
+                mp3audio = dlg.mp3_text.GetValue()
+                
+                jsmediaelement_dir = os.path.join(settings.ThirdPartyDir, "..", "jsmediaelement")
+                
+                for afile in glob.glob(os.path.join(jsmediaelement_dir, "*.*")):
+                    self.CopyFileIfNeeded(afile, overwrite="always", subdir="jsmediaelement")
+                    
+                if os.path.exists(mp3audio):
+                    mp3audio = self.CopyFileIfNeeded(mp3audio)
+                    
+                audioHTML = templates.jmediaplayer_audio
+                audioHTML = audioHTML.replace("__AUDIO__.MP3", mp3audio)
+                
+                print "Inserting %s" % audioHTML
+                self.webview.ExecuteEditCommand("InsertHTML", audioHTML)
+            dlg.Destroy()
+        
+        def CopyFileIfNeeded(self, filepath, overwrite="ask", subdir=""):
             # if it's not an absolute path to a file, we assume it's a URL or relative path
             if not os.path.exists(filepath):
                 print "File %s does not exist." % filepath
                 return filepath
                 
             basepath = self.parent.baseurl.replace("file://", "")
-            subdir = ""
             
-            if os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
-                destdir = os.path.join(basepath, "images")
+            if subdir == "" and os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
+                subdir = "images"
                
             destdir = os.path.join(basepath, subdir)
             
@@ -156,7 +180,7 @@ if EXPERIMENTAL_WXWEBKIT:
                 copy = True
                 if overwrite == "never":
                     copy = False
-                if os.path.exists(newpath) and overwrite == "ask" :
+                if os.path.exists(newpath) and not newpath == filepath and overwrite == "ask" :
                     result = wx.MessageBox(_("The file %s already exists. Would you like to overwrite the existing file?") % newpath, _("Overwrite existing file?"), wx.YES_NO)
                     if result == wx.YES:
                         copy = True
@@ -300,9 +324,6 @@ class MainFrame2(sc.SizedFrame):
         icnHelp = wx.Bitmap(os.path.join(imagepath, "help.png"))
 
         self.treeimages = wx.ImageList(15, 15)
-        #self.treeimages.Add(wxBitmap(os.path.join(imagepath, "bookclosed.gif"), wxBITMAP_TYPE_GIF))
-        #self.treeimages.Add(wxBitmap(os.path.join(imagepath, "chapter.gif"), wxBITMAP_TYPE_GIF))
-        #self.treeimages.Add(wxBitmap(os.path.join(imagepath, "page.gif"), wxBITMAP_TYPE_GIF))
 
         #create toolbar
         self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
