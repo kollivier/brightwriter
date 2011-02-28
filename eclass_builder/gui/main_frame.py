@@ -870,6 +870,7 @@ class MainFrame2(sc.SizedFrame):
             return
         dirtyNodes = []
         sel_item = self.projectTree.GetSelection()
+        parent = self.projectTree.GetItemParent(sel_item)
         pastenode = self.CopyNode
         if self.CutNode:
             pastenode = self.CutNode
