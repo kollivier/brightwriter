@@ -66,9 +66,74 @@
 							Adding Pages
 						</title>
 					</item>
+					<item identifier="URN:IMS-PLIRID-V0:23ce8ad2-952a-48d8-b89e-4b140a6fa1eb" identifierref="URN:IMS-PLIRID-V0:84855057-7f86-4fb2-9b5b-f9472cbeeae4">
+						<title>
+							Editing Pages
+						</title>
+						<item identifier="URN:IMS-PLIRID-V0:c3bfd029-49b0-45be-9ecc-09be34d5e456" identifierref="URN:IMS-PLIRID-V0:5a726127-0e3f-43bd-a3c5-ab71261c5a5b">
+							<title>
+								Working with Links
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:bc2f6628-b5cd-4744-a0da-cf61ae4eb2c9" identifierref="URN:IMS-PLIRID-V0:58f7ff72-b122-4925-a865-0479fa9b8d08">
+							<title>
+								Working with Images
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:9a0b28d9-2550-4c7a-9086-5e477456e252" identifierref="URN:IMS-PLIRID-V0:fafbbe03-c34f-49d0-bdc6-293706654957">
+							<title>
+								Working with Tables
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:7320bd3e-8999-4ab0-9ea8-60a8cfce0ff5" identifierref="URN:IMS-PLIRID-V0:d569d4c6-4284-4387-a8ed-7738bfe159d7">
+							<title>
+								Working with Audio
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:7634826a-361d-4f65-8387-2c33bbf6cb37" identifierref="URN:IMS-PLIRID-V0:2b44b404-2529-4db9-be2f-7f5aec40eaf0">
+							<title>
+								Working with Video
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:714ccade-e601-4126-b4e7-204272bd8648" identifierref="URN:IMS-PLIRID-V0:e73da1fe-fd96-4078-b980-546e1fef920d">
+							<title>
+								Working with Bookmarks
+							</title>
+						</item>
+					</item>
 					<item identifier="URN:IMS-PLIRID-V0:1CCFCB0B4F214F029BFC94AACD406CD0" identifierref="URN:IMS-PLIRID-V0:288FE5EA2C804052B4886FF0E1C5E46B">
 						<title>
 							Publish Your EClass
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:9cb140ef-5db0-4ea4-81be-44aeb7128fad" identifierref="URN:IMS-PLIRID-V0:81b5f592-490d-4c10-ba98-307e98f87338">
+						<title>
+							Importing Content
+						</title>
+					</item>
+				</item>
+				<item identifier="URN:IMS-PLIRID-V0:ab3dace2-c95b-49a9-88e5-61b373f5b042" identifierref="URN:IMS-PLIRID-V0:2daf54e3-7103-41f9-940d-a6bcfed79846">
+					<title>
+						Multimedia Overview
+					</title>
+					<item identifier="URN:IMS-PLIRID-V0:67ff6440-b551-4c05-8feb-52dbf1dfd6c4" identifierref="URN:IMS-PLIRID-V0:d0c25157-42f7-4050-9dea-32eb00732e88">
+						<title>
+							Graphics Production &amp; Editing
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:36c22006-c60c-49e9-988a-b2c44f1a8efc" identifierref="URN:IMS-PLIRID-V0:e0ea2108-cc5b-4dc8-83ba-b68f3e65b293">
+						<title>
+							Audio Production &amp; Conversion
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:046d3dbd-d939-4fd4-9a9f-61f59807c981" identifierref="URN:IMS-PLIRID-V0:945fc5c4-47e2-444d-a817-597686ad905b">
+						<title>
+							Video Production &amp; Conversion
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:d12393cc-39c7-4958-b8ad-ced288cc2635" identifierref="URN:IMS-PLIRID-V0:f38e13ad-4b54-4d0d-a930-30788f2d4c58">
+						<title>
+							Creating and Exporting Presentations
 						</title>
 					</item>
 				</item>
@@ -101,8 +166,9 @@
 		</organization>
 	</organizations>
 	<resources>
-		<resource adlcp:scormtype="asset" href="Text/EClass.Builder 2.5 Documenta 1.htm" identifier="URN:IMS-PLIRID-V0:FEDEF7F54D6E41368CB30B8931045768" type="webcontent">
+		<resource adlcp:scormtype="asset" href="Text/EClass.Builder 2.5 Documenta 1.xhtml" identifier="URN:IMS-PLIRID-V0:FEDEF7F54D6E41368CB30B8931045768" type="webcontent">
 			<file href="Text/EClass.Builder 2.5 Documenta 1.htm"/>
+			<file href="Text/EClass.Builder 2.5 Documenta 1.xhtml"/>
 		</resource>
 		<resource adlcp:scormtype="asset" href="Text/Getting Started 1.htm" identifier="URN:IMS-PLIRID-V0:AF2D2464C33D4806808C177F4E22A64A" type="webcontent">
 			<file href="Text/Getting Started 1.htm"/>
@@ -151,6 +217,45 @@
 		</resource>
 		<resource adlcp:scormtype="asset" href="Content/Upgrading_From_2.x.xhtml" identifier="URN:IMS-PLIRID-V0:920f065b-21b7-4d77-a739-2acb0b56681e" type="webcontent">
 			<file href="Content/Upgrading_From_2.x.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Editing_HTML_Pages.xhtml" identifier="URN:IMS-PLIRID-V0:84855057-7f86-4fb2-9b5b-f9472cbeeae4" type="webcontent">
+			<file href="Content/Editing_HTML_Pages.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Importing_Content.xhtml" identifier="URN:IMS-PLIRID-V0:81b5f592-490d-4c10-ba98-307e98f87338" type="webcontent">
+			<file href="Content/Importing_Content.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Links.xhtml" identifier="URN:IMS-PLIRID-V0:5a726127-0e3f-43bd-a3c5-ab71261c5a5b" type="webcontent">
+			<file href="Content/Working_with_Links.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Images.xhtml" identifier="URN:IMS-PLIRID-V0:58f7ff72-b122-4925-a865-0479fa9b8d08" type="webcontent">
+			<file href="Content/Working_with_Images.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Tables.xhtml" identifier="URN:IMS-PLIRID-V0:fafbbe03-c34f-49d0-bdc6-293706654957" type="webcontent">
+			<file href="Content/Working_with_Tables.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Multimedia_Overview.xhtml" identifier="URN:IMS-PLIRID-V0:2daf54e3-7103-41f9-940d-a6bcfed79846" type="webcontent">
+			<file href="Content/Multimedia_Overview.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Audio.xhtml" identifier="URN:IMS-PLIRID-V0:d569d4c6-4284-4387-a8ed-7738bfe159d7" type="webcontent">
+			<file href="Content/Working_with_Audio.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Video.xhtml" identifier="URN:IMS-PLIRID-V0:2b44b404-2529-4db9-be2f-7f5aec40eaf0" type="webcontent">
+			<file href="Content/Working_with_Video.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Graphics_Production_&amp;_Edi.xhtml" identifier="URN:IMS-PLIRID-V0:d0c25157-42f7-4050-9dea-32eb00732e88" type="webcontent">
+			<file href="Content/Graphics_Production_&amp;_Edi.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Audio_Production_&amp;_Conver.xhtml" identifier="URN:IMS-PLIRID-V0:e0ea2108-cc5b-4dc8-83ba-b68f3e65b293" type="webcontent">
+			<file href="Content/Audio_Production_&amp;_Conver.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Video_Production_&amp;_Conver.xhtml" identifier="URN:IMS-PLIRID-V0:945fc5c4-47e2-444d-a817-597686ad905b" type="webcontent">
+			<file href="Content/Video_Production_&amp;_Conver.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Creating_and_Exporting_Pr.xhtml" identifier="URN:IMS-PLIRID-V0:f38e13ad-4b54-4d0d-a930-30788f2d4c58" type="webcontent">
+			<file href="Content/Creating_and_Exporting_Pr.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Bookmarks.xhtml" identifier="URN:IMS-PLIRID-V0:e73da1fe-fd96-4078-b980-546e1fef920d" type="webcontent">
+			<file href="Content/Working_with_Bookmarks.xhtml"/>
 		</resource>
 	</resources>
 </manifest>
