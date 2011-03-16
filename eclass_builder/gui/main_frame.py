@@ -885,7 +885,7 @@ class MainFrame2(sc.SizedFrame):
         # we need to check this before we actually paste the item
         hasChildren = self.projectTree.GetChildrenCount(pastenode, False) > 0
 
-        if event.GetId() in [ID_PASTE_BELOW, ID_PASTE]:
+        if event.GetId() in [ID_PASTE_BELOW, ID_PASTE] and not parent == self.projectTree.GetRootItem():
             newitem = self.projectTree.InsertItem(self.projectTree.GetItemParent(sel_item), 
                                          sel_item, self.projectTree.GetItemText(pastenode), 
                                        -1, -1, wx.TreeItemData(self.projectTree.GetPyData(pastenode)))
@@ -897,7 +897,7 @@ class MainFrame2(sc.SizedFrame):
             parentitem.items.insert(previndex, pasteitem)
             
 
-        elif event.GetId() == ID_PASTE_CHILD:
+        elif event.GetId() == ID_PASTE_CHILD or parent == self.projectTree.GetRootItem():
             newitem = self.projectTree.AppendItem(sel_item, self.projectTree.GetItemText(pastenode), 
                                                 -1, -1, wx.TreeItemData(self.projectTree.GetPyData(pastenode)))
             
@@ -913,8 +913,11 @@ class MainFrame2(sc.SizedFrame):
         if self.CutNode:
             cutparent = self.projectTree.GetItemParent(self.CutNode)
             cutparentitem = self.projectTree.GetPyData(cutparent)
-            cutparentitem.items.remove(self.projectTree.GetPyData(pastenode))
-
+            cutitem = self.projectTree.GetPyData(pastenode)
+            if cutitem in cutparentitem.items:
+                cutparentitem.items.remove(cutitem)
+            else:
+                print cutitem
             self.projectTree.Delete(self.CutNode)
             self.CutNode = None
 
@@ -972,7 +975,7 @@ class MainFrame2(sc.SizedFrame):
                 newitem = self.projectTree.InsertItem(parent, insertafter, 
                                          selitem.title.text,-1,-1,wx.TreeItemData(selitem))
                 if haschild:
-                    self.AddIMSChildItemsToTree(selection, selitem.items)
+                    self.projectTree.AddIMSChildItemsToTree(newitem, selitem.items)
                 self.projectTree.SelectItem(newitem)
                 self.Update()
                 
@@ -986,7 +989,7 @@ class MainFrame2(sc.SizedFrame):
         
         if parentitem:        
             index = parentitem.items.index(selitem)
-            if index > 0:
+            if index >= 0 and index < len(parentitem.items)-1:
                 parentitem.items.remove(selitem)
                 parentitem.items.insert(index + 1, selitem)
     
@@ -997,7 +1000,7 @@ class MainFrame2(sc.SizedFrame):
                 newitem = self.projectTree.InsertItem(parent, insertafter, 
                                          selitem.title.text,-1,-1,wx.TreeItemData(selitem))
                 if haschild:
-                    self.AddIMSChildItemsToTree(selection, selitem.items)
+                    self.projectTree.AddIMSChildItemsToTree(newitem, selitem.items)
                 self.projectTree.SelectItem(newitem)
                 self.Update()
                 
