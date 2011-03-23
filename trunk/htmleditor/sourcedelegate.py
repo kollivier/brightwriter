@@ -29,7 +29,7 @@ class STCFindReplaceController(wx.EvtHandler):
         if self.lastFindResult > 0 and next:
             startPos = self.lastFindResult + 1
 
-        self.lastFindResult = self.stc.FindText(0, self.stc.GetLength(), text)
+        self.lastFindResult = self.stc.FindText(startPos, self.stc.GetLength(), text)
         if self.lastFindResult != -1:
             self.stc.SetCurrentPos(self.lastFindResult)
             self.stc.EnsureCaretVisible()

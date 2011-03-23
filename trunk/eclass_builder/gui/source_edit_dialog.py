@@ -33,13 +33,14 @@ class SourceEditDialog(sc.SizedDialog):
         self.sourceDelegate.RegisterHandlers()
         
         self.searchCtrl.Bind(wx.EVT_TEXT, self.OnDoSearch)
-        self.searchCtrl.Bind(wx.KEY_DOWN, self.OnKeyDown)
+        self.searchCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         
     def OnKeyDown(self, event):
-        is_search = event.MetaDown() and event.KeyCode == 'G'
+        is_search = event.MetaDown() and event.KeyCode == ord('G')
+        searchText = self.searchCtrl.GetValue()
         
-        if self.searchText and is_search:
-            self.DoInlineSearch(self.searchText, next=True)
+        if searchText and is_search:
+            Publisher().sendMessage(('search', 'findnext'), searchText)
         else:
             event.Skip()
 
