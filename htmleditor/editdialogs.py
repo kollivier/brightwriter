@@ -195,6 +195,9 @@ class RowPropsDialog(TagEditorDialog):
         wx.StaticText(pane, -1, _("Vertical Alignment:"))
         wx.Choice(pane, -1, choices=htmlattrs.attr_values['TR']['valign'].keys(), name="valign")
         
+        wx.StaticText(pane, -1, _("Background Color"))
+        wx.TextCtrl(pane, -1, name="bgcolor")
+        
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
         self.Fit()
@@ -215,6 +218,9 @@ class CellPropsDialog(TagEditorDialog):
     
         wx.StaticText(pane, -1, _("Vertical Alignment:"))
         wx.Choice(pane, -1, choices=htmlattrs.attr_values['TD']['valign'].keys(), name="valign")
+        
+        wx.StaticText(pane, -1, _("Background Color"))
+        wx.TextCtrl(pane, -1, name="bgcolor")
         
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
