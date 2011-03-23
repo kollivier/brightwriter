@@ -2,13 +2,20 @@ import wx
 import wx.lib.sized_controls as sc
 import wx.stc
 
+from wx.lib.pubsub import Publisher
+
 import sourcedelegate
 
 class SourceEditDialog(sc.SizedDialog):
     def __init__(self, *a, **kw):
         sc.SizedDialog.__init__(self, *a, **kw)
         
-        self.source = wx.stc.StyledTextCtrl(self.GetContentsPane(), -1)
+        pane = self.GetContentsPane()
+        
+        self.searchCtrl = wx.SearchCtrl(pane, -1)
+        self.searchCtrl.SetSizerProps(expand=True)
+        
+        self.source = wx.stc.StyledTextCtrl(pane, -1)
         self.source.SetSizerProps(expand=True, proportion=1)
         
         self.isDirty = False
@@ -22,7 +29,25 @@ class SourceEditDialog(sc.SizedDialog):
         self.source.SetProperty("fold.html", "1")
         self.source.SetWrapMode(wx.stc.STC_WRAP_WORD)
 
-        self.sourceDelegate = sourcedelegate.HTMLSourceEditorDelegate(self.source)
+        self.sourceDelegate = sourcedelegate.HTMLSourceEditorDelegate(self.source, searchCtrl=self.searchCtrl)
+        self.sourceDelegate.RegisterHandlers()
+        
+        self.searchCtrl.Bind(wx.EVT_TEXT, self.OnDoSearch)
+        self.searchCtrl.Bind(wx.KEY_DOWN, self.OnKeyDown)
+        
+    def OnKeyDown(self, event):
+        is_search = event.MetaDown() and event.KeyCode == 'G'
+        
+        if self.searchText and is_search:
+            self.DoInlineSearch(self.searchText, next=True)
+        else:
+            event.Skip()
+
+
+    def OnDoSearch(self, event):
+        # wx bug: event.GetString() doesn't work on Windows 
+        text = event.GetEventObject().GetValue()
+        Publisher().sendMessage(('search', 'find'), text)
 
     def OnSavePointReached(self, event):
         self.isDirty = False
