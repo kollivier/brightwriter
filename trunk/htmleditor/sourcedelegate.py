@@ -9,7 +9,7 @@ class STCFindReplaceController(wx.EvtHandler):
     "move to selection" behavior and setting up the keyboard shortcuts.
     '''
     def __init__(self, stc, *args, **kwargs):
-        wx.EvtHandler.__init__(self, *args, **kwargs)
+        wx.EvtHandler.__init__(self)
         self.stc = stc
         self.searchText = None
         self.lastFindResult = -1
@@ -41,11 +41,11 @@ class STCFindReplaceController(wx.EvtHandler):
 
 class HTMLSourceEditorDelegate(wx.EvtHandler):
     def __init__(self, source, *args, **kwargs):
-        wx.EvtHandler.__init__(self, *args, **kwargs)
+        wx.EvtHandler.__init__(self)
         self.source = source
         self.sourceFindHandler = STCFindReplaceController(self.source)
-        self.searchId = None
-        Publisher().subscribe(self.OnDoSearch, ('search', 'text', 'changed'))
+        Publisher().subscribe(self.OnFind, ('search', 'find'))
+        Publisher().subscribe(self.OnFindNext, ('search', 'findnext'))
         
     def RegisterHandlers(self, event=None):       
         app = wx.GetApp()
@@ -53,11 +53,6 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_REDO, self.OnRedo)
         app.AddHandlerForID(ID_SELECTALL, self.OnSelectAll)
         app.AddHandlerForID(ID_SELECTNONE, self.OnSelectNone)
-        
-        search = self.source.FindWindowByName("searchctrl")
-        if search:
-            self.searchId = search.GetId()
-            app.AddHandlerForID(self.searchId, self.OnDoSearch)
         
     def RemoveHandlers(self, event=None):
         app = wx.GetApp()
@@ -72,9 +67,13 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
     def OnRedo(self, event):
         self.source.Redo()
         
-    def OnDoSearch(self, message):
+    def OnFind(self, message):
         if wx.GetTopLevelParent(self.source).IsActive():
             self.sourceFindHandler.DoInlineSearch(message.data)
+
+    def OnFindNext(self, message):
+        if wx.GetTopLevelParent(self.source).IsActive():
+            self.sourceFindHandler.DoInlineSearch(message.data, next=True)
 
     def OnSelectAll(self, evt):
         self.source.SelectAll()
