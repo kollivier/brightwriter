@@ -27,14 +27,14 @@ jwplayer = """
 <script type="text/javascript" src="jwplayer.js"></script>
 <div id="__VIDEO_ID___container"></div><div><p> </p></div>
 <script type="text/javascript">
-<![CDATA[
+/*<![CDATA[*/
     jwplayer("__VIDEO_ID___container").setup({
         flashplayer: "player.swf",
         file: "__VIDEO__.MP4",
         poster: "__VIDEO__.JPG",__DIMENSIONS__
         provider: "__PROVIDER__"
     });
-]]>
+/*]]>*/
 </script>
 </span>
 """
