@@ -1358,10 +1358,10 @@ class MainFrame2(sc.SizedFrame):
     def SaveWebPage(self):
         source = self.browser.GetPageSource()
         
-        if source.find("-//W3C//DTD XHTML 1.0 Strict//EN") != -1 and not self.filename.endswith(".xhtml"):
-            wx.MessageBox("This is an XHTML file but the file extension is not .xhtml. To avoid problems with some features not working, EClass will change the extension to .xhtml.")
+        if self.filename.endswith(".xhtml"):
+            wx.MessageBox("Internet Explorer will ask users to download HTML files with the XHTML extension. To resolve this issue, EClass will change the extension to .html.")
             basename, ext = os.path.splitext(self.filename)
-            newfile = basename + ".xhtml"
+            newfile = basename + ".html"
             
             os.rename(self.filename, newfile)
             self.filename = newfile
