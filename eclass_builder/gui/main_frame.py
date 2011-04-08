@@ -1195,7 +1195,17 @@ class MainFrame2(sc.SizedFrame):
             folder = settings.ProjectSettings["CDSaveDir"]
 
         self.SaveProject()
+
+        callback = GUIFileCopyCallback(self)
+        maxfiles = fileutils.getNumFiles(settings.ProjectDir)
+        self.filesCopied = 0
+        self.dialog = wx.ProgressDialog(_("Copying CD Files"), _("Preparing to copy CD files...") + "                            ", maxfiles, style=wx.PD_APP_MODAL)
+
+        fileutils.CopyFiles(settings.ProjectDir, folder, 1, callback)
         
+        self.dialog.Destroy()
+        self.dialog = None
+
         self.CopyWebFiles(folder)
         self.CopyCDFiles(folder)
         message = _("A window will now appear with all files that must be published to CD-ROM. Start your CD-Recording program and copy all files in this window to that program, and your CD will be ready for burning.")
