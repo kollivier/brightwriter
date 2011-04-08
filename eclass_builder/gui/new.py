@@ -113,7 +113,7 @@ class NewPageDialog(sc.SizedDialog):
 		if string.find(title, ".") != -1:
 			title = title[:string.rfind(title, ".")]
 
-		extension = ".xhtml"
+		extension = ".html"
 
 		if not self.filenameEdited:
 			title = MakeFileName2(self.txtTitle.GetValue())
