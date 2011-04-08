@@ -66,11 +66,6 @@ class BaseHTMLPublisher:
         if self.dir == "":
             self.dir = settings.ProjectDir
         
-        for subdir in constants.eclassdirs:
-            fulldir = os.path.join(self.dir, subdir)
-            if not os.path.exists(fulldir):
-                os.makedirs(fulldir)
-        
         self.counter = 1
         self.themedir = os.path.join(settings.AppDir, "themes", themename)
         self.cancelled = False
