@@ -6,7 +6,7 @@ class StartupDialog(wx.Dialog):
 	def __init__(self, parent):
 		point = parent.GetPositionTuple()
 		size = parent.GetSizeTuple()
-		wx.Dialog.__init__ (self, parent, -1, _("Welcome to EClass.Builder"),wx.DefaultPosition, wx.Size(460,160), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE)
+		wx.Dialog.__init__ (self, parent, -1, _("Welcome to EClass.Builder"),wx.DefaultPosition, wx.Size(460,160), wx.DEFAULT_DIALOG_STYLE)
 		height = 20
 		buttonstart = 90
 		fontsize = 22

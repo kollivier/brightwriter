@@ -13,7 +13,7 @@ class ContactsDialog(sc.SizedDialog):
     def __init__(self, parent):
         sc.SizedDialog.__init__ (self, parent, -1, _("Contact Manager"), 
                                   wx.Point(100,100),wx.Size(300,300), 
-                                  wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                                  wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
                                   
         self.parent = parent
         pane = self.GetContentsPane()
@@ -131,7 +131,7 @@ class ContactEditor(sc.SizedDialog):
     def __init__(self, parent, myvcard):
         sc.SizedDialog.__init__ (self, parent, -1, _("Contact Editor"), 
                                   wx.Point(100,100), wx.Size(300,300), 
-                                  wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                                  wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.myvcard = myvcard
         self.parent = parent
         pane = self.GetContentsPane()

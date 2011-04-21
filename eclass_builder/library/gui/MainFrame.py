@@ -326,7 +326,7 @@ class MainView(sc.SizedPanel):
         contentsDir = self.indexManager.getIndexProp(libName, index_manager.CONTENT_DIR)
         dialog = LibSettings.LibSettingsDialog(self, -1,
                     _("%(libname)s Library Settings") % {"libname": libName},
-                    style=wx.DEFAULT_DIALOG_STYLE | wx.DIALOG_MODAL | wx.RESIZE_BORDER,
+                    style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
                     indexDir=indexDir, contentsDir=contentsDir)
         result = dialog.ShowModal()
         if result == wx.ID_OK:

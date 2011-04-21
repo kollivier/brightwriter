@@ -8,7 +8,7 @@ class ConvertMediaDialog(sc.SizedDialog):
         
         sc.SizedDialog.__init__(self, parent, -1, _("Convert Media Files?"), 
                             wx.DefaultPosition, wx.DefaultSize,
-                            wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE)
+                            wx.DEFAULT_DIALOG_STYLE)
         
         # we do things this way so that the dialog automatically is able to
         # calculate the correct amount of padding around the dialog.

@@ -20,7 +20,7 @@ def getPluginsCanCreateNew():
 class PreferencesEditor(sc.SizedDialog):
 	def __init__(self, parent):
 		sc.SizedDialog.__init__ (self, parent, -1, _("Options"), wx.Point(100,100), 
-		                          style=wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		                          style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
 		pane = self.GetContentsPane()
 		pane.SetSizerType("form")

@@ -15,7 +15,7 @@ wx.TextCtrl.DoGetBestSize = GetBestSize
 
 class NewPubDialog(sc.SizedDialog):
 	def __init__(self, parent):
-		sc.SizedDialog.__init__ (self, parent, -1, _("New Project"), wx.Point(100,100), style=wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		sc.SizedDialog.__init__ (self, parent, -1, _("New Project"), wx.Point(100,100), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
 		self.eclassdir = None
 		pane = self.GetContentsPane()
@@ -63,7 +63,7 @@ class NewPubDialog(sc.SizedDialog):
 
 class NewPageDialog(sc.SizedDialog):
 	def __init__(self, parent):
-		sc.SizedDialog.__init__ (self, parent, -1, _("New Page"), wx.Point(100,100), style=wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+		sc.SizedDialog.__init__ (self, parent, -1, _("New Page"), wx.Point(100,100), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
 		pane = self.GetContentsPane()
 		pane.SetSizerType("form")

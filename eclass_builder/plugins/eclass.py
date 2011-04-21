@@ -717,7 +717,7 @@ class EClassObjectiveEditorDialog(sc.SizedDialog):
         sc.SizedDialog.__init__ (self, parent, -1, _("Objective Editor"),
                          wx.DefaultPosition,
                            wx.Size(200,150),
-                           wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                           wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         self.parent = parent
         pane = self.GetContentsPane()
         self.txtObj = wx.TextCtrl(pane, -1, parent.CurrentObj, style=wx.TE_MULTILINE)
@@ -772,7 +772,7 @@ class EClassHyperlinkEditorDialog(sc.SizedDialog):
         sc.SizedDialog.__init__ (self, parent, -1, _("Hyperlink Editor"),
                          wx.DefaultPosition,
                            wx.DefaultSize,
-                           wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                           wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
         self.parent = parent
         self.term = term
@@ -917,7 +917,7 @@ class EditorDialog (sc.SizedDialog):
         sc.SizedDialog.__init__ (self, parent, -1, _("EClass Page Editor"),
                          wx.DefaultPosition,
                            wx.DefaultSize,
-                           wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                           wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
                            
         pane = self.GetContentsPane()
 
@@ -1326,7 +1326,7 @@ class NewTermDialog(sc.SizedDialog):
         sc.SizedDialog.__init__ (self, parent, -1, _("Create New Hotword"),
                          wx.DefaultPosition,
                            wx.DefaultSize, 
-                           wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                           wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
         self.parent = parent
         pane = self.GetContentsPane()
