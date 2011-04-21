@@ -1633,8 +1633,6 @@ class MainFrame2(sc.SizedFrame):
             else:
                 self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
 
-            self.browser.SetFocus()
-
         else:
             self.browser.SetPage(utils.createHTMLPageWithBody(""))
 
