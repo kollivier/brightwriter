@@ -417,7 +417,7 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
         self.isDialog = True
         sc.SizedDialog.__init__(self, parent, -1, _("Publish to web site"), 
                               wx.Point(100,100),wx.Size(400,440), 
-                              wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                              wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
         
         self.parent = parent

@@ -28,7 +28,7 @@ class PagePropertiesDialog (sc.SizedDialog):
         sc.SizedDialog.__init__ (self, parent, -1, _("Page Properties"),
                            wx.Point(100,100),
                          
-                           style = wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                           style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
         pane = self.GetContentsPane()
         

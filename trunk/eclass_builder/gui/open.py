@@ -6,7 +6,7 @@ import settings
 
 class OpenPubDialog(sc.SizedDialog):
 	def __init__(self, parent):
-		sc.SizedDialog.__init__ (self, parent, -1, _("Open Publication"), (100,100), (480,200), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+		sc.SizedDialog.__init__ (self, parent, -1, _("Open Publication"), (100,100), (480,200), wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 		self.parent = parent
 		self.path = ""
 		

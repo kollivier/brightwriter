@@ -16,8 +16,11 @@ except:
     pass
 
 if sys.platform.startswith("darwin"): 
-    import wx.webkit
-    browserlist.append("webkit")
+    try:
+        import wx.webkit
+        browserlist.append("webkit")
+    except:
+        pass
     
 def getDefaultBrowser():
     global browserlist

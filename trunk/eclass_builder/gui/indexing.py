@@ -43,7 +43,7 @@ class UpdateIndexDialog(sc.SizedDialog):
 
 		"""
 		sc.SizedDialog.__init__ (self, parent, -1, _("Indexing EClass"), wx.Point(100,100),
-								  wx.Size(400,230), wx.DIALOG_MODAL|wx.DEFAULT_DIALOG_STYLE)
+								  wx.Size(400,230), wx.DEFAULT_DIALOG_STYLE)
 
 		pane = self.GetContentsPane()
 		
