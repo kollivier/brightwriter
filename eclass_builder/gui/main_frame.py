@@ -13,7 +13,7 @@ import persistence
 import wx.lib.sized_controls as sc
 import time
 
-wx.SystemOptions.SetOptionInt("mac.textcontrol-use-mlte", 1)
+#wx.SystemOptions.SetOptionInt("mac.textcontrol-use-mlte", 1)
 
 hasmozilla = False
 
@@ -51,7 +51,7 @@ import xmlrpclib
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
 import wx.lib.pubsub
-from wx.lib.pubsub import Publisher
+from wx.lib.pubsub import pub
 
 try:
     import externals.taskrunner as taskrunner
@@ -62,7 +62,7 @@ except:
 EXPERIMENTAL_WXWEBKIT = False
 
 try:
-    import wx.webview
+    import wx.webkit
     EXPERIMENTAL_WXWEBKIT = True
     
 except:
@@ -226,12 +226,13 @@ import gui.menus as menus
 
 #dynamically import any plugin in the plugins folder and add it to the 'plugin registry'
 import plugins
-plugins.LoadPlugins() 
+plugins.LoadPlugins()
 
 settings.plugins = plugins.pluginList
 
 from constants import *
 from gui.ids import *
+
 
 def getMimeTypeForHTML(html):
     mimetype = 'text/html'
@@ -239,23 +240,37 @@ def getMimeTypeForHTML(html):
         mimetype = 'application/xhtml+xml'
     return mimetype
 
+
 class GUIIndexingCallback:
     def __init__(self, parent):
         self.parent = parent
-        
+
     def fileProgress(self, totalFiles, statustext):
         wx.CallAfter(self.parent.OnIndexFileChanged, totalFiles, statustext)
-        
+
+
 class GUIFileCopyCallback:
     def __init__(self, parent):
         self.parent = parent
-        
+
     def fileChanged(self, filename):
         wx.CallAfter(self.parent.OnFileChanged, filename)
         # This is needed because for smaller packages, the copy dialog may be destroyed before
         # this event fires.
         wx.Yield()
         
+command_ids = {
+    ID_BOLD: "Bold",
+    ID_ITALIC: "Italic",
+    ID_UNDERLINE: "Underline",
+    ID_BULLETS: "InsertUnorderedList",
+    ID_NUMBERING: "InsertOrderedList",
+    ID_ALIGN_LEFT: "AlignLeft",
+    ID_ALIGN_CENTER: "AlignCenter",
+    ID_ALIGN_RIGHT: "AlignRight",
+    ID_ALIGN_JUSTIFY: "AlignJustify",
+}
+
 #----------------------------- MainFrame Class ----------------------------------------------
 
 class MainFrame2(sc.SizedFrame): 
@@ -265,8 +280,8 @@ class MainFrame2(sc.SizedFrame):
                       style=wx.DEFAULT_FRAME_STYLE)
         
         # the default encoding isn't correct for Mac.
-        if wx.Platform == "__WXMAC__":
-            wx.SetDefaultPyEncoding("utf-8")
+        #if wx.Platform == "__WXMAC__":
+        #    wx.SetDefaultPyEncoding("utf-8")
         
         self.imscp = None
         #dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
@@ -297,8 +312,6 @@ class MainFrame2(sc.SizedFrame):
         
         # Modeless dialog
         self.find_dialog = None
-        
-        wx.InitAllImageHandlers()
 
         import logging
         self.log = logging.getLogger('EClass')
@@ -369,7 +382,7 @@ class MainFrame2(sc.SizedFrame):
         toolbar2.SetSizerProps(expand=True, border=("all", 0))
         toolbar2.SetToolBitmapSize(wx.Size(16,16))
         self.fonts = ["Times New Roman, Times, serif", "Helvetica, Arial, sans-serif", "Courier New, Courier, monospace"]
-        self.fontlist = wx.ComboBox(toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
+        self.fontlist = wx.ComboBox(toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.TE_PROCESS_ENTER)
     
         self.fontsizes = {"10px": "1", "13px": "2", "16px": "3", "18px": "4", "24px": "5", "32px": "6", "48px": "7"}
         keys = self.fontsizes.values()
@@ -381,19 +394,19 @@ class MainFrame2(sc.SizedFrame):
         toolbar2.AddControl(self.fontsizelist)
         toolbar2.AddSeparator()
             
-        toolbar2.AddCheckTool(ID_BOLD, icnBold, shortHelp=_("Bold"))
-        toolbar2.AddCheckTool(ID_ITALIC, icnItalic, shortHelp=_("Italic"))
-        toolbar2.AddCheckTool(ID_UNDERLINE, icnUnderline, shortHelp=_("Underline"))
+        toolbar2.AddCheckTool(ID_BOLD, '', icnBold, shortHelp=_("Bold"))
+        toolbar2.AddCheckTool(ID_ITALIC, '', icnItalic, shortHelp=_("Italic"))
+        toolbar2.AddCheckTool(ID_UNDERLINE, '', icnUnderline, shortHelp=_("Underline"))
             #self.toolbar2.AddSimpleTool(ID_FONT_COLOR, icnColour, _("Font Color"), _("Select a font color"))
         toolbar2.AddSeparator()
-        toolbar2.AddCheckTool(ID_ALIGN_LEFT, icnAlignLeft, shortHelp=_("Left Align"))
-        toolbar2.AddCheckTool(ID_ALIGN_CENTER, icnAlignCenter, shortHelp=_("Center"))
-        toolbar2.AddCheckTool(ID_ALIGN_RIGHT, icnAlignRight, shortHelp=_("Right Align"))
+        toolbar2.AddCheckTool(ID_ALIGN_LEFT, '', icnAlignLeft, shortHelp=_("Left Align"))
+        toolbar2.AddCheckTool(ID_ALIGN_CENTER, '', icnAlignCenter, shortHelp=_("Center"))
+        toolbar2.AddCheckTool(ID_ALIGN_RIGHT, '', icnAlignRight, shortHelp=_("Right Align"))
         toolbar2.AddSeparator()
         toolbar2.AddSimpleTool(ID_DEDENT, icnDedent, _("Decrease Indent"), _("Decrease Indent"))
         toolbar2.AddSimpleTool(ID_INDENT, icnIndent, _("Increase Indent"), _("Increase Indent"))
-        toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
-        toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
+        toolbar2.AddCheckTool(ID_BULLETS, '', icnBullets, shortHelp=_("Bullets"))
+        toolbar2.AddCheckTool(ID_NUMBERING, '', icnNumbering, shortHelp=_("Numbering"))
         toolbar2.AddSeparator()
         toolbar2.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
         toolbar2.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
@@ -407,7 +420,7 @@ class MainFrame2(sc.SizedFrame):
         
         #split the window into two - Treeview on one side, browser on the other
         self.splitter1 = wx.SplitterWindow(pane, -1, style=wx.NO_BORDER)
-        self.splitter1.SetSashSize(7)
+#        self.splitter1.SetSashSize(7)
         self.splitter1.SetSizerProps({"expand":True, "proportion":1})
 
         # Tree Control for the XML hierachy
@@ -421,21 +434,15 @@ class MainFrame2(sc.SizedFrame):
         accelerators = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_TREE_REMOVE)])
         self.SetAcceleratorTable(accelerators)
 
-        if not EXPERIMENTAL_WXWEBKIT:
-            self.browser = wxbrowser.wxBrowser(self.splitter1, -1)
-        else:
-            self.browser = wx.webview.WebView(self.splitter1, -1, size=(200,200), style=wx.WANTS_CHARS)
-            self.browser.MakeEditable(True)
-            self.browser.LoadPage = self.browser.LoadURL
-            self.browser.SetPage = self.browser.SetPageSource
-            self.browser.browser = self.browser
-            self.webdelegate = EClassHTMLEditorDelegate(source=self.browser, parent=self)
-            
-            self.browser.ToggleContinuousSpellChecking()
-            
-            self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
-            self.browser.Bind(wx.EVT_MOUSE_EVENTS, self.UpdateStatus)
-            self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
+        self.browser = wxbrowser.wxBrowser(self.splitter1, -1)
+        self.browser.MakeEditable(True)
+        self.webdelegate = EClassHTMLEditorDelegate(source=self.browser, parent=self)
+        #self.browser.ToggleContinuousSpellChecking()
+        
+        self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
+        #self.Bind(wx.EVT_IDLE, self.UpdateStatus)
+        pub.subscribe(self.OnPageLoaded, 'page_load_complete')
+            #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
         
         self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
@@ -482,7 +489,11 @@ class MainFrame2(sc.SizedFrame):
     def OnDoSearch(self, event):
         # wx bug: event.GetString() doesn't work on Windows 
         text = event.GetEventObject().GetValue()
-        Publisher().sendMessage(('search', 'text', 'changed'), text)
+        pub.sendMessage(('search', 'text', 'changed'), message=text)
+
+    def OnPageLoaded(self):
+        logging.info("Page loaded callback called")
+        self.browser.MakeEditable()
         
     def OnFindReplace(self, event):
         import find_replace_dialog
@@ -504,14 +515,15 @@ class MainFrame2(sc.SizedFrame):
         EClassAboutDialog(self).ShowModal()
 
     def GetCommandState(self, command):
-        if self.FindFocus() == self.browser:
-            state = self.browser.GetEditCommandState(command) 
-            if state in [wx.webview.EditStateMixed, wx.webview.EditStateTrue]:
-                return True
+        state = self.browser.GetEditCommandState(command)
+        print("State = %r" % state)
+        if state.lower().strip() == "true":
+            return True
         
         return False
 
     def OnFontSizeSelect(self, evt):
+        print("OnFontSizeSelect called")
         value = self.fontsizelist.GetStringSelection()
         self.browser.ExecuteEditCommand("FontSize", value)
 
@@ -519,15 +531,15 @@ class MainFrame2(sc.SizedFrame):
         self.browser.ExecuteEditCommand("FontName", self.fontlist.GetStringSelection())
 
     def UpdateStatus(self, evt):
-        self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
-        self.toolbar2.ToggleTool(ID_ITALIC, self.GetCommandState("Italic"))
-        self.toolbar2.ToggleTool(ID_UNDERLINE, self.GetCommandState("Underline"))
-        self.toolbar2.ToggleTool(ID_BULLETS, self.GetCommandState("InsertUnorderedList"))
-        self.toolbar2.ToggleTool(ID_NUMBERING, self.GetCommandState("InsertOrderedList"))
-        self.toolbar2.ToggleTool(ID_ALIGN_LEFT, self.GetCommandState("AlignLeft"))
-        self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("AlignCenter"))
-        self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("AlignRight"))
-        self.toolbar2.ToggleTool(ID_ALIGN_JUSTIFY, self.GetCommandState("AlignJustify"))
+        # self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
+        # self.toolbar2.ToggleTool(ID_ITALIC, self.GetCommandState("Italic"))
+        # self.toolbar2.ToggleTool(ID_UNDERLINE, self.GetCommandState("Underline"))
+        # self.toolbar2.ToggleTool(ID_BULLETS, self.GetCommandState("InsertUnorderedList"))
+        # self.toolbar2.ToggleTool(ID_NUMBERING, self.GetCommandState("InsertOrderedList"))
+        # self.toolbar2.ToggleTool(ID_ALIGN_LEFT, self.GetCommandState("AlignLeft"))
+        # self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("AlignCenter"))
+        # self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("AlignRight"))
+        # self.toolbar2.ToggleTool(ID_ALIGN_JUSTIFY, self.GetCommandState("AlignJustify"))
         self.fontsizelist.SetStringSelection(self.browser.GetEditCommandValue("FontSize"))
         self.fontlist.SetValue(self.browser.GetEditCommandValue("FontName"))
         
@@ -584,6 +596,10 @@ class MainFrame2(sc.SizedFrame):
         
         app.AddHandlerForID(ID_SETTINGS, self.OnAppPreferences)
         app.AddHandlerForID(wx.ID_ABOUT, self.OnAbout)
+
+        # edit commands
+        #for id in command_ids:
+        #    app.AddHandlerForID(id, self.OnEditCommandClicked)
         
         app.AddUIHandlerForID(ID_SAVE, self.UpdatePageCommand)
         app.AddUIHandlerForID(ID_CLOSE, self.UpdateProjectCommand)
@@ -721,6 +737,10 @@ class MainFrame2(sc.SizedFrame):
                                 self.Update()
             except:
                 raise
+
+    def OnEditCommandClicked(self, event):
+        command = command_ids[event.GetId()]
+        self.browser.ExecuteEditCommand(command)
 
     def OnAppPreferences(self, event):
         PreferencesEditor(self).ShowModal()
@@ -1128,16 +1148,11 @@ class MainFrame2(sc.SizedFrame):
                     value = False
                 else:
                     value = True
-            elif event.Id == ID_SAVE:
-                value = self.dirty
         
         event.Enable(value)
 
     def UpdateEditCommand(self, event):
-        if self.browser.FindFocus() == self.browser:
-            event.Enable(True)
-        else:
-            event.Enable(False)
+        event.Enable(True)
 
     def OnCloseWindow(self, event):
         self.ShutDown(event)
@@ -1367,6 +1382,7 @@ class MainFrame2(sc.SizedFrame):
 
     def SaveWebPage(self):
         source = self.browser.GetPageSource()
+        print("Source: %s" % source)
         
         if self.filename.endswith(".xhtml"):
             wx.MessageBox("Internet Explorer will ask users to download HTML files with the XHTML extension. To resolve this issue, EClass will change the extension to .html.")
@@ -1626,7 +1642,7 @@ class MainFrame2(sc.SizedFrame):
                     self.baseurl = 'file://' + fileurl
                     html = htmlutils.getUnicodeHTMLForFile(filename)
             
-                    self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
+                    self.browser.SetPage(html)
                     self.filename = filename
                 else:
                     self.browser.LoadPage(filename)

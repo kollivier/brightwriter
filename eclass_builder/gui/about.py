@@ -1,7 +1,7 @@
 import string, sys, os
 import wx
 import wx.lib.sized_controls as sc
-import wx.lib.hyperlink as hl
+#import wx.lib.hyperlink as hl
 import version
 
 rootdir = os.path.join(os.path.dirname(__file__), "..")
@@ -37,12 +37,12 @@ class EClassAboutDialog(sc.SizedDialog):
         ack_font.SetWeight(wx.FONTWEIGHT_BOLD)
         acknowledgements.SetFont(ack_font)
         
-        wxpy_link = hl.HyperLinkCtrl(panel, -1, "Built with wxPython", URL="http://www.wxpython.org")
-        wxpy_link.SetSizerProps(halign="center")
+        #wxpy_link = hl.HyperLinkCtrl(panel, -1, "Built with wxPython", URL="http://www.wxpython.org")
+        #wxpy_link.SetSizerProps(halign="center")
         
-        fatcow_link = hl.HyperLinkCtrl(panel, -1, "EClass.Builder uses FatCow free icons", URL="http://www.fatcow.com/free-icons/")
-        fatcow_link.SetSizerProps(halign="center")
+        #fatcow_link = hl.HyperLinkCtrl(panel, -1, "EClass.Builder uses FatCow free icons", URL="http://www.fatcow.com/free-icons/")
+        #fatcow_link.SetSizerProps(halign="center")
 
-        program_icon = hl.HyperLinkCtrl(panel, -1, "EClass.Builder icon created from iconaholic.com icons", URL="http://www.iconaholic.com/")
+        #program_icon = hl.HyperLinkCtrl(panel, -1, "EClass.Builder icon created from iconaholic.com icons", URL="http://www.iconaholic.com/")
 
         self.Fit()

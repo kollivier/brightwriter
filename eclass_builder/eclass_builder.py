@@ -9,7 +9,7 @@ import wx
 import gui.error_viewer as error_viewer
 
 oldexcepthook = sys.excepthook 
-sys.excepthook = error_viewer.guiExceptionHook
+#sys.excepthook = error_viewer.guiExceptionHook
 
 rootdir = os.path.abspath(sys.path[0])
 # os.path.dirname will chop the last dir if the path is to a directory
@@ -50,7 +50,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
             settings.logfile = os.path.join(guiutils.getAppDataDir(), 'log.txt')
         
         formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
-        logging.basicConfig(filename=settings.logfile, format="%(asctime)s\t%(levelname)s\t%(message)s")
+        logging.basicConfig(format="%(asctime)s\t%(levelname)s\t%(message)s", level=logging.DEBUG)
         log = logging.getLogger('EClass')
         log.setLevel(logging.DEBUG)
         
@@ -60,7 +60,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         
         log.info('Starting %s.' % self.GetAppName())
         
-        wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
+        #wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
         
         # initialize the environment
         self.LoadPrefs()

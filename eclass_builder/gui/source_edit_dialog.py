@@ -2,7 +2,7 @@ import wx
 import wx.lib.sized_controls as sc
 import wx.stc
 
-from wx.lib.pubsub import Publisher
+from wx.lib.pubsub import pub
 
 import sourcedelegate
 
@@ -40,7 +40,7 @@ class SourceEditDialog(sc.SizedDialog):
         searchText = self.searchCtrl.GetValue()
         
         if searchText and is_search:
-            Publisher().sendMessage(('search', 'findnext'), searchText)
+            pub.sendMessage(('search', 'findnext'), searchText)
         else:
             event.Skip()
 

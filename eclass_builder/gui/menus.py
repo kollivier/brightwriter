@@ -37,6 +37,7 @@ def getEditMenu():
     
     EditMenu.AppendSeparator()
     EditMenu.Append(ID_FIND, _("Find and Replace") + "\tCTRL+F")
+    EditMenu.Append(ID_FIND_NEXT, _("Find Next") + "\tCTRL+G")
     
     return EditMenu
     

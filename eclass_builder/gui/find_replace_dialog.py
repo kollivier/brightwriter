@@ -1,7 +1,7 @@
 import wx
 import wx.lib.sized_controls as sc
 
-from wx.lib.pubsub import Publisher
+from wx.lib.pubsub import pub
 
 from ids import *
 
@@ -11,11 +11,11 @@ class WebViewFindReplaceController(wx.EvtHandler):
         self.webview = webview
         self.hasResult = False
         
-        Publisher().subscribe(self.OnFindNext, ('find_replace', 'find_next'))
-        Publisher().subscribe(self.OnFindPrevious, ('find_replace', 'find_previous'))
-        Publisher().subscribe(self.OnReplace, ('find_replace', 'replace'))
-        Publisher().subscribe(self.OnReplaceFind, ('find_replace', 'replace_find'))
-        Publisher().subscribe(self.OnReplaceAll, ('find_replace', 'replace_all'))
+        pub.subscribe(self.OnFindNext, ('find_replace', 'find_next'))
+        pub.subscribe(self.OnFindPrevious, ('find_replace', 'find_previous'))
+        pub.subscribe(self.OnReplace, ('find_replace', 'replace'))
+        pub.subscribe(self.OnReplaceFind, ('find_replace', 'replace_find'))
+        pub.subscribe(self.OnReplaceAll, ('find_replace', 'replace_all'))
         
     def FindText(self, text, caseSensitive=False, forward=True):
         self.hasResult = self.webview.FindString(text, forward, caseSensitive)
@@ -92,16 +92,16 @@ class FindReplaceDialog(sc.SizedDialog):
         self.Fit()
         
     def OnFindNext(self, event):
-        Publisher().sendMessage(('find_replace', 'find_next'), (self.find_text.GetValue(), self.case_checkbox.IsChecked()))
+        pub.sendMessage(('find_replace', 'find_next'), (self.find_text.GetValue(), self.case_checkbox.IsChecked()))
 
     def OnFindPrevious(self, event):
-        Publisher().sendMessage(('find_replace', 'find_previous'), (self.find_text.GetValue(), self.case_checkbox.IsChecked()))
+        pub.sendMessage(('find_replace', 'find_previous'), (self.find_text.GetValue(), self.case_checkbox.IsChecked()))
 
     def OnReplace(self, event):
-        Publisher().sendMessage(('find_replace', 'replace'), self.replace_text.GetValue())
+        pub.sendMessage(('find_replace', 'replace'), self.replace_text.GetValue())
 
     def OnReplaceFind(self, event):
-        Publisher().sendMessage(('find_replace', 'replace_find'), (self.find_text.GetValue(), self.replace_text.GetValue(), self.case_checkbox.IsChecked()))
+        pub.sendMessage(('find_replace', 'replace_find'), (self.find_text.GetValue(), self.replace_text.GetValue(), self.case_checkbox.IsChecked()))
 
     def OnReplaceAll(self, event):
-        Publisher().sendMessage(('find_replace', 'replace_all'), (self.find_text.GetValue(), self.replace_text.GetValue(), self.case_checkbox.IsChecked()))
+        pub.sendMessage(('find_replace', 'replace_all'), (self.find_text.GetValue(), self.replace_text.GetValue(), self.case_checkbox.IsChecked()))

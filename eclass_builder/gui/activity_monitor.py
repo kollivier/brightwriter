@@ -4,7 +4,7 @@ import wx.lib.sized_controls as sc
 import tasks
 import string, os
 
-class ActivityList(wx.HtmlListBox):
+class ActivityList(wx.ListBox):
     
     def OnGetItem(self, n):
         numTasks = len(tasks.activeTasks)
@@ -25,7 +25,7 @@ class ActivityMonitor(sc.SizedDialog):
         sc.SizedDialog.__init__(self, parent, -1, _("Activity Monitor"), style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
         self.taskList = ActivityList(pane, -1)
-        self.taskList.SetItemCount(5)
+        #self.taskList.SetItemCount(5)
         self.taskList.SetSizerProp("proportion", 1)
         self.taskList.SetSizerProp("expand", "true")
         
