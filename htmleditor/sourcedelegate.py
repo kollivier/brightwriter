@@ -1,5 +1,5 @@
 import wx
-from wx.lib.pubsub import Publisher
+from wx.lib.pubsub import pub
 
 from editactions import *
 
@@ -44,8 +44,8 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
         wx.EvtHandler.__init__(self)
         self.source = source
         self.sourceFindHandler = STCFindReplaceController(self.source)
-        Publisher().subscribe(self.OnFind, ('search', 'find'))
-        Publisher().subscribe(self.OnFindNext, ('search', 'findnext'))
+        pub.subscribe(self.OnFind, ('search', 'find'))
+        pub.subscribe(self.OnFindNext, ('search', 'findnext'))
         
     def RegisterHandlers(self, event=None):       
         app = wx.GetApp()

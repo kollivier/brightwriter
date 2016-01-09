@@ -1,6 +1,6 @@
 import wx
-import wx.webview
-import wx.lib.flatnotebook as fnb
+import wx.webkit
+#import wx.lib.flatnotebook as fnb
 import wx.lib.sized_controls as sc
 import wx.stc
 
@@ -28,15 +28,15 @@ class HTMLCleanUpDialog(sc.SizedDialog):
         self.splitter1.SetSashSize(1)
         self.splitter1.SetSizerProps({"expand":True, "proportion":1})
 
-        fnbStyle = fnb.FNB_NO_X_BUTTON | fnb.FNB_NO_NAV_BUTTONS
+        #fnbStyle = fnb.FNB_NO_X_BUTTON | fnb.FNB_NO_NAV_BUTTONS
 
-        self.originalBook = fnb.FlatNotebook(self.splitter1, wx.ID_ANY, style=fnbStyle)
-        self.newBook = fnb.FlatNotebook(self.splitter1, wx.ID_ANY, style=fnbStyle)
+        #self.originalBook = fnb.FlatNotebook(self.splitter1, wx.ID_ANY, style=fnbStyle)
+        #self.newBook = fnb.FlatNotebook(self.splitter1, wx.ID_ANY, style=fnbStyle)
 
-        self.original = wx.webview.WebView(self.originalBook, -1)
+        self.original = wx.webkit.WebKitCtrl(self.originalBook, -1)
         self.originalSource = wx.stc.StyledTextCtrl(self.originalBook, -1)
         
-        self.new = wx.webview.WebView(self.newBook, -1)
+        self.new = wx.webkit.WebKitCtrl(self.newBook, -1)
         self.newSource = wx.stc.StyledTextCtrl(self.newBook, -1)
         
         self.originalBook.AddPage(self.original, _("Original Page"))

@@ -10,7 +10,7 @@ import wx.lib.flatnotebook as fnb
 import wx.lib.mixins.inspection
 import wx.lib.sized_controls as sc
 
-from wx.lib.pubsub import Publisher
+from wx.lib.pubsub import pub
 
 thisfile = sys.executable
 if not hasattr(sys, 'frozen'):
@@ -285,7 +285,7 @@ class EditorFrame (sc.SizedFrame):
     def OnDoSearch(self, event):
         # wx bug: event.GetString() doesn't work on Windows 
         text = event.GetEventObject().GetValue()
-        Publisher().sendMessage(('search', 'text', 'changed'), text)
+        pub.sendMessage(('search', 'text', 'changed'), text)
 
     def OnFontSelect(self, evt):
         self.webview.ExecuteEditCommand("FontName", self.fontlist.GetStringSelection())

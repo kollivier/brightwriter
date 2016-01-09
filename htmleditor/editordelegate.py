@@ -1,7 +1,8 @@
-import wx
-import wx.webview
+import logging
 
-from wx.lib.pubsub import Publisher
+import wx
+
+from wx.lib.pubsub import pub
 
 from editactions import *
 from editdialogs import *
@@ -16,14 +17,17 @@ def _(text):
 
 class HTMLEditorDelegate(wx.EvtHandler):
     def __init__(self, source, *args, **kwargs):
+        logging.info("Initializing HTMLEditor Delegate...")
         wx.EvtHandler.__init__(self, *args, **kwargs)
         self.webview = source
-        settings = self.webview.GetWebSettings()
-        settings.SetEditableLinkBehavior(wx.webview.EditableLinkOnlyLiveWithShiftKey)
-        self.webview.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
-        self.webview.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+        self.currentSearchText = None
+        #settings = self.webview.GetWebSettings()
+        #settings.SetEditableLinkBehavior(wx.webview.EditableLinkOnlyLiveWithShiftKey)
+        #self.webview.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
+        #self.webview.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+        self.RegisterHandlers()
         self.searchId = None
-        Publisher().subscribe(self.OnDoSearch, ('search', 'text', 'changed'))
+        pub.subscribe(self.OnDoSearch, ('search', 'text', 'changed'))
         
     def OnSetFocus(self, event):
         self.RegisterHandlers()
@@ -35,6 +39,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         
     def RegisterHandlers(self):
         app = wx.GetApp()
+        logging.info("Calling RegisterHandlers")
         app.AddHandlerForID(ID_UNDO, self.OnUndo)
         app.AddHandlerForID(ID_REDO, self.OnRedo)
         app.AddHandlerForID(ID_CUT, self.OnCut)
@@ -54,6 +59,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_NUMBERING, self.OnNumbering)
         app.AddHandlerForID(ID_SELECTALL, self.OnSelectAll)
         app.AddHandlerForID(ID_SELECTNONE, self.OnSelectNone)
+
+        app.AddHandlerForID(ID_FIND_NEXT, self.OnFindNext)
 
         app.AddHandlerForID(ID_INSERT_IMAGE, self.OnImageButton)
         app.AddHandlerForID(ID_INSERT_LINK, self.OnLinkButton)
@@ -116,7 +123,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddUIHandlerForID(ID_TEXT_REMOVE_STYLES, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_SPELLING_GUESS, self.UpdateEditCommand)
         
-        self.webview.Bind(wx.webview.EVT_WEBVIEW_CONTEXT_MENU, self.OnRightClick)
+        #self.webview.Bind(wx.webview.EVT_WEBVIEW_CONTEXT_MENU, self.OnRightClick)
 
     def RemoveHandlers(self):
         app = wx.GetApp()
@@ -140,6 +147,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_SELECTALL)
         app.RemoveHandlerForID(ID_SELECTNONE)
 
+        app.RemoveHandlerForID(ID_FIND_NEXT)
+
         app.RemoveHandlerForID(ID_INSERT_IMAGE)
         app.RemoveHandlerForID(ID_INSERT_LINK)
         app.RemoveHandlerForID(ID_INSERT_HR)
@@ -158,16 +167,26 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.RemoveHandlerForID(ID_TEXT_SUP)
         app.RemoveHandlerForID(ID_TEXT_SUB)
         app.RemoveHandlerForID(ID_TEXT_REMOVE_STYLES)
-        
+
     def UpdateEditCommand(self, event):
-        if self.webview.FindFocus() == self.webview:
-            event.Enable(True)
-        else:
-            event.Enable(False)
+        event.Enable(True)
 
     def OnDoSearch(self, message):
+        self.Find(message)
+
+    def OnFindNext(self, event):
+        self.Find(findFirst=False)
+
+    def Find(self, text=None, findFirst=True):
         if wx.GetTopLevelParent(self.webview).IsActive():
-            self.webview.FindString(message.data)
+            if text is None and not findFirst:
+                text = self.currentSearchText
+
+            if findFirst:
+                self.webview.ExecuteEditCommand("Unselect")
+            if text and text != "":
+                self.currentSearchText = text
+                self.webview.EvaluateJavaScript("window.find('%s', false, false, true);" % text)
 
     def OnSpellingGuessChosen(self, event):
         menu = event.GetEventObject()
@@ -270,9 +289,10 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
         mydialog = editorClass(self.webview, props)
         mydialog.CentreOnParent()
-        if mydialog.ShowModal() == wx.ID_OK:
+        # FIXME: We need to change this to use JS commands
+        if False: #mydialog.ShowModal() == wx.ID_OK:
             return_props = mydialog.getProps()
-            editcmd = wx.webview.WebEditCommand(self.webview.GetMainFrame())        
+            #editcmd = wx.webview.WebEditCommand(self.webview.GetMainFrame())        
             for prop in return_props:
                 assert prop in all_attrs
                 if prop in ["href", "src"]:
@@ -309,8 +329,9 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
     def GetParent(self, elementName):
         elementName = elementName.lower()
-        selection = self.webview.GetSelection().GetAsRange()
-        if selection:                
+        #selection = self.webview.GetSelection().GetAsRange()
+        # FIXME: We need to change this to use JS commands
+        if False:                
             root = selection.startContainer()
             children = root.childNodes()
             
@@ -318,14 +339,14 @@ class HTMLEditorDelegate(wx.EvtHandler):
             # image, so we need to find the image in the children.
             for index in xrange(children.length()):
                 child = children.item(index)
-                if isinstance(child, wx.webview.WebDOMElement) and child.tagName().lower() == elementName:
-                    return child
+                #if isinstance(child, wx.webview.WebDOMElement) and child.tagName().lower() == elementName:
+                #    return child
             
             parent = root
             while parent.impl():
-                if isinstance(parent, wx.webview.WebDOMElement):
-                    if parent.tagName().lower() == elementName:
-                        return parent
+                #if isinstance(parent, wx.webview.WebDOMElement):
+                #    if parent.tagName().lower() == elementName:
+                #        return parent
                 
                 parent = parent.parentNode()
         return None
