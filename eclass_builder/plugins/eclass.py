@@ -1115,7 +1115,7 @@ class EditorDialog (sc.SizedDialog):
     def btnNewFileClicked(self, event):
         savefile = False
 
-        f = wx.FileDialog(self, _("New HTML Page"), os.path.join(settings.ProjectDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wx.SAVE)
+        f = wx.FileDialog(self, _("New HTML Page"), os.path.join(settings.ProjectDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wx.FD_SAVE)
         if f.ShowModal() == wx.ID_OK:
             filename = f.GetPath()
             if os.path.exists(filename):

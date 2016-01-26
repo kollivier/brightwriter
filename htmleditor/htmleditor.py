@@ -431,14 +431,14 @@ class EditorFrame (sc.SizedFrame):
 
     def OnOpen(self, event):
         global webPageWildcard
-        dlg = wx.FileDialog(self, _("Select a file"), "", "", webPageWildcard, wx.OPEN)
+        dlg = wx.FileDialog(self, _("Select a file"), "", "", webPageWildcard, wx.FD_OPEN)
         dlg.CentreOnParent()
         if dlg.ShowModal() == wx.ID_OK:
             self.LoadPage(dlg.GetPath())
         dlg.Destroy()
 
     def OnSaveAs(self, event):
-        dlg = wx.FileDialog(self, _("Save File As"), "", "", webPageWildcard, wx.SAVE)
+        dlg = wx.FileDialog(self, _("Save File As"), "", "", webPageWildcard, wx.FD_SAVE)
         dlg.CentreOnParent()
         if dlg.ShowModal() == wx.ID_OK:
             self.current = dlg.GetPath()

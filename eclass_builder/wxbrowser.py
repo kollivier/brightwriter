@@ -190,16 +190,16 @@ class wxBrowser(wx.Window):
         if event.GetState() == wx.webkit.WEBKIT_STATE_STOP:
             logging.info("Sending page load complete?")
             pub.sendMessage("page_load_complete")
-            
-    def SetPage(self, text):
+
+    def SetPage(self, text, baseurl, mimetype="text/html"):
         if self.engine == "ie":
             self.browser.LoadString(text)
         elif self.engine == "webkit":
             self.browser.SetPageSource(text)
         elif self.engine == "webview":
-            self.browser.SetPage(text, "")
+            self.browser.SetPage(text, baseurl)
         elif self.engine == "cef":
-            self.browser.GetBrowser().GetMainFrame().LoadString(text, "")
+            self.browser.GetBrowser().GetMainFrame().LoadString(text, baseurl)
 
     def GetPageSource(self):
         if self.engine == "webkit":

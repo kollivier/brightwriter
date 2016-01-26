@@ -35,6 +35,8 @@ import traceback
 import sys
 import utils, guiutils, settings
 
+from core import BaseHTMLPublisher
+
 import logging
 log = logging.getLogger('EClass')
 
@@ -82,7 +84,7 @@ def CreateNewFile(filename, name="New Page"):
 #if this isn't the main script, then we're probably loading in EClass.Builder
 #so load the plugin publisher class
 if __name__ != "__main__":
-    class HTMLPublisher(plugins.BaseHTMLPublisher):
+    class HTMLPublisher(BaseHTMLPublisher):
         #init defined by parent class
         def GetFileLink(self, filename):
             return "pub/" + os.path.basename(self.GetFilename(filename))

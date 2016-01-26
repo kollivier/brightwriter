@@ -1,33 +1,27 @@
-import string, os
-import utils
+import os
+import sys
 
 import logging
 log = logging.getLogger('EClass')
 
 themeList = None
 
+import BaseTheme
+import Default_frames
+import IMS_Package
+
+
 class ThemeList:
-    def __init__(self, themedir):
-        self.themedir = themedir
+    def __init__(self):
         self.themes = {}
         self.LoadThemes()
 
     def LoadThemes(self):
-        self.themes = {}
-        for item in os.listdir(self.themedir):
-            if item[-3:] == ".py" and string.find(item, "__init__.py") == -1 and string.find(item, "themes.py") == -1 and not item[0] == ".":
-                theme = string.replace(item, ".py", "")
-                if theme != "BaseTheme":
-                    try:
-                        exec("import " + theme)
-                        exec("mytheme = " + theme)
-                        self.themes[mytheme.themename] = mytheme
-                    except:
-                        global log
-                        log.error("Couldn't load theme: " + theme)
-                        import traceback
-                        if traceback.print_exc() != None:
-                            log.error(traceback.print_exc())                                
+        self.themes = {
+            BaseTheme.themename: BaseTheme,
+            Default_frames.themename: Default_frames,
+            IMS_Package.themename: IMS_Package
+        }
 
     def GetPublicThemeNames(self):
         result = []
@@ -49,9 +43,8 @@ class ThemeList:
 def FindTheme(themename, returnDefault=True):
     return themeList.FindTheme(themename, returnDefault)
 
+
 def GetPublicThemeNames():
     return themeList.GetPublicThemeNames()
 
-rootdir = os.path.abspath(os.path.dirname(__file__))
-themeList = ThemeList(rootdir)
-themeList.LoadThemes()
+themeList = ThemeList()

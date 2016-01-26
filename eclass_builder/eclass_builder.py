@@ -1,5 +1,25 @@
-import string, sys, os, shutil, glob
-    
+import datetime
+import glob
+import os
+import shutil
+import string
+import sys
+
+import settings
+settings.logfile = os.path.join(settings.getAppDataDir(), 'BrightWriter.log')
+
+import logging
+
+formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
+logging.basicConfig(filename=settings.logfile, filemode='w', format="%(asctime)s\t%(levelname)s\t%(message)s", level=logging.DEBUG)
+log = logging.getLogger('BrightWriter')
+log.setLevel(logging.DEBUG)
+
+import version
+
+log.info("Starting %s %s" % (settings.app_name, version.asString()))
+log.info(datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"))
+
 # do this first because other modules may rely on _()
 import i18n
 lang_dict = i18n.installEClassGettext()
@@ -8,16 +28,17 @@ import wx
 
 import gui.error_viewer as error_viewer
 
-oldexcepthook = sys.excepthook 
-#sys.excepthook = error_viewer.guiExceptionHook
+oldexcepthook = sys.excepthook
+sys.excepthook = error_viewer.guiExceptionHook
 
-rootdir = os.path.abspath(sys.path[0])
+rootdir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+logging.info("rootdir = %r" % rootdir)
 # os.path.dirname will chop the last dir if the path is to a directory
 if not os.path.isdir(rootdir):
     rootdir = os.path.dirname(rootdir)
 
-import logging
-log = None
+logging.info("rootdir is now %r" % rootdir)
 
 import settings, guiutils, appdata, errors
 import conman.xml_settings as xml_settings
@@ -43,22 +64,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
     def OnInit(self):
         events.AppEventHandlerMixin.__init__(self)
         
-        self.SetAppName("EClass.Builder")
-        
-        global log
-        if hasattr(sys, 'frozen'):
-            settings.logfile = os.path.join(guiutils.getAppDataDir(), 'log.txt')
-        
-        formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
-        logging.basicConfig(format="%(asctime)s\t%(levelname)s\t%(message)s", level=logging.DEBUG)
-        log = logging.getLogger('EClass')
-        log.setLevel(logging.DEBUG)
-        
-        if settings.logfile:
-            sys.stderr = open(settings.logfile, "w")
-            sys.stdout = sys.stderr
-        
-        log.info('Starting %s.' % self.GetAppName())
+        self.SetAppName(settings.app_name)
         
         #wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", 0)
         
@@ -85,17 +91,11 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         if not os.path.exists(contactsdir):
             os.mkdir(contactsdir)
             
-        if not os.path.exists(settings.AppSettings["EClass3Folder"]):
-            os.makedirs(settings.AppSettings["EClass3Folder"])
+        if not os.path.exists(settings.AppSettings["ProjectsFolder"]):
+            os.makedirs(settings.AppSettings["ProjectsFolder"])
     
     def LoadPrefs(self):
-        settings.PrefDir = guiutils.getAppDataDir()
-        oldprefdir = guiutils.getOldAppDataDir()
-
-        # Move old AppDataDir if it exists.
-        if oldprefdir and os.path.exists(oldprefdir) and not oldprefdir == settings.PrefDir:
-            fileutils.CopyFiles(oldprefdir, settings.PrefDir, 1)
-            shutil.rmtree(oldprefdir)
+        settings.PrefDir = settings.getAppDataDir()
 
         settings.AppSettings = xml_settings.XMLSettings()
         if os.path.exists(os.path.join(settings.PrefDir, "settings.xml")):
@@ -116,10 +116,10 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
 
     def SetDefaultDirs(self):
         #check settings and if blank, apply defaults
-        coursefolder = settings.AppSettings["EClass3Folder"]
+        coursefolder = settings.AppSettings["ProjectsFolder"]
 
         if coursefolder == "":
-            settings.AppSettings["EClass3Folder"] = guiutils.getEClass3Dir()
+            settings.AppSettings["ProjectsFolder"] = settings.getProjectsDir()
 
     def LoadVCards(self):
         #load the VCards

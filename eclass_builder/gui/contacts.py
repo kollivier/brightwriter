@@ -66,7 +66,7 @@ class ContactsDialog(sc.SizedDialog):
 
     def OnImport(self, event):
         dialog = wx.FileDialog(self, _("Choose a vCard"), "", "", 
-                              _("vCard Files") + " (*.vcf)|*.vcf", wx.OPEN)
+                              _("vCard Files") + " (*.vcf)|*.vcf", wx.FD_OPEN)
         
         if dialog.ShowModal() == wx.ID_OK:
             filename = ""

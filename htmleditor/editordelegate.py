@@ -377,7 +377,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
     def OnImageButton(self, evt):
         imageFormats = _("Image files") +"|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
-        dialog = wx.FileDialog(self.webview, _("Select an image"), "","", imageFormats, wx.OPEN)
+        dialog = wx.FileDialog(self.webview, _("Select an image"), "","", imageFormats, wx.FD_OPEN)
         if dialog.ShowModal() == wx.ID_OK:
             self.webview.ExecuteEditCommand("InsertImage", self.CopyFileIfNeeded(dialog.GetPath()))
         self.dirty = True

@@ -240,7 +240,7 @@ class HTMLPublisher(BaseHTMLPublisher):
     def ImportTheme(self, event=None):
         import zipfile
         dialog = wx.FileDialog(self, _("Select Theme to Import"), "", "",
-                      _("Theme Files") + " (*.theme)|*.theme", wx.OPEN) 
+                      _("Theme Files") + " (*.theme)|*.theme", wx.FD_OPEN) 
         if dialog.ShowModal() == wx.ID_OK:
             filename = dialog.GetPath()
             themezip = zipfile.ZipFile(filename, "r")

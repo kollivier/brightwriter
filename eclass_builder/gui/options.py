@@ -20,13 +20,13 @@ def getPluginsCanCreateNew():
 class PreferencesEditor(sc.SizedDialog):
 	def __init__(self, parent):
 		sc.SizedDialog.__init__ (self, parent, -1, _("Options"), wx.Point(100,100), 
-		                          style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+								  style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 		self.parent = parent
 		pane = self.GetContentsPane()
 		pane.SetSizerType("form")
 		
 		wx.StaticText(pane, -1, _("Course Folder"))
-		self.pickCourseFolder = picker.SelectBox(pane, settings.AppSettings["EClass3Folder"], "Directory")
+		self.pickCourseFolder = picker.SelectBox(pane, settings.AppSettings["ProjectsFolder"], "Directory")
 		
 		wx.StaticText(pane, -1, _("Language"))
 		self.languages = ["English", "Francais", "Espanol"]
@@ -49,7 +49,7 @@ class PreferencesEditor(sc.SizedDialog):
 			self.cmbLanguage.SetStringSelection(settings.AppSettings["Language"])
 
 	def btnOKClicked(self, event):
-		settings.AppSettings["EClass3Folder"] = self.pickCourseFolder.GetValue()
+		settings.AppSettings["ProjectsFolder"] = self.pickCourseFolder.GetValue()
 		
 		language = settings.AppSettings["Language"]
 		if language != self.cmbLanguage.GetStringSelection():

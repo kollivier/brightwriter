@@ -92,7 +92,7 @@ class SelectBox(sc.SizedPanel):
         if self.type == "Directory":
             f = wx.DirDialog(self.parent, _("Select a directory"), self.startdir)
         else:
-            f = wx.FileDialog(self.parent, _("Select a file"), self.startdir, "", self.createFilter(), wx.OPEN)
+            f = wx.FileDialog(self.parent, _("Select a file"), self.startdir, "", self.createFilter(), wx.FD_OPEN)
         if f and f.ShowModal() == wx.ID_OK:
             self.textbox.SetValue(f.GetPath())
             evt = FileSelectedEvent(sender = self, filename = f.GetPath())

@@ -4,8 +4,7 @@ from distutils.core import setup
 
 import os
 import sys
-sys.path.append("..")
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "htmleditor"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "htmleditor"))
 
 platform = None
 if sys.platform.startswith("win"):
@@ -25,7 +24,7 @@ myplist = dict(
     CFBundleVersion=version.asString()
     )
  
-rootdir = "../"
+rootdir = "./"
 
 py2app_options = dict(
     iconfile=rootdir + "icons/eclass_builder.icns", 

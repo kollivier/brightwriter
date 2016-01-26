@@ -306,7 +306,7 @@ class MainFrame2(sc.SizedFrame):
         self.selectedFileLastModifiedTime = 0
         
         # Note: themes are deprecated, code is left only until it can be removed safely.
-        self.themes = themes.ThemeList(os.path.join(settings.AppDir, "themes"))
+        self.themes = themes.ThemeList()
         self.currentTheme = self.themes.FindTheme("Default (frames)")
         self.launchApps = []
         
@@ -718,7 +718,7 @@ class MainFrame2(sc.SizedFrame):
         html = dialog.GetSource()
         
         if not html == self.browser.GetPageSource():
-            self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
+            self.browser.SetPage(html, self.baseurl, getMimeTypeForHTML(html))
             self.dirty = True
 
     def OnIdle(self, event):
@@ -773,7 +773,7 @@ class MainFrame2(sc.SizedFrame):
         dialog.log.SetValue(errors)
         if dialog.ShowModal() == wx.ID_OK:
             html = dialog.newSource.GetText()
-            self.browser.SetPageSource(html, self.baseurl, getMimeTypeForHTML(html))
+            self.browser.SetPage(html, self.baseurl, getMimeTypeForHTML(html))
             self.dirty = True
             
         dialog.Destroy()
@@ -838,7 +838,7 @@ class MainFrame2(sc.SizedFrame):
             log.debug("Load cancelled, result is %r" % result)
 
     def OpenIMSPackage(self, zip, subdir):
-        eclassdir = os.path.join(settings.AppSettings["EClass3Folder"], subdir)
+        eclassdir = os.path.join(settings.AppSettings["ProjectsFolder"], subdir)
         if os.path.exists(eclassdir):
             result = wx.MessageBox(_("It appears you already have imported this package. Would you like to overwrite the existing package?"), _("Overwrite Package?"), wx.YES_NO)
             if result == wx.YES:
@@ -1041,10 +1041,10 @@ class MainFrame2(sc.SizedFrame):
                 self.imscp.clearDirtyBit()
         
         defaultdir = ""
-        if settings.AppSettings["EClass3Folder"] != "" and os.path.exists(settings.AppSettings["EClass3Folder"]):
-            defaultdir = settings.AppSettings["EClass3Folder"]
+        if settings.AppSettings["ProjectsFolder"] != "" and os.path.exists(settings.AppSettings["ProjectsFolder"]):
+            defaultdir = settings.AppSettings["ProjectsFolder"]
 
-        dialog = wx.DirDialog(self, _("Choose a directory."), settings.AppSettings["EClass3Folder"], style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dialog = wx.DirDialog(self, _("Choose a directory."), settings.AppSettings["ProjectsFolder"], style=wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dialog.ShowModal() == wx.ID_OK:
             manifest = os.path.join(dialog.GetPath(), "imsmanifest.xml")
             if os.path.exists(manifest):
@@ -1427,7 +1427,7 @@ class MainFrame2(sc.SizedFrame):
                 return
 
         defaultdir = ""
-        if settings.AppSettings["EClass3Folder"] == "" or not os.path.exists(settings.AppSettings["EClass3Folder"]):
+        if settings.AppSettings["ProjectsFolder"] == "" or not os.path.exists(settings.AppSettings["ProjectsFolder"]):
             msg = wx.MessageBox(_("You need to specify a folder to store your course packages. To do so, select Options->Preferences from the main menu."),_("Course Folder not specified"))
             return
         else:
@@ -1642,7 +1642,7 @@ class MainFrame2(sc.SizedFrame):
                     self.baseurl = 'file://' + fileurl
                     html = htmlutils.getUnicodeHTMLForFile(filename)
             
-                    self.browser.SetPage(html)
+                    self.browser.SetPage(html, self.baseurl)
                     self.filename = filename
                 else:
                     self.browser.LoadPage(filename)
@@ -1676,7 +1676,7 @@ class MainFrame2(sc.SizedFrame):
 
     def PublishToEpub(self, event):
         deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".epub"
-        dialog = wx.FileDialog(self, _("Export ePub package"), "", deffilename, _("ePub Files") + " (*.epub)|*.epub", wx.SAVE)
+        dialog = wx.FileDialog(self, _("Export ePub package"), "", deffilename, _("ePub Files") + " (*.epub)|*.epub", wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK: 
             import epub
             epubPackage = epub.EPubPackage(self.imscp.organizations[0].items[0].title.text)
@@ -1688,7 +1688,7 @@ class MainFrame2(sc.SizedFrame):
     def PublishToIMS(self, event):
         #zipname = os.path.join(settings.ProjectDir, "myzip.zip")
         deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".zip"
-        dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.SAVE)
+        dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK: 
             tempdir = tempfile.mkdtemp()
             imsdir = os.path.dirname(os.path.join(tempdir, "IMSPackage"))
