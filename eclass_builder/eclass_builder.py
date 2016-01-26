@@ -48,6 +48,8 @@ import gui
 import fileutils
 import externals.BeautifulSoup
 
+import gui.error_viewer as error_viewer
+
 # workaround for http://bugs.python.org/issue843590
 import encodings
 encodings.aliases.aliases['macintosh'] = 'mac_roman'

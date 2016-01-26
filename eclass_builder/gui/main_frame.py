@@ -277,7 +277,7 @@ class MainFrame2(sc.SizedFrame):
     def __init__(self, parent, ID, title):
         busy = wx.BusyCursor()
         sc.SizedFrame.__init__(self, parent, ID, title, size=(780,580), 
-                      style=wx.DEFAULT_FRAME_STYLE)
+                      style=wx.DEFAULT_FRAME_STYLE|wx.WANTS_CHARS)
         
         # the default encoding isn't correct for Mac.
         #if wx.Platform == "__WXMAC__":
@@ -297,6 +297,7 @@ class MainFrame2(sc.SizedFrame):
         self.errorPrompts = prompts.errorPrompts
         
         pane = self.GetContentsPane()
+        pane.SetWindowStyleFlag(wx.WANTS_CHARS)
 
         # These are used for copy and paste, and drag and drop
         self.DragItem = None
@@ -394,19 +395,19 @@ class MainFrame2(sc.SizedFrame):
         toolbar2.AddControl(self.fontsizelist)
         toolbar2.AddSeparator()
             
-        toolbar2.AddCheckTool(ID_BOLD, '', icnBold, shortHelp=_("Bold"))
-        toolbar2.AddCheckTool(ID_ITALIC, '', icnItalic, shortHelp=_("Italic"))
-        toolbar2.AddCheckTool(ID_UNDERLINE, '', icnUnderline, shortHelp=_("Underline"))
+        toolbar2.AddCheckTool(ID_BOLD, icnBold, shortHelp=_("Bold"))
+        toolbar2.AddCheckTool(ID_ITALIC, icnItalic, shortHelp=_("Italic"))
+        toolbar2.AddCheckTool(ID_UNDERLINE, icnUnderline, shortHelp=_("Underline"))
             #self.toolbar2.AddSimpleTool(ID_FONT_COLOR, icnColour, _("Font Color"), _("Select a font color"))
         toolbar2.AddSeparator()
-        toolbar2.AddCheckTool(ID_ALIGN_LEFT, '', icnAlignLeft, shortHelp=_("Left Align"))
-        toolbar2.AddCheckTool(ID_ALIGN_CENTER, '', icnAlignCenter, shortHelp=_("Center"))
-        toolbar2.AddCheckTool(ID_ALIGN_RIGHT, '', icnAlignRight, shortHelp=_("Right Align"))
+        toolbar2.AddCheckTool(ID_ALIGN_LEFT, icnAlignLeft, shortHelp=_("Left Align"))
+        toolbar2.AddCheckTool(ID_ALIGN_CENTER, icnAlignCenter, shortHelp=_("Center"))
+        toolbar2.AddCheckTool(ID_ALIGN_RIGHT, icnAlignRight, shortHelp=_("Right Align"))
         toolbar2.AddSeparator()
         toolbar2.AddSimpleTool(ID_DEDENT, icnDedent, _("Decrease Indent"), _("Decrease Indent"))
         toolbar2.AddSimpleTool(ID_INDENT, icnIndent, _("Increase Indent"), _("Increase Indent"))
-        toolbar2.AddCheckTool(ID_BULLETS, '', icnBullets, shortHelp=_("Bullets"))
-        toolbar2.AddCheckTool(ID_NUMBERING, '', icnNumbering, shortHelp=_("Numbering"))
+        toolbar2.AddCheckTool(ID_BULLETS, icnBullets, shortHelp=_("Bullets"))
+        toolbar2.AddCheckTool(ID_NUMBERING, icnNumbering, shortHelp=_("Numbering"))
         toolbar2.AddSeparator()
         toolbar2.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
         toolbar2.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
@@ -419,7 +420,7 @@ class MainFrame2(sc.SizedFrame):
         self.SetMenuBar(menus.getMenuBar())
         
         #split the window into two - Treeview on one side, browser on the other
-        self.splitter1 = wx.SplitterWindow(pane, -1, style=wx.NO_BORDER)
+        self.splitter1 = wx.SplitterWindow(pane, -1, style=wx.NO_BORDER|wx.WANTS_CHARS)
 #        self.splitter1.SetSashSize(7)
         self.splitter1.SetSizerProps({"expand":True, "proportion":1})
 
@@ -444,7 +445,7 @@ class MainFrame2(sc.SizedFrame):
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
             #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
         
-        self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
+        self.splitter1.SplitVertically(self.projectTree, self.browser, 200)
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         
