@@ -59,144 +59,132 @@ except:
     pass
     
     
-EXPERIMENTAL_WXWEBKIT = False
+import htmledit.htmlattrs as htmlattrs
+import htmledit.templates as templates
 
-try:
-    import wx.webkit
-    EXPERIMENTAL_WXWEBKIT = True
-    
-except:
-    pass
+import editordelegate
+import htmlutils
+import source_edit_dialog
+import gui.embed_audio_dialog
+import gui.embed_video_dialog
 
-if EXPERIMENTAL_WXWEBKIT:
-    import htmledit.htmlattrs as htmlattrs
-    import htmledit.templates as templates
-
-    import editordelegate
-    import htmlutils
-    import aboutdialog
-    import cleanhtmldialog
-    import source_edit_dialog
-    import gui.embed_audio_dialog
-    import gui.embed_video_dialog
-
-    class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
-        def __init__(self, source, parent, *a, **kw):
-            editordelegate.HTMLEditorDelegate.__init__(self, source, *a, **kw)
-            # FIXME: An ugly hack to get to the current filename.
-            self.parent = parent
-            
-        def OnInsertVideo(self, evt):
-            dlg = gui.embed_video_dialog.EmbedVideoDialog(self.webview, -1, _("Video Properties"), size=(400,400))
-            dlg.CentreOnScreen()
-            if dlg.ShowModal() == wx.ID_OK:
-                mp4video = dlg.mp4_text.GetValue()
-                oggvideo = dlg.ogg_text.GetValue()
-                poster = dlg.poster_text.GetValue()
-                
-                if dlg.useJWPlayer:
-                    videoHTML = templates.jwplayer
-                    jwplayer_dir = os.path.join(settings.ThirdPartyDir, "..", "mediaplayer-5.3")
-                    for afile in ["jwplayer.js", "license.txt", "swfobject.js", "player.swf", "yt.swf"]:
-                        self.CopyFileIfNeeded(os.path.join(jwplayer_dir, afile), overwrite="always")
-                else:
-                    videoHTML = templates.html5video
-                    if os.path.exists(poster):
-                        poster = self.CopyFileIfNeeded(poster)
-                        
-                    if poster != "":
-                        poster = """
-                        <img src="%s" alt="No video playback capabilities, please download the video below"
-             title="No video playback capabilities, please download the video below" />
-                        """ % poster
-                    
-                    if os.path.exists(oggvideo):
-                        oggvideo = self.CopyFileIfNeeded(oggvideo)
-                    
-                    if oggvideo != "":
-                        oggvideo = """<source src="%s" type="video/ogg" /><!-- Firefox / Opera -->""" % oggvideo
-                        
-                if os.path.exists(mp4video):
-                    mp4video = self.CopyFileIfNeeded(mp4video)
-                    
-                videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
-                videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.splitext(os.path.basename(mp4video))[0])
-                videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
-                videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
-                provider = "video"
-                if dlg.http_streaming_check.IsChecked():
-                    provider = "http"
-                videoHTML = videoHTML.replace("__PROVIDER__", provider)
-                dimensions = ""
-                if dlg.width_text.GetValue() != "":
-                    dimensions += "\n        width: %s," % dlg.width_text.GetValue()
-                    
-                if dlg.height_text.GetValue() != "":
-                    dimensions += "\n        height: %s," % dlg.height_text.GetValue()
-                    
-                videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
-                print "Inserting %s" % videoHTML
-                self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
-            dlg.Destroy()
+class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
+    def __init__(self, source, parent, *a, **kw):
+        editordelegate.HTMLEditorDelegate.__init__(self, source, *a, **kw)
+        # FIXME: An ugly hack to get to the current filename.
+        self.parent = parent
         
-        def OnInsertAudio(self, event):
-            dlg = gui.embed_audio_dialog.EmbedAudioDialog(self.webview, -1, _("Audio Properties"), size=(400,400))
-            dlg.CentreOnScreen()
-            if dlg.ShowModal() == wx.ID_OK:
-                mp3audio = dlg.mp3_text.GetValue()
-                
-                jsmediaelement_dir = os.path.join(settings.ThirdPartyDir, "..", "jsmediaelement")
-                
-                for afile in glob.glob(os.path.join(jsmediaelement_dir, "*.*")):
-                    self.CopyFileIfNeeded(afile, overwrite="always", subdir="jsmediaelement")
-                    
-                if os.path.exists(mp3audio):
-                    mp3audio = self.CopyFileIfNeeded(mp3audio)
-                    
-                audioHTML = templates.jmediaplayer_audio
-                audioHTML = audioHTML.replace("__AUDIO__.MP3", mp3audio)
-                
-                print "Inserting %s" % audioHTML
-                self.webview.ExecuteEditCommand("InsertHTML", audioHTML)
-            dlg.Destroy()
-        
-        def CopyFileIfNeeded(self, filepath, overwrite="ask", subdir=""):
-            # if it's not an absolute path to a file, we assume it's a URL or relative path
-            if not os.path.exists(filepath):
-                print "File %s does not exist." % filepath
-                return filepath
-                
-            basepath = self.parent.baseurl.replace("file://", "")
+    def OnInsertVideo(self, evt):
+        dlg = gui.embed_video_dialog.EmbedVideoDialog(self.webview, -1, _("Video Properties"), size=(400,400))
+        dlg.CentreOnScreen()
+        if dlg.ShowModal() == wx.ID_OK:
+            mp4video = dlg.mp4_text.GetValue()
+            oggvideo = dlg.ogg_text.GetValue()
+            poster = dlg.poster_text.GetValue()
             
-            if subdir == "" and os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
-                subdir = "images"
-               
-            destdir = os.path.join(basepath, subdir)
-            
-            if not os.path.exists(destdir):
-                os.makedirs(destdir)
-            if filepath.find(basepath) == -1:
-                newpath = os.path.join(destdir, os.path.basename(filepath))
-                copy = True
-                if overwrite == "never":
-                    copy = False
-                if os.path.exists(newpath) and not newpath == filepath and overwrite == "ask" :
-                    result = wx.MessageBox(_("The file %s already exists. Would you like to overwrite the existing file?") % newpath, _("Overwrite existing file?"), wx.YES_NO)
-                    if result == wx.YES:
-                        copy = True
-                    else:
-                        copy = False
-                    
-                if copy:
-                    shutil.copy2(filepath, newpath)
-                
-                filepath = newpath.replace(basepath, "")
+            if dlg.useJWPlayer:
+                videoHTML = templates.jwplayer
+                jwplayer_dir = os.path.join(settings.ThirdPartyDir, "..", "mediaplayer-5.3")
+                for afile in ["jwplayer.js", "license.txt", "swfobject.js", "player.swf", "yt.swf"]:
+                    self.CopyFileIfNeeded(os.path.join(jwplayer_dir, afile), overwrite="always")
             else:
-                filepath = filepath.replace(basepath, "")
+                videoHTML = templates.html5video
+                if os.path.exists(poster):
+                    poster = self.CopyFileIfNeeded(poster)
+                    
+                if poster != "":
+                    poster = """
+                    <img src="%s" alt="No video playback capabilities, please download the video below"
+         title="No video playback capabilities, please download the video below" />
+                    """ % poster
                 
-            assert os.path.exists(os.path.join(basepath, filepath))
+                if os.path.exists(oggvideo):
+                    oggvideo = self.CopyFileIfNeeded(oggvideo)
+                
+                if oggvideo != "":
+                    oggvideo = """<source src="%s" type="video/ogg" /><!-- Firefox / Opera -->""" % oggvideo
+                    
+            if os.path.exists(mp4video):
+                mp4video = self.CopyFileIfNeeded(mp4video)
+                
+            videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
+            videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.splitext(os.path.basename(mp4video))[0])
+            videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
+            videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
+            provider = "video"
+            if dlg.http_streaming_check.IsChecked():
+                provider = "http"
+            videoHTML = videoHTML.replace("__PROVIDER__", provider)
+            dimensions = ""
+            if dlg.width_text.GetValue() != "":
+                dimensions += "\n        width: %s," % dlg.width_text.GetValue()
+                
+            if dlg.height_text.GetValue() != "":
+                dimensions += "\n        height: %s," % dlg.height_text.GetValue()
+                
+            videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
+            print "Inserting %s" % videoHTML
+            self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
+        dlg.Destroy()
+    
+    def OnInsertAudio(self, event):
+        dlg = gui.embed_audio_dialog.EmbedAudioDialog(self.webview, -1, _("Audio Properties"), size=(400,400))
+        dlg.CentreOnScreen()
+        if dlg.ShowModal() == wx.ID_OK:
+            mp3audio = dlg.mp3_text.GetValue()
             
+            jsmediaelement_dir = os.path.join(settings.ThirdPartyDir, "..", "jsmediaelement")
+            
+            for afile in glob.glob(os.path.join(jsmediaelement_dir, "*.*")):
+                self.CopyFileIfNeeded(afile, overwrite="always", subdir="jsmediaelement")
+                
+            if os.path.exists(mp3audio):
+                mp3audio = self.CopyFileIfNeeded(mp3audio)
+                
+            audioHTML = templates.jmediaplayer_audio
+            audioHTML = audioHTML.replace("__AUDIO__.MP3", mp3audio)
+            
+            print "Inserting %s" % audioHTML
+            self.webview.ExecuteEditCommand("InsertHTML", audioHTML)
+        dlg.Destroy()
+    
+    def CopyFileIfNeeded(self, filepath, overwrite="ask", subdir=""):
+        # if it's not an absolute path to a file, we assume it's a URL or relative path
+        if not os.path.exists(filepath):
+            print "File %s does not exist." % filepath
             return filepath
+            
+        basepath = self.parent.baseurl.replace("file://", "")
+        
+        if subdir == "" and os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
+            subdir = "images"
+           
+        destdir = os.path.join(basepath, subdir)
+        
+        if not os.path.exists(destdir):
+            os.makedirs(destdir)
+        if filepath.find(basepath) == -1:
+            newpath = os.path.join(destdir, os.path.basename(filepath))
+            copy = True
+            if overwrite == "never":
+                copy = False
+            if os.path.exists(newpath) and not newpath == filepath and overwrite == "ask" :
+                result = wx.MessageBox(_("The file %s already exists. Would you like to overwrite the existing file?") % newpath, _("Overwrite existing file?"), wx.YES_NO)
+                if result == wx.YES:
+                    copy = True
+                else:
+                    copy = False
+                
+            if copy:
+                shutil.copy2(filepath, newpath)
+            
+            filepath = newpath.replace(basepath, "")
+        else:
+            filepath = filepath.replace(basepath, "")
+            
+        assert os.path.exists(os.path.join(basepath, filepath))
+        
+        return filepath
 
 
 # Import the gui dialogs. They used to be embedded in editor.py
