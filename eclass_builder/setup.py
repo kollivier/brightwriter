@@ -16,6 +16,8 @@ elif sys.platform.startswith("darwin"):
     sys.argv.append("py2app")
     platform = "mac"
 import glob
+
+import settings
 import version
 
 myplist = dict(
@@ -60,9 +62,17 @@ for subdir in subdirs:
     source_files.extend(allFilesRecursive(rootdir + subdir))
 
 setup(
-    name="EClass.Builder",
+    name=settings.app_name,
     app=[rootdir + 'eclass_builder.py'],
     windows=[{"script": rootdir + 'eclass_builder.py', "icon_resources": [(1, rootdir + "icons/eclass_builder.ico")]}],
     data_files=source_files,
     options=dict(py2exe=py2exe_options, py2app=py2app_options),
 )
+
+if sys.platform.startswith("darwin"):
+    dmg_name = "%s %s.dmg" % (settings.app_name, version.asString())
+    deploy_dir = "deploy"
+    if not os.path.exists(deploy_dir):
+        os.makedirs(deploy_dir)
+    cmd = "hdiutil create -srcfolder dist -volname \"%s\" -imagekey zlib-level=9 \"%s/%s\"" % (settings.app_name, deploy_dir, dmg_name)
+    os.system(cmd)
