@@ -4,6 +4,7 @@ import sys, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
 import logging
 import tempfile
+import urllib
 import zipfile
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "htmleditor"))
@@ -1639,7 +1640,7 @@ class MainFrame2(sc.SizedFrame):
             if os.path.exists(filename) and ext in ok_fileTypes:
                 if ext.find("htm") != -1: 
                     fileurl = os.path.dirname(filename) + "/"
-                    self.baseurl = 'file://' + fileurl
+                    self.baseurl = 'file://' + urllib.quote(fileurl)
                     html = htmlutils.getUnicodeHTMLForFile(filename)
             
                     self.browser.SetPage(html, self.baseurl)
