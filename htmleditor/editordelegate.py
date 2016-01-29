@@ -451,17 +451,8 @@ class HTMLEditorDelegate(wx.EvtHandler):
         #for now, we're just interested in knowing when to ask for save
         self.UpdateStatus(evt)
 
-    def OnSuperscript(self, evt):
-        self.RunCommand("superscript", evt)
-
-    def OnSubscript(self, evt):
-        self.RunCommand("subscript", evt)
-
     def OnRemoveStyle(self, evt):
         self.RunCommand("RemoveFormat", evt)
-
-    def OnRemoveLink(self, evt):
-        self.RunCommand("removeLinks", evt)
 
     def OnBullet(self, evt):
         self.RunCommand("InsertUnorderedList", evt)
@@ -479,13 +470,13 @@ class HTMLEditorDelegate(wx.EvtHandler):
         self.RunCommand("Underline", evt)
 
     def OnLeftAlignButton(self, evt):
-        self.RunCommand("AlignLeft", evt)
+        self.RunCommand("JustifyLeft", evt)
 
     def OnCenterAlignButton(self, evt):
-        self.RunCommand("AlignCenter", evt)
+        self.RunCommand("JustifyCenter", evt)
         
     def OnRightAlignButton(self, evt):
-        self.RunCommand("AlignRight", evt)
+        self.RunCommand("JustifyRight", evt)
 
     def OnOutdentButton(self, evt):
         self.RunCommand("Outdent", evt)
@@ -494,6 +485,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         self.RunCommand("Indent", evt)
 
     def RunCommand(self, command, evt):
+        logging.debug("Executing command %s" % command)
         self.webview.ExecuteEditCommand(command)
         self.dirty = True
 
@@ -503,42 +495,9 @@ class HTMLEditorDelegate(wx.EvtHandler):
     def OnSubscript(self, evt):
         self.RunCommand("Subscript", evt)
 
-    def OnRemoveStyle(self, evt):
-        self.RunCommand("RemoveFormat", evt)
-
     def OnRemoveLink(self, evt):
         # FIXME: This only works when the entire link is in the selection. To make this
         # work from anywhere inside the link, we must expand the selection to contain
         # the whole link, which will require adding more of WebCore::SelectionController API
         # to wxWebKitSelection.
         self.RunCommand("Unlink", evt)
-
-    def OnBullet(self, evt):
-        self.RunCommand("InsertUnorderedList", evt)
-
-    def OnNumbering(self, evt):
-        self.RunCommand("InsertOrderedList", evt)
-
-    def OnBoldButton(self, evt):
-        self.RunCommand("Bold", evt)
-        
-    def OnItalicButton(self, evt):
-        self.RunCommand("Italic", evt)
-
-    def OnUnderlineButton(self, evt):
-        self.RunCommand("Underline", evt)
-
-    def OnLeftAlignButton(self, evt):
-        self.RunCommand("AlignLeft", evt)
-
-    def OnCenterAlignButton(self, evt):
-        self.RunCommand("AlignCenter", evt)
-        
-    def OnRightAlignButton(self, evt):
-        self.RunCommand("AlignRight", evt)
-
-    def OnOutdentButton(self, evt):
-        self.RunCommand("Outdent", evt)
-
-    def OnIndentButton(self, evt):
-        self.RunCommand("Indent", evt)
