@@ -172,6 +172,7 @@ class wxBrowser(wx.Window):
 
     def LoadPage(self, url):
         self.currenturl = url
+        self.editable = False  # Disable editing behavior when we reload.
         logging.info("Loading URL %r" % url)
         if self.engine in ["webkit", "webview"]:
             url = "file://" + url
@@ -191,7 +192,12 @@ class wxBrowser(wx.Window):
             logging.info("Sending page load complete?")
             pub.sendMessage("page_load_complete")
 
+    def OnWebKitBeforeLoad(self, event):
+        if self.editable and event.GetNavigationType() == wx.webkit.WEBKIT_NAV_LINK_CLICKED:
+            event.Cancel()
+
     def SetPage(self, text, baseurl, mimetype="text/html"):
+        self.editable = False
         if self.engine == "ie":
             self.browser.LoadString(text)
         elif self.engine == "webkit":
@@ -223,10 +229,14 @@ class wxBrowser(wx.Window):
 
     def MakeEditable(self, editable=True):
         logging.info("Calling MakeEditable")
+        self.editable = editable
+
         if self.engine == "webview":
             logging.info("Calling SetEditable")
             self.browser.SetEditable(editable)
             assert self.browser.IsEditable() == editable
+        elif self.engine == "webkit":
+            self.browser.MakeEditable(editable)
         else:
             mode = 'on'
             if not editable:
@@ -285,6 +295,7 @@ class wxBrowser(wx.Window):
             self.browser = wx.webkit.WebKitCtrl(self.parent, self.id)
             self.engine = "webkit"
             self.browser.Bind(wx.webkit.EVT_WEBKIT_STATE_CHANGED, self.OnWebKitLoad)
+            self.browser.Bind(wx.webkit.EVT_WEBKIT_BEFORE_LOAD, self.OnWebKitBeforeLoad)
             return True
         except:
             return False
