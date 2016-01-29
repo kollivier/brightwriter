@@ -74,5 +74,9 @@ if sys.platform.startswith("darwin"):
     deploy_dir = "deploy"
     if not os.path.exists(deploy_dir):
         os.makedirs(deploy_dir)
-    cmd = "hdiutil create -srcfolder dist -volname \"%s\" -imagekey zlib-level=9 \"%s/%s\"" % (settings.app_name, deploy_dir, dmg_name)
+
+    deploy_path = os.path.join(deploy_dir, dmg_name)
+    if os.path.exists(deploy_path):
+        os.remove(deploy_path)
+    cmd = "hdiutil create -srcfolder dist -volname \"%s\" -imagekey zlib-level=9 \"%s\"" % (settings.app_name, deploy_path)
     os.system(cmd)
