@@ -195,7 +195,7 @@ class wxBrowser(wx.Window):
         if self.engine == "ie":
             self.browser.LoadString(text)
         elif self.engine == "webkit":
-            self.browser.SetPageSource(text)
+            self.browser.SetPageSource(text, baseurl)
         elif self.engine == "webview":
             self.browser.SetPage(text, baseurl)
         elif self.engine == "cef":
@@ -203,7 +203,7 @@ class wxBrowser(wx.Window):
 
     def GetPageSource(self):
         if self.engine == "webkit":
-            return self.EvaluateJavaScript("document.documentElement.outerHTML")
+            return self.EvaluateJavaScript("var xml = new XMLSerializer();xml.serializeToString(document)")
 
     def GetBrowserName(self):
         if self.engine == "webkit":
