@@ -167,7 +167,7 @@ if EXPERIMENTAL_WXWEBKIT:
                 print "File %s does not exist." % filepath
                 return filepath
                 
-            basepath = self.parent.baseurl.replace("file://", "")
+            basepath = urllib.unquote(self.parent.baseurl.replace("file://", ""))
             
             if subdir == "" and os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
                 subdir = "images"
