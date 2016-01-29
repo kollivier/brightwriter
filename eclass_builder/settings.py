@@ -12,7 +12,7 @@ encoding = "iso-8859-1"
 webkit = False
 logfile = None
 
-app_name = "BrightWriter"
+app_name = "EClass.Builder"
 
 # NOTE: Do not load any non-system modules in this file, nor set up logging.
 import os
