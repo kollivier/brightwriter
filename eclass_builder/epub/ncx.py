@@ -16,6 +16,7 @@ class NCXHead(Tag):
     def __init__(self, name="ncx:head"):
         Tag.__init__(self, name)
         
+        self.required = True
         self.metatags = TagList("ncx:meta", tagClass=Tag)
         
         self.children = [self.metatags]

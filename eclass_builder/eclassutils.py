@@ -7,6 +7,7 @@ import ims.utils
 import constants
 import version
 
+import htmlutils
 import plugins
 import utils
 
@@ -89,6 +90,56 @@ def getResourceNamespace():
 
 def getItemUUIDWithNamespace():
     return getResourceNamespace() + utils.getUUID()
+
+
+def updateManifestLinkedFiles(imsresource, htmlfile, html):
+    basedir = os.path.dirname(htmlfile)
+    soup = bs.BeautifulSoup(html)
+    hrefs = soup.findAll(href=True)
+    links = []
+    for href in hrefs:
+        url = href['href']
+        links.append(url)
+
+    srcs = soup.findAll(src=True)
+    for src in srcs:
+        url = src['src']
+        links.append(url)
+
+    pub_links = []
+    for link in links:
+        abspath = link
+        if not os.path.isabs(link):
+            abspath = os.path.join(basedir, link)
+
+        # ignore links that don't point to on disk resources
+        if os.path.exists(abspath):
+            # FIXME: Eventually we want to strip the publication root from the filename and add on
+            # any subdirs above the HTML page that aren't in the link.
+            if basedir.endswith("Content") and not link.startswith("Content"):
+                link = "Content/" + link
+
+            pub_links.append(link)
+
+    files_to_remove = []
+    for afile in imsresource.files:
+        if not afile.attrs['href'] in pub_links:
+            files_to_remove.append(afile)
+
+    for afile in files_to_remove:
+        imsresource.files.remove(afile)
+
+    for link in pub_links:
+        has_file = False
+        for file in imsresource.files:
+            if file.attrs['href'] == link:
+                has_file = True
+
+        if not has_file:
+            imsfile = ims.contentpackage.File()
+            imsfile.attrs["href"] = link
+            imsfile.attrs['id'] = str(uuid.uuid4())
+            imsresource.files.append(imsfile)
 
 
 class EClass:

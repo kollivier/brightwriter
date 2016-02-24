@@ -1393,14 +1393,16 @@ class MainFrame2(sc.SizedFrame):
             os.rename(self.filename, newfile)
             self.filename = newfile
             
-            if self.projectTree:
-                imsitem = self.projectTree.GetCurrentTreeItemData()
-                if imsitem:
-                    import ims.utils
-                    resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
-                    if resource:
-                        resource.setFilename(self.filename.replace(settings.ProjectDir + os.sep, "").replace("\\", "/"))
+        if self.projectTree:
+            imsitem = self.projectTree.GetCurrentTreeItemData()
+            if imsitem:
+                import ims.utils
+                resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
+                eclassutils.updateManifestLinkedFiles(resource, self.filename, source)
+                if resource:
+                    resource.setFilename(self.filename.replace(settings.ProjectDir + os.sep, "").replace("\\", "/"))
             
+
         encoding = htmlutils.GetEncoding(source)
         try:
             if not encoding:
@@ -1609,14 +1611,20 @@ class MainFrame2(sc.SizedFrame):
                 self.Update()
                 self.SaveProject()
 
-    def GetContentFilenameForSelectedItem(self):
+    def GetIMSResourceForSelectedItem(self):
+        resource = None
         if self.projectTree:
             imsitem = self.projectTree.GetCurrentTreeItemData()
             if imsitem:
                 import ims.utils
                 resource = ims.utils.getIMSResourceForIMSItem(self.imscp, imsitem)
-                if resource:
-                    return resource.getFilename().replace("\\", "/")
+
+        return resource
+
+    def GetContentFilenameForSelectedItem(self):
+        resource = self.GetIMSResourceForSelectedItem()
+        if resource:
+            return resource.getFilename().replace("\\", "/")
         
         return None
 

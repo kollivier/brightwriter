@@ -243,6 +243,8 @@ class wxBrowser(wx.Window):
                 mode = 'off'
             self.EvaluateJavaScript("document.designMode = '%s'" % mode)
 
+        self.ExecuteEditCommand("styleWithCSS", "true")
+
     def EvaluateJavaScript(self, script):
         #print("Running script %s" % script)
         if self.engine in ["webkit", "webview"]:

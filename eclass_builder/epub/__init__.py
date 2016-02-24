@@ -1,7 +1,9 @@
+import logging
+import mimetypes
 import os
 import shutil
-import sys
 import tempfile
+import uuid
 import zipfile
 
 import ncx
@@ -11,35 +13,45 @@ import utils.zip as ziputils
 import xmlobjects
 import xmlutils
 
+mimetypes.init()
 counter = 0
+
+
 def addIMSItemsToEPubRecursive(imspackage, imsitems, ncxparent, opf):
     import ims.utils
     global counter
-    
+
     for item in imsitems:
         navpoint = ncx.NCXNavPoint()
         navpoint.label.ncxText.text = item.title.text
-        
+
         counter += 1
         navpoint.attrs['playOrder'] = str(counter)
-        
+
         refitem = ims.utils.getIMSResourceForIMSItem(imspackage, item)
         if refitem:
-            itemid = xmlutils.createXMLUUID() #refitem.attrs['identifier']
+            itemid = xmlutils.createXMLUUID()  # refitem.attrs['identifier']
             navpoint.attrs['id'] = itemid
-            
+
             opfitemref = xmlobjects.Tag("itemref")
             opfitemref.attrs['idref'] = itemid
             opf.spine.itemrefs.append(opfitemref)
-            
+
             if len(refitem.files) > 0:
-                filename = refitem.attrs['href']
-                navpoint.content.attrs['src'] = filename
-                opfitem = xmlobjects.Tag("item")
-                opfitem.attrs['href'] = filename
-                opfitem.attrs['media-type'] = 'application/xhtml+xml'
-                opfitem.attrs['id'] = itemid
-                opf.manifest.items.append(opfitem)
+                for afile in refitem.files:
+                    fileid = xmlutils.createXMLUUID()
+                    filename = afile.attrs['href']
+                    if filename == refitem.attrs['href']:
+                        fileid = itemid
+                    mime_type = mimetypes.guess_type(filename)[0]
+                    if mime_type == 'text/html':
+                        mime_type = 'application/xhtml+xml'
+                    navpoint.content.attrs['src'] = filename
+                    opfitem = xmlobjects.Tag("item")
+                    opfitem.attrs['href'] = filename
+                    opfitem.attrs['media-type'] = mime_type
+                    opfitem.attrs['id'] = fileid
+                    opf.manifest.items.append(opfitem)
         
         if len(item.items) > 0:
             addIMSItemsToEPubRecursive(imspackage, item.items, navpoint, opf)
@@ -82,6 +94,10 @@ class EPubPackage:
         self.opf.metadata.language.text = language
             
         addIMSItemsToEPubRecursive(imspackage, imspackage.organizations[0].items, self.ncx, self.opf)
+        nav_uid = xmlobjects.Tag('ncx:meta')
+        nav_uid.attrs['name'] = 'dtb:uid'
+        nav_uid.attrs['content'] = str(uuid.uuid4())
+        self.ncx.head.metatags.append(nav_uid)
         self.ncx.docTitle.ncxText.text = imspackage.organizations[0].items[0].title.text
         
         

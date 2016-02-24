@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 import xml.dom.minidom
 
 from xmlobjects import *
@@ -14,7 +15,7 @@ class OPFMetadata(Tag):
         Tag.__init__(self, name)
         
         self.identifier = DCTag("dc:identifier")
-        self.identifier.attrs['id'] = 'bookid'
+        self.identifier.attrs["id"] = "pub-identifier"
         self.title = DCTag("dc:title")
         self.rights = DCTag("dc:rights")
         self.publisher = DCTag("dc:publisher")
@@ -47,15 +48,19 @@ class OPFPackage(RootTag):
     def __init__(self, name="package"):
         RootTag.__init__(self, name)
         
+        id = str(uuid.uuid4())
         self.attrs['xmlns']= 'http://www.idpf.org/2007/opf'
         self.attrs['version'] = '2.0'
-        self.attrs['unique-identifier'] = 'bookid'
+        self.attrs['unique-identifier'] = 'pub-identifier'
         
         self.metadata = OPFMetadata()
         self.manifest = OPFManifest()
         self.spine = OPFSpine()
         self.filename = "content.opf"
         
+        self.metadata.identifier.text = id
+        self.metadata.date.text = "2016-02-22"
+
         self.children = [self.metadata, self.manifest, self.spine]
         
         
