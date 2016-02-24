@@ -28,11 +28,6 @@ except Exception, e:
     logging.error("Unable to import CEFPython")
     logging.error(traceback.format_exc(e))
 
-
-if sys.platform.startswith("win32"): 
-    import wx.lib.iewin
-    browserlist.append("ie")
-
 if sys.platform.startswith("darwin"):
     try:
         import wx.webkit
@@ -66,6 +61,7 @@ if "cef" in browserlist:
         def OnLoadEnd(self, browser, frame, httpStatusCode):
             if frame == browser.GetMainFrame():
                 self.loaded = True
+                print("Sending page loaded event?")
                 pub.sendMessage("page_load_complete")
     
 
@@ -74,10 +70,10 @@ def getDefaultBrowser():
 
     if sys.platform.startswith("darwin") and "webkit" in browserlist:
         default = "webkit"
-    elif "webview" in browserlist:
-        default = "webview"
     elif "cef" in browserlist:
         default = "cef"
+    elif "webview" in browserlist:
+        default = "webview"
     elif sys.platform.startswith("win") and "ie" in browserlist:
         default = "ie"
 
@@ -100,7 +96,7 @@ class wxBrowser(wx.Window):
 
     """
     def __init__(self, parent, id, preferredBrowser=""):
-        wx.Window.__init__(self, parent, id)
+        wx.Window.__init__(self, parent, id, style=wx.WANTS_CHARS)
         self.parent = parent
         self.id = id
         self.browser = None
@@ -123,7 +119,7 @@ class wxBrowser(wx.Window):
                 return
         elif preferredBrowser.lower() == "cef":
             self.callback = None
-            self.browser = cefwx.ChromeWindow(self, url="http://www.google.com", timerMillis=25, useTimer=True)
+            self.browser = cefwx.ChromeWindow(self, url="http://www.google.com", timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
             # override the ChromeWindow __del__ handler, it calls Unbind when the
             # wx control is in an indeterminate state, which leads to a crash,
             # and in fact the Unbind call is not necessary.
@@ -131,6 +127,7 @@ class wxBrowser(wx.Window):
                 self.browser.CloseBrowser()
             self.browser.__del__ = delhandler
             client = ClientHandler()
+            client.callback = None
             self.browser.GetBrowser().SetClientHandler(client)
             self.javascriptBindings = cefpython.JavascriptBindings(
                     bindToFrames=False, bindToPopups=True)
@@ -180,6 +177,8 @@ class wxBrowser(wx.Window):
             self.browser.LoadURL(url)
         elif self.engine == "ie":
             self.browser.Navigate(url)
+        elif self.engine == "cef":
+            self.browser.GetBrowser().GetMainFrame().LoadUrl("file://" + url)
         else:
             self.browser.LoadPage(url)
 
@@ -249,6 +248,8 @@ class wxBrowser(wx.Window):
         #print("Running script %s" % script)
         if self.engine in ["webkit", "webview"]:
             return self.browser.RunScript(script)
+        elif self.engine == "cef":
+            self.browser.GetBrowser().GetMainFrame().ExecuteJavascript(script)
 
     def ExecuteEditCommand(self, command, value=None):
         value_exec = ""

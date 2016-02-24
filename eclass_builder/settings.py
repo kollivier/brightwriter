@@ -39,6 +39,7 @@ def getAppDataDir():
             prefdir = os.environ["APPDATA"]
             if not os.path.exists(prefdir):
                 prefdir = os.path.join(getUserHomeDir(), "Application Data")
+            prefdir = os.path.join(prefdir, app_name)
     elif sys.platform.startswith('darwin'):
         prefdir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", app_name)
 

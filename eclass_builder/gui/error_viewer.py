@@ -1,16 +1,18 @@
-import sys, string, os
+import logging
+import os
+import sys
+import time
+import traceback
+
 import utils
 import guiutils
-import time
 
 import wx
 import wx.lib.sized_controls as sc
 
 import autolist
 import errors
-import persistence
 import settings
-import traceback
 import version
 import xmlrpc
 
@@ -50,8 +52,9 @@ class ErrorDialog(sc.SizedDialog):
         self.detailsButton = wx.Button(pane, -1, _("Show Details"))
 
         self.detailsText = wx.TextCtrl(pane, -1, size=(-1,300), style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.detailsText.SetSizerProps(expand=True)
         self.detailsText.Show(False)
-        pane.GetSizer().Detach(self.detailsText)
+        pane.GetSizer().Hide(self.detailsText)
         
         line = wx.StaticLine(pane, -1)
         line.SetSizerProps(expand=True)
@@ -82,19 +85,21 @@ class ErrorDialog(sc.SizedDialog):
         if not self.detailsText.IsShown(): 
             self.detailsText.Show()
             self.detailsButton.SetLabel(_("Hide Details"))
-            self.GetContentsPane().GetSizer().Insert(8, self.detailsText, 0, wx.EXPAND)
+            self.GetContentsPane().GetSizer().Show(self.detailsText)
             self.Layout()
             self.Fit()
         else:
             self.detailsText.Show(False)
             self.detailsButton.SetLabel(_("Show Details"))
-            self.GetContentsPane().GetSizer().Detach(self.detailsText)
+            self.GetContentsPane().GetSizer().Hide(self.detailsText)
             self.Layout()
             self.Fit()
         
 def guiExceptionHook(exctype, value, trace):    
     errorText = errors.get_platform_info()
     errorText += errors.print_exc_plus(exctype, value, trace)
+
+    logging.error(errorText)
     
     if not wx.GetApp():
         app = wx.PySimpleApp()
