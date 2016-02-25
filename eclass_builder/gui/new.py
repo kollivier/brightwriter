@@ -30,7 +30,7 @@ class NewPubDialog(sc.SizedDialog):
         self.txtTitle.SetSizerProp("expand", True)
         self.lblDescription = wx.StaticText(pane, -1, _("Description"))
         self.lblDescription.SetSizerProp("valign", "center")
-        self.txtDescription = wx.TextCtrl(pane, -1, style=wx.TE_MULTILINE)
+        self.txtDescription = wx.TextCtrl(pane, -1, size=(-1, 100), style=wx.TE_MULTILINE)
         self.txtDescription.SetSizerProps({"expand": True, "proportion": 1})
         self.lblKeywords = wx.StaticText(pane, -1, _("Keywords"))
         self.lblKeywords.SetSizerProp("valign", "center")
