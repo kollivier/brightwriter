@@ -92,7 +92,7 @@ class PagePropertiesDialog (sc.SizedDialog):
         self.txtTitle.SetSizerProp("expand", True)
 
         wx.StaticText(mypanel, -1, _("Description"))
-        self.txtDescription = wx.TextCtrl(mypanel, -1, description, style=wx.TE_MULTILINE)
+        self.txtDescription = wx.TextCtrl(mypanel, -1, description, size=(-1, 100), style=wx.TE_MULTILINE)
         self.txtDescription.SetSizerProp("expand", True)
 
         wx.StaticText(mypanel, -1, _("Keywords"))
@@ -146,7 +146,7 @@ class PagePropertiesDialog (sc.SizedDialog):
         self.txtOrganization = self.CreateAuthorBox(mypanel, self.OnLoadContacts)
 
         wx.StaticText(mypanel, -1, _("Credits"))
-        self.txtCredit = wx.TextCtrl(mypanel, -1, credits, style=wx.TE_MULTILINE)
+        self.txtCredit = wx.TextCtrl(mypanel, -1, credits, size=(-1, 100), style=wx.TE_MULTILINE)
         self.txtCredit.SetSizerProp("expand", True)
 
         self.UpdateAuthorList()
