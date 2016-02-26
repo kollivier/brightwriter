@@ -30,6 +30,8 @@ def getFileMenu():
     
 def getEditMenu():
     EditMenu = wx.Menu()
+    EditMenu.Append(ID_UNDO, _("Undo") + "\tCTRL+Z")
+    EditMenu.Append(ID_REDO, _("Redo") + "\tCTRL+Y")
     EditMenu.Append(ID_CUT, _("Cut")+"\tCTRL+X")
     EditMenu.Append(ID_COPY, _("Copy")+"\tCTRL+C")
 
