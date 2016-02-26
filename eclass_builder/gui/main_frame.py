@@ -1059,6 +1059,9 @@ class MainFrame2(sc.SizedFrame):
         webbrowser.open_new("http://sourceforge.net/tracker/?group_id=67634")
 
     def OnTreeSelChanging(self, event):
+        self.CheckIfSaveNeeded()
+
+    def CheckIfSaveNeeded(self):
         if not self.projectTree.GetCurrentTreeItemData():
             return
 
@@ -1120,11 +1123,12 @@ class MainFrame2(sc.SizedFrame):
             
     def OnTreeLabelChanged(self, event):
         item = self.projectTree.GetCurrentTreeItemData()
-        if not event.IsEditCancelled():
+        if item and not event.IsEditCancelled():
             label = event.GetLabel()
             item.title.text = event.GetLabel()
             self.inLabelEdit = False
             self.SaveProject()
+            self.UpdateTitle(label)
         
     def SkipNotebookEvent(self, evt):
         evt.Skip()
@@ -1302,6 +1306,8 @@ class MainFrame2(sc.SizedFrame):
         fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
 
     def ShutDown(self, event):
+        self.CheckIfSaveNeeded()
+
         if self.imscp and self.imscp.isDirty():
             self.SaveProject()
 
@@ -1568,7 +1574,12 @@ class MainFrame2(sc.SizedFrame):
             result = PagePropertiesDialog(self, selitem, None, os.path.join(settings.ProjectDir, "Text")).ShowModal()
             self.projectTree.SetItemText(seltreeitem, selitem.title.text)
             self.Update()
+            self.UpdateTitle(selitem.title.text)
+
             self.SaveProject()
+
+    def UpdateTitle(self, title):
+        self.browser.EvaluateJavaScript("document.getElementById('page_title').innerText = '%s'; dirty=true;" % title)
 
     def RemoveItem(self, event):
         if not self.projectTree.HasFocus():
@@ -1663,7 +1674,7 @@ class MainFrame2(sc.SizedFrame):
         if imsitem == None:
             imsitem = self.projectTree.GetCurrentTreeItemData()
 
-        self.Preview()
+        # self.Preview()
         self.dirtyNodes.append(imsitem)
         if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
             self.UploadPage()

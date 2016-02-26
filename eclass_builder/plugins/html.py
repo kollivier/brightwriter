@@ -63,7 +63,7 @@ htmlpage = u"""
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 </head>
 <body>
-    <h1 align="center">New Page</h1>
+    <h1 id="page_title" style="text-align: center">New Page</h1>
 </body>
 </html>
 """
