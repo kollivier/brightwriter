@@ -2,6 +2,8 @@
 
 from distutils.core import setup
 
+import logging
+logging.basicConfig()
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "htmleditor"))
@@ -19,6 +21,10 @@ import glob
 
 import settings
 import version
+
+import pewtools.codesign
+
+from local_settings import *
 
 myplist = dict(
     CFBundleIdentifier='net.eclass.eclass_builder',
@@ -70,6 +76,23 @@ setup(
 )
 
 if sys.platform.startswith("darwin"):
+    if 'osx_identity' in globals():
+        to_sign = []
+        output_path = os.path.abspath("dist/EClass.Builder.app")
+        to_sign.extend(glob.glob(os.path.join(output_path, "Contents", "Frameworks", "*.framework")))
+        to_sign.extend(glob.glob(os.path.join(output_path, "Contents", "Frameworks", "*.dylib")))
+        exes = ["Python"]
+        for exe in exes:
+            to_sign.append(os.path.join(output_path, 'Contents', 'MacOS', exe))
+
+        # sign the main bundle last
+        to_sign.append(output_path)
+        for path in to_sign:
+            pewtools.codesign.osx_code_sign_file(path, osx_identity)
+
+    else:
+        logging.warning("Not code-signing build, for local use only.")
+
     dmg_name = "%s %s.dmg" % (settings.app_name, version.asString())
     deploy_dir = "deploy"
     if not os.path.exists(deploy_dir):
