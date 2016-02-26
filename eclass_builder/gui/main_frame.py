@@ -1059,7 +1059,11 @@ class MainFrame2(sc.SizedFrame):
         webbrowser.open_new("http://sourceforge.net/tracker/?group_id=67634")
 
     def OnTreeSelChanging(self, event):
-        if self.dirty:
+        if not self.projectTree.GetCurrentTreeItemData():
+            return
+
+        abspath = os.path.join(settings.ProjectDir, self.GetContentFilenameForSelectedItem())
+        if not self.browser.GetPageSource() == open(abspath, "rb").read():
             result = wx.MessageDialog(self, _("This document contains unsaved changes. Would you like to save them now?"), _("Save Changes?"), wx.YES | wx.NO | wx.CANCEL).ShowModal()
             
             if result == wx.ID_CANCEL:
@@ -1068,7 +1072,7 @@ class MainFrame2(sc.SizedFrame):
                 self.dirty = False
             elif result == wx.ID_YES:
                 self.SaveWebPage()
-                
+            
     def OnTreeSelChanged(self, event):
         self.Preview()
         event.Skip()
