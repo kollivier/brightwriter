@@ -1062,8 +1062,9 @@ class MainFrame2(sc.SizedFrame):
         if not self.projectTree.GetCurrentTreeItemData():
             return
 
-        abspath = os.path.join(settings.ProjectDir, self.GetContentFilenameForSelectedItem())
-        if not self.browser.GetPageSource() == open(abspath, "rb").read():
+        dirty = self.browser.EvaluateJavaScript("dirty")
+
+        if dirty == "true":
             result = wx.MessageDialog(self, _("This document contains unsaved changes. Would you like to save them now?"), _("Save Changes?"), wx.YES | wx.NO | wx.CANCEL).ShowModal()
             
             if result == wx.ID_CANCEL:
@@ -1072,6 +1073,7 @@ class MainFrame2(sc.SizedFrame):
                 self.dirty = False
             elif result == wx.ID_YES:
                 self.SaveWebPage()
+                self.browser.EvaluateJavaScript("dirty = false;")
             
     def OnTreeSelChanged(self, event):
         self.Preview()
@@ -1649,10 +1651,10 @@ class MainFrame2(sc.SizedFrame):
                 else:
                     self.browser.LoadPage(filename)
             else:
-                self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"))
+                self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"), "")
 
         else:
-            self.browser.SetPage(utils.createHTMLPageWithBody(""))
+            self.browser.SetPage(utils.createHTMLPageWithBody(""), "")
 
     def Update(self, imsitem = None):
         if imsitem == None:

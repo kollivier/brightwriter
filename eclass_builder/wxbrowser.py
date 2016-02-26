@@ -243,6 +243,7 @@ class wxBrowser(wx.Window):
             self.EvaluateJavaScript("document.designMode = '%s'" % mode)
 
         self.ExecuteEditCommand("styleWithCSS", "true")
+        self.EvaluateJavaScript('dirty = false; document.body.addEventListener("input", function() { dirty = true; }, false);')
 
     def EvaluateJavaScript(self, script):
         #print("Running script %s" % script)
