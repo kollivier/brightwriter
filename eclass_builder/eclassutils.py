@@ -1,6 +1,7 @@
 import os
 import shutil
 import unittest
+import uuid
 
 import ims.contentpackage
 import ims.utils
