@@ -1378,7 +1378,6 @@ class MainFrame2(sc.SizedFrame):
 
     def SaveWebPage(self):
         source = self.browser.GetPageSource()
-        print("Source: %s" % source)
         
         if self.filename.endswith(".xhtml"):
             wx.MessageBox("Internet Explorer will ask users to download HTML files with the XHTML extension. To resolve this issue, EClass will change the extension to .html.")
@@ -1396,7 +1395,6 @@ class MainFrame2(sc.SizedFrame):
                 eclassutils.updateManifestLinkedFiles(resource, self.filename, source)
                 if resource:
                     resource.setFilename(self.filename.replace(settings.ProjectDir + os.sep, "").replace("\\", "/"))
-            
 
         encoding = htmlutils.GetEncoding(source)
         try:
