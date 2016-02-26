@@ -261,7 +261,7 @@ class wxBrowser(wx.Window):
         return self.EvaluateJavaScript("document.queryCommandValue('%s')" % command)
 
     def GetEditCommandState(self, command):
-        return "true" #return self.EvaluateJavaScript("if (document.queryCommandState('%s')) { return 'true'; } return 'false';" % command)
+        return self.EvaluateJavaScript("document.queryCommandState('%s')" % command)
 
     def _LoadIE(self):
         try:
