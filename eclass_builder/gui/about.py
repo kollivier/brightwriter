@@ -11,7 +11,7 @@ rootdir = os.path.join(os.path.dirname(__file__), "..")
 
 class EClassAboutDialog(sc.SizedDialog):
     def __init__(self, parent):
-        sc.SizedDialog.__init__ (self, parent, -1, _("About ") + settings.app_name, wx.Point(100,100), size=(300, -1))
+        sc.SizedDialog.__init__ (self, parent, -1, _("About %(appname)s") + {"appname": settings.app_name}, wx.Point(100,100), size=(300, -1))
         self.parent = parent
         
         panel = self.GetContentsPane()
