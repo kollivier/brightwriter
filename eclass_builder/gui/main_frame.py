@@ -1122,7 +1122,6 @@ class MainFrame2(sc.SizedFrame):
         item = self.projectTree.GetCurrentTreeItemData()
         if not event.IsEditCancelled():
             label = event.GetLabel()
-            assert label is not None and label != ""
             item.title.text = event.GetLabel()
             self.inLabelEdit = False
             self.SaveProject()
@@ -1290,7 +1289,7 @@ class MainFrame2(sc.SizedFrame):
                     self.projectTree.SelectItem(self.projectTree.GetRootItem())
 
                 self.SaveProject()
-    
+
                 self.isNewCourse = False
             dialog.Destroy()
             
@@ -1572,6 +1571,10 @@ class MainFrame2(sc.SizedFrame):
             self.SaveProject()
 
     def RemoveItem(self, event):
+        if not self.projectTree.HasFocus():
+            event.Skip()
+            return
+
         selection = self.projectTree.GetCurrentTreeItem()
         selitem = self.projectTree.GetCurrentTreeItemData()        
         
