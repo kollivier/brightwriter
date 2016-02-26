@@ -155,7 +155,7 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
             print "File %s does not exist." % filepath
             return filepath
             
-        basepath = self.parent.baseurl.replace("file://", "")
+        basepath = urllib.unquote(self.parent.baseurl.replace("file://", ""))
         
         if subdir == "" and os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
             subdir = "images"
@@ -185,7 +185,7 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
             
         assert os.path.exists(os.path.join(basepath, filepath))
         
-        return filepath
+        return urllib.quote(filepath)
 
 
 # Import the gui dialogs. They used to be embedded in editor.py
@@ -368,9 +368,11 @@ class MainFrame2(sc.SizedFrame):
         icnImage = wx.Bitmap(os.path.join(imagepath, "image_add.png"))
 
         
-        self.toolbar2 = toolbar2 = wx.ToolBar(pane, -1)
+        self.toolbar2 = toolbar2 = wx.ToolBar(pane, -1, style=wx.TB_HORIZONTAL
+            | wx.NO_BORDER
+            | wx.TB_FLAT)
         toolbar2.SetSizerProps(expand=True, border=("all", 0))
-        toolbar2.SetToolBitmapSize(wx.Size(16,16))
+        # toolbar2.SetToolBitmapSize(wx.Size(16,16))
         self.fonts = ["Times New Roman, Times, serif", "Helvetica, Arial, sans-serif", "Courier New, Courier, monospace"]
         self.fontlist = wx.ComboBox(toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.TE_PROCESS_ENTER)
     
@@ -430,7 +432,7 @@ class MainFrame2(sc.SizedFrame):
         #self.browser.ToggleContinuousSpellChecking()
         
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
-        #self.Bind(wx.EVT_IDLE, self.UpdateStatus)
+        self.Bind(wx.EVT_IDLE, self.UpdateStatus)
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
             #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
         
@@ -506,8 +508,8 @@ class MainFrame2(sc.SizedFrame):
 
     def GetCommandState(self, command):
         state = self.browser.GetEditCommandState(command)
-        print("State = %r" % state)
         if state.lower().strip() == "true":
+            print("Returning true for %r" % command)
             return True
         
         return False
@@ -521,15 +523,15 @@ class MainFrame2(sc.SizedFrame):
         self.browser.ExecuteEditCommand("FontName", self.fontlist.GetStringSelection())
 
     def UpdateStatus(self, evt):
-        # self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
+        self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
         # self.toolbar2.ToggleTool(ID_ITALIC, self.GetCommandState("Italic"))
         # self.toolbar2.ToggleTool(ID_UNDERLINE, self.GetCommandState("Underline"))
         # self.toolbar2.ToggleTool(ID_BULLETS, self.GetCommandState("InsertUnorderedList"))
         # self.toolbar2.ToggleTool(ID_NUMBERING, self.GetCommandState("InsertOrderedList"))
-        # self.toolbar2.ToggleTool(ID_ALIGN_LEFT, self.GetCommandState("AlignLeft"))
-        # self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("AlignCenter"))
-        # self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("AlignRight"))
-        # self.toolbar2.ToggleTool(ID_ALIGN_JUSTIFY, self.GetCommandState("AlignJustify"))
+        self.toolbar2.ToggleTool(ID_ALIGN_LEFT, self.GetCommandState("AlignLeft"))
+        self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("AlignCenter"))
+        self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("AlignRight"))
+        self.toolbar2.ToggleTool(ID_ALIGN_JUSTIFY, self.GetCommandState("AlignJustify"))
         self.fontsizelist.SetStringSelection(self.browser.GetEditCommandValue("FontSize"))
         self.fontlist.SetValue(self.browser.GetEditCommandValue("FontName"))
         
