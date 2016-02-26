@@ -1,6 +1,8 @@
 import wx
 from gui.ids import *
 
+import settings
+
 def getFileMenu():
     # File menu
     FileMenu = wx.Menu()
@@ -115,8 +117,8 @@ def getToolsMenu():
 
 def getHelpMenu():
     HelpMenu = wx.Menu()
-    HelpMenu.Append(wx.ID_ABOUT, _("About Eclass"), _("About Eclass.Builder"))
-    HelpMenu.Append(ID_HELP, _("Help"), _("EClass.Builder Help"))
+    HelpMenu.Append(wx.ID_ABOUT, _("About %(appname)s" % {"appname": settings.app_name}), _("About %(appname)s" % {"appname": settings.app_name}))
+    HelpMenu.Append(ID_HELP, _("Help"), _("%(appname)s Help" % {"appname": settings.app_name}))
     HelpMenu.Append(ID_BUG, _("Provide Feedback"), _("Submit feature requests or bugs"))
     
     return HelpMenu
