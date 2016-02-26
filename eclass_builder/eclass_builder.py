@@ -60,6 +60,9 @@ if sys.platform.startswith("win"):
     import ctypes.wintypes
     import wx.stc
 
+
+import pew.cache
+
 settings.AppDir = rootdir
         
 class BuilderApp(wx.App, events.AppEventHandlerMixin):
@@ -81,6 +84,7 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         self.frame = gui.main_frame.MainFrame2(None, -1, self.GetAppName())
         self.frame.CentreOnScreen()
 
+        pew.cache.set_cache_dir(settings.getAppDataDir())
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
         return True
