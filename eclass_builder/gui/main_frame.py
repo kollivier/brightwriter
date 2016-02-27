@@ -373,7 +373,7 @@ class MainFrame2(sc.SizedFrame):
             | wx.TB_FLAT)
         toolbar2.SetSizerProps(expand=True, border=("all", 0))
         # toolbar2.SetToolBitmapSize(wx.Size(16,16))
-        self.fonts = ["Times New Roman, Times, serif", "Helvetica, Arial, sans-serif", "Courier New, Courier, monospace"]
+        self.fonts = ["Times New Roman", "Arial", "Helvetica", "Courier"]
         self.fontlist = wx.ComboBox(toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.TE_PROCESS_ENTER)
     
         self.fontsizes = {"10px": "1", "13px": "2", "16px": "3", "18px": "4", "24px": "5", "32px": "6", "48px": "7"}
