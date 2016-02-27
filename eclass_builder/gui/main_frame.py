@@ -1164,13 +1164,18 @@ class MainFrame2(sc.SizedFrame):
         return msg.ShowModal()
 
     def PublishToWeb(self, event):
-        folder = settings.ProjectDir
+        folder = os.path.join(settings.ProjectDir, "..")
         if settings.ProjectSettings["WebSaveDir"] == "":
             result = wx.MessageDialog(self, _("You need to specify a directory in which to store the web files.\nWould you like to do so now?"), _("Specify Web Save Directory?"), wx.YES_NO).ShowModal()
             if result == wx.ID_YES:
                 dialog = wx.DirDialog(self, _("Choose a folder to store web files."), style=wx.DD_NEW_DIR_BUTTON)
                 if dialog.ShowModal() == wx.ID_OK:
-                    folder = settings.ProjectSettings["WebSaveDir"] = dialog.GetPath()
+                    if dialog.GetPath().lower().startswith(settings.ProjectDir.lower()):
+                        wx.MessageDialog(self, _("The web export directory cannot be within your project directory.\nPlease choose another location and try again."), _("Export Directory Not Valid"), wx.OK).ShowModal()
+                        return
+                    else:
+                        folder = settings.ProjectSettings["WebSaveDir"] = dialog.GetPath()
+
             else:
                 return
         else:
@@ -1179,14 +1184,11 @@ class MainFrame2(sc.SizedFrame):
         self.SaveProject()
         
         callback = GUIFileCopyCallback(self)
-        maxfiles = fileutils.getNumFiles(settings.ProjectDir)
+        self.maxfiles = fileutils.getNumFiles(settings.ProjectDir)
         self.filesCopied = 0
-        self.dialog = wx.ProgressDialog(_("Copying Web Files"), _("Preparing to copy Web files...") + "                            ", maxfiles, style=wx.PD_APP_MODAL)
+        self.dialog = wx.ProgressDialog(_("Copying Web Files"), _("Preparing to copy Web files...") + "                            ", self.maxfiles, style=wx.PD_APP_MODAL)
 
         fileutils.CopyFiles(settings.ProjectDir, folder, 1, callback)
-        
-        self.dialog.Destroy()
-        self.dialog = None
         
         self.CopyWebFiles(folder)
         
@@ -1248,6 +1250,10 @@ class MainFrame2(sc.SizedFrame):
 
     def OnFileChanged(self, filename):
         self.filesCopied += 1
+        if self.filesCopied == self.maxfiles:
+            self.dialog.Destroy()
+            self.dialog = None
+
         if self.dialog:
             self.keepCopying = self.dialog.Update(self.filesCopied, "Copying: " + filename)
 
