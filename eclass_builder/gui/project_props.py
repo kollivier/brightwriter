@@ -43,7 +43,6 @@ class ProjectPropsDialog(sc.SizedDialog):
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
 
-        self.Fit()
         self.SetMinSize(self.GetSize())
         
         # TODO: Can this be removed?
