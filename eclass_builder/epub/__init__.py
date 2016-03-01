@@ -9,6 +9,8 @@ import zipfile
 import ncx
 import opf
 
+import fileutils
+import settings
 import utils.zip as ziputils
 import xmlobjects
 import xmlutils
@@ -117,43 +119,57 @@ class EPubPackage:
         rootfile.attrs['media-type'] = 'application/oebps-package+xml'
         self.container.rootfiles.append(rootfile)
     
-    def createEPubPackage(self, filesdir, filename):
-        zip = zipfile.ZipFile(filename, 'w')
-        
-        zip.writestr("mimetype", self.mimetype)
-        
+    def createEPubPackage(self, filesdir, zip_filename=None, output_dir=None, callback=None):
+        """
+        Creates the ePub package.
+
+        If output_dir is specified, the epub will be written to that directory.
+
+        If zip_filename is specified, a zip file will be created.
+        """
         opfBasename = os.path.basename(self.opf.filename)
-        assert opfBasename != ""
         
         ncxBasename = None
         if self.ncx:
             ncxBasename = os.path.basename(self.ncx.filename)
-            assert ncxBasename 
-        
-        opfFile = tempfile.mkstemp()[1]
-        try:
-            self.opf.saveAsXML(opfFile)
-            zip.write(opfFile, os.path.join("OEPBS", opfBasename))
-        finally:
-            os.remove(opfFile)
-        
-        ncxFile = tempfile.mkstemp()[1]
-        try:
-            self.ncx.saveAsXML(ncxFile)
-            zip.write(ncxFile, os.path.join("OEPBS", ncxBasename))
-        finally:
-            os.remove(ncxFile)
-
-        containerFile = tempfile.mkstemp()[1]
         containerBasename = os.path.basename(self.container.filename)
-        try:
-            self.container.saveAsXML(containerFile)
-            zip.write(containerFile, os.path.join("META-INF", containerBasename))
-        finally:
-            os.remove(containerFile)
         
-        ziputils.dirToZipFile("", zip, filesdir, zipDir="OEPBS")
-    
+        if output_dir is not None:
+            oepbs_dir = os.path.join(output_dir, "OEPBS")
+            if not os.path.exists(oepbs_dir):
+                os.makedirs(oepbs_dir)
+            meta_dir = os.path.join(output_dir, "META-INF")
+            if not os.path.exists(meta_dir):
+                os.makedirs(meta_dir)
+            opfFile = os.path.join(oepbs_dir, opfBasename)
+            ncxFile = os.path.join(oepbs_dir, ncxBasename)
+            containerFile = os.path.join(meta_dir, containerBasename)
+
+            fileutils.CopyFiles(settings.ProjectDir, oepbs_dir, 1, callback)
+
+        else:
+            opfFile = tempfile.mkstemp()[1]
+            ncxFile = tempfile.mkstemp()[1]
+            containerFile = tempfile.mkstemp()[1]
+
+        self.ncx.saveAsXML(ncxFile)
+        self.opf.saveAsXML(opfFile)
+        self.container.saveAsXML(containerFile)
+
+        if zip_filename is not None:
+            try:
+                zip = zipfile.ZipFile(zip_filename, 'w')
+                zip.writestr("mimetype", self.mimetype)
+
+                zip.write(opfFile, os.path.join("OEPBS", opfBasename))
+                zip.write(ncxFile, os.path.join("OEPBS", ncxBasename))
+                zip.write(containerFile, os.path.join("META-INF", containerBasename))
+                ziputils.dirToZipFile("", zip, filesdir, zipDir="OEPBS")
+            finally:
+                os.remove(opfFile)
+                os.remove(ncxFile)
+                os.remove(containerFile)
+
 import unittest
 
 class EPubTests(unittest.TestCase):

@@ -8,6 +8,7 @@ themeList = None
 
 import BaseTheme
 import Default_frames
+import epub
 import IMS_Package
 
 
@@ -20,7 +21,8 @@ class ThemeList:
         self.themes = {
             BaseTheme.themename: BaseTheme,
             Default_frames.themename: Default_frames,
-            IMS_Package.themename: IMS_Package
+            IMS_Package.themename: IMS_Package,
+            epub.themename: epub
         }
 
     def GetPublicThemeNames(self):
@@ -35,7 +37,7 @@ class ThemeList:
         if themename in self.themes.keys():
             return self.themes[themename]
         elif returnDefault:
-            return self.themes["Default (frames)"]
+            return self.themes["epub"]
         else:
             return None
 

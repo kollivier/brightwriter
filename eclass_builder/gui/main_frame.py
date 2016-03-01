@@ -37,6 +37,7 @@ import ims
 import ims.contentpackage
     
 import conman
+import epub
 import version
 import utils
 import fileutils
@@ -297,7 +298,7 @@ class MainFrame2(sc.SizedFrame):
         
         # Note: themes are deprecated, code is left only until it can be removed safely.
         self.themes = themes.ThemeList()
-        self.currentTheme = self.themes.FindTheme("Default (frames)")
+        self.currentTheme = self.themes.FindTheme("epub")
         self.launchApps = []
         
         # Modeless dialog
@@ -1188,8 +1189,10 @@ class MainFrame2(sc.SizedFrame):
         self.filesCopied = 0
         self.dialog = wx.ProgressDialog(_("Copying Web Files"), _("Preparing to copy Web files...") + "                            ", self.maxfiles, style=wx.PD_APP_MODAL)
 
-        fileutils.CopyFiles(settings.ProjectDir, folder, 1, callback)
-        
+        epubPackage = epub.EPubPackage(self.imscp.organizations[0].items[0].title.text)
+        epubPackage.imsToEPub(self.imscp)
+        epubPackage.createEPubPackage(settings.ProjectDir, output_dir=folder, callback=callback)
+
         self.CopyWebFiles(folder)
         
         result = wx.MessageDialog(self, "Would you like to upload the web files to the server via FTP now?", _("Upload to web site?"), wx.YES_NO).ShowModal()
@@ -1505,7 +1508,7 @@ class MainFrame2(sc.SizedFrame):
                 if len(self.imscp.organizations) > 0:
                     self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0])
                 
-                self.currentTheme = self.themes.FindTheme(settings.ProjectSettings["Theme"])
+                self.currentTheme = self.themes.FindTheme("epub")
     
                 self.SetFocus()
                 settings.AppSettings["LastOpened"] = filename
@@ -1688,9 +1691,9 @@ class MainFrame2(sc.SizedFrame):
     def CopyWebFiles(self, output_dir):
         result = False
         busy = wx.BusyCursor()
-        utils.CreateJoustJavascript(self.imscp.organizations[0].items[0], output_dir)
-        utils.CreateiPhoneNavigation(self.imscp.organizations[0].items[0], output_dir)
-        self.currentTheme = self.themes.FindTheme(settings.ProjectSettings["Theme"])
+        # utils.CreateJoustJavascript(self.imscp.organizations[0].items[0], output_dir)
+        # utils.CreateiPhoneNavigation(self.imscp.organizations[0].items[0], output_dir)
+        self.currentTheme = self.themes.FindTheme("epub")
         if self.currentTheme:
             self.currentTheme.HTMLPublisher(self, output_dir).CopySupportFiles()
             
