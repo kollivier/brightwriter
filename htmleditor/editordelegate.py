@@ -1,3 +1,4 @@
+import json
 import logging
 
 import wx
@@ -12,8 +13,72 @@ import embed_video_dialog
 import htmledit.htmlattrs as htmlattrs
 import htmledit.templates as templates
 
+
 def _(text):
     return text
+
+edit_functions = """
+    function elementToObject(el, o) {
+        var o = {
+           tagName: el.tagName
+        };
+        var i = 0;
+        for (i ; i < el.attributes.length; i++) {
+            o[el.attributes[i].name] = el.attributes[i].value;
+        }
+
+        var children = el.childNodes;
+        if (children.length) {
+          o.children = [];
+          i = 0;
+          for (i ; i < children.length; i++) {
+            var child = children[i];
+            if (child.nodeType == 1) {
+                o.children[i] = elementToObject(child, o.children) ;
+            }
+          }
+        }
+        return o;
+    };
+
+    function getSelectedNode(tagName) {
+        var selection = window.getSelection();
+        var range = selection.getRangeAt(0);
+        var node = range.commonAncestorContainer;
+        while (node) {
+            if (node.nodeType == 1 && node.tagName.toLowerCase() == tagName) {
+                return node;
+            }
+            node = node.parentNode;
+        };
+
+        var child = range.commonAncestorContainer.getElementsByTagName(tagName);
+        console.log("child = " + child);
+        if (child.length == 1 && child[0].nodeType == 1) {
+            return child[0];
+        }
+        return null;
+    };
+
+    function getTagAttributes(tagName) {
+        var node = getSelectedNode(tagName);
+        if (node) {
+            var obj = elementToObject(node);
+            return JSON.stringify(obj)
+        }
+        return "";
+    };
+
+    function setTagAttributes(tagName, attributes) {
+        var node = getSelectedNode(tagName);
+        if (node) {
+            var attrs = JSON.parse(attributes);
+            for (var key in attrs) {
+                node.setAttribute(key, attrs[key]);
+            }
+        }
+    };
+"""
 
 class HTMLEditorDelegate(wx.EvtHandler):
     def __init__(self, source, *args, **kwargs):
@@ -21,13 +86,10 @@ class HTMLEditorDelegate(wx.EvtHandler):
         wx.EvtHandler.__init__(self, *args, **kwargs)
         self.webview = source
         self.currentSearchText = None
-        #settings = self.webview.GetWebSettings()
-        #settings.SetEditableLinkBehavior(wx.webview.EditableLinkOnlyLiveWithShiftKey)
-        #self.webview.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
-        #self.webview.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         self.RegisterHandlers()
         self.searchId = None
         pub.subscribe(self.OnDoSearch, ('search', 'text', 'changed'))
+
         
     def OnSetFocus(self, event):
         self.RegisterHandlers()
@@ -123,7 +185,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddUIHandlerForID(ID_TEXT_REMOVE_STYLES, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_SPELLING_GUESS, self.UpdateEditCommand)
         
-        #self.webview.Bind(wx.webview.EVT_WEBVIEW_CONTEXT_MENU, self.OnRightClick)
+        self.webview.browser.Bind(wx.EVT_CONTEXT_MENU, self.OnRightClick)
 
     def RemoveHandlers(self):
         app = wx.GetApp()
@@ -285,33 +347,34 @@ class HTMLEditorDelegate(wx.EvtHandler):
         attrs = htmlattrs.tag_attrs[tagName]
         all_attrs = attrs["required"] + attrs["optional"]
         for attr in all_attrs:
-            props[attr] = tag.getAttribute(attr)
+            if attr in tag:
+                props[attr] = tag[attr]
 
         mydialog = editorClass(self.webview, props)
         mydialog.CentreOnParent()
-        # FIXME: We need to change this to use JS commands
-        if False: #mydialog.ShowModal() == wx.ID_OK:
+        if mydialog.ShowModal() == wx.ID_OK:
             return_props = mydialog.getProps()
-            #editcmd = wx.webview.WebEditCommand(self.webview.GetMainFrame())        
             for prop in return_props:
                 assert prop in all_attrs
                 if prop in ["href", "src"]:
                     return_props[prop] = self.CopyFileIfNeeded(return_props[prop])
-                editcmd.SetNodeAttribute(tag, prop, return_props[prop])
-            editcmd.Apply()
-            self.dirty = True
+
+            self.SetAttributes(tagName, return_props)
 
         mydialog.Destroy()
+
+    def SetAttributes(self, tagName, attrs):
+        self.webview.EvaluateJavaScript(edit_functions + "setTagAttributes('%s', '%s');" % (tagName.lower(), json.dumps(attrs)))
+        self.dirty = True
 
     def OnLinkProps(self, evt):
         linkProps = {}
         link = self.GetParent("A")
         if link:
-            url = link.getAttribute("href")
-            if url != "":
+            if "href" in link and link["href"] != "":
                 self.ShowEditorForTag("A", LinkPropsDialog)
 
-            elif link.getAttribute("name") != "":
+            elif "name" in link and link["name"] != "":
                 self.ShowEditorForTag("A", BookmarkPropsDialog)
 
     def OnListProps(self, evt):
@@ -319,7 +382,6 @@ class HTMLEditorDelegate(wx.EvtHandler):
         list = self.GetParent("ol")
         if list:
             self.ShowEditorForTag("OL", OLPropsDialog)
-        
         else:
             self.ShowEditorForTag("UL", ULPropsDialog)
 
@@ -329,29 +391,17 @@ class HTMLEditorDelegate(wx.EvtHandler):
 
     def GetParent(self, elementName):
         elementName = elementName.lower()
-        #selection = self.webview.GetSelection().GetAsRange()
-        # FIXME: We need to change this to use JS commands
-        if False:                
-            root = selection.startContainer()
-            children = root.childNodes()
-            
-            # when selecting, say, an image, the container is actually the tag above the
-            # image, so we need to find the image in the children.
-            for index in xrange(children.length()):
-                child = children.item(index)
-                #if isinstance(child, wx.webview.WebDOMElement) and child.tagName().lower() == elementName:
-                #    return child
-            
-            parent = root
-            while parent.impl():
-                #if isinstance(parent, wx.webview.WebDOMElement):
-                #    if parent.tagName().lower() == elementName:
-                #        return parent
-                
-                parent = parent.parentNode()
+        js = edit_functions + " getTagAttributes('%s');" % (elementName)
+        result = self.webview.EvaluateJavaScript(js)
+        if result != '':
+            return json.loads(result)
         return None
 
-    def OnLinkButton(self, evt):    
+    def OnLinkButton(self, evt):
+        if self.GetParent("A"):
+            self.OnLinkProps(evt)
+            return
+
         linkProps = {}
         mydialog = LinkPropsDialog(self.webview, linkProps)
         mydialog.CentreOnParent()
@@ -361,7 +411,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
             if "target" in props:
                 url = self.GetParent("A")
                 if url:
-                    url.setAttribute("target", props["target"])
+                    self.SetAttributes("A", {"target": props["target"]})
         mydialog.Destroy()
 
     def OnBookmarkButton(self, evt):    
@@ -376,6 +426,9 @@ class HTMLEditorDelegate(wx.EvtHandler):
         dialog.Destroy()
 
     def OnImageButton(self, evt):
+        if self.GetParent("IMG"):
+            self.OnImageProps(evt)
+            return
         imageFormats = _("Image files") +"|*.gif;*.jpg;*.png;*.jpeg;*.bmp"
         dialog = wx.FileDialog(self.webview, _("Select an image"), "","", imageFormats, wx.FD_OPEN)
         if dialog.ShowModal() == wx.ID_OK:
@@ -420,17 +473,10 @@ class HTMLEditorDelegate(wx.EvtHandler):
     def OnRightClick(self, evt):
         popupmenu = wx.Menu()
 
-        guesses = self.webview.GuessesForMisspelledSelection()
-        
-        for guess in guesses:
-            id = wx.NewId()
-            popupmenu.Append(id, guess)
-            self.webview.Bind(wx.EVT_MENU, self.OnSpellingGuessChosen, id=id)
-        
         if self.GetParent("IMG"):
             popupmenu.Append(ID_EDITIMAGE, "Image Properties")
         link = self.GetParent("A")
-        if link and link.getAttribute('href') != '':
+        if link and link['href'] != '':
             popupmenu.Append(ID_EDITLINK, "Link Properties")
             popupmenu.Append(ID_REMOVE_LINK, "Remove Link")
         if self.GetParent("ol") or self.GetParent("ul"):

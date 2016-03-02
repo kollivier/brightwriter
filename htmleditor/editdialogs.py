@@ -12,13 +12,10 @@ class TagEditorDialog(sc.SizedDialog):
         self.tagName = None
         # FIXME: Add a notebook with a "style" section here
     
-    def setProps(self, props):
-        assert self.tagName
-        
+    def setProps(self, props):       
         attrs = htmlattrs.tag_attrs[self.tagName]
         
         for prop in props:
-            assert prop in attrs["required"] + attrs["optional"]
             control = self.FindWindowByName(prop)
             if control:
                 value = props[prop]
@@ -167,7 +164,8 @@ class ImagePropsDialog(TagEditorDialog):
         self.txtDescription = wx.TextCtrl(pane, -1, name="alt")
         self.txtDescription.SetSizerProps(expand=True)
         wx.StaticText(pane, -1, _("Image Alignment"))
-        wx.Choice(pane, -1, choices=htmlattrs.attr_values['IMG']['align'].keys(), name="align")
+        choice = wx.Choice(pane, -1, choices=htmlattrs.attr_values['IMG']['align'].keys(), name="align")
+        choice.SetStringSelection(_("Default"))
 
         wx.StaticText(pane, -1, _("Width"))
         wx.TextCtrl(pane, -1, name="width")
