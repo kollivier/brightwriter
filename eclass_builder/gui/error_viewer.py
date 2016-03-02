@@ -136,8 +136,9 @@ def guiExceptionHook(exctype, value, trace):
                 "application_log": log
             }
 
-            logging.info("posting error report")
-            server.post_error_report(report)
+            if hasattr(sys, "frozen") or result == wx.ID_OK:
+                logging.info("posting error report")
+                server.post_error_report(report)
             success = True
         except Exception, e:
             import traceback
