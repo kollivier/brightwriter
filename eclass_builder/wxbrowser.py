@@ -3,6 +3,8 @@ import logging
 import os
 import sys
 import utils
+import webbrowser
+
 import wx
 
 from wx.lib.pubsub import pub
@@ -193,6 +195,9 @@ class wxBrowser(wx.Window):
 
     def OnWebKitBeforeLoad(self, event):
         if self.editable and event.GetNavigationType() == wx.webkit.WEBKIT_NAV_LINK_CLICKED:
+            event.Cancel()
+        elif not self.editable and event.URL.startswith("http"):
+            webbrowser.open(event.URL)
             event.Cancel()
 
     def SetPage(self, text, baseurl, mimetype="text/html"):

@@ -255,10 +255,10 @@ command_ids = {
     ID_UNDERLINE: "Underline",
     ID_BULLETS: "InsertUnorderedList",
     ID_NUMBERING: "InsertOrderedList",
-    ID_ALIGN_LEFT: "AlignLeft",
-    ID_ALIGN_CENTER: "AlignCenter",
-    ID_ALIGN_RIGHT: "AlignRight",
-    ID_ALIGN_JUSTIFY: "AlignJustify",
+    ID_ALIGN_LEFT: "JustifyLeft",
+    ID_ALIGN_CENTER: "JustifyCenter",
+    ID_ALIGN_RIGHT: "JustifyRight",
+    ID_ALIGN_JUSTIFY: "JustifyFull",
 }
 
 #----------------------------- MainFrame Class ----------------------------------------------
@@ -351,20 +351,22 @@ class MainFrame2(sc.SizedFrame):
 
         self.toolbar.Realize()
 
-        icnBold = wx.Bitmap(os.path.join(imagepath, "text_bold.png"))
-        icnItalic = wx.Bitmap(os.path.join(imagepath, "text_italic.png"))
-        icnUnderline = wx.Bitmap(os.path.join(imagepath, "text_underline.png"))
+        imagepath = os.path.join(settings.AppDir, "icons", "fugue")
+        icnBold = wx.Bitmap(os.path.join(imagepath, "edit-bold.png"))
+        icnItalic = wx.Bitmap(os.path.join(imagepath, "edit-italic.png"))
+        icnUnderline = wx.Bitmap(os.path.join(imagepath, "edit-underline.png"))
         
-        icnAlignLeft = wx.Bitmap(os.path.join(imagepath, "text_align_left.png")) 
-        icnAlignCenter = wx.Bitmap(os.path.join(imagepath, "text_align_center.png"))
-        icnAlignRight = wx.Bitmap(os.path.join(imagepath, "text_align_right.png"))
-        icnAlignJustify = wx.Bitmap(os.path.join(imagepath, "text_align_justify.png"))
+        icnAlignLeft = wx.Bitmap(os.path.join(imagepath, "edit-alignment.png")) 
+        icnAlignCenter = wx.Bitmap(os.path.join(imagepath, "edit-alignment-center.png"))
+        icnAlignRight = wx.Bitmap(os.path.join(imagepath, "edit-alignment-right.png"))
+        icnAlignJustify = wx.Bitmap(os.path.join(imagepath, "edit-alignment-justify.png"))
         
-        icnIndent = wx.Bitmap(os.path.join(imagepath, "text_indent.png")) 
-        icnDedent = wx.Bitmap(os.path.join(imagepath, "text_indent_remove.png"))
-        icnBullets = wx.Bitmap(os.path.join(imagepath, "text_list_bullets.png"))
-        icnNumbering = wx.Bitmap(os.path.join(imagepath, "text_list_numbers.png"))
+        icnIndent = wx.Bitmap(os.path.join(imagepath, "edit-indent.png")) 
+        icnDedent = wx.Bitmap(os.path.join(imagepath, "edit-outdent.png"))
+        icnBullets = wx.Bitmap(os.path.join(imagepath, "edit-list.png"))
+        icnNumbering = wx.Bitmap(os.path.join(imagepath, "edit-list-order.png"))
         
+        imagepath = os.path.join(settings.AppDir, "icons", "fatcow")
         icnLink = wx.Bitmap(os.path.join(imagepath, "world_link.png"))
         icnImage = wx.Bitmap(os.path.join(imagepath, "image_add.png"))
 
@@ -510,7 +512,6 @@ class MainFrame2(sc.SizedFrame):
     def GetCommandState(self, command):
         state = self.browser.GetEditCommandState(command)
         if state.lower().strip() == "true":
-            print("Returning true for %r" % command)
             return True
         
         return False
@@ -525,14 +526,13 @@ class MainFrame2(sc.SizedFrame):
 
     def UpdateStatus(self, evt):
         self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
-        # self.toolbar2.ToggleTool(ID_ITALIC, self.GetCommandState("Italic"))
-        # self.toolbar2.ToggleTool(ID_UNDERLINE, self.GetCommandState("Underline"))
-        # self.toolbar2.ToggleTool(ID_BULLETS, self.GetCommandState("InsertUnorderedList"))
-        # self.toolbar2.ToggleTool(ID_NUMBERING, self.GetCommandState("InsertOrderedList"))
-        self.toolbar2.ToggleTool(ID_ALIGN_LEFT, self.GetCommandState("AlignLeft"))
-        self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("AlignCenter"))
-        self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("AlignRight"))
-        self.toolbar2.ToggleTool(ID_ALIGN_JUSTIFY, self.GetCommandState("AlignJustify"))
+        self.toolbar2.ToggleTool(ID_ITALIC, self.GetCommandState("Italic"))
+        self.toolbar2.ToggleTool(ID_UNDERLINE, self.GetCommandState("Underline"))
+        self.toolbar2.ToggleTool(ID_BULLETS, self.GetCommandState("InsertUnorderedList"))
+        self.toolbar2.ToggleTool(ID_NUMBERING, self.GetCommandState("InsertOrderedList"))
+        self.toolbar2.ToggleTool(ID_ALIGN_LEFT, self.GetCommandState("JustifyLeft"))
+        self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("JustifyCenter"))
+        self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("JustifyRight"))
         self.fontsizelist.SetStringSelection(self.browser.GetEditCommandValue("FontSize"))
         self.fontlist.SetValue(self.browser.GetEditCommandValue("FontName"))
         

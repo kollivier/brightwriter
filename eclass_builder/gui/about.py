@@ -8,10 +8,11 @@ import settings
 
 rootdir = os.path.join(os.path.dirname(__file__), "..")
 
+import wxbrowser
 
 class EClassAboutDialog(sc.SizedDialog):
     def __init__(self, parent):
-        sc.SizedDialog.__init__ (self, parent, -1, _("About %(appname)s" % {"appname": settings.app_name}), wx.Point(100,100), size=(300, -1))
+        sc.SizedDialog.__init__ (self, parent, -1, _("About %(appname)s" % {"appname": settings.app_name}), wx.Point(100,100), size=(300, -1), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.parent = parent
         
         panel = self.GetContentsPane()
@@ -27,23 +28,24 @@ class EClassAboutDialog(sc.SizedDialog):
 
         app_version = wx.StaticText(panel, -1, version.asString())
         app_version.SetSizerProps(halign="center")
-        
-        # app_copyright = wx.StaticText(panel, -1, "Copyright 2002-2010 Tulane University")
-        # app_copyright.SetSizerProps(halign="center")
-        
-        # app_license = wx.StaticText(panel, -1, "This program is BSD licensed")
-        # app_license.SetSizerProps(halign="center")
-        
-        # acknowledgements = wx.StaticText(panel, -1, "Thanks and Acknowledgements")
-        # acknowledgements.SetSizerProps(halign="center")
-        # ack_font = acknowledgements.GetFont()
-        # ack_font.SetWeight(wx.FONTWEIGHT_BOLD)
-        # acknowledgements.SetFont(ack_font)
-        
-        #wxpy_link = hl.HyperLinkCtrl(panel, -1, "Built with wxPython", URL="http://www.wxpython.org")
-        #wxpy_link.SetSizerProps(halign="center")
-        
-        #fatcow_link = hl.HyperLinkCtrl(panel, -1, "EClass.Builder uses FatCow free icons", URL="http://www.fatcow.com/free-icons/")
-        #fatcow_link.SetSizerProps(halign="center")
 
-        #program_icon = hl.HyperLinkCtrl(panel, -1, "EClass.Builder icon created from iconaholic.com icons", URL="http://www.iconaholic.com/")
+        app_copyright = wx.StaticText(panel, -1, "Copyright 2010 Tulane University")
+        app_copyright.SetSizerProps(halign="center")
+        
+        app_license = wx.StaticText(panel, -1, "This program is BSD licensed")
+        app_license.SetSizerProps(halign="center")
+
+        credits_label = wx.StaticText(panel, -1, _("Credits and Acknowledgments"))
+        credits_label.SetSizerProps(halign="center", border=("all", 3))
+        label_font = credits_label.GetFont()
+        label_font.SetWeight(wx.FONTWEIGHT_BOLD)
+        credits_label.SetFont(label_font)
+
+        self.browser = wxbrowser.wxBrowser(panel, -1)
+        self.browser.SetSizerProps(expand=True)
+        self.browser.browser.SetSizerProps(expand=True, proportion=1)
+        self.browser.browser.SetMinSize((400, 100))
+        # FIXME: Move this to an html file on disk.
+        self.browser.SetPage("""<head><style>body {font-family: Helvetica}</style></head><body><h4>Credits and Acknowledgements</h4><p><a href="http://wxpython.org">Built with wxPython</a></p><p>Icons provided by <a href="http://www.fatcow.com/free-icons/">FatCow</a> and <a href="http://p.yusukekamiyamane.com">Yusuke Kamiyamane</a></p><p>App icon created from <a href="http://www.iconaholic.com/">iconaholic.com icons</a></p></body>""", "")
+
+        self.Fit()
