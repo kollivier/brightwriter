@@ -81,42 +81,16 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
         dlg.CentreOnScreen()
         if dlg.ShowModal() == wx.ID_OK:
             mp4video = dlg.mp4_text.GetValue()
-            oggvideo = dlg.ogg_text.GetValue()
-            poster = dlg.poster_text.GetValue()
             
-            if dlg.useJWPlayer:
-                videoHTML = templates.jwplayer
-                jwplayer_dir = os.path.join(settings.ThirdPartyDir, "..", "mediaplayer-5.3")
-                for afile in ["jwplayer.js", "license.txt", "swfobject.js", "player.swf", "yt.swf"]:
-                    self.CopyFileIfNeeded(os.path.join(jwplayer_dir, afile), overwrite="always")
-            else:
-                videoHTML = templates.html5video
-                if os.path.exists(poster):
-                    poster = self.CopyFileIfNeeded(poster)
-                    
-                if poster != "":
-                    poster = """
-                    <img src="%s" alt="No video playback capabilities, please download the video below"
-         title="No video playback capabilities, please download the video below" />
-                    """ % poster
-                
-                if os.path.exists(oggvideo):
-                    oggvideo = self.CopyFileIfNeeded(oggvideo)
-                
-                if oggvideo != "":
-                    oggvideo = """<source src="%s" type="video/ogg" /><!-- Firefox / Opera -->""" % oggvideo
-                    
+            videoHTML = templates.html5video
+
             if os.path.exists(mp4video):
                 mp4video = self.CopyFileIfNeeded(mp4video)
                 
             videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
+            videoHTML = videoHTML.replace("_filename_", mp4video)
+            videoHTML = videoHTML.replace("_autostart_", "false")
             videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.splitext(os.path.basename(mp4video))[0])
-            videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
-            videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
-            provider = "video"
-            if dlg.http_streaming_check.IsChecked():
-                provider = "http"
-            videoHTML = videoHTML.replace("__PROVIDER__", provider)
             dimensions = ""
             if dlg.width_text.GetValue() != "":
                 dimensions += "\n        width: %s," % dlg.width_text.GetValue()
@@ -125,7 +99,6 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
                 dimensions += "\n        height: %s," % dlg.height_text.GetValue()
                 
             videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
-            print "Inserting %s" % videoHTML
             self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
         dlg.Destroy()
     

@@ -260,6 +260,7 @@ class wxBrowser(wx.Window):
     def ExecuteEditCommand(self, command, value=None):
         value_exec = ""
         if value is not None:
+            value = value.replace("\n", "\\\n")
             value_exec = ", '%s'" % value
         return self.EvaluateJavaScript("document.execCommand('%s', false%s)" % (command, value_exec))
 
