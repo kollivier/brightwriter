@@ -1033,9 +1033,9 @@ class MainFrame2(sc.SizedFrame):
         webbrowser.open_new("http://sourceforge.net/tracker/?group_id=67634")
 
     def OnTreeSelChanging(self, event):
-        self.CheckIfSaveNeeded()
+        self.CheckIfSaveNeeded(event)
 
-    def CheckIfSaveNeeded(self):
+    def CheckIfSaveNeeded(self, event=None):
         if not self.projectTree.GetCurrentTreeItemData():
             return
 
