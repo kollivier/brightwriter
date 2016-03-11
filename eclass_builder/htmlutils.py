@@ -2,7 +2,7 @@ from HTMLParser import HTMLParser
 from xmlutils import *
 
 import analyzer
-import externals.BeautifulSoup as BeautifulSoup
+import bs4 as BeautifulSoup
 import cStringIO
 import fileutils
 import os
@@ -108,10 +108,12 @@ def cleanUpHTML(html, options=None):
                         "force-output" : 1,
                         "output-xhtml" : 1,
                         "doctype" : "strict",
-                        "drop-empty-paras": 1,
+                        "drop-empty-paras": 0,
                         "output-encoding" : "utf8",
                         "clean": 1,
-                        "bare": 1
+                        "bare": 1,
+                        "hide-endtags": 0,
+                        "tidy-mark": 0
                        }
     if options:
         default_options.extend(options)
@@ -124,7 +126,21 @@ def cleanUpHTML(html, options=None):
     addMetaTag(soup, [('http-equiv', 'Content-type'), ('content', 'text/html; charset=utf-8')])
     
     return tidylib.tidy_document(soup.prettify(encoding=None), options=default_options)
+
     
+def ensureValidXHTML(html):
+    soup = BeautifulSoup.BeautifulSoup(html, smartQuotesTo="html")
+    styles = soup.findAll("style")
+    for style in styles:
+        if not 'type' in style:
+            style['type'] = 'text/css'
+
+    bookmarks = soup.findAll("a", {"name": True})
+    for bookmark in bookmarks:
+        bookmark['id'] = bookmark['name']
+        del bookmark['name']
+
+    return soup.prettify(encoding=None)
 
 
 def copyDependentFilesAndUpdateLinks(oldfile, filename):

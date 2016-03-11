@@ -59,8 +59,7 @@ try:
     import externals.taskrunner as taskrunner
 except:
     pass
-    
-    
+
 import htmledit.htmlattrs as htmlattrs
 import htmledit.templates as templates
 
@@ -1366,8 +1365,8 @@ class MainFrame2(sc.SizedFrame):
         self.SaveWebPage()
 
     def SaveWebPage(self):
-        source = self.browser.GetPageSource()
-        
+        source = htmlutils.ensureValidXHTML(self.browser.GetPageSource())
+
         if self.filename.endswith(".xhtml"):
             wx.MessageBox("Internet Explorer will ask users to download HTML files with the XHTML extension. To resolve this issue, EClass will change the extension to .html.")
             basename, ext = os.path.splitext(self.filename)
