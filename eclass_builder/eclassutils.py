@@ -113,14 +113,14 @@ def updateManifestLinkedFiles(imsresource, htmlfile, html):
         if not os.path.isabs(link):
             abspath = os.path.join(basedir, link)
 
-        # ignore links that don't point to on disk resources
         if os.path.exists(abspath):
             # FIXME: Eventually we want to strip the publication root from the filename and add on
             # any subdirs above the HTML page that aren't in the link.
             if basedir.endswith("Content") and not link.startswith("Content"):
                 link = "Content/" + link
 
-            pub_links.append(link)
+        # ALL links, even external resources, need to be in the manifest
+        pub_links.append(link)
 
     files_to_remove = []
     for afile in imsresource.files:
