@@ -1,10 +1,71 @@
+import string
+
 import wx
 import wx.lib.sized_controls as sc
 
 import htmledit.htmlattrs as htmlattrs
 
+
 def _(text):
     return text
+
+ALPHA_ONLY = 1
+DIGIT_ONLY = 2
+
+
+class TextValidator(wx.PyValidator):
+    def __init__(self, flag=None, pyVar=None):
+        wx.PyValidator.__init__(self)
+        self.flag = flag
+        self.Bind(wx.EVT_CHAR, self.OnChar)
+
+    def Clone(self):
+        return TextValidator(self.flag)
+
+    def Validate(self, win):
+        tc = self.GetWindow()
+        val = tc.GetValue()
+        
+        if self.flag == ALPHA_ONLY:
+            for x in val:
+                if x not in string.letters:
+                    return False
+
+        elif self.flag == DIGIT_ONLY:
+            for x in val:
+                if x not in string.digits:
+                    return False
+
+        return True
+
+    def OnChar(self, event):
+        key = event.GetKeyCode()
+
+        if key < wx.WXK_SPACE or key == wx.WXK_DELETE or key > 255:
+            event.Skip()
+            return
+
+        if self.flag == ALPHA_ONLY and chr(key) in string.letters:
+            event.Skip()
+            return
+
+        if self.flag == DIGIT_ONLY and chr(key) in string.digits:
+            event.Skip()
+            return
+
+        if not wx.Validator.IsSilent():
+            wx.Bell()
+
+        # Returning without calling even.Skip eats the event before it
+        # gets to the text control
+        return
+        
+    def TransferToWindow(self):
+        return True # Prevent wxDialog from complaining.
+
+    def TransferFromWindow(self):
+        return True # Prevent wxDialog from complaining.
+
 
 class TagEditorDialog(sc.SizedDialog):
     def __init__(self, *a, **kw):
@@ -12,56 +73,73 @@ class TagEditorDialog(sc.SizedDialog):
         self.tagName = None
         # FIXME: Add a notebook with a "style" section here
     
-    def setProps(self, props):       
-        attrs = htmlattrs.tag_attrs[self.tagName]
-        
-        for prop in props:
-            control = self.FindWindowByName(prop)
-            if control:
-                value = props[prop]
-                if isinstance(control, wx.TextCtrl):
-                    control.SetValue(value)
-                elif isinstance(control, wx.SpinCtrl):
-                    if value.isdigit():
-                        control.SetValue(int(value))
-                elif isinstance(control, wx.Choice) or isinstance(control, wx.ComboBox):
-                    tagattrs = htmlattrs.attr_values[self.tagName][prop]
-                    in_list = False
-                    for tagattr in tagattrs:
-                        if tagattrs[tagattr] == value:
-                            if isinstance(control, wx.Choice):
-                                control.SetStringSelection(tagattr)
-                            else:
-                                control.SetValue(tagattr)
-                            in_list = True
-                    if not in_list and isinstance(control, wx.ComboBox):
+    def setProps(self, props):
+        tags = self.tagName
+        attrs = {}
+
+        if isinstance(self.tagName, basestring):
+            tags = [self.tagName]
+
+        for tag in tags:
+            attrs[tag] = htmlattrs.tag_attrs[tag]
+
+            tagProps = props[tag]
+            for prop in tagProps:
+                control = self.FindWindowByName(prop)
+                if control:
+                    value = tagProps[prop]
+                    if isinstance(control, wx.TextCtrl):
                         control.SetValue(value)
-                elif isinstance(control, wx.FilePickerCtrl):
-                    control.GetTextCtrl().SetValue(value)
-                    
+                    elif isinstance(control, wx.SpinCtrl):
+                        if value.isdigit():
+                            control.SetValue(int(value))
+                    elif isinstance(control, wx.Choice) or isinstance(control, wx.ComboBox):
+                        tagattrs = htmlattrs.attr_values[self.tagName][prop]
+                        in_list = False
+                        for tagattr in tagattrs:
+                            if tagattrs[tagattr] == value:
+                                if isinstance(control, wx.Choice):
+                                    control.SetStringSelection(tagattr)
+                                else:
+                                    control.SetValue(tagattr)
+                                in_list = True
+                        if not in_list and isinstance(control, wx.ComboBox):
+                            control.SetValue(value)
+                    elif isinstance(control, wx.FilePickerCtrl):
+                        control.GetTextCtrl().SetValue(value)
+
     def getProps(self):
-        assert self.tagName
         retattrs = {}
-        attrs = htmlattrs.tag_attrs[self.tagName]
-        all_attrs = attrs["required"] + attrs["optional"]
-        for attr in all_attrs:
-            control = self.FindWindowByName(attr)
-            if control:
-                if isinstance(control, wx.TextCtrl):
-                    retattrs[attr] = control.GetValue()
-                elif isinstance(control, wx.SpinCtrl):
-                    retattrs[attr] = "%d" % control.GetValue()
-                elif isinstance(control, wx.Choice) or isinstance(control, wx.ComboBox):
-                    if isinstance(control, wx.Choice):
-                        value = control.GetStringSelection()
-                    else:
+        attrs = {}
+        tags = self.tagName
+        if isinstance(self.tagName, basestring):
+            tags = [self.tagName]
+        
+        for tag in tags:
+            attrs[tag] = htmlattrs.tag_attrs[tag]
+        for tag in tags:
+            tagAttrs = attrs[tag]
+            all_attrs = tagAttrs["required"] + tagAttrs["optional"]
+            retattrs[tag] = {}
+            for attr in all_attrs:
+                control = self.FindWindowByName(attr)
+                if control:
+                    value = None
+                    if isinstance(control, wx.TextCtrl):
                         value = control.GetValue()
-                    if value in htmlattrs.attr_values[self.tagName][attr]:
-                        retattrs[attr] = htmlattrs.attr_values[self.tagName][attr][value]
-                    elif isinstance(control, wx.ComboBox):
-                        retattrs[attr] = value
-                elif isinstance(control, wx.FilePickerCtrl):
-                    retattrs[attr] = control.GetTextCtrl().GetValue()
+                    elif isinstance(control, wx.SpinCtrl):
+                        value = "%d" % control.GetValue()
+                    elif isinstance(control, wx.Choice) or isinstance(control, wx.ComboBox):
+                        if isinstance(control, wx.Choice):
+                            value = control.GetStringSelection()
+                        else:
+                            value = control.GetValue()
+                        if value in htmlattrs.attr_values[tag][attr]:
+                            value = htmlattrs.attr_values[self.tagName][attr][value]
+                    elif isinstance(control, wx.FilePickerCtrl):
+                        value = control.GetTextCtrl().GetValue()
+                    retattrs[tag][attr] = value
+
         return retattrs
 
 class LinkPropsDialog(TagEditorDialog):
@@ -88,6 +166,33 @@ class LinkPropsDialog(TagEditorDialog):
         
         self.setProps(linkProps)
 
+class VideoPropsDialog(TagEditorDialog):
+    def __init__(self, parent, props=None):
+        TagEditorDialog.__init__ (self, parent, -1, _("Video Properties"), size=wx.Size(400,200), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+        self.tagName = "VIDEO"
+        
+        pane = self.GetContentsPane()
+        pane.SetSizerType("form")
+        wx.StaticText(pane, -1, "MP4 Video").SetSizerProps(halign="right")
+        self.mp4_text = filebrowse.FileBrowseButton(pane, -1, labelText="", fileMask="MP4 Video (*.mp4,*.m4v)|*.mp4;*.m4v")
+        self.mp4_text.SetSizerProps(expand=True)
+        
+        wx.StaticText(pane, -1, _("Width")).SetSizerProps(halign="right")
+        self.width_text = wx.TextCtrl(video_panel, -1, "", validator=TextValidator(DIGIT_ONLY))
+        
+        wx.StaticText(pane, -1, _("Height")).SetSizerProps(halign="right")
+        self.height_text = wx.TextCtrl(pane, -1, "", validator=TextValidator(DIGIT_ONLY))
+
+        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+        
+        self.fileURL.SetFocus()
+        self.Fit()
+        self.MinSize = self.Size
+        self.MaxSize = (-1, self.Size.y)
+        
+        if props is not None:
+            self.setProps(props)
+
 class BookmarkPropsDialog(TagEditorDialog):
     def __init__(self, parent, bookmarkProps):
         TagEditorDialog.__init__ (self, parent, -1, _("Bookmark Properties"), size=wx.Size(400,200), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
@@ -96,8 +201,8 @@ class BookmarkPropsDialog(TagEditorDialog):
         pane = self.GetContentsPane()
         pane.SetSizerType("form")
 
-        wx.StaticText(pane, -1, _("Name"))
-        wx.TextCtrl(pane, -1, name="name")
+        wx.StaticText(pane, -1, _("ID"))
+        wx.TextCtrl(pane, -1, name="id")
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
@@ -168,9 +273,9 @@ class ImagePropsDialog(TagEditorDialog):
         choice.SetStringSelection(_("Default"))
 
         wx.StaticText(pane, -1, _("Width"))
-        wx.TextCtrl(pane, -1, name="width")
+        wx.TextCtrl(pane, -1, name="width", validator=TextValidator(DIGIT_ONLY))
         wx.StaticText(pane, -1, _("Height"))
-        wx.TextCtrl(pane, -1, name="height")
+        wx.TextCtrl(pane, -1, name="height", validator=TextValidator(DIGIT_ONLY))
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
@@ -281,7 +386,7 @@ class CreateTableDialog(sc.SizedDialog):
         widthPane = sc.SizedPanel(panel, -1)
         widthPane.SetSizerType("horizontal")
         self.lblWidth = wx.StaticText(widthPane, -1, _("Width:"))
-        self.txtWidth = wx.TextCtrl(widthPane, -1, self.twidth)
+        self.txtWidth = wx.TextCtrl(widthPane, -1, self.twidth, validator=TextValidator(DIGIT_ONLY))
         self.cmbWidthType = wx.Choice(widthPane, -1, choices=[_("Percent"), _("Pixels")])
         self.cmbWidthType.SetStringSelection(_("Percent"))
         

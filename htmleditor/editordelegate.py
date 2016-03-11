@@ -46,7 +46,7 @@ edit_functions = """
         var range = selection.getRangeAt(0);
         var node = range.commonAncestorContainer;
         while (node) {
-            if (node.nodeType == 1 && node.tagName.toLowerCase() == tagName) {
+            if (node.nodeType == 1 && node.tagName.toLowerCase() == tagName.toLowerCase()) {
                 return node;
             }
             node = node.parentNode;
@@ -69,12 +69,14 @@ edit_functions = """
         return "";
     };
 
-    function setTagAttributes(tagName, attributes) {
-        var node = getSelectedNode(tagName);
-        if (node) {
-            var attrs = JSON.parse(attributes);
-            for (var key in attrs) {
-                node.setAttribute(key, attrs[key]);
+    function setTagAttributes(attributes) {
+        var attrs = JSON.parse(attributes);
+        for (var tagName in attrs) {
+            var node = getSelectedNode(tagName);
+            if (node) {
+                for (var key in attrs[tagName]) {
+                    node.setAttribute(key, attrs[tagName][key]);
+                }
             }
         }
     };
@@ -275,8 +277,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         self.RunCommand("Paste", evt)
         
     def OnInsertVideo(self, evt):
-
-        dlg = embed_video_dialog.EmbedVideoDialog(self.webview, -1, _("Video Properties"), size=(400,400))
+        dlg = VideoPropsDialog(self.webview, -1)
         if dlg.ShowModal() == wx.ID_OK:
             mp4video = dlg.mp4_text.GetValue()
             oggvideo = dlg.ogg_text.GetValue()
@@ -324,7 +325,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
                 for counter in range(0, int(tcolumns)):
                     tablehtml = tablehtml + "<td>&#160;</td>"
                 tablehtml = tablehtml + "</tr>"
-            tablehtml = tablehtml + "</table>"
+            tablehtml = tablehtml + "</table><p>&nbsp;</p>"
             self.webview.ExecuteEditCommand("InsertHTML", tablehtml)
             self.dirty = True
         mydialog.Destroy()
@@ -341,30 +342,42 @@ class HTMLEditorDelegate(wx.EvtHandler):
     def OnImageProps(self, evt):
         self.ShowEditorForTag("IMG", ImagePropsDialog)
     
-    def ShowEditorForTag(self, tagName, editorClass):
+    def ShowEditorForTag(self, tag, editorClass):
+        """
+        Just a compatibility wrapper for single tag cases. 
+        """
+        self.ShowEditorForTags([tag], editorClass)
+
+    def ShowEditorForTags(self, tags, editorClass):
         props = {}
-        tag = self.GetParent(tagName)
-        attrs = htmlattrs.tag_attrs[tagName]
-        all_attrs = attrs["required"] + attrs["optional"]
-        for attr in all_attrs:
-            if attr in tag:
-                props[attr] = tag[attr]
+        all_attrs = {}
+        
+        for tag in tags:
+            attrs = htmlattrs.tag_attrs[tag]
+            tagAttrs = self.GetParent(tag)
+            all_attrs = attrs["required"] + attrs["optional"]
+            for attr in all_attrs:
+                if attr in tagAttrs:
+                    if not tag in props:
+                        props[tag] = {}
+                    props[tag][attr] = tagAttrs[attr]
 
         mydialog = editorClass(self.webview, props)
         mydialog.CentreOnParent()
         if mydialog.ShowModal() == wx.ID_OK:
             return_props = mydialog.getProps()
-            for prop in return_props:
-                assert prop in all_attrs
-                if prop in ["href", "src"]:
-                    return_props[prop] = self.CopyFileIfNeeded(return_props[prop])
+            for tag in return_props:
+                for prop in return_props[tag]:
+                    if prop in ["href", "src"]:
+                        return_props[tag][prop] = self.CopyFileIfNeeded(return_props[tag][prop])
 
-            self.SetAttributes(tagName, return_props)
+            self.SetAttributes(tags, return_props)
 
         mydialog.Destroy()
 
-    def SetAttributes(self, tagName, attrs):
-        self.webview.EvaluateJavaScript(edit_functions + "setTagAttributes('%s', '%s');" % (tagName.lower(), json.dumps(attrs)))
+    def SetAttributes(self, tags, attrs):
+        print("Calling setTagAttributes with %r" % attrs)
+        self.webview.EvaluateJavaScript(edit_functions + "setTagAttributes('%s');" % (json.dumps(attrs)))
         self.dirty = True
 
     def OnLinkProps(self, evt):
@@ -411,7 +424,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
             if "target" in props:
                 url = self.GetParent("A")
                 if url:
-                    self.SetAttributes("A", {"target": props["target"]})
+                    self.SetAttributes("A", {"A": {"target": props["target"]}})
         mydialog.Destroy()
 
     def OnBookmarkButton(self, evt):    
@@ -420,7 +433,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         result = dialog.ShowModal()
         if result == wx.ID_OK:
             props = dialog.getProps()
-            html = "<a name=\"" + props["name"] + "\"></a>"
+            html = "<a id=\"" + props["id"] + "\"></a>"
             self.webview.ExecuteEditCommand("InsertHTML", html)
             self.dirty = True
         dialog.Destroy()
