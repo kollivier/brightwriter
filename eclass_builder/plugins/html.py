@@ -61,7 +61,7 @@ htmlpage = u"""
 <head>
     <title>New Page</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-    <style>
+    <style type="text/css">
         body {font-family: Arial}
     </style>
 </head>
