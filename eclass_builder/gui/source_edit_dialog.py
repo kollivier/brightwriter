@@ -36,19 +36,20 @@ class SourceEditDialog(sc.SizedDialog):
         self.searchCtrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         
     def OnKeyDown(self, event):
+        # FIXME: Figure out why this doesn't fire on Mac
         is_search = event.MetaDown() and event.KeyCode == ord('G')
         searchText = self.searchCtrl.GetValue()
         
         if searchText and is_search:
-            pub.sendMessage(('search', 'findnext'), searchText)
+            pub.sendMessage(('search', 'findnext'), text=searchText)
         else:
             event.Skip()
 
-
     def OnDoSearch(self, event):
-        # wx bug: event.GetString() doesn't work on Windows 
+        # wx bug: event.GetString() doesn't work on Windows
         text = event.GetEventObject().GetValue()
-        Publisher().sendMessage(('search', 'find'), text)
+        pub.sendMessage(('search', 'find'), text=text)
+        event.Skip()
 
     def OnSavePointReached(self, event):
         self.isDirty = False

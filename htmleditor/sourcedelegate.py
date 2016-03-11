@@ -67,13 +67,13 @@ class HTMLSourceEditorDelegate(wx.EvtHandler):
     def OnRedo(self, event):
         self.source.Redo()
         
-    def OnFind(self, message):
+    def OnFind(self, text):
         if wx.GetTopLevelParent(self.source).IsActive():
-            self.sourceFindHandler.DoInlineSearch(message.data)
+            self.sourceFindHandler.DoInlineSearch(text)
 
-    def OnFindNext(self, message):
+    def OnFindNext(self, text):
         if wx.GetTopLevelParent(self.source).IsActive():
-            self.sourceFindHandler.DoInlineSearch(message.data, next=True)
+            self.sourceFindHandler.DoInlineSearch(text, next=True)
 
     def OnSelectAll(self, evt):
         self.source.SelectAll()
