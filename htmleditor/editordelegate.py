@@ -387,7 +387,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
             if "href" in link and link["href"] != "":
                 self.ShowEditorForTag("A", LinkPropsDialog)
 
-            elif "name" in link and link["name"] != "":
+            elif "id" in link and link["id"] != "":
                 self.ShowEditorForTag("A", BookmarkPropsDialog)
 
     def OnListProps(self, evt):
@@ -419,7 +419,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         mydialog = LinkPropsDialog(self.webview, linkProps)
         mydialog.CentreOnParent()
         if mydialog.ShowModal() == wx.ID_OK:
-            props = mydialog.getProps()
+            props = mydialog.getProps()["A"]
             self.webview.ExecuteEditCommand("CreateLink", self.CopyFileIfNeeded(props["href"]))
             if "target" in props:
                 url = self.GetParent("A")
@@ -432,7 +432,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         dialog.CentreOnParent()
         result = dialog.ShowModal()
         if result == wx.ID_OK:
-            props = dialog.getProps()
+            props = dialog.getProps()["A"]
             html = "<a id=\"" + props["id"] + "\"></a>"
             self.webview.ExecuteEditCommand("InsertHTML", html)
             self.dirty = True

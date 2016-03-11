@@ -83,30 +83,31 @@ class TagEditorDialog(sc.SizedDialog):
         for tag in tags:
             attrs[tag] = htmlattrs.tag_attrs[tag]
 
-            tagProps = props[tag]
-            for prop in tagProps:
-                control = self.FindWindowByName(prop)
-                if control:
-                    value = tagProps[prop]
-                    if isinstance(control, wx.TextCtrl):
-                        control.SetValue(value)
-                    elif isinstance(control, wx.SpinCtrl):
-                        if value.isdigit():
-                            control.SetValue(int(value))
-                    elif isinstance(control, wx.Choice) or isinstance(control, wx.ComboBox):
-                        tagattrs = htmlattrs.attr_values[self.tagName][prop]
-                        in_list = False
-                        for tagattr in tagattrs:
-                            if tagattrs[tagattr] == value:
-                                if isinstance(control, wx.Choice):
-                                    control.SetStringSelection(tagattr)
-                                else:
-                                    control.SetValue(tagattr)
-                                in_list = True
-                        if not in_list and isinstance(control, wx.ComboBox):
+            if tag in props:
+                tagProps = props[tag]
+                for prop in tagProps:
+                    control = self.FindWindowByName(prop)
+                    if control:
+                        value = tagProps[prop]
+                        if isinstance(control, wx.TextCtrl):
                             control.SetValue(value)
-                    elif isinstance(control, wx.FilePickerCtrl):
-                        control.GetTextCtrl().SetValue(value)
+                        elif isinstance(control, wx.SpinCtrl):
+                            if value.isdigit():
+                                control.SetValue(int(value))
+                        elif isinstance(control, wx.Choice) or isinstance(control, wx.ComboBox):
+                            tagattrs = htmlattrs.attr_values[self.tagName][prop]
+                            in_list = False
+                            for tagattr in tagattrs:
+                                if tagattrs[tagattr] == value:
+                                    if isinstance(control, wx.Choice):
+                                        control.SetStringSelection(tagattr)
+                                    else:
+                                        control.SetValue(tagattr)
+                                    in_list = True
+                            if not in_list and isinstance(control, wx.ComboBox):
+                                control.SetValue(value)
+                        elif isinstance(control, wx.FilePickerCtrl):
+                            control.GetTextCtrl().SetValue(value)
 
     def getProps(self):
         retattrs = {}
@@ -139,7 +140,6 @@ class TagEditorDialog(sc.SizedDialog):
                     elif isinstance(control, wx.FilePickerCtrl):
                         value = control.GetTextCtrl().GetValue()
                     retattrs[tag][attr] = value
-
         return retattrs
 
 class LinkPropsDialog(TagEditorDialog):
