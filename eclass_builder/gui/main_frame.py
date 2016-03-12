@@ -1049,7 +1049,6 @@ class MainFrame2(sc.SizedFrame):
                 self.dirty = False
             elif result == wx.ID_YES:
                 self.SaveWebPage()
-                self.browser.EvaluateJavaScript("dirty = false;")
             
     def OnTreeSelChanged(self, event):
         self.Preview()
@@ -1398,6 +1397,7 @@ class MainFrame2(sc.SizedFrame):
         
         self.selectedFileLastModifiedTime = os.path.getmtime(self.filename)
         self.dirty = False
+        self.browser.EvaluateJavaScript("dirty = false;")
 
     def NewContentPackage(self):
         """
