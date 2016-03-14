@@ -1628,7 +1628,11 @@ class MainFrame2(sc.SizedFrame):
     def PublishToEpub(self, event):
         deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".epub"
         dialog = wx.FileDialog(self, _("Export ePub package"), "", deffilename, _("ePub Files") + " (*.epub)|*.epub", wx.FD_SAVE)
-        if dialog.ShowModal() == wx.ID_OK: 
+        if dialog.ShowModal() == wx.ID_OK:
+            if dialog.GetPath().lower().startswith(settings.ProjectDir.lower()):
+                wx.MessageBox(_("ePub file cannot be saved inside of the project directory. Please choose another location"), _("Invalid Save Directory"))
+                return
+
             import epub
             epubPackage = epub.EPubPackage(self.imscp.organizations[0].items[0].title.text)
             epubPackage.imsToEPub(self.imscp)
