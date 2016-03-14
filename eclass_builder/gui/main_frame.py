@@ -66,62 +66,14 @@ import htmledit.templates as templates
 import editordelegate
 import htmlutils
 import source_edit_dialog
-import gui.embed_audio_dialog
-import gui.embed_video_dialog
+
 
 class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
     def __init__(self, source, parent, *a, **kw):
         editordelegate.HTMLEditorDelegate.__init__(self, source, *a, **kw)
         # FIXME: An ugly hack to get to the current filename.
         self.parent = parent
-        
-    def OnInsertVideo(self, evt):
-        dlg = gui.embed_video_dialog.EmbedVideoDialog(self.webview, -1, _("Video Properties"), size=(400,400))
-        dlg.CentreOnScreen()
-        if dlg.ShowModal() == wx.ID_OK:
-            mp4video = dlg.mp4_text.GetValue()
-            
-            videoHTML = templates.html5video
 
-            if os.path.exists(mp4video):
-                mp4video = self.CopyFileIfNeeded(mp4video)
-                
-            videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
-            videoHTML = videoHTML.replace("_filename_", mp4video)
-            videoHTML = videoHTML.replace("_autostart_", "false")
-            videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.splitext(os.path.basename(mp4video))[0])
-            dimensions = ""
-            if dlg.width_text.GetValue() != "":
-                dimensions += "\n        width: %s," % dlg.width_text.GetValue()
-                
-            if dlg.height_text.GetValue() != "":
-                dimensions += "\n        height: %s," % dlg.height_text.GetValue()
-                
-            videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
-            self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
-        dlg.Destroy()
-    
-    def OnInsertAudio(self, event):
-        dlg = gui.embed_audio_dialog.EmbedAudioDialog(self.webview, -1, _("Audio Properties"), size=(400,400))
-        dlg.CentreOnScreen()
-        if dlg.ShowModal() == wx.ID_OK:
-            mp3audio = dlg.mp3_text.GetValue()
-            
-            jsmediaelement_dir = os.path.join(settings.ThirdPartyDir, "..", "jsmediaelement")
-            
-            for afile in glob.glob(os.path.join(jsmediaelement_dir, "*.*")):
-                self.CopyFileIfNeeded(afile, overwrite="always", subdir="jsmediaelement")
-                
-            if os.path.exists(mp3audio):
-                mp3audio = self.CopyFileIfNeeded(mp3audio)
-                
-            audioHTML = templates.jmediaplayer_audio
-            audioHTML = audioHTML.replace("__AUDIO__.MP3", mp3audio)
-            
-            print "Inserting %s" % audioHTML
-            self.webview.ExecuteEditCommand("InsertHTML", audioHTML)
-        dlg.Destroy()
-    
     def CopyFileIfNeeded(self, filepath, overwrite="ask", subdir=""):
         # if it's not an absolute path to a file, we assume it's a URL or relative path
         if not os.path.exists(filepath):

@@ -1,5 +1,7 @@
+import glob
 import json
 import logging
+import os
 
 import wx
 
@@ -8,7 +10,7 @@ from wx.lib.pubsub import pub
 from editactions import *
 from editdialogs import *
 
-import embed_video_dialog
+import settings
 
 import htmledit.htmlattrs as htmlattrs
 import htmledit.templates as templates
@@ -277,41 +279,51 @@ class HTMLEditorDelegate(wx.EvtHandler):
         self.RunCommand("Paste", evt)
         
     def OnInsertVideo(self, evt):
-        dlg = VideoPropsDialog(self.webview, -1)
+        dlg = VideoPropsDialog(self.webview)
+        dlg.CentreOnScreen()
         if dlg.ShowModal() == wx.ID_OK:
             mp4video = dlg.mp4_text.GetValue()
-            oggvideo = dlg.ogg_text.GetValue()
-            poster = dlg.poster_text.GetValue()
-            
-            if dlg.useJWPlayer:
-                videoHTML = templates.jwplayer
-            else:
-                videoHTML = templates.html5video
-                
+
+            videoHTML = templates.html5video
+
             if os.path.exists(mp4video):
                 mp4video = self.CopyFileIfNeeded(mp4video)
-            
-            if os.path.exists(oggvideo):
-                oggvideo = self.CopyFileIfNeeded(oggvideo)
-                
+
             videoHTML = videoHTML.replace("__VIDEO__.MP4", mp4video)
-            videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.basename(mp4video))
-            videoHTML = videoHTML.replace("__VIDEO__.OGV", oggvideo)
-            videoHTML = videoHTML.replace("__VIDEO__.JPG", poster)
-            
+            videoHTML = videoHTML.replace("_filename_", mp4video)
+            videoHTML = videoHTML.replace("_autostart_", "false")
+            videoHTML = videoHTML.replace("__VIDEO_ID__", os.path.splitext(os.path.basename(mp4video))[0])
             dimensions = ""
             if dlg.width_text.GetValue() != "":
-                dimensions += "\nwidth: %s," % dlg.width_text.GetValue()
-                
+                dimensions += "\n        width: %s," % dlg.width_text.GetValue()
+
             if dlg.height_text.GetValue() != "":
-                dimensions += "\nheight: %s," % dlg.height_text.GetValue()
-                
+                dimensions += "\n        height: %s," % dlg.height_text.GetValue()
+
             videoHTML = videoHTML.replace("__DIMENSIONS__", dimensions)
             self.webview.ExecuteEditCommand("InsertHTML", videoHTML)
         dlg.Destroy()
 
     def OnInsertAudio(self, evt):
-        print "Calling OnInsertAudio"
+        dlg = AudioPropsDialog(self.webview)
+        dlg.CentreOnScreen()
+        if dlg.ShowModal() == wx.ID_OK:
+            mp3audio = dlg.mp3_text.GetValue()
+
+            jsmediaelement_dir = os.path.join(settings.ThirdPartyDir, "..", "jsmediaelement")
+
+            for afile in glob.glob(os.path.join(jsmediaelement_dir, "*.*")):
+                self.CopyFileIfNeeded(afile, overwrite="always", subdir="jsmediaelement")
+
+            if os.path.exists(mp3audio):
+                mp3audio = self.CopyFileIfNeeded(mp3audio)
+
+            audioHTML = templates.jmediaplayer_audio
+            audioHTML = audioHTML.replace("__AUDIO__.MP3", mp3audio)
+
+            print "Inserting %s" % audioHTML
+            self.webview.ExecuteEditCommand("InsertHTML", audioHTML)
+        dlg.Destroy()
 
     def OnTableButton(self, evt):
         tableProps = []

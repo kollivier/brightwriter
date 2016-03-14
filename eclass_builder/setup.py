@@ -94,7 +94,8 @@ if sys.platform.startswith("darwin"):
         logging.warning("Not code-signing build, for local use only.")
 
     dmg_name = "%s %s.dmg" % (settings.app_name, version.asString())
-    deploy_dir = "deploy4"
+    dmg_name = dmg_name.replace(" ", "-")
+    deploy_dir = "deploy5"
     if not os.path.exists(deploy_dir):
         os.makedirs(deploy_dir)
 
