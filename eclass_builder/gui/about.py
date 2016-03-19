@@ -6,8 +6,6 @@ import version
 
 import settings
 
-rootdir = os.path.join(os.path.dirname(__file__), "..")
-
 import wxbrowser
 
 class EClassAboutDialog(sc.SizedDialog):
@@ -17,7 +15,7 @@ class EClassAboutDialog(sc.SizedDialog):
         
         panel = self.GetContentsPane()
         
-        icon = wx.StaticBitmap(panel, -1, wx.Bitmap(os.path.join(rootdir, "icons", "eclass_builder.png")))
+        icon = wx.StaticBitmap(panel, -1, wx.Bitmap(os.path.join(settings.AppDir, "icons", "eclass_builder.png")))
         icon.SetSizerProps(halign="center")
         
         app_name = wx.StaticText(panel, -1, settings.app_name)
