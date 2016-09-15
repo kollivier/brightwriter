@@ -1,0 +1,91 @@
+<html><head><base href="file:///C:/Documents%20and%20Settings/Kevin%20Ollivier/My%20Documents/EClass%20Projects/BrightWriter%202.5%20Documentation/Text/translating.htm"></head><body><div style="text-align: center;"><b><font class="Apple-style-span" size="6">Localizing BrightWriter</font></b></div><div><br></div>BrightWriter has support for translating the graphical interface into foreign
+languages. This process is commonly referred to as 'localization', to
+distinguish it from 'translation' which generally refers to translating
+program documentation or the content of an EClass. In order for BrightWriter to support a new
+language, all that needs to be done is to develop a localization file
+(named eclass.po).
+All of EClass's localization files are stored in the &lt;EClass Program
+Folder&gt;\locale subdirectory. <br>
+
+<br>
+
+Inside that directory, each language gets its own folder, which
+contains a LC_MESSAGES subfolder, and finally the BrightWriter localization file for that language. For example, here are the contents
+of the current BrightWriter locale directory, which contains
+translations for English, Spanish, and French:<br>
+
+<br>
+
+locale\en\LC_MESSAGES\eclass.po<br>
+
+locale\en\LC_MESSAGES\eclass.mo<br>
+
+<br>
+
+locale\es\LC_MESSAGES\eclass.po<br>
+
+locale\es\LC_MESSAGES\eclass.mo<br>
+
+<br>
+
+locale\fr\LC_MESSAGES\eclass.po<br>
+
+locale\fr\LC_MESSAGES\eclass.mo<br>
+
+<br>
+
+en, es, and fr are the two letter codes for English, Spanish and
+French, respectively. To lookup the two letter code for your own
+language, you can go to: <a target="_blank" href="http://www.w3.org/WAI/ER/IG/ert/iso639.htm">http://www.w3.org/WAI/ER/IG/ert/iso639.htm</a>.
+<br>
+<br>
+If you create a new language, make sure to create a subdirectory of
+locale that uses the two letter code for your language. This is
+necessary because Windows, Mac, and Linux refer to languages by these
+codes, so EClass can actually check which language the system is
+running and use the correct localization file without asking the user
+which language s/he wants to use.<br>
+
+<br>
+
+What are the eclass.mo and eclass.po files? The eclass.po file is the
+localization file containing all the text entries that need to be
+localized. The eclass.mo file is a binary index file. It is created to
+speed up the loading of text, similar in nature to how databases enable
+you to search large amounts of text quickly. People wishing to localize BrightWriter need only worry about the .po files. Once you send me
+the finished eclass.po file for a particular language, I will
+automatically generate the appropriate binary file needed by BrightWriter.<br>
+
+<br>
+
+<b>Creating a New Language</b> <b>File</b><br>
+
+<br>
+If you are creating a new localization file for BrightWriter, you
+should start by copying the English language eclass.po file to the new
+subdirectory for your language.<br>
+
+<br>
+&nbsp;<b>Localizing the Text<br>
+<br>
+</b>Open the &lt;EClass
+Directory&gt;\locale\&lt;Your Language Code&gt;\LC_MESSAGES\eclass.po
+file for editing. It is a plain text file. If you're not familiar
+with editing .po files, I would <b>highly recommend </b>using <a target="_blank" href="http://poedit.sourceforge.net/">poEdit</a> to edit the
+file, as
+it has a number of helpful features such as Unicode support and putting
+untranslated entries at the top of the list. In poEdit, just open the eclass.po file, select an English item from
+the list, and type the translation in the bottom left-hand box, below
+the English text box. Do not type over the English text - EClass uses
+the English text in order to 'look up' the localized text.<br>
+
+<br>
+
+<b>Submitting the Translation File</b> <br>
+<br>
+When you're done creating a new translation or editing an existing one,
+please send a note to the eclass-users mailing list and I will tell you
+where to send the file. Thanks! =)<br>
+
+<br>
+</body></html>

@@ -1,0 +1,261 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest version="IMS CP 1.1.4" xmlns="http://www.imsglobal.org/xsd/imscp_v1p1" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_v1p3" xmlns:imsmd="http://www.imsglobal.org/xsd/imsmd_v1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imscp_v1p1 http://www.imsglobal.org/xsd/imscp_v1p1.xsd http://www.imsglobal.org/xsd/imsmd_v1p2 http://www.imsglobal.org/xsd/imsmd_v1p2.xsd ">
+	<metadata>
+		<imsmd:lom>
+			<imsmd:general>
+				<imsmd:title>
+					<imsmd:langstring xml:lang="en-US">
+						BrightWriter 2.5 Documentation
+					</imsmd:langstring>
+				</imsmd:title>
+			</imsmd:general>
+		</imsmd:lom>
+	</metadata>
+	<organizations default="URN:IMS-PLIRID-V0:4B8E1A5FAA05484C98C2ECE68B0C5051">
+		<organization identifier="URN:IMS-PLIRID-V0:4B8E1A5FAA05484C98C2ECE68B0C5051">
+			<item identifier="URN:IMS-PLIRID-V0:E224935A7719403AA486352B67EC5EA0" identifierref="URN:IMS-PLIRID-V0:FEDEF7F54D6E41368CB30B8931045768">
+				<title>
+					BrightWriter Documentation
+				</title>
+				<item identifier="URN:IMS-PLIRID-V0:82398B2899A74C3388DF0DA470E59508" identifierref="URN:IMS-PLIRID-V0:9CC71042BAEE4D19AE73BF4666512758">
+					<title>
+						Why BrightWriter?
+					</title>
+				</item>
+				<item identifier="URN:IMS-PLIRID-V0:936a4c3d-7e36-4dc9-9a54-e1a7f8b071c2" identifierref="URN:IMS-PLIRID-V0:920f065b-21b7-4d77-a739-2acb0b56681e">
+					<title>
+						Upgrading From 2.x
+					</title>
+				</item>
+				<item identifier="URN:IMS-PLIRID-V0:966CA18BBEED4900A060453D64B237D1" identifierref="URN:IMS-PLIRID-V0:AF2D2464C33D4806808C177F4E22A64A">
+					<title>
+						Getting Started
+					</title>
+					<item identifier="URN:IMS-PLIRID-V0:A479EED45B1342109C15E1DB0A70088F" identifierref="URN:IMS-PLIRID-V0:476E1FC38A864EEA8E6DA04CEAB41D52">
+						<title>
+							Installing BrightWriter
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:362A5DF60E4F464B859FF097F32F7082" identifierref="URN:IMS-PLIRID-V0:04DD88B77B1041B89F7566FA80C1507D">
+						<title>
+							System Requirements
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:03F9D383249949C9ACB9AF90A187C8CD" identifierref="URN:IMS-PLIRID-V0:D7FE756B661D430E824CBCF4FDBA4A86">
+						<title>
+							How BrightWriter Works
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:a81ee7b2-5c87-4efe-ab22-fb919ec24342" identifierref="URN:IMS-PLIRID-V0:5d6f2782-f1dd-447d-af12-b7c2555cbd44">
+						<title>
+							Thinking Outside the Page
+						</title>
+					</item>
+				</item>
+				<item identifier="URN:IMS-PLIRID-V0:6BF4973F98674196BF1B7C70D16ABCAB" identifierref="URN:IMS-PLIRID-V0:FA0A7EA47C4D425BA6EF9D69C6D777FC">
+					<title>
+						Tutorial
+					</title>
+					<item identifier="URN:IMS-PLIRID-V0:657C9C6943404B47B64F027934FC310F" identifierref="URN:IMS-PLIRID-V0:97D62C7F134341E985819F6761BF2B7D">
+						<title>
+							Creating a New Project
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:AF5195C27557481A8F95C09E99FD99E1" identifierref="URN:IMS-PLIRID-V0:A3D1F9CBF43D4E0FAD4F3CCBEE621A83">
+						<title>
+							Adding Pages
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:23ce8ad2-952a-48d8-b89e-4b140a6fa1eb" identifierref="URN:IMS-PLIRID-V0:84855057-7f86-4fb2-9b5b-f9472cbeeae4">
+						<title>
+							Editing Pages
+						</title>
+						<item identifier="URN:IMS-PLIRID-V0:c3bfd029-49b0-45be-9ecc-09be34d5e456" identifierref="URN:IMS-PLIRID-V0:5a726127-0e3f-43bd-a3c5-ab71261c5a5b">
+							<title>
+								Working with Links
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:bc2f6628-b5cd-4744-a0da-cf61ae4eb2c9" identifierref="URN:IMS-PLIRID-V0:58f7ff72-b122-4925-a865-0479fa9b8d08">
+							<title>
+								Working with Images
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:9a0b28d9-2550-4c7a-9086-5e477456e252" identifierref="URN:IMS-PLIRID-V0:fafbbe03-c34f-49d0-bdc6-293706654957">
+							<title>
+								Working with Tables
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:7320bd3e-8999-4ab0-9ea8-60a8cfce0ff5" identifierref="URN:IMS-PLIRID-V0:d569d4c6-4284-4387-a8ed-7738bfe159d7">
+							<title>
+								Working with Audio
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:7634826a-361d-4f65-8387-2c33bbf6cb37" identifierref="URN:IMS-PLIRID-V0:2b44b404-2529-4db9-be2f-7f5aec40eaf0">
+							<title>
+								Working with Video
+							</title>
+						</item>
+						<item identifier="URN:IMS-PLIRID-V0:714ccade-e601-4126-b4e7-204272bd8648" identifierref="URN:IMS-PLIRID-V0:e73da1fe-fd96-4078-b980-546e1fef920d">
+							<title>
+								Working with Bookmarks
+							</title>
+						</item>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:1CCFCB0B4F214F029BFC94AACD406CD0" identifierref="URN:IMS-PLIRID-V0:288FE5EA2C804052B4886FF0E1C5E46B">
+						<title>
+							Publish Your EClass
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:9cb140ef-5db0-4ea4-81be-44aeb7128fad" identifierref="URN:IMS-PLIRID-V0:81b5f592-490d-4c10-ba98-307e98f87338">
+						<title>
+							Importing Content
+						</title>
+					</item>
+				</item>
+				<item identifier="URN:IMS-PLIRID-V0:ab3dace2-c95b-49a9-88e5-61b373f5b042" identifierref="URN:IMS-PLIRID-V0:2daf54e3-7103-41f9-940d-a6bcfed79846">
+					<title>
+						Multimedia Overview
+					</title>
+					<item identifier="URN:IMS-PLIRID-V0:67ff6440-b551-4c05-8feb-52dbf1dfd6c4" identifierref="URN:IMS-PLIRID-V0:d0c25157-42f7-4050-9dea-32eb00732e88">
+						<title>
+							Graphics Production &amp; Editing
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:36c22006-c60c-49e9-988a-b2c44f1a8efc" identifierref="URN:IMS-PLIRID-V0:e0ea2108-cc5b-4dc8-83ba-b68f3e65b293">
+						<title>
+							Audio Production &amp; Conversion
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:046d3dbd-d939-4fd4-9a9f-61f59807c981" identifierref="URN:IMS-PLIRID-V0:945fc5c4-47e2-444d-a817-597686ad905b">
+						<title>
+							Video Production &amp; Conversion
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:d12393cc-39c7-4958-b8ad-ced288cc2635" identifierref="URN:IMS-PLIRID-V0:f38e13ad-4b54-4d0d-a930-30788f2d4c58">
+						<title>
+							Creating and Exporting Presentations
+						</title>
+					</item>
+				</item>
+				<item identifier="URN:IMS-PLIRID-V0:7B2B54DB19C34DE7B6B28760FDF83D73" identifierref="URN:IMS-PLIRID-V0:F1A086B9B4A34682A49CB4470B8CD9BF">
+					<title>
+						Advanced Options
+					</title>
+					<item identifier="URN:IMS-PLIRID-V0:D577D82A23B8491EA1FA18AB2A7A8F44" identifierref="URN:IMS-PLIRID-V0:496FE103266B48349C7A9E536BE1A68B">
+						<title>
+							Changing Project Settings
+						</title>
+					</item>
+					<item identifier="URN:IMS-PLIRID-V0:04D84DE93FF9443A9304180E74CB3193" identifierref="URN:IMS-PLIRID-V0:A436267DF4384DC389E465E8BAEDB5C7">
+						<title>
+							Changing Page Properties
+						</title>
+					</item>
+				</item>
+				<item identifier="URN:IMS-PLIRID-V0:37C8F2ADDC0349C99B43960961BF9C9B" identifierref="URN:IMS-PLIRID-V0:451BA54D47FB4F1BBFFBC2B5B4592708">
+					<title>
+						For Developers
+					</title>
+					<item identifier="URN:IMS-PLIRID-V0:F5C38075E50D4436A957C1AD34E3681E" identifierref="URN:IMS-PLIRID-V0:38471C43538E44FD936820BBD4B9DA9F">
+						<title>
+							Localizing BrightWriter
+						</title>
+					</item>
+				</item>
+			</item>
+		</organization>
+	</organizations>
+	<resources>
+		<resource adlcp:scormtype="asset" href="Text/BrightWriter 2.5 Documenta 1.xhtml" identifier="URN:IMS-PLIRID-V0:FEDEF7F54D6E41368CB30B8931045768" type="webcontent">
+			<file href="Text/BrightWriter 2.5 Documenta 1.htm"/>
+			<file href="Text/BrightWriter 2.5 Documenta 1.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Getting Started 1.htm" identifier="URN:IMS-PLIRID-V0:AF2D2464C33D4806808C177F4E22A64A" type="webcontent">
+			<file href="Text/Getting Started 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Installing BrightWriter 1.htm" identifier="URN:IMS-PLIRID-V0:476E1FC38A864EEA8E6DA04CEAB41D52" type="webcontent">
+			<file href="Text/Installing BrightWriter 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Why EClass 1.htm" identifier="URN:IMS-PLIRID-V0:9CC71042BAEE4D19AE73BF4666512758" type="webcontent">
+			<file href="Text/Why EClass 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/How EClass Works 1.htm" identifier="URN:IMS-PLIRID-V0:D7FE756B661D430E824CBCF4FDBA4A86" type="webcontent">
+			<file href="Text/How EClass Works 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/For Developers 1.htm" identifier="URN:IMS-PLIRID-V0:451BA54D47FB4F1BBFFBC2B5B4592708" type="webcontent">
+			<file href="Text/For Developers 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Walkthrough 1.htm" identifier="URN:IMS-PLIRID-V0:FA0A7EA47C4D425BA6EF9D69C6D777FC" type="webcontent">
+			<file href="Text/Walkthrough 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Create a New Project 1.htm" identifier="URN:IMS-PLIRID-V0:97D62C7F134341E985819F6761BF2B7D" type="webcontent">
+			<file href="Text/Create a New Project 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Add and Edit Pages 1.htm" identifier="URN:IMS-PLIRID-V0:A3D1F9CBF43D4E0FAD4F3CCBEE621A83" type="webcontent">
+			<file href="Text/Add and Edit Pages 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Advanced Options 1.htm" identifier="URN:IMS-PLIRID-V0:F1A086B9B4A34682A49CB4470B8CD9BF" type="webcontent">
+			<file href="Text/Advanced Options 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Publish Your EClass 1.htm" identifier="URN:IMS-PLIRID-V0:288FE5EA2C804052B4886FF0E1C5E46B" type="webcontent">
+			<file href="Text/Publish Your EClass 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Changing Page Properties 1.htm" identifier="URN:IMS-PLIRID-V0:A436267DF4384DC389E465E8BAEDB5C7" type="webcontent">
+			<file href="Text/Changing Page Properties 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/Changing Project Settings 1.htm" identifier="URN:IMS-PLIRID-V0:496FE103266B48349C7A9E536BE1A68B" type="webcontent">
+			<file href="Text/Changing Project Settings 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/System Requirements 1.htm" identifier="URN:IMS-PLIRID-V0:04DD88B77B1041B89F7566FA80C1507D" type="webcontent">
+			<file href="Text/System Requirements 1.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Text/translating.htm" identifier="URN:IMS-PLIRID-V0:38471C43538E44FD936820BBD4B9DA9F" type="webcontent">
+			<file href="Text/translating.htm"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Thinking_Outside_the_Page.xhtml" identifier="URN:IMS-PLIRID-V0:5d6f2782-f1dd-447d-af12-b7c2555cbd44" type="webcontent">
+			<file href="Content/Thinking_Outside_the_Page.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Upgrading_From_2.x.xhtml" identifier="URN:IMS-PLIRID-V0:920f065b-21b7-4d77-a739-2acb0b56681e" type="webcontent">
+			<file href="Content/Upgrading_From_2.x.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Editing_HTML_Pages.xhtml" identifier="URN:IMS-PLIRID-V0:84855057-7f86-4fb2-9b5b-f9472cbeeae4" type="webcontent">
+			<file href="Content/Editing_HTML_Pages.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Importing_Content.xhtml" identifier="URN:IMS-PLIRID-V0:81b5f592-490d-4c10-ba98-307e98f87338" type="webcontent">
+			<file href="Content/Importing_Content.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Links.xhtml" identifier="URN:IMS-PLIRID-V0:5a726127-0e3f-43bd-a3c5-ab71261c5a5b" type="webcontent">
+			<file href="Content/Working_with_Links.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Images.xhtml" identifier="URN:IMS-PLIRID-V0:58f7ff72-b122-4925-a865-0479fa9b8d08" type="webcontent">
+			<file href="Content/Working_with_Images.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Tables.xhtml" identifier="URN:IMS-PLIRID-V0:fafbbe03-c34f-49d0-bdc6-293706654957" type="webcontent">
+			<file href="Content/Working_with_Tables.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Multimedia_Overview.xhtml" identifier="URN:IMS-PLIRID-V0:2daf54e3-7103-41f9-940d-a6bcfed79846" type="webcontent">
+			<file href="Content/Multimedia_Overview.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Audio.xhtml" identifier="URN:IMS-PLIRID-V0:d569d4c6-4284-4387-a8ed-7738bfe159d7" type="webcontent">
+			<file href="Content/Working_with_Audio.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Video.xhtml" identifier="URN:IMS-PLIRID-V0:2b44b404-2529-4db9-be2f-7f5aec40eaf0" type="webcontent">
+			<file href="Content/Working_with_Video.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Graphics_Production_&amp;_Edi.xhtml" identifier="URN:IMS-PLIRID-V0:d0c25157-42f7-4050-9dea-32eb00732e88" type="webcontent">
+			<file href="Content/Graphics_Production_&amp;_Edi.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Audio_Production_&amp;_Conver.xhtml" identifier="URN:IMS-PLIRID-V0:e0ea2108-cc5b-4dc8-83ba-b68f3e65b293" type="webcontent">
+			<file href="Content/Audio_Production_&amp;_Conver.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Video_Production_&amp;_Conver.xhtml" identifier="URN:IMS-PLIRID-V0:945fc5c4-47e2-444d-a817-597686ad905b" type="webcontent">
+			<file href="Content/Video_Production_&amp;_Conver.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Creating_and_Exporting_Pr.xhtml" identifier="URN:IMS-PLIRID-V0:f38e13ad-4b54-4d0d-a930-30788f2d4c58" type="webcontent">
+			<file href="Content/Creating_and_Exporting_Pr.xhtml"/>
+		</resource>
+		<resource adlcp:scormtype="asset" href="Content/Working_with_Bookmarks.xhtml" identifier="URN:IMS-PLIRID-V0:e73da1fe-fd96-4078-b980-546e1fef920d" type="webcontent">
+			<file href="Content/Working_with_Bookmarks.xhtml"/>
+		</resource>
+	</resources>
+</manifest>
