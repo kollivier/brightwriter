@@ -24,7 +24,7 @@ import appdata
 import ftplib
 import settings
 
-use_launch = not hasattr(sys, 'frozen')
+use_launch = False # not hasattr(sys, 'frozen')
 if use_launch:
     import launch
 
