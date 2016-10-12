@@ -272,7 +272,7 @@ class MainFrame2(frameClass):
         
         if self._mgr:
             aui.AuiToolBar.AddToToolBar = AddToToolBar
-            self.toolbar = toolbarClass(pane, -1)
+            self.toolbar = aui.AuiToolBar(pane, -1)
         else:
             wx.ToolBar.AddToToolBar = AddToToolBar
             self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
@@ -342,7 +342,8 @@ class MainFrame2(frameClass):
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
             #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
         
-        self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
+        if not self._mgr:
+            self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         
@@ -353,8 +354,6 @@ class MainFrame2(frameClass):
         self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
-
-        self.SetMinSize(self.GetSizer().GetMinSize())
 
         #if sys.platform.startswith("win"):
         # this nasty hack is needed because on Windows, the controls won't
