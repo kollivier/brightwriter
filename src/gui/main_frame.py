@@ -1273,7 +1273,8 @@ class MainFrame2(frameClass):
         self.SaveWebPage()
 
     def SaveWebPage(self):
-        source = htmlutils.ensureValidXHTML(self.browser.GetPageSource())
+        data = self.browser.EvaluateJavaScript("GetContents()", returnsValue=True)
+        source = htmlutils.ensureValidXHTML(data)
 
         if self.filename.endswith(".xhtml"):
             wx.MessageBox("Internet Explorer will ask users to download HTML files with the XHTML extension. To resolve this issue, EClass will change the extension to .html.")
