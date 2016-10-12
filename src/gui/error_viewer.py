@@ -15,8 +15,6 @@ import errors
 import settings
 import version
 
-from rest import brightsparc
-
 class ErrorDialog(sc.SizedDialog):
     def __init__(self, parent=None):
         sc.SizedDialog.__init__(self, parent, -1, _("%s: Unexpected Error" % wx.GetApp().GetAppName()), wx.DefaultPosition, wx.Size(500, 340), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
@@ -120,6 +118,7 @@ def guiExceptionHook(exctype, value, trace):
             description = error.descriptionText.GetValue()
 
         try:
+            from rest import brightsparc
             server = brightsparc.BrightSparcClient()
             log = ""
             if os.path.exists(settings.logfile):

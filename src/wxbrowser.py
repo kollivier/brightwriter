@@ -1,7 +1,9 @@
 import atexit
+import json
 import logging
 import os
 import sys
+import time
 import utils
 import webbrowser
 
@@ -53,6 +55,10 @@ if "cef" in browserlist:
         # RequestHandler
         # --------------------------------------------------------------------------
         loaded = False
+        controller = None
+
+        def __init__(self, controller):
+            self.controller = controller
 
         def OnBeforeBrowse(self, browser, frame, request, isRedirect):
             if self.callback is not None:
@@ -65,6 +71,12 @@ if "cef" in browserlist:
                 self.loaded = True
                 print("Sending page loaded event?")
                 pub.sendMessage("page_load_complete")
+
+                jsBindings = cefpython.JavascriptBindings(
+                        bindToFrames=True, bindToPopups=True)
+                jsBindings.SetObject("app", self.controller)
+                browser.SetJavascriptBindings(jsBindings)
+                self.controller.jsBindings = jsBindings
     
 
 def getDefaultBrowser():
@@ -121,20 +133,20 @@ class wxBrowser(wx.Window):
                 return
         elif preferredBrowser.lower() == "cef":
             self.callback = None
-            self.browser = cefwx.ChromeWindow(self, url="http://www.google.com", timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
+            self.browser = cefwx.ChromeWindow(self, url="file://" + os.path.abspath(os.path.join("gui", "html", "index.html")), timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
+            # self.browser.SetSizerProps(expand=True, proportion=1)
+
+
+
             # override the ChromeWindow __del__ handler, it calls Unbind when the
             # wx control is in an indeterminate state, which leads to a crash,
             # and in fact the Unbind call is not necessary.
             def delhandler(self):
                 self.browser.CloseBrowser()
             self.browser.__del__ = delhandler
-            client = ClientHandler()
+            client = ClientHandler(self)
             client.callback = None
             self.browser.GetBrowser().SetClientHandler(client)
-            self.javascriptBindings = cefpython.JavascriptBindings(
-                    bindToFrames=False, bindToPopups=True)
-            self.javascriptBindings.SetObject("wxbridge", self)
-            self.browser.GetBrowser().SetJavascriptBindings(self.javascriptBindings)
 
         elif preferredBrowser.lower() == "ie":
             if self._LoadIE():
@@ -147,6 +159,7 @@ class wxBrowser(wx.Window):
                 print "Error: No browser could be found."
 
         self.engine = preferredBrowser
+        self.browser.SetFocus()
 
         self.Sizer = wx.BoxSizer(wx.VERTICAL)
         self.Sizer.Add(self.browser, 1, wx.EXPAND)
@@ -180,6 +193,8 @@ class wxBrowser(wx.Window):
         elif self.engine == "ie":
             self.browser.Navigate(url)
         elif self.engine == "cef":
+            if not os.path.exists(url):
+                return
             self.browser.GetBrowser().GetMainFrame().LoadUrl("file://" + url)
         else:
             self.browser.LoadPage(url)
@@ -223,13 +238,13 @@ class wxBrowser(wx.Window):
         else:
             return "HTML Window"
 
-    def Refresh(self):
+    def Reload(self):
         if self.engine == "mozilla":
             self.browser.Reload()
         elif self.engine == "ie":
             self.browser.Refresh(wxIEHTML_REFRESH_COMPLETELY)
         else:
-            self.browser.LoadPage(self.currenturl)
+            self.LoadPage(self.currenturl)
 
     def MakeEditable(self, editable=True):
         logging.info("Calling MakeEditable")
@@ -250,25 +265,56 @@ class wxBrowser(wx.Window):
         self.ExecuteEditCommand("styleWithCSS", "true")
         self.EvaluateJavaScript('dirty = false; document.body.addEventListener("input", function() { dirty = true; }, false);')
 
-    def EvaluateJavaScript(self, script):
+    def SendJSValue(self, json_value):
+        # Handle the JSON data, which is the Python dict: {foo: 'bar'}
+        print("value = %r" % json_value)
+        data = json.loads(json_value)
+        self.js_return_value = data['value']
+        print("js_return_value = %r" % self.js_return_value)
+
+    def WaitForJSValue(self, timeout=0.5):
+        elapsed = 0
+        while not self.js_return_value and elapsed < timeout:
+            time.sleep(0.05)
+            elapsed += 0.05
+
+        if self.js_return_value:
+            return self.js_return_value
+
+        return None
+
+    def EvaluateJavaScript(self, script, returnsValue=False):
         #print("Running script %s" % script)
+        self.js_return_value = None
         if self.engine in ["webkit", "webview"]:
             return self.browser.RunScript(script)
         elif self.engine == "cef":
+            if not hasattr(self, 'jsBindings') or not self.jsBindings:
+                returnsValue = False
+
+            if returnsValue:
+                script = "app.SendJSValue(JSON.stringify({value: %s}))" % script
             self.browser.GetBrowser().GetMainFrame().ExecuteJavascript(script)
+            if returnsValue:
+                return self.WaitForJSValue()
+            return ""
 
     def ExecuteEditCommand(self, command, value=None):
         value_exec = ""
         if value is not None:
             value = value.replace("\n", "\\\n")
             value_exec = ", '%s'" % value
-        return self.EvaluateJavaScript("document.execCommand('%s', false%s)" % (command, value_exec))
+        return self.EvaluateJavaScript("document.execCommand('%s', false%s)" % (command, value_exec), returnsValue=False)
 
     def GetEditCommandValue(self, command):
-        return self.EvaluateJavaScript("document.queryCommandValue('%s')" % command)
+        value = self.EvaluateJavaScript("document.queryCommandValue('%s')" % command, returnsValue=True)
+        if not value:
+            return ""
 
     def GetEditCommandState(self, command):
-        return self.EvaluateJavaScript("document.queryCommandState('%s')" % command)
+        value = self.EvaluateJavaScript("document.queryCommandState('%s')" % command, returnsValue=True)
+        if not value:
+            return ""
 
     def _LoadIE(self):
         try:

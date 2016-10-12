@@ -61,7 +61,12 @@ if sys.platform.startswith("win"):
     import wx.stc
 
 
-import pew.cache
+use_pew_cache = False
+try:
+    import pew.cache
+    use_pew_cache = True
+except:
+    pass
 
 settings.AppDir = rootdir
         
@@ -83,14 +88,15 @@ class BuilderApp(wx.App, events.AppEventHandlerMixin):
         import gui.main_frame
         self.frame = gui.main_frame.MainFrame2(None, -1, self.GetAppName())
         self.frame.CentreOnScreen()
-
-        pew.cache.set_cache_dir(settings.getAppDataDir())
+        if use_pew_cache:
+            pew.cache.set_cache_dir(settings.getAppDataDir())
         self.frame.Show(True)
         self.SetTopWindow(self.frame)
         return True
         
     def OnExit(self):
         sys.excepthook = oldexcepthook
+        return 0
         
     def CreateAppDirsIfNeeded(self):
         contactsdir = os.path.join(settings.PrefDir, "Contacts")

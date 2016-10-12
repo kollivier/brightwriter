@@ -50,6 +50,7 @@ import eclass_convert
 # modules that don't get picked up elsewhere...
 import uuid
 import xmlrpclib
+import wx.lib.agw.aui as aui
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
 import wx.lib.pubsub
@@ -187,16 +188,21 @@ command_ids = {
 
 #----------------------------- MainFrame Class ----------------------------------------------
 
-class MainFrame2(sc.SizedFrame): 
+class MainFrame2(wx.Frame): 
     def __init__(self, parent, ID, title):
         busy = wx.BusyCursor()
-        sc.SizedFrame.__init__(self, parent, ID, title, size=(780,580), 
+        wx.Frame.__init__(self, parent, ID, title, size=(780,580), 
                       style=wx.DEFAULT_FRAME_STYLE|wx.WANTS_CHARS)
         
         # the default encoding isn't correct for Mac.
         #if wx.Platform == "__WXMAC__":
         #    wx.SetDefaultPyEncoding("utf-8")
         
+        self._mgr = aui.AuiManager()
+
+        # tell AuiManager to manage this frame
+        self._mgr.SetManagedWindow(self)
+
         self.imscp = None
         #dirtyNodes are ones that need to be uploaded to FTP after a move operation is performed
         self.dirtyNodes = []
@@ -210,8 +216,8 @@ class MainFrame2(sc.SizedFrame):
         settings.LangDirName = langdict[lang]
         self.errorPrompts = prompts.errorPrompts
         
-        pane = self.GetContentsPane()
-        pane.SetWindowStyleFlag(wx.WANTS_CHARS)
+        pane = self # self.GetContentsPane()
+        # pane.SetWindowStyleFlag(wx.WANTS_CHARS)
 
         # These are used for copy and paste, and drag and drop
         self.DragItem = None
@@ -253,21 +259,32 @@ class MainFrame2(sc.SizedFrame):
 
         self.treeimages = wx.ImageList(15, 15)
 
+        def AddToToolBar(self, id=-1, bitmap=wx.EmptyBitmap, label="", shortHelpString=""):
+            if isinstance(self, aui.AuiToolBar):
+                self.AddSimpleTool(id, label, bitmap, short_help_string=shortHelpString)
+            else:
+                self.AddSimpleTool(id, bitmap, label, shortHelpString)
+
+        if hasattr(self, "_mgr"):
+            aui.AuiToolBar.AddToToolBar = AddToToolBar
+        else:
+            wx.ToolBar.AddToToolBar = AddToToolBar
+
         #create toolbar
-        self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
-        self.toolbar.AddSimpleTool(ID_NEW, icnNewProject, _("New"), _("Create a New Project"))
-        self.toolbar.AddSimpleTool(ID_OPEN, icnOpenProject, _("Open"), _("Open an Existing Project")) 
+        self.toolbar = aui.AuiToolBar(self, -1)
+        self.toolbar.AddToToolBar(ID_NEW, bitmap=icnNewProject, label=_("New"), shortHelpString=_("Create a New Project"))
+        self.toolbar.AddToToolBar(ID_OPEN, bitmap=icnOpenProject, label=_("Open"), shortHelpString=_("Open an Existing Project")) 
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(ID_ADD_MENU, icnNewPage, _("New Page"), _("Adds a New EClass Page"))
-        self.toolbar.AddSimpleTool(ID_TREE_EDIT, icnPageProps, _("Page Properties"), _("View and Edit Page Properties"))
-        self.toolbar.AddSimpleTool(ID_SAVE, icnSavePage, _("Save Page"), _("Save the current page"))
-        self.toolbar.AddSimpleTool(ID_TREE_REMOVE, icnDeletePage, _("Delete Page"), _("Delete Currently Selected Page"))
+        self.toolbar.AddToToolBar(ID_ADD_MENU, bitmap=icnNewPage, label=_("New Page"), shortHelpString=_("Adds a New EClass Page"))
+        self.toolbar.AddToToolBar(ID_TREE_EDIT, bitmap=icnPageProps, label=_("Page Properties"), shortHelpString=_("View and Edit Page Properties"))
+        self.toolbar.AddToToolBar(ID_SAVE, bitmap=icnSavePage, label=_("Save Page"), shortHelpString=_("Save the current page"))
+        self.toolbar.AddToToolBar(ID_TREE_REMOVE, bitmap=icnDeletePage, label=_("Delete Page"), shortHelpString=_("Delete Currently Selected Page"))
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(ID_PUBLISH_CD, icnPublishCD, _("Publish to CD-ROM"), _("Publish to CD-ROM"))
-        self.toolbar.AddSimpleTool(ID_PUBLISH, icnPublishWeb, _("Publish to web site"), _("Publish to web site"))
-        #self.toolbar.AddSimpleTool(ID_PUBLISH_PDF, icnPublishPDF, _("Publish to PDF"), _("Publish to PDF"))
+        self.toolbar.AddToToolBar(ID_PUBLISH_CD, bitmap=icnPublishCD, label=_("Publish to CD-ROM"), shortHelpString=_("Publish to CD-ROM"))
+        self.toolbar.AddToToolBar(ID_PUBLISH, bitmap=icnPublishWeb, label=_("Publish to web site"), shortHelpString=_("Publish to web site"))
+        #self.toolbar.AddToToolBar(ID_PUBLISH_PDF, icnPublishPDF, _("Publish to PDF"), _("Publish to PDF"))
         self.toolbar.AddSeparator()
-        self.toolbar.AddSimpleTool(ID_HELP, icnHelp, _("View Help"), _("View Help File"))
+        self.toolbar.AddToToolBar(ID_HELP, bitmap=icnHelp, label=_("View Help"), shortHelpString=_("View Help File"))
         self.searchCtrl = wx.SearchCtrl(self.toolbar, -1, size=(200,-1))
         self.toolbar.AddControl(self.searchCtrl)
 
@@ -275,28 +292,34 @@ class MainFrame2(sc.SizedFrame):
 
         self.toolbar.Realize()
 
+        self._mgr.AddPane(self.toolbar, aui.AuiPaneInfo().ToolbarPane().Top().Floatable(False).Gripper(False).Resizable(True))
+
         if sys.platform.startswith("darwin"):
             wx.App.SetMacPreferencesMenuItemId(ID_SETTINGS)
 
         self.SetMenuBar(menus.getMenuBar())
         
         #split the window into two - Treeview on one side, browser on the other
-        self.splitter1 = wx.SplitterWindow(pane, -1, style=wx.NO_BORDER|wx.WANTS_CHARS)
+        # self.splitter1 = wx.SplitterWindow(pane, -1, style=wx.NO_BORDER)
+        # self.splitter1.SetSize(800, 500)
 #        self.splitter1.SetSashSize(7)
-        self.splitter1.SetSizerProps({"expand":True, "proportion":1})
+        # self.splitter1.SetSizerProps({"expand":True, "proportion":1})
 
         # Tree Control for the XML hierachy
-        self.projectTree = gui.imstree.IMSCPTreeControl(self.splitter1,
+        self.projectTree = gui.imstree.IMSCPTreeControl(self,
                     -1 ,
                     style=wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER | wx.TR_EDIT_LABELS)
-
+        self._mgr.AddPane(self.projectTree, aui.AuiPaneInfo().Caption("Table of Contents").Left().Position(1).MinimizeButton().CaptionVisible(True))
         #self.projectTree.SetImageList(self.treeimages)
 
         #handle delete key
         accelerators = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_TREE_REMOVE)])
         self.SetAcceleratorTable(accelerators)
 
-        self.browser = wxbrowser.wxBrowser(self.splitter1, -1)
+        self.browser = wxbrowser.wxBrowser(self, -1)
+        self._mgr.AddPane(self.browser, aui.AuiPaneInfo().Center().Position(2).MinSize(400, 400).CaptionVisible(False))
+        # self.browser.SetSize((400, 400))
+        # self.browser.SetSizerProps(expand=True, proportion=1)
         self.browser.MakeEditable(True)
         self.webdelegate = EClassHTMLEditorDelegate(source=self.browser, parent=self)
         #self.browser.ToggleContinuousSpellChecking()
@@ -305,7 +328,7 @@ class MainFrame2(sc.SizedFrame):
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
             #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
         
-        self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
+        #self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         
@@ -317,7 +340,7 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
-        self.SetMinSize(self.GetSizer().GetMinSize())
+        # self.SetMinSize(self.GetSizer().GetMinSize())
 
         #if sys.platform.startswith("win"):
         # this nasty hack is needed because on Windows, the controls won't
@@ -342,6 +365,8 @@ class MainFrame2(sc.SizedFrame):
 
         filename = os.path.abspath(os.path.join("gui", "html", "index.html"))
         self.browser.LoadPage(filename)
+
+        self._mgr.Update()
 
     def OnDoSearch(self, event):
         # wx bug: event.GetString() doesn't work on Windows 
@@ -375,7 +400,7 @@ class MainFrame2(sc.SizedFrame):
 
     def GetCommandState(self, command):
         state = self.browser.GetEditCommandState(command)
-        if state.lower().strip() == "true":
+        if state and state.lower().strip() == "true":
             return True
         
         return False
@@ -1529,7 +1554,7 @@ class MainFrame2(sc.SizedFrame):
 
         # self.Preview()
         self.dirtyNodes.append(imsitem)
-        if string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
+        if "UploadOnSave" in settings.ProjectSettings and string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
             self.UploadPage()
             
     def CopyWebFiles(self, output_dir):
