@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Using CKEditor API</title>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+        textarea {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <script src="ckeditor/ckeditor.js"></script>
+</head>
+
+<body>
+
+    <textarea cols="100" id="editor1" name="editor1" rows="10">     &lt;p&gt;This is some &lt;strong&gt;sample text&lt;/strong&gt;.     You are using &lt;a href="http://ckeditor.com/"&gt;CKEditor&lt;/a&gt;.&lt;/p&gt;
+    </textarea>
+
+    <script>
+        // Helper function to display messages below CKEditor.
+        function ShowMessage( msg ) {
+            console.log(msg);
+        }
+
+        function SetContents(value, basehref) {
+            // Get the editor instance that you want to interact with.
+            var editor = CKEDITOR.instances.editor1;
+
+            if (basehref) {
+                CKEDITOR.config.baseHref = basehref;
+            }
+
+            // Set editor content (replace current content).
+            // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-setData
+            editor.setData( value );
+        }
+
+        function GetContents() {
+            // Get the editor instance that you want to interact with.
+            var editor = CKEDITOR.instances.editor1;
+
+            // Get editor content.
+            // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-getData
+            alert( editor.getData() );
+        }
+
+        function ExecuteCommand( commandName ) {
+            // Get the editor instance that you want to interact with.
+            var editor = CKEDITOR.instances.editor1;
+
+            // Check the active editing mode.
+            if ( editor.mode == 'wysiwyg' )
+            {
+                // Execute the command.
+                // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-execCommand
+                editor.execCommand( commandName );
+            }
+            else
+                alert( 'You must be in WYSIWYG mode!' );
+        }
+
+        function CheckDirty() {
+            // Get the editor instance that you want to interact with.
+            var editor = CKEDITOR.instances.editor1;
+            // Checks whether the current editor content contains changes when compared
+            // to the content loaded into the editor at startup.
+            // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-checkDirty
+            alert( editor.checkDirty() );
+        }
+
+        function ResetDirty() {
+            // Get the editor instance that you want to interact with.
+            var editor = CKEDITOR.instances.editor1;
+            // Resets the "dirty state" of the editor.
+            // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-resetDirty
+            editor.resetDirty();
+            alert( 'The "IsDirty" status was reset.' );
+        }
+
+        function Focus() {
+            // Get the editor instance that you want to interact with.
+            var editor = CKEDITOR.instances.editor1;
+            // Focuses the editor.
+            // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-focus
+            editor.focus();
+        }
+    </script>
+
+    <script>
+        // Attaching event listeners to the global CKEDITOR object.
+        // The instanceReady event is fired when an instance of CKEditor has finished its initialization.
+        CKEDITOR.on( 'instanceReady', function( ev ) {
+            ShowMessage( 'Editor instance <em>' + ev.editor.name + '</em> was loaded.' );
+        });
+
+        // Replace the <textarea id="editor1"> with a CKEditor instance.
+        // A reference to the editor object is returned by CKEDITOR.replace() allowing you to work with editor instances.
+        var editor = CKEDITOR.replace( 'editor1', {
+            fullPage: true,
+            extraPlugins: 'docprops',
+            allowedContent: true,
+            removePlugins: 'resize'
+        } );
+
+        // Attaching event listeners to CKEditor instances.
+        // Refer to http://docs.ckeditor.com/#!/api/CKEDITOR.editor for a list of all available events.
+        editor.on( 'focus', function( evt ) {
+            ShowMessage( 'Editor instance <em>' + this.name + '</em> <b>is focused</b>.' );
+        });
+        editor.on( 'blur', function( evt ) {
+            ShowMessage( 'Editor instance <em>' + this.name + '</em> <b>lost focus</b>.' );
+        });
+        // Helper variable to count the number of detected changes in CKEditor.
+        var changesNum = 0;
+        editor.on( 'change', function( evt ) {
+            ShowMessage( 'The number of changes in <em>' + this.name + '</em>: <b>' + ++changesNum + '</b>.' );
+        });
+    </script>
+</body>
+
+</html>

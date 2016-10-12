@@ -275,63 +275,6 @@ class MainFrame2(sc.SizedFrame):
 
         self.toolbar.Realize()
 
-        imagepath = os.path.join(settings.AppDir, "icons", "fugue")
-        icnBold = wx.Bitmap(os.path.join(imagepath, "edit-bold.png"))
-        icnItalic = wx.Bitmap(os.path.join(imagepath, "edit-italic.png"))
-        icnUnderline = wx.Bitmap(os.path.join(imagepath, "edit-underline.png"))
-        
-        icnAlignLeft = wx.Bitmap(os.path.join(imagepath, "edit-alignment.png")) 
-        icnAlignCenter = wx.Bitmap(os.path.join(imagepath, "edit-alignment-center.png"))
-        icnAlignRight = wx.Bitmap(os.path.join(imagepath, "edit-alignment-right.png"))
-        icnAlignJustify = wx.Bitmap(os.path.join(imagepath, "edit-alignment-justify.png"))
-        
-        icnIndent = wx.Bitmap(os.path.join(imagepath, "edit-indent.png")) 
-        icnDedent = wx.Bitmap(os.path.join(imagepath, "edit-outdent.png"))
-        icnBullets = wx.Bitmap(os.path.join(imagepath, "edit-list.png"))
-        icnNumbering = wx.Bitmap(os.path.join(imagepath, "edit-list-order.png"))
-        
-        imagepath = os.path.join(settings.AppDir, "icons", "fatcow")
-        icnLink = wx.Bitmap(os.path.join(imagepath, "world_link.png"))
-        icnImage = wx.Bitmap(os.path.join(imagepath, "image_add.png"))
-
-        
-        self.toolbar2 = toolbar2 = wx.ToolBar(pane, -1, style=wx.TB_HORIZONTAL
-            | wx.NO_BORDER
-            | wx.TB_FLAT)
-        toolbar2.SetSizerProps(expand=True, border=("all", 0))
-        # toolbar2.SetToolBitmapSize(wx.Size(16,16))
-        self.fonts = ["Times New Roman", "Arial", "Helvetica", "Courier"]
-        self.fontlist = wx.ComboBox(toolbar2, wx.NewId(), self.fonts[0], choices=self.fonts,style=wx.CB_DROPDOWN|wx.TE_PROCESS_ENTER)
-    
-        self.fontsizes = {"10px": "1", "13px": "2", "16px": "3", "18px": "4", "24px": "5", "32px": "6", "48px": "7"}
-        keys = self.fontsizes.values()
-        keys.sort()
-        self.fontsizelist = wx.Choice(toolbar2, wx.NewId(), choices=keys)
-        
-        toolbar2.AddControl(self.fontlist)
-        toolbar2.AddSeparator()
-        toolbar2.AddControl(self.fontsizelist)
-        toolbar2.AddSeparator()
-            
-        toolbar2.AddCheckTool(ID_BOLD, '', icnBold, shortHelp=_("Bold"))
-        toolbar2.AddCheckTool(ID_ITALIC, '', icnItalic, shortHelp=_("Italic"))
-        toolbar2.AddCheckTool(ID_UNDERLINE, '', icnUnderline, shortHelp=_("Underline"))
-            #self.toolbar2.AddSimpleTool(ID_FONT_COLOR, icnColour, _("Font Color"), _("Select a font color"))
-        toolbar2.AddSeparator()
-        toolbar2.AddCheckTool(ID_ALIGN_LEFT, '', icnAlignLeft, shortHelp=_("Left Align"))
-        toolbar2.AddCheckTool(ID_ALIGN_CENTER, '', icnAlignCenter, shortHelp=_("Center"))
-        toolbar2.AddCheckTool(ID_ALIGN_RIGHT, '', icnAlignRight, shortHelp=_("Right Align"))
-        toolbar2.AddSeparator()
-        toolbar2.AddSimpleTool(ID_DEDENT, icnDedent, _("Decrease Indent"), _("Decrease Indent"))
-        toolbar2.AddSimpleTool(ID_INDENT, icnIndent, _("Increase Indent"), _("Increase Indent"))
-        toolbar2.AddCheckTool(ID_BULLETS, '', icnBullets, shortHelp=_("Bullets"))
-        toolbar2.AddCheckTool(ID_NUMBERING, '', icnNumbering, shortHelp=_("Numbering"))
-        toolbar2.AddSeparator()
-        toolbar2.AddSimpleTool(ID_INSERT_IMAGE, icnImage, _("Insert Image"), _("Insert Image"))
-        toolbar2.AddSimpleTool(ID_INSERT_LINK, icnLink, _("Insert Link"), _("Insert Link"))
-            #self.toolbar.AddSimpleTool(ID_INSERT_HR, icnHR, _("Insert Horizontal Line"), _("Insert Horizontal Line"))
-        toolbar2.Realize()
-
         if sys.platform.startswith("darwin"):
             wx.App.SetMacPreferencesMenuItemId(ID_SETTINGS)
 
@@ -359,7 +302,6 @@ class MainFrame2(sc.SizedFrame):
         #self.browser.ToggleContinuousSpellChecking()
         
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
-        self.Bind(wx.EVT_IDLE, self.UpdateStatus)
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
             #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
         
@@ -373,10 +315,6 @@ class MainFrame2(sc.SizedFrame):
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnTreeSelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.OnTreeLabelChanged, self.projectTree)
         self.Bind(wx.EVT_TREE_ITEM_MENU, self.OnTreeItemContextMenu, self.projectTree)
-        self.fontsizelist.Bind(wx.EVT_CHOICE, self.OnFontSizeSelect)
-        self.fontsizelist.Bind(wx.EVT_UPDATE_UI, self.UpdateEditCommand)
-        self.fontlist.Bind(wx.EVT_COMBOBOX, self.OnFontSelect)
-        self.fontlist.Bind(wx.EVT_UPDATE_UI, self.UpdateEditCommand)
         self.Bind(wx.EVT_TEXT, self.OnDoSearch, self.searchCtrl)
 
         self.SetMinSize(self.GetSizer().GetMinSize())
@@ -402,8 +340,8 @@ class MainFrame2(sc.SizedFrame):
         # we make this the fallback handler in case no other handlers are set.
         self.RegisterTreeHandlers()
 
-        if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
-            self.LoadEClass(settings.AppSettings["LastOpened"])
+        filename = os.path.abspath(os.path.join("gui", "html", "index.html"))
+        self.browser.LoadPage(filename)
 
     def OnDoSearch(self, event):
         # wx bug: event.GetString() doesn't work on Windows 
@@ -413,6 +351,8 @@ class MainFrame2(sc.SizedFrame):
     def OnPageLoaded(self):
         logging.info("Page loaded callback called")
         self.browser.MakeEditable()
+        if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
+            self.LoadEClass(settings.AppSettings["LastOpened"])
         
     def OnFindReplace(self, event):
         import find_replace_dialog
@@ -439,28 +379,6 @@ class MainFrame2(sc.SizedFrame):
             return True
         
         return False
-
-    def OnFontSizeSelect(self, evt):
-        print("OnFontSizeSelect called")
-        value = self.fontsizelist.GetStringSelection()
-        self.browser.ExecuteEditCommand("FontSize", value)
-
-    def OnFontSelect(self, evt):
-        self.browser.ExecuteEditCommand("FontName", self.fontlist.GetStringSelection())
-
-    def UpdateStatus(self, evt):
-        self.toolbar2.ToggleTool(ID_BOLD, self.GetCommandState("Bold"))
-        self.toolbar2.ToggleTool(ID_ITALIC, self.GetCommandState("Italic"))
-        self.toolbar2.ToggleTool(ID_UNDERLINE, self.GetCommandState("Underline"))
-        self.toolbar2.ToggleTool(ID_BULLETS, self.GetCommandState("InsertUnorderedList"))
-        self.toolbar2.ToggleTool(ID_NUMBERING, self.GetCommandState("InsertOrderedList"))
-        self.toolbar2.ToggleTool(ID_ALIGN_LEFT, self.GetCommandState("JustifyLeft"))
-        self.toolbar2.ToggleTool(ID_ALIGN_CENTER, self.GetCommandState("JustifyCenter"))
-        self.toolbar2.ToggleTool(ID_ALIGN_RIGHT, self.GetCommandState("JustifyRight"))
-        self.fontsizelist.SetStringSelection(self.browser.GetEditCommandValue("FontSize"))
-        self.fontlist.SetValue(self.browser.GetEditCommandValue("FontName"))
-        
-        evt.Skip()
 
     def RegisterTreeHandlers(self):
         app = wx.GetApp()
@@ -1580,7 +1498,7 @@ class MainFrame2(sc.SizedFrame):
                 self.selectedFileLastModifiedTime = 0
             
             filename = os.path.join(settings.ProjectDir, filename)
-    
+
             #we shouldn't preview files that EClass can't view
             ok_fileTypes = ["htm", "html", "gif", "jpg", "jpeg", "xhtml"]
             if sys.platform == "win32":
@@ -1588,12 +1506,14 @@ class MainFrame2(sc.SizedFrame):
     
             ext = os.path.splitext(filename)[1][1:]
             if os.path.exists(filename) and ext in ok_fileTypes:
-                if ext.find("htm") != -1: 
+                if ext.find("htm") != -1:
                     fileurl = os.path.dirname(filename) + "/"
                     self.baseurl = 'file://' + urllib.quote(fileurl)
                     html = htmlutils.getUnicodeHTMLForFile(filename)
-            
-                    self.browser.SetPage(html, self.baseurl)
+                    js = 'SetContents(`%s`, "%s");' % (html.replace('"', '\\"'), self.baseurl)
+                    logging.info("js = %s" % js)
+                    self.browser.EvaluateJavaScript(js)
+                    # self.browser.SetPage(html, self.baseurl)
                     self.filename = filename
                 else:
                     self.browser.LoadPage(filename)
