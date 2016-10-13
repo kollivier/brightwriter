@@ -24,7 +24,10 @@ import version
 
 import pewtools.codesign
 
-from local_settings import *
+try:
+    from local_settings import *
+except:
+    pass
 
 myplist = dict(
     CFBundleIdentifier='com.kosoftworks.brightwriter',
@@ -56,16 +59,36 @@ def allFilesRecursive(dir):
             fileList.append(dirfiles)
     return fileList
 
-py2exe_options = dict(skip_archive=True)
+dll_excludes_win = ["combase.dll", "crypt32.dll", "dhcpcsvc.dll", "msvcp90.dll", "mpr.dll", "oleacc.dll", "powrprof.dll", "psapi.dll", "setupapi.dll", "userenv.dll",  "usp10.dll", "wtsapi32.dll"]
+dll_excludes_win.extend(["iertutil.dll", "iphlpapi.dll", "nsi.dll", "urlmon.dll", "Secur32.dll", "webio.dll","wininet.dll", "winhttp.dll", "winnsi.dll"])
+
+
+py2exe_options = {"skip_archive":True, "dll_excludes": dll_excludes_win, "packages": ['wx.lib.pubsub']}
 
 subdirs = ['3rdparty/mediaplayer-5.3', '3rdparty/src/flash_mp3_player', '3rdparty/' + platform, 'about', 'autorun', 'convert', 
-                '3rdparty/bin', 'docs/en/web', 'externals', 'greenstone', 'icons', 'locale', 'license',
+                '3rdparty/bin', 'docs/en/web', 'externals', 'greenstone', "gui/html", 'icons', 'locale', 'license',
                 'mmedia', 'plugins', 'themes', 'web']
 
 source_files = []
 
 for subdir in subdirs:
     source_files.extend(allFilesRecursive(rootdir + subdir))
+
+if sys.platform.startswith("win"):
+    import cefpython3
+    cefp = os.path.dirname(cefpython3.__file__)
+    source_files.extend([('', ['%s/icudt.dll' % cefp,
+          '%s/cef.pak' % cefp,
+          '%s/cefclient.exe' % cefp,
+          '%s/d3dcompiler_43.dll' % cefp,
+          '%s/devtools_resources.pak' % cefp,
+          '%s/ffmpegsumo.dll' % cefp,
+          '%s/libEGL.dll' % cefp,
+          '%s/libGLESv2.dll' % cefp,
+          '%s/subprocess.exe' % cefp]),
+        ('locales', ['%s/locales/en-US.pak' % cefp]),
+        ]
+    )
 
 setup(
     name=settings.app_name,
