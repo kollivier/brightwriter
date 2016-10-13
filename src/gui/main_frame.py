@@ -2,6 +2,7 @@
 
 import sys, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
+import json
 import logging
 import tempfile
 import urllib
@@ -322,7 +323,7 @@ class MainFrame2(frameClass):
                     style=wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER | wx.TR_EDIT_LABELS)
         
         if self._mgr:
-            self._mgr.AddPane(self.projectTree, aui.AuiPaneInfo().Caption("Table of Contents").Left().Position(1).MinimizeButton().CaptionVisible(True))
+            self._mgr.AddPane(self.projectTree, aui.AuiPaneInfo().Caption("Table of Contents").MinSize(200, -1).Left().Position(1).CaptionVisible(False))
         #self.projectTree.SetImageList(self.treeimages)
 
         #handle delete key
@@ -1273,7 +1274,10 @@ class MainFrame2(frameClass):
         self.SaveWebPage()
 
     def SaveWebPage(self):
-        data = self.browser.EvaluateJavaScript("GetContents()", returnsValue=True)
+        data = self.browser.EvaluateJavaScript("GetContents()", callback=self.DoSaveWebPage)
+
+    def DoSaveWebPage(self, data):
+        print("data = %r" % data)
         source = htmlutils.ensureValidXHTML(data)
 
         if self.filename.endswith(".xhtml"):
@@ -1550,7 +1554,7 @@ class MainFrame2(frameClass):
                     fileurl = os.path.dirname(filename) + "/"
                     self.baseurl = 'file://' + urllib.quote(fileurl)
                     html = htmlutils.getUnicodeHTMLForFile(filename)
-                    js = 'SetContents(`%s`, "%s");' % (html.replace('"', '\\"'), self.baseurl)
+                    js = 'SetContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
                     logging.info("js = %s" % js)
                     self.browser.EvaluateJavaScript(js)
                     # self.browser.SetPage(html, self.baseurl)

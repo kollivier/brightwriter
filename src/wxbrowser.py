@@ -137,7 +137,7 @@ class wxBrowser(wx.Window):
             # self.browser.SetSizerProps(expand=True, proportion=1)
 
 
-
+ 
             # override the ChromeWindow __del__ handler, it calls Unbind when the
             # wx control is in an indeterminate state, which leads to a crash,
             # and in fact the Unbind call is not necessary.
@@ -269,34 +269,25 @@ class wxBrowser(wx.Window):
         # Handle the JSON data, which is the Python dict: {foo: 'bar'}
         print("value = %r" % json_value)
         data = json.loads(json_value)
-        self.js_return_value = data['value']
-        print("js_return_value = %r" % self.js_return_value)
+        self.callback(data['value'])
+        self.callback = None
 
-    def WaitForJSValue(self, timeout=0.5):
-        elapsed = 0
-        while not self.js_return_value and elapsed < timeout:
-            time.sleep(0.05)
-            elapsed += 0.05
+    def EvaluateJavaScript(self, script, callback=None):
 
-        if self.js_return_value:
-            return self.js_return_value
-
-        return None
-
-    def EvaluateJavaScript(self, script, returnsValue=False):
         #print("Running script %s" % script)
         self.js_return_value = None
         if self.engine in ["webkit", "webview"]:
+            if callback:
+                return callback(self.browser.RunScript(script))
             return self.browser.RunScript(script)
         elif self.engine == "cef":
             if not hasattr(self, 'jsBindings') or not self.jsBindings:
-                returnsValue = False
+                callback = None
 
-            if returnsValue:
+            if callback:
+                self.callback = callback
                 script = "app.SendJSValue(JSON.stringify({value: %s}))" % script
             self.browser.GetBrowser().GetMainFrame().ExecuteJavascript(script)
-            if returnsValue:
-                return self.WaitForJSValue()
             return ""
 
     def ExecuteEditCommand(self, command, value=None):
@@ -304,17 +295,7 @@ class wxBrowser(wx.Window):
         if value is not None:
             value = value.replace("\n", "\\\n")
             value_exec = ", '%s'" % value
-        return self.EvaluateJavaScript("document.execCommand('%s', false%s)" % (command, value_exec), returnsValue=False)
-
-    def GetEditCommandValue(self, command):
-        value = self.EvaluateJavaScript("document.queryCommandValue('%s')" % command, returnsValue=True)
-        if not value:
-            return ""
-
-    def GetEditCommandState(self, command):
-        value = self.EvaluateJavaScript("document.queryCommandState('%s')" % command, returnsValue=True)
-        if not value:
-            return ""
+        self.EvaluateJavaScript("document.execCommand('%s', false%s)" % (command, value_exec))
 
     def _LoadIE(self):
         try:

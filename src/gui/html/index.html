@@ -29,17 +29,24 @@
             console.log(msg);
         }
 
-        function SetContents(value, basehref) {
+        function SetContents(data) {
             // Get the editor instance that you want to interact with.
+            console.log("SetContents called");
             var editor = CKEDITOR.instances.editor1;
 
-            if (basehref) {
-                CKEDITOR.config.baseHref = basehref;
+            // var data = JSON.parse(json);
+
+            console.log("Data = " + JSON.stringify(data));
+
+            if (data["basehref"]) {
+                CKEDITOR.config.baseHref = data["basehref"];
             }
+
+            console.log("data[content] = " + data["content"]);
 
             // Set editor content (replace current content).
             // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-setData
-            editor.setData( value );
+            editor.setData( data["content"] );
         }
 
         function GetContents() {

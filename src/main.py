@@ -59,6 +59,7 @@ if sys.platform.startswith("win"):
     import ctypes
     import ctypes.wintypes
     import wx.stc
+    import wx.lib.pubsub
 
 
 use_pew_cache = False
