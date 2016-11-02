@@ -69,8 +69,6 @@ if "cef" in browserlist:
         def OnLoadEnd(self, browser, frame, httpStatusCode):
             if frame == browser.GetMainFrame():
                 self.loaded = True
-                print("Sending page loaded event?")
-                pub.sendMessage("page_load_complete")
 
                 jsBindings = cefpython.JavascriptBindings(
                         bindToFrames=True, bindToPopups=True)
@@ -163,6 +161,10 @@ class wxBrowser(wx.Window):
 
         self.Sizer = wx.BoxSizer(wx.VERTICAL)
         self.Sizer.Add(self.browser, 1, wx.EXPAND)
+
+    def EditorReady(self):
+        print("Sending page loaded event?")
+        pub.sendMessage("page_load_complete")
 
     def GoBack(self):
         if self.engine == "mozilla":

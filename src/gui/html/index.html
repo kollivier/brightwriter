@@ -9,12 +9,11 @@
         html, body {
             height: 100%;
             width: 100%;
-        }
-        textarea {
-            height: 100%;
-            width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
         }
     </style>
+    <script src="jquery-3.1.1.min.js"></script>
     <script src="ckeditor/ckeditor.js"></script>
 </head>
 
@@ -24,6 +23,18 @@
     </textarea>
 
     <script>
+
+        function ResizeEditor(event) {
+            console.log("ResizeEditor called");
+            var editor = CKEDITOR.instances.editor1;
+            editor.resize($("body").width(),$("body").height());
+        }
+            
+        window.onresize = ResizeEditor;
+        window.onload = ResizeEditor;
+
+        var isLoaded = false;
+        var dataToLoad = null;
         // Helper function to display messages below CKEditor.
         function ShowMessage( msg ) {
             console.log(msg);
@@ -36,7 +47,7 @@
 
             // var data = JSON.parse(json);
 
-            console.log("Data = " + JSON.stringify(data));
+            // console.log("Data = " + JSON.stringify(data));
 
             if (data["basehref"]) {
                 CKEDITOR.config.baseHref = data["basehref"];
@@ -46,6 +57,7 @@
 
             // Set editor content (replace current content).
             // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-setData
+
             editor.setData( data["content"] );
         }
 
@@ -104,7 +116,10 @@
         // Attaching event listeners to the global CKEDITOR object.
         // The instanceReady event is fired when an instance of CKEditor has finished its initialization.
         CKEDITOR.on( 'instanceReady', function( ev ) {
+            isLoaded = true;
             ShowMessage( 'Editor instance <em>' + ev.editor.name + '</em> was loaded.' );
+            ResizeEditor();
+            app.EditorReady();
         });
 
         // Replace the <textarea id="editor1"> with a CKEditor instance.

@@ -391,6 +391,8 @@ class MainFrame2(frameClass):
     def OnPageLoaded(self):
         logging.info("Page loaded callback called")
         self.browser.MakeEditable()
+        self.browser.EvaluateJavaScript("ResizeEditor()")
+        self.Preview()
         if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
             self.LoadEClass(settings.AppSettings["LastOpened"])
         
@@ -1533,6 +1535,7 @@ class MainFrame2(frameClass):
         return None
 
     def Preview(self):
+        print("Preview called")
         filename = self.GetContentFilenameForSelectedItem()
         
         if filename:
