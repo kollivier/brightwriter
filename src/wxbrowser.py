@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import time
+import urlparse
 import utils
 import webbrowser
 
@@ -61,8 +62,14 @@ if "cef" in browserlist:
             self.controller = controller
 
         def OnBeforeBrowse(self, browser, frame, request, isRedirect):
+            url = request.GetUrl()
+
             if self.callback is not None:
-                self.callback(request.GetUrl())
+                self.callback(url)
+                return True
+
+            if self.loaded and not self.ShouldHandleURL(url):
+                return True
 
             return self.loaded
         
@@ -134,8 +141,6 @@ class wxBrowser(wx.Window):
             self.browser = cefwx.ChromeWindow(self, url="file://" + os.path.abspath(os.path.join("gui", "html", "index.html")), timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
             # self.browser.SetSizerProps(expand=True, proportion=1)
 
-
- 
             # override the ChromeWindow __del__ handler, it calls Unbind when the
             # wx control is in an indeterminate state, which leads to a crash,
             # and in fact the Unbind call is not necessary.
@@ -210,12 +215,28 @@ class wxBrowser(wx.Window):
             logging.info("Sending page load complete?")
             pub.sendMessage("page_load_complete")
 
+    def ShouldHandleURL(self, url):
+        print("ShouldHandleURL called with %s" % url)
+        data = urlparse.urlparse(url)
+        if data.scheme == "bw":
+            if data.netloc == "browseFiles":
+                print("File browser called")
+                return False
+
+        return True
+
     def OnWebKitBeforeLoad(self, event):
-        if self.editable and event.GetNavigationType() == wx.webkit.WEBKIT_NAV_LINK_CLICKED:
+        print("OnWebKitBeforeLoad called with %r" % event.URL)
+        if not self.ShouldHandleURL(event.URL):
             event.Cancel()
-        elif not self.editable and event.URL.startswith("http"):
-            webbrowser.open(event.URL)
-            event.Cancel()
+            return
+
+        if event.GetNavigationType() == wx.webkit.WEBKIT_NAV_LINK_CLICKED:
+            if self.editable:
+                event.Cancel()
+            elif not self.editable and event.URL.startswith("http"):
+                webbrowser.open(event.URL)
+                event.Cancel()
 
     def SetPage(self, text, baseurl, mimetype="text/html"):
         self.editable = False

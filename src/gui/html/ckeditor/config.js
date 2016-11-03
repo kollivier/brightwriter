@@ -4,7 +4,7 @@
  */
 
 CKEDITOR.editorConfig = function( config ) {
-    config.filebrowserBrowseUrl = '/browseFiles';
+    config.filebrowserBrowseUrl = 'bw://browseFiles';
     config.toolbarGroups = [
         { name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
         { name: 'clipboard', groups: [ 'clipboard', 'undo' ] },
