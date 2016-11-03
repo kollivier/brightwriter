@@ -119,7 +119,9 @@
             isLoaded = true;
             ShowMessage( 'Editor instance <em>' + ev.editor.name + '</em> was loaded.' );
             ResizeEditor();
-            app.EditorReady();
+            if (app) {
+                app.EditorReady();
+            }
         });
 
         // Replace the <textarea id="editor1"> with a CKEditor instance.
@@ -128,7 +130,7 @@
             fullPage: true,
             extraPlugins: 'docprops',
             allowedContent: true,
-            removePlugins: 'resize'
+            removePlugins: 'resize',
         } );
 
         // Attaching event listeners to CKEditor instances.
