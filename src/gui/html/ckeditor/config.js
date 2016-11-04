@@ -5,7 +5,7 @@
 
 CKEDITOR.editorConfig = function( config ) {
     config.filebrowserBrowseUrl = 'bw://BrowseFiles';
-
+    config.extraAllowedContent = 'audio[*]{*};video[*]{*};source[*]{*}';
     config.toolbarGroups = [
         { name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
         { name: 'clipboard', groups: [ 'clipboard', 'undo' ] },
