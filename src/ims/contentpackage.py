@@ -342,19 +342,21 @@ class Resource(Tag):
             return self.files[0].attrs["href"]
             
     def setFilename(self, filename):
-        self.attrs["href"] = filename
+        # Make sure we don't have any Windows slashes in file references.
+        url_filename = filename.replace("\\", "/")
+        self.attrs["href"] = url_filename
         
         hasFile = False
         
         for afile in self.files:
-            if afile.attrs["href"] == filename:
+            if afile.attrs["href"] == url_filename:
                 hasFile = True
                 
         # According to the IMS standard, the resource's href must also
         # be listed as a file reference.
         if not hasFile:
             imsfile = File()
-            imsfile.attrs["href"] = filename
+            imsfile.attrs["href"] = url_filename
             self.files.append(imsfile)
         
 class Organizations(Container):
