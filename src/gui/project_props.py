@@ -77,10 +77,7 @@ class ProjectPropsDialog(sc.SizedDialog):
         else:
             settings.ProjectSettings["FTPPassive"] = "No"
 
-        if self.ftpPanel.chkUploadOnSave.GetValue() == True:
-            settings.ProjectSettings["UploadOnSave"] = "Yes"
-        else:
-            settings.ProjectSettings["UploadOnSave"] = "No"
+        settings.ProjectSettings["UploadOnSave"] = "No"
 
         settings.ProjectSettings["CDSaveDir"] = self.publishPanel.txtCDDir.GetValue()
         settings.ProjectSettings["WebSaveDir"] = self.publishPanel.txtWebDir.GetValue()
@@ -229,7 +226,6 @@ class FTPPanel(sc.SizedPanel):
         self.txtDirectory.SetSizerProp("expand", True)
         
         self.chkPassiveFTP = wx.CheckBox(self, -1, _("Use Passive FTP"))
-        self.chkUploadOnSave = wx.CheckBox(self, -1, _("Upload Files on Save"))
         
         self.txtFTPSite.SetFocus()
         self.txtFTPSite.SetSelection(0, -1)
@@ -239,8 +235,3 @@ class FTPPanel(sc.SizedPanel):
             self.chkPassiveFTP.SetValue(True)
         else:
             self.chkPassiveFTP.SetValue(False)
-            
-        if settings.ProjectSettings["UploadOnSave"] == "Yes":
-            self.chkUploadOnSave.SetValue(True)
-        else:
-            self.chkUploadOnSave.SetValue(False)
