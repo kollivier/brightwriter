@@ -134,6 +134,10 @@ class EPubPackage:
             ncxBasename = os.path.basename(self.ncx.filename)
         containerBasename = os.path.basename(self.container.filename)
         
+        opfFd = None
+        ncxFd = None
+        containerFd = None
+
         if output_dir is not None:
             oepbs_dir = os.path.join(output_dir, "OEPBS")
             if not os.path.exists(oepbs_dir):
@@ -148,9 +152,9 @@ class EPubPackage:
             fileutils.CopyFiles(settings.ProjectDir, oepbs_dir, 1, callback)
 
         else:
-            opfFile = tempfile.mkstemp()[1]
-            ncxFile = tempfile.mkstemp()[1]
-            containerFile = tempfile.mkstemp()[1]
+            opfFd, opfFile = tempfile.mkstemp()
+            ncxFd, ncxFile = tempfile.mkstemp()
+            containerFd, containerFile = tempfile.mkstemp()
 
         self.ncx.saveAsXML(ncxFile)
         self.opf.saveAsXML(opfFile)
@@ -165,7 +169,14 @@ class EPubPackage:
                 zip.write(ncxFile, os.path.join("OEPBS", ncxBasename))
                 zip.write(containerFile, os.path.join("META-INF", containerBasename))
                 ziputils.dirToZipFile("", zip, filesdir, zipDir="OEPBS")
+                zip.close()
             finally:
+                if opfFd:
+                    os.close(opfFd)
+                if ncxFd:
+                    os.close(ncxFd)
+                if containerFd:
+                    os.close(containerFd)
                 os.remove(opfFile)
                 os.remove(ncxFile)
                 os.remove(containerFile)
