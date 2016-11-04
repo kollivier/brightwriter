@@ -390,7 +390,8 @@ class MainFrame2(frameClass):
         dialog = wx.FileDialog(self)
         if dialog.ShowModal() == wx.ID_OK:
             path = guiutils.importFile(dialog.GetPath())
-            path = path.replace(settings.ProjectDir + "\\Contents", "").replace("\\", "/")
+            # FIXME: Make a constant for the Content dir and use that here.
+            path = path.replace(settings.ProjectDir + "\\Content\\", "").replace("\\", "/")
             js = "CKEDITOR.tools.callFunction(%r, '%s');" % (self.browseFilesReturnArgs['CKEditorFuncNum'][0], path)
             print("Running JS %s" % js)
             self.browser.EvaluateJavaScript(js)
