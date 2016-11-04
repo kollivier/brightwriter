@@ -61,6 +61,15 @@ if "cef" in browserlist:
         def __init__(self, controller):
             self.controller = controller
 
+        def OnBeforePopup(self, browser, frame, targetUrl, targetFrameName, 
+                targetDisposition, userGesture, popupFeatures, windowInfo, client):
+
+            if self.loaded:
+                self.controller.ProcessAppURL(targetUrl)
+            # Always return True as there is no cross-platform support for having the browser natively
+            # create its own popup window yet.
+            return True
+
         def OnBeforeBrowse(self, browser, frame, request, isRedirect):
             url = request.GetUrl()
 
@@ -68,10 +77,10 @@ if "cef" in browserlist:
                 self.callback(url)
                 return True
 
-            if self.loaded and not self.ShouldHandleURL(url):
-                return True
+            if self.loaded:
+                return self.controller.ProcessAppURL(url)
 
-            return self.loaded
+            return False
         
         def OnLoadEnd(self, browser, frame, httpStatusCode):
             if frame == browser.GetMainFrame():
@@ -114,11 +123,12 @@ class wxBrowser(wx.Window):
     Mozilla
 
     """
-    def __init__(self, parent, id, preferredBrowser=""):
+    def __init__(self, parent, id, preferredBrowser="", messageHandler=None):
         wx.Window.__init__(self, parent, id, style=wx.WANTS_CHARS)
         self.parent = parent
         self.id = id
         self.browser = None
+        self.messageHandler = messageHandler
         self.currenturl = ""
         self.engine = ""
         self.OnPageChanged = lambda x: x
@@ -215,15 +225,16 @@ class wxBrowser(wx.Window):
             logging.info("Sending page load complete?")
             pub.sendMessage("page_load_complete")
 
-    def ShouldHandleURL(self, url):
-        print("ShouldHandleURL called with %s" % url)
+    def ProcessAppURL(self, url):
         data = urlparse.urlparse(url)
+        args = urlparse.parse_qs(data.query)
         if data.scheme == "bw":
-            if data.netloc == "browseFiles":
-                print("File browser called")
-                return False
-
-        return True
+            if self.messageHandler and hasattr(self.messageHandler, data.netloc):
+                method = "self.messageHandler." + data.netloc + "(args)"
+                eval(method)
+            
+            return True
+        return False
 
     def OnWebKitBeforeLoad(self, event):
         print("OnWebKitBeforeLoad called with %r" % event.URL)

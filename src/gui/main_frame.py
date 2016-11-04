@@ -330,7 +330,7 @@ class MainFrame2(frameClass):
         accelerators = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_TREE_REMOVE)])
         self.SetAcceleratorTable(accelerators)
 
-        self.browser = wxbrowser.wxBrowser(parent, -1)
+        self.browser = wxbrowser.wxBrowser(parent, -1, messageHandler=self)
         if self._mgr:
             self._mgr.AddPane(self.browser, aui.AuiPaneInfo().Center().Position(2).MinSize(400, 400).CaptionVisible(False))
         # self.browser.SetSize((400, 400))
@@ -382,6 +382,21 @@ class MainFrame2(frameClass):
 
         if self._mgr:
             self._mgr.Update()
+
+    def BrowseFiles(self, args):
+        print("browseFiles called with args %r" % args)
+        self.browseFilesReturnArgs = args
+
+        dialog = wx.FileDialog(self)
+        if dialog.ShowModal() == wx.ID_OK:
+            path = guiutils.importFile(dialog.GetPath())
+            path = path.replace(settings.ProjectDir + "\\Contents", "").replace("\\", "/")
+            js = "CKEDITOR.tools.callFunction(%r, '%s');" % (self.browseFilesReturnArgs['CKEditorFuncNum'][0], path)
+            print("Running JS %s" % js)
+            self.browser.EvaluateJavaScript(js)
+
+
+        return True
 
     def OnDoSearch(self, event):
         # wx bug: event.GetString() doesn't work on Windows 
@@ -1555,7 +1570,7 @@ class MainFrame2(frameClass):
             if os.path.exists(filename) and ext in ok_fileTypes:
                 if ext.find("htm") != -1:
                     fileurl = os.path.dirname(filename) + "/"
-                    self.baseurl = 'file://' + urllib.quote(fileurl)
+                    self.baseurl = 'file://' + fileurl
                     html = htmlutils.getUnicodeHTMLForFile(filename)
                     js = 'SetContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
                     logging.info("js = %s" % js)

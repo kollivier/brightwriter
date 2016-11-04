@@ -133,6 +133,13 @@
             removePlugins: 'resize',
         } );
 
+        // We sometimes need to create our own native window, but the popup function doesn't give us the option to handle the URL
+        // and decide for ourselves, so we are monkey patching the popup function to implement our own handling.
+        editor.popup = function( url, width, height, options ) {
+            app.ProcessAppURL(url);
+            return true;
+        }
+
         // Attaching event listeners to CKEditor instances.
         // Refer to http://docs.ckeditor.com/#!/api/CKEDITOR.editor for a list of all available events.
         editor.on( 'focus', function( evt ) {
