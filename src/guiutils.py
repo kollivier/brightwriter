@@ -34,6 +34,7 @@ def importFile(filename):
     if destfile == filename:
         pass
     elif os.path.exists(destfile):
+        # TODO: Check if files are identical before prompting to overwrite.
         msg = wx.MessageDialog(None, _("The file %(filename)s already exists. Do you want to overwrite this file?") % {"filename": destfile},
                                    _("Overwrite File?"), wx.YES_NO)
         answer = msg.ShowModal()
