@@ -1592,8 +1592,6 @@ class MainFrame2(frameClass):
 
         # self.Preview()
         self.dirtyNodes.append(imsitem)
-        if "UploadOnSave" in settings.ProjectSettings and string.lower(settings.ProjectSettings["UploadOnSave"]) == "yes":
-            self.UploadPage()
             
     def CopyWebFiles(self, output_dir):
         result = False
