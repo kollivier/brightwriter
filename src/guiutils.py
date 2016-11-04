@@ -27,7 +27,6 @@ def importFile(filename):
     if filename.find(settings.ProjectDir) != -1:
         return filename.replace(settings.ProjectDir + os.sep, "")
     
-    plugin = plugins.GetPluginForFilename(filename)
     copyfile = False
     destdir = os.path.join(settings.ProjectDir, "Content")
     # Don't do anything if the user selected the same file
