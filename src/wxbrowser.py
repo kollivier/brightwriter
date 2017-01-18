@@ -148,7 +148,7 @@ class wxBrowser(wx.Window):
                 return
         elif preferredBrowser.lower() == "cef":
             self.callback = None
-            self.browser = cefwx.ChromeWindow(self, url="file://" + os.path.abspath(os.path.join("gui", "html", "index.html")), timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
+            self.browser = cefwx.ChromeWindow(self, url="about:blank", timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
             # self.browser.SetSizerProps(expand=True, proportion=1)
 
             # override the ChromeWindow __del__ handler, it calls Unbind when the
