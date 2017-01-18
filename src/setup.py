@@ -81,6 +81,7 @@ if sys.platform.startswith("win"):
           '%s/cef.pak' % cefp,
           '%s/cefclient.exe' % cefp,
           '%s/d3dcompiler_43.dll' % cefp,
+          '%s/d3dcompiler_46.dll' % cefp,
           '%s/devtools_resources.pak' % cefp,
           '%s/ffmpegsumo.dll' % cefp,
           '%s/libEGL.dll' % cefp,
