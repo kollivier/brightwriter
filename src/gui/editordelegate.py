@@ -110,7 +110,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddHandlerForID(ID_REDO, self.OnRedo)
         app.AddHandlerForID(ID_CUT, self.OnCut)
         app.AddHandlerForID(ID_COPY, self.OnCopy)
-        app.AddHandlerForID(ID_PASTE, self.OnPaste)
+        # app.AddHandlerForID(ID_PASTE, self.OnPaste)
         app.AddHandlerForID(ID_REMOVE_LINK, self.OnRemoveLink)
         app.AddHandlerForID(ID_BOLD, self.OnBoldButton)
         app.AddHandlerForID(ID_ITALIC, self.OnItalicButton)

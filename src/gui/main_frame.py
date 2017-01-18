@@ -444,7 +444,7 @@ class MainFrame2(frameClass):
         app.AddHandlerForID(ID_COPY, self.OnCopy)
         app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
         app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
-        app.AddHandlerForID(ID_PASTE, self.OnPaste)
+        #app.AddHandlerForID(ID_PASTE, self.OnPaste)
 
     def RemoveTreeHandlers(self):
         app = wx.GetApp()
@@ -508,7 +508,7 @@ class MainFrame2(frameClass):
         
         app.AddUIHandlerForID(ID_CUT, self.UpdatePageCommand)
         app.AddUIHandlerForID(ID_COPY, self.UpdatePageCommand)
-        app.AddUIHandlerForID(ID_PASTE, self.UpdatePageCommand)
+        # app.AddUIHandlerForID(ID_PASTE, self.UpdatePageCommand)
         app.AddUIHandlerForID(ID_FIND_IN_PROJECT, self.UpdatePageCommand)
         
         app.AddUIHandlerForID(ID_ADD_MENU, self.UpdatePageCommand)
@@ -1229,7 +1229,13 @@ class MainFrame2(frameClass):
         if self.errorViewer:
             self.errorViewer.SaveState("ErrorLogViewer")
             self.errorViewer.Destroy()
+
+        if self._mgr:
+            logging.info("Calling mgr.UnInit")
+            self._mgr.UnInit()
         self.Destroy()
+        if event:
+            event.Skip()
         
     def SaveProject(self, event=None):
         """

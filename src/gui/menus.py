@@ -30,12 +30,12 @@ def getFileMenu():
     
 def getEditMenu():
     EditMenu = wx.Menu()
-    EditMenu.Append(ID_UNDO, _("Undo") + "\tCTRL+Z")
-    EditMenu.Append(ID_REDO, _("Redo") + "\tCTRL+Y")
-    EditMenu.Append(ID_CUT, _("Cut")+"\tCTRL+X")
-    EditMenu.Append(ID_COPY, _("Copy")+"\tCTRL+C")
+#    EditMenu.Append(ID_UNDO, _("Undo") + "\tCTRL+Z")
+#    EditMenu.Append(ID_REDO, _("Redo") + "\tCTRL+Y")
+#    EditMenu.Append(ID_CUT, _("Cut")+"\tCTRL+X")
+#    EditMenu.Append(ID_COPY, _("Copy")+"\tCTRL+C")
 
-    EditMenu.Append(ID_PASTE, _("Paste") + "\tCTRL+V")
+#    EditMenu.Append(ID_PASTE, _("Paste") + "\tCTRL+V")
     EditMenu.Append(ID_PASTE_BELOW, _("Paste Page After")+"\tCTRL+SHIFT+V")
     EditMenu.Append(ID_PASTE_CHILD, _("Paste Page As Child"))
     
@@ -95,7 +95,7 @@ def getPageMenu(openWithMenu=None, isPopup=False):
         PasteMenu2 = wx.Menu()
         PasteMenu2.Append(ID_PASTE_BELOW, _("Paste After")+"\tCTRL+V")
         PasteMenu2.Append(ID_PASTE_CHILD, _("Paste As Child"))
-        PageMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu2)
+#        PageMenu.AppendMenu(ID_PASTE, _("Paste"), PasteMenu2)
     
     PageMenu.Append(ID_TREE_MOVEUP, _("Move Page Up"), _("Move the selected page higher in the tree"))
     PageMenu.Append(ID_TREE_MOVEDOWN, _("Move Page Down"), _("Move the selected page lower in the tree"))   
