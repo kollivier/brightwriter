@@ -238,7 +238,7 @@ class wxBrowser(wx.Window):
 
     def OnWebKitBeforeLoad(self, event):
         print("OnWebKitBeforeLoad called with %r" % event.URL)
-        if not self.ShouldHandleURL(event.URL):
+        if self.ProcessAppURL(event.URL):
             event.Cancel()
             return
 
