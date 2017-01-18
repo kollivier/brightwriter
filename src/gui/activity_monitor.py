@@ -34,11 +34,6 @@ class ActivityMonitor(sc.SizedDialog):
         self.Fit()
         self.SetMinSize(self.GetSize())
         
-        #self.Bind(wx.EVT_TIMER, self.OnTimerFired)
-        
-        self.timer = wx.Timer(self)
-        self.timer.Start(1000)
-        
     def OnDetailsClick(self, event):
         sel = self.taskList.GetSelection()
         if sel >= 0 and sel < len(tasks.activeTasks):
