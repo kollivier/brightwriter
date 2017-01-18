@@ -15,6 +15,15 @@ logging.basicConfig(filename=settings.logfile, filemode='w', format="%(asctime)s
 log = logging.getLogger('BrightWriter')
 log.setLevel(logging.DEBUG)
 
+class SysErrLog:
+    def __init__(self, log):
+        self.log = log
+
+    def write(self, msg):
+        self.log.error(msg)
+
+sys.stderr = SysErrLog(log)
+
 import version
 
 log.info("Starting %s %s" % (settings.app_name, version.asString()))
