@@ -44,6 +44,6 @@ class EClassAboutDialog(sc.SizedDialog):
         self.browser.browser.SetSizerProps(expand=True, proportion=1)
         self.browser.browser.SetMinSize((400, 100))
         # FIXME: Move this to an html file on disk.
-        self.browser.SetPage("""<head><style>body {font-family: Helvetica}</style></head><body><h4>Credits and Acknowledgements</h4><p><a href="http://wxpython.org">Built with wxPython</a></p><p>Icons provided by <a href="http://www.fatcow.com/free-icons/">FatCow</a> and <a href="http://p.yusukekamiyamane.com">Yusuke Kamiyamane</a></p><p>App icon created from <a href="http://www.iconaholic.com/">iconaholic.com icons</a></p></body>""", "")
+        self.browser.LoadPage(os.path.join(settings.AppDir, "gui", "html", "about.html"))
 
         self.Fit()
