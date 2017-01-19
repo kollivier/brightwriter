@@ -1233,6 +1233,8 @@ class MainFrame2(frameClass):
         if self._mgr:
             logging.info("Calling mgr.UnInit")
             self._mgr.UnInit()
+        if hasattr(wxbrowser, "ShutDown"):
+            wxbrowser.ShutDown()
         self.Destroy()
         if event:
             event.Skip()

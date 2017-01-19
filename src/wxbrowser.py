@@ -23,7 +23,7 @@ except:
     pass
 
 try:
-    if not sys.platform.startswith("darwin"):
+    if True:  # not sys.platform.startswith("darwin"):
         from cefpython3 import cefpython
         import cefpython3.wx.chromectrl as cefwx
         browserlist.append("cef")
@@ -47,7 +47,7 @@ if "cef" in browserlist:
     }
     cefwx.Initialize(settings)
     
-    @atexit.register
+    # @atexit.register
     def ShutDown():
         cefpython.Shutdown()
     
@@ -96,7 +96,7 @@ if "cef" in browserlist:
 def getDefaultBrowser():
     global browserlist
 
-    if sys.platform.startswith("darwin") and "webkit" in browserlist:
+    if False:  # sys.platform.startswith("darwin") and "webkit" in browserlist:
         default = "webkit"
     elif "cef" in browserlist:
         default = "cef"
@@ -148,7 +148,10 @@ class wxBrowser(wx.Window):
                 return
         elif preferredBrowser.lower() == "cef":
             self.callback = None
-            self.browser = cefwx.ChromeWindow(self, url="about:blank", timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
+            parent = self
+            if sys.platform.startswith("darwin"):
+                parent = self.parent
+            self.browser = cefwx.ChromeWindow(parent, url="about:blank", timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
             # self.browser.SetSizerProps(expand=True, proportion=1)
 
             # override the ChromeWindow __del__ handler, it calls Unbind when the
