@@ -1,12 +1,5 @@
-import wx
-import wx.stc
-import wx.lib.sized_controls as sc
-
-import string
 import os
 #import conman.conman as conman
-import locale
-import re
 import settings
 import eclassutils
 import ims
@@ -17,23 +10,13 @@ import conman
 from xmlutils import *
 from htmlutils import *
 from fileutils import *
-import plugins
-from mmedia import HTMLTemplates
-    #from conman.colorbutton import *
 
-try:
-    if settings.webkit:
-        import wx.webview
-        webkit_available = True
-        from htmleditor import *
-except:
-    webkit_available = False
-
-from StringIO import StringIO
 from threading import *
 import traceback
 import sys
-import utils, guiutils, settings
+
+import utils
+import settings
 
 from core import BaseHTMLPublisher
 
@@ -71,6 +54,7 @@ htmlpage = u"""
 </html>
 """
 
+
 def CreateNewFile(filename, name="New Page"):
     if os.path.exists(filename):
         raise IOError, "File already exists!"
@@ -95,19 +79,19 @@ if __name__ != "__main__":
         def GetData(self):
             if isinstance(self.node, conman.conman.ConNode):
                 filename = self.node.content.filename
-            
+
             elif isinstance(self.node, ims.contentpackage.Item):
                 resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
                 filename = eclassutils.getEClassPageForIMSResource(resource)
                 if not filename:
                     filename = resource.getFilename()
-            
+
             filename = os.path.join(settings.ProjectDir, filename)
-            
+
             if os.path.exists(filename):
                 myfile = None
                 myfile = utils.openFile(filename, 'r')
-                
+
                 #if myfile:
                 myhtml = GetBodySoup(myfile)
                 myfile.close()
@@ -118,16 +102,19 @@ if __name__ != "__main__":
 
             self.data['content'] = myhtml
 
-if __name__ != "__main__":
+if sys.platform.startswith('win') and __name__ != "__main__":
+    import wx
+    import wx.stc
+
     class EditorDialog:
         def __init__(self, parent, node):
             self.parent = parent
             self.node = node
-    
+
         def ShowModal(self):
             if isinstance(self.node, conman.conman.ConNode):
                 filename = self.node.content.filename
-            
+
             elif isinstance(self.node, ims.contentpackage.Item):
                 resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.node)
                 filename = eclassutils.getEClassPageForIMSResource(resource)
@@ -141,7 +128,6 @@ if __name__ != "__main__":
                 file.write(htmlpage)
                 file.close()
 
-            
             if False:
                 size = wx.Display().ClientArea.Size
                 size.x = size.x / 2
@@ -153,16 +139,5 @@ if __name__ != "__main__":
                 self.frame.CentreOnScreen()
             else:
                 guiutils.openInHTMLEditor(self.filename)
-                
+
             return wx.ID_OK
-
-class MyApp(wx.App):
-    def OnInit(self):
-        self.frame = EditorFrame(None)
-        self.frame.Show(True)
-        self.SetTopWindow(self.frame)
-        return True
-
-if __name__ == "__main__":
-    app = MyApp(0)
-    app.MainLoop()

@@ -1,7 +1,3 @@
-import wx
-import wx.lib.sized_controls as sc
-import persistence
-
 import string
 import os
 import locale
@@ -658,248 +654,251 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
 
 
 #------------------------------ EDITOR CLASSES ------------------------------------
+if sys.platform.startswith('win'):
+    import wx
+    import wx.lib.sized_controls as sc
 
-class EditorDialog(sc.SizedDialog):
-    def __init__(self, parent, item):
-        self.quiz = QuizPage()
-        self.item = item
-        self.parent = parent
+    class EditorDialog(sc.SizedDialog):
+        def __init__(self, parent, item):
+            self.quiz = QuizPage()
+            self.item = item
+            self.parent = parent
 
-        sc.SizedDialog.__init__(self, parent, -1, _("Quiz Editor"), wx.Point(100, 100),
-                                    style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-        pane = self.GetContentsPane()
+            sc.SizedDialog.__init__(self, parent, -1, _("Quiz Editor"), wx.Point(100, 100),
+                                        style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+            pane = self.GetContentsPane()
 
-        wx.StaticText(pane, -1, _("Question List"))
-        self.lstQuestions = wx.ListBox(pane, -1)
-        self.lstQuestions.SetSizerProps({"expand":True, "proportion":1})
-        btnPane = sc.SizedPanel(pane, -1)
-        btnPane.SetSizerType("horizontal")
-        btnPane.SetSizerProp("halign", "center")
-        
-        self.btnAdd = wx.Button(btnPane, -1, _("Add"))
-        self.btnEdit = wx.Button(btnPane, -1, _("Edit"))
-        self.btnRemove = wx.Button(btnPane, -1, _("Remove"))
-        
-        filename = None
-        if isinstance(self.item, conman.conman.ConMan):
-            filename = self.node.content.filename
-        else:
-            self.content = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.item)
-            filename = eclassutils.getEClassPageForIMSResource(self.content)
-            if not filename:
-                filename = self.content.getFilename()
-                
-        if filename: 
-            self.filename = os.path.join(settings.ProjectDir, filename)
+            wx.StaticText(pane, -1, _("Question List"))
+            self.lstQuestions = wx.ListBox(pane, -1)
+            self.lstQuestions.SetSizerProps({"expand":True, "proportion":1})
+            btnPane = sc.SizedPanel(pane, -1)
+            btnPane.SetSizerType("horizontal")
+            btnPane.SetSizerProp("halign", "center")
+            
+            self.btnAdd = wx.Button(btnPane, -1, _("Add"))
+            self.btnEdit = wx.Button(btnPane, -1, _("Edit"))
+            self.btnRemove = wx.Button(btnPane, -1, _("Remove"))
+            
+            filename = None
+            if isinstance(self.item, conman.conman.ConMan):
+                filename = self.node.content.filename
+            else:
+                self.content = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, self.item)
+                filename = eclassutils.getEClassPageForIMSResource(self.content)
+                if not filename:
+                    filename = self.content.getFilename()
+                    
+            if filename: 
+                self.filename = os.path.join(settings.ProjectDir, filename)
+                try:
+                    self.quiz.LoadPage(self.filename)
+                except IOError, msg:
+                    message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": self.filename})
+                    global log
+                    log.error(message)
+                    wx.MessageBox(message, _("Unable to create file."), wxICON_ERROR)
+                    return
+
+                for item in self.quiz.items:
+                    self.lstQuestions.Append(item.presentation.text, item)
+
+            self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
+            
+            self.Fit()
+            self.SetMinSize(self.GetSize())
+
+            wx.EVT_BUTTON(self, wx.ID_OK, self.btnOKClicked)
+            wx.EVT_BUTTON(self.btnAdd, self.btnAdd.GetId(), self.btnAddClicked)
+            wx.EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.btnEditClicked)
+            wx.EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.btnRemoveClicked)
+            wx.EVT_LEFT_DCLICK(self.lstQuestions, self.btnEditClicked)
+
+        def btnOKClicked(self, event):
             try:
-                self.quiz.LoadPage(self.filename)
-            except IOError, msg:
-                message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": self.filename})
+                self.quiz.SaveAsXML(self.filename)
+                self.EndModal(wx.ID_OK)
+            except IOError:
+                message = utils.getStdErrorMessage("IOError", {"filename":self.filename, "type":"write"})
                 global log
                 log.error(message)
-                wx.MessageBox(message, _("Unable to create file."), wxICON_ERROR)
+                wx.MessageBox(message, _("Cannot Save File"), wxICON_ERROR)
+
+        def btnAddClicked(self,event):
+            editor = QuestionEditor(self)
+            if editor.ShowModal() == wx.ID_OK:
+                self.quiz.items.append(editor.question)
+                self.lstQuestions.Append(editor.question.presentation.text, editor.question)
+
+        def btnEditClicked(self, event):
+            if self.lstQuestions.GetSelection() == -1:
                 return
+            myitem = self.lstQuestions.GetClientData(self.lstQuestions.GetSelection())
+            editor = QuestionEditor(self, myitem)
+            editor.ShowModal()
 
-            for item in self.quiz.items:
-                self.lstQuestions.Append(item.presentation.text, item)
-
-        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
-        
-        self.Fit()
-        self.SetMinSize(self.GetSize())
-
-        wx.EVT_BUTTON(self, wx.ID_OK, self.btnOKClicked)
-        wx.EVT_BUTTON(self.btnAdd, self.btnAdd.GetId(), self.btnAddClicked)
-        wx.EVT_BUTTON(self.btnEdit, self.btnEdit.GetId(), self.btnEditClicked)
-        wx.EVT_BUTTON(self.btnRemove, self.btnRemove.GetId(), self.btnRemoveClicked)
-        wx.EVT_LEFT_DCLICK(self.lstQuestions, self.btnEditClicked)
-
-    def btnOKClicked(self, event):
-        try:
-            self.quiz.SaveAsXML(self.filename)
-            self.EndModal(wx.ID_OK)
-        except IOError:
-            message = utils.getStdErrorMessage("IOError", {"filename":self.filename, "type":"write"})
-            global log
-            log.error(message)
-            wx.MessageBox(message, _("Cannot Save File"), wxICON_ERROR)
-
-    def btnAddClicked(self,event):
-        editor = QuestionEditor(self)
-        if editor.ShowModal() == wx.ID_OK:
-            self.quiz.items.append(editor.question)
-            self.lstQuestions.Append(editor.question.presentation.text, editor.question)
-
-    def btnEditClicked(self, event):
-        if self.lstQuestions.GetSelection() == -1:
-            return
-        myitem = self.lstQuestions.GetClientData(self.lstQuestions.GetSelection())
-        editor = QuestionEditor(self, myitem)
-        editor.ShowModal()
-
-    def btnRemoveClicked(self, event):
-        if self.lstQuestions.GetSelection() == -1:
-            return
-        myitem = self.lstQuestions.GetClientData(self.lstQuestions.GetSelection())
-        self.lstQuestions.Delete(self.lstQuestions.GetSelection())
-        self.quiz.items.remove(myitem)
+        def btnRemoveClicked(self, event):
+            if self.lstQuestions.GetSelection() == -1:
+                return
+            myitem = self.lstQuestions.GetClientData(self.lstQuestions.GetSelection())
+            self.lstQuestions.Delete(self.lstQuestions.GetSelection())
+            self.quiz.items.remove(myitem)
 
 
-class QuestionEditor(sc.SizedDialog):
-    def __init__(self, parent, question=None):
-        sc.SizedDialog.__init__(self, parent, -1, _("Question Editor"), wx.Point(100, 100),
-                                  style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-        pane = self.GetContentsPane()
+    class QuestionEditor(sc.SizedDialog):
+        def __init__(self, parent, question=None):
+            sc.SizedDialog.__init__(self, parent, -1, _("Question Editor"), wx.Point(100, 100),
+                                      style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+            pane = self.GetContentsPane()
 
-        wx.StaticText(pane, -1, _("Question:"))
-        self.txtQuestion = wx.TextCtrl(pane, -1, "", style=wx.TE_MULTILINE)
-        self.txtQuestion.SetSizerProp("expand", True)
-        
-        aPane = sc.SizedPanel(pane, -1)
-        aPane.SetSizerType("form")
-        aPane.SetSizerProp("expand", True)
+            wx.StaticText(pane, -1, _("Question:"))
+            self.txtQuestion = wx.TextCtrl(pane, -1, "", style=wx.TE_MULTILINE)
+            self.txtQuestion.SetSizerProp("expand", True)
+            
+            aPane = sc.SizedPanel(pane, -1)
+            aPane.SetSizerType("form")
+            aPane.SetSizerProp("expand", True)
 
-        wx.StaticText(aPane, -1, _("Correct?"))
-        wx.StaticText(aPane, -1, _("Answer Text"))
+            wx.StaticText(aPane, -1, _("Correct?"))
+            wx.StaticText(aPane, -1, _("Answer Text"))
 
-        self.chkCorrect1 = wx.CheckBox(aPane, -1, "")
-        self.txtAnswer1 = wx.TextCtrl(aPane, -1, "") 
-        self.txtAnswer1.SetSizerProp("expand", True)
-        
-        self.chkCorrect2 = wx.CheckBox(aPane, -1, "")
-        self.txtAnswer2 = wx.TextCtrl(aPane, -1, "") 
-        self.txtAnswer2.SetSizerProp("expand", True)
+            self.chkCorrect1 = wx.CheckBox(aPane, -1, "")
+            self.txtAnswer1 = wx.TextCtrl(aPane, -1, "") 
+            self.txtAnswer1.SetSizerProp("expand", True)
+            
+            self.chkCorrect2 = wx.CheckBox(aPane, -1, "")
+            self.txtAnswer2 = wx.TextCtrl(aPane, -1, "") 
+            self.txtAnswer2.SetSizerProp("expand", True)
 
-        self.chkCorrect3 = wx.CheckBox(aPane, -1, "")
-        self.txtAnswer3 = wx.TextCtrl(aPane, -1, "")
-        self.txtAnswer3.SetSizerProp("expand", True)
+            self.chkCorrect3 = wx.CheckBox(aPane, -1, "")
+            self.txtAnswer3 = wx.TextCtrl(aPane, -1, "")
+            self.txtAnswer3.SetSizerProp("expand", True)
 
-        self.chkCorrect4 = wx.CheckBox(aPane, -1, "")
-        self.txtAnswer4 = wx.TextCtrl(aPane, -1, "")
-        self.txtAnswer4.SetSizerProp("expand", True)
+            self.chkCorrect4 = wx.CheckBox(aPane, -1, "")
+            self.txtAnswer4 = wx.TextCtrl(aPane, -1, "")
+            self.txtAnswer4.SetSizerProp("expand", True)
 
-        self.chkCorrect5 = wx.CheckBox(aPane, -1, "")
-        self.txtAnswer5 = wx.TextCtrl(aPane, -1, "")
-        self.txtAnswer5.SetSizerProp("expand", True)
-        
-        # feedback
-        fPane = sc.SizedPanel(pane, -1)
-        fPane.SetSizerType("form")
-        fPane.SetSizerProp("expand", True)
-        
-        wx.StaticText(fPane, -1, _("Correct Answer Feedback"))
-        wx.StaticText(fPane, -1, _("Incorrect Answer Feedback"))
-        self.txtCorrect = wx.TextCtrl(fPane, -1, "", style=wx.TE_MULTILINE)
-        self.txtCorrect.SetSizerProp("expand", True)
-        
-        self.txtIncorrect = wx.TextCtrl(fPane, -1, "", style=wx.TE_MULTILINE)
-        self.txtIncorrect.SetSizerProp("expand", True)
+            self.chkCorrect5 = wx.CheckBox(aPane, -1, "")
+            self.txtAnswer5 = wx.TextCtrl(aPane, -1, "")
+            self.txtAnswer5.SetSizerProp("expand", True)
+            
+            # feedback
+            fPane = sc.SizedPanel(pane, -1)
+            fPane.SetSizerType("form")
+            fPane.SetSizerProp("expand", True)
+            
+            wx.StaticText(fPane, -1, _("Correct Answer Feedback"))
+            wx.StaticText(fPane, -1, _("Incorrect Answer Feedback"))
+            self.txtCorrect = wx.TextCtrl(fPane, -1, "", style=wx.TE_MULTILINE)
+            self.txtCorrect.SetSizerProp("expand", True)
+            
+            self.txtIncorrect = wx.TextCtrl(fPane, -1, "", style=wx.TE_MULTILINE)
+            self.txtIncorrect.SetSizerProp("expand", True)
 
-        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
-        
-        self.txtQuestion.SetFocus()
-        self.Fit()
-        self.SetMinSize(self.GetSize())
+            self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
+            
+            self.txtQuestion.SetFocus()
+            self.Fit()
+            self.SetMinSize(self.GetSize())
 
-        if not question == None:
-            self.question = question
-            self.txtQuestion.SetValue(question.presentation.text)
-            counter = 0
-            for choice in question.presentation.choices:
-                if counter < 6:
-                    eval("self.txtAnswer" + `(counter + 1)` + ".SetValue(u\"" + choice.text + "\")")
-                    for cond in question.conditions:
-                        if cond.title == "Correct":
-                            for var in cond.variables:
-                                if var.value == choice.id and var.condition == "equal":
-                                    eval("self.chkCorrect" + `(counter + 1)` + ".SetValue(True)")
-                counter = counter + 1
+            if not question == None:
+                self.question = question
+                self.txtQuestion.SetValue(question.presentation.text)
+                counter = 0
+                for choice in question.presentation.choices:
+                    if counter < 6:
+                        eval("self.txtAnswer" + `(counter + 1)` + ".SetValue(u\"" + choice.text + "\")")
+                        for cond in question.conditions:
+                            if cond.title == "Correct":
+                                for var in cond.variables:
+                                    if var.value == choice.id and var.condition == "equal":
+                                        eval("self.chkCorrect" + `(counter + 1)` + ".SetValue(True)")
+                    counter = counter + 1
+                    
+                for itemfeedback in self.question.feedback:
+                    if itemfeedback.id == "Correct":
+                        self.txtCorrect.SetValue(itemfeedback.text)
+                    elif itemfeedback.id == "Incorrect":
+                        self.txtIncorrect.SetValue(itemfeedback.text)
+            else:
+                self.question = QuizItem()
+
+            wx.EVT_BUTTON(self, wx.ID_OK, self.SavePage)
+
+        def SavePage(self, event):
+            self.question.presentation.text = self.txtQuestion.GetValue()
+            self.question.presentation.choices = []
+            self.question.conditions = []
+            correctcondition = QuizItemCondition()
+            correctcondition.title = "Correct"
+            correctcondition.itemid = self.question.presentation.lidid
+
+            #incorrectcondition = QuizItemCondition()
+            #incorrectcondition.title = "Correct"
+            #incorrectcondition.itemid = self.question.presentation.lidid
+            correctAnswer = False
+            numAnswers = 0
+            for counter in range(1, 6):
+                exec("chkCorrect = self.chkCorrect" + `counter`)
+                exec("txtAnswer = self.txtAnswer" + `counter`)
                 
-            for itemfeedback in self.question.feedback:
-                if itemfeedback.id == "Correct":
-                    self.txtCorrect.SetValue(itemfeedback.text)
-                elif itemfeedback.id == "Incorrect":
-                    self.txtIncorrect.SetValue(itemfeedback.text)
-        else:
-            self.question = QuizItem()
-
-        wx.EVT_BUTTON(self, wx.ID_OK, self.SavePage)
-
-    def SavePage(self, event):
-        self.question.presentation.text = self.txtQuestion.GetValue()
-        self.question.presentation.choices = []
-        self.question.conditions = []
-        correctcondition = QuizItemCondition()
-        correctcondition.title = "Correct"
-        correctcondition.itemid = self.question.presentation.lidid
-
-        #incorrectcondition = QuizItemCondition()
-        #incorrectcondition.title = "Correct"
-        #incorrectcondition.itemid = self.question.presentation.lidid
-        correctAnswer = False
-        numAnswers = 0
-        for counter in range(1, 6):
-            exec("chkCorrect = self.chkCorrect" + `counter`)
-            exec("txtAnswer = self.txtAnswer" + `counter`)
-            
-            if chkCorrect.GetValue() == True:
-                correctAnswer = True
-
-            if not txtAnswer.GetValue() == "":
-                numAnswers = numAnswers + 1
-
-        if self.question.presentation.text == "":
-            wx.MessageBox(_("Please enter a question."))
-            return False
-
-        if not correctAnswer:
-            wx.MessageBox(_("Please specify one or more correct answer(s)."))
-            return False 
-
-        if numAnswers <= 1:
-            wx.MessageBox(_("Questions must have at least 2 answers."))
-            return False
-
-        for counter in range(1, 6):
-            exec("txtAnswer = self.txtAnswer" + `counter`)
-            exec("chkCorrect = self.chkCorrect" + `counter`)
-
-            if not len(txtAnswer.GetValue()) == 0:
-                newchoice = QuizItemChoice()
-                newchoice.id = "A" + `counter`
-
-                newchoice.text = txtAnswer.GetValue()                   
-
                 if chkCorrect.GetValue() == True:
-                    var = QuizItemVariable()
-                    var.value = newchoice.id
-                    correctcondition.variables.append(var)
-                else:
-                    var = QuizItemVariable()
-                    var.condition = "not equal"
-                    var.value = newchoice.id
-                    correctcondition.variables.append(var)
+                    correctAnswer = True
 
-                self.question.presentation.choices.append(newchoice)
+                if not txtAnswer.GetValue() == "":
+                    numAnswers = numAnswers + 1
 
-        self.question.conditions.append(correctcondition)
-        
-        self.question.feedback = []
-        if len(self.txtCorrect.GetValue()) > 0:
-            newfeedback = QuizItemFeedback()
-            newfeedback.id = "Correct"
-            newfeedback.view = "Candidate"
-            newfeedback.text = self.txtCorrect.GetValue()
-            self.question.feedback.append(newfeedback)
+            if self.question.presentation.text == "":
+                wx.MessageBox(_("Please enter a question."))
+                return False
 
-        if len(self.txtIncorrect.GetValue()) > 0:
-            newfeedback = QuizItemFeedback()
-            newfeedback.id = "Incorrect"
-            newfeedback.view = "Candidate"
-            newfeedback.text = self.txtIncorrect.GetValue()
-            self.question.feedback.append(newfeedback)
+            if not correctAnswer:
+                wx.MessageBox(_("Please specify one or more correct answer(s)."))
+                return False 
+
+            if numAnswers <= 1:
+                wx.MessageBox(_("Questions must have at least 2 answers."))
+                return False
+
+            for counter in range(1, 6):
+                exec("txtAnswer = self.txtAnswer" + `counter`)
+                exec("chkCorrect = self.chkCorrect" + `counter`)
+
+                if not len(txtAnswer.GetValue()) == 0:
+                    newchoice = QuizItemChoice()
+                    newchoice.id = "A" + `counter`
+
+                    newchoice.text = txtAnswer.GetValue()                   
+
+                    if chkCorrect.GetValue() == True:
+                        var = QuizItemVariable()
+                        var.value = newchoice.id
+                        correctcondition.variables.append(var)
+                    else:
+                        var = QuizItemVariable()
+                        var.condition = "not equal"
+                        var.value = newchoice.id
+                        correctcondition.variables.append(var)
+
+                    self.question.presentation.choices.append(newchoice)
+
+            self.question.conditions.append(correctcondition)
             
-        self.EndModal(wx.ID_OK)
+            self.question.feedback = []
+            if len(self.txtCorrect.GetValue()) > 0:
+                newfeedback = QuizItemFeedback()
+                newfeedback.id = "Correct"
+                newfeedback.view = "Candidate"
+                newfeedback.text = self.txtCorrect.GetValue()
+                self.question.feedback.append(newfeedback)
+
+            if len(self.txtIncorrect.GetValue()) > 0:
+                newfeedback = QuizItemFeedback()
+                newfeedback.id = "Incorrect"
+                newfeedback.view = "Candidate"
+                newfeedback.text = self.txtIncorrect.GetValue()
+                self.question.feedback.append(newfeedback)
+                
+            self.EndModal(wx.ID_OK)
 
 def Test():
     quiz = QuizPage()

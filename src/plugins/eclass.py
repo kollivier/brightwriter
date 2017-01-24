@@ -9,16 +9,10 @@ from xmlutils import *
 from StringIO import StringIO
 import utils
 import fileutils
-import guiutils
 import mmedia
-import gui.media_convert
 import settings
 import plugins.html as html
 
-import wx
-import persistence
-import wx.lib.sized_controls as sc
-import gui.select_box as picker
 import appdata
 import eclassutils
 import ims.contentpackage
@@ -395,13 +389,6 @@ class EClassPage(plugins.PluginData):
         %s
         </Term>""" % (TextToXMLChar(term.name), TextToXMLChar(term.type), myvalue)
         return myterms
-
-class ResultEvent(wx.PyEvent):
-    def __init__(self, hwname, hwid):
-        wx.PyEvent.__init__(self)
-        self.SetEventType(wx.EVT_RESULT_ID)
-        self.hwname = hwname
-        self.hwid = hwid
     
 class EClassMedia (plugins.PluginData):
     """
@@ -698,669 +685,684 @@ class PDFPublisher(HTMLPublisher):
 
 #-------------------------- EDITOR INTERFACE ----------------------------------------
 
-class EClassObjectiveEditorDialog(sc.SizedDialog):
-    """
-    class: eclass.EClassObjectiveEditorDialog(wxDialog)
-    Last Updated: 9/24/02
-    Description: This dialog presents an interface for editing objectives.
+if sys.platform.startswith('win'):
+    import wx
+    import wx.lib.sized_controls as sc
+    import gui.select_box as picker
 
-    Attributes:
-    - parent: the parent window which called the dialog
-    - txtObj: a text box containing the objective
-    - btnOK: OK button
+    import guiutils
+    import gui.media_convert
 
-    Methods:
-    - btnOKClicked: Saves data and closes the dialog
-    """
+    class ResultEvent(wx.PyEvent):
+        def __init__(self, hwname, hwid):
+            wx.PyEvent.__init__(self)
+            self.SetEventType(wx.EVT_RESULT_ID)
+            self.hwname = hwname
+            self.hwid = hwid
 
-    def __init__(self, parent):
-        sc.SizedDialog.__init__ (self, parent, -1, _("Objective Editor"),
-                         wx.DefaultPosition,
-                           wx.Size(200,150),
-                           wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-        self.parent = parent
-        pane = self.GetContentsPane()
-        self.txtObj = wx.TextCtrl(pane, -1, parent.CurrentObj, style=wx.TE_MULTILINE)
-        self.txtObj.SetSizerProps({"expand":"true", "proportion": 1})
-        self.txtObj.SetFocus()
-        self.txtObj.SetSelection(0, -1)
+    class EClassObjectiveEditorDialog(sc.SizedDialog):
+        """
+        class: eclass.EClassObjectiveEditorDialog(wxDialog)
+        Last Updated: 9/24/02
+        Description: This dialog presents an interface for editing objectives.
+
+        Attributes:
+        - parent: the parent window which called the dialog
+        - txtObj: a text box containing the objective
+        - btnOK: OK button
+
+        Methods:
+        - btnOKClicked: Saves data and closes the dialog
+        """
+
+        def __init__(self, parent):
+            sc.SizedDialog.__init__ (self, parent, -1, _("Objective Editor"),
+                             wx.DefaultPosition,
+                               wx.Size(200,150),
+                               wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+            self.parent = parent
+            pane = self.GetContentsPane()
+            self.txtObj = wx.TextCtrl(pane, -1, parent.CurrentObj, style=wx.TE_MULTILINE)
+            self.txtObj.SetSizerProps({"expand":"true", "proportion": 1})
+            self.txtObj.SetFocus()
+            self.txtObj.SetSelection(0, -1)
+            
+            self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
+            self.btnOK.SetDefault()
+            self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
+
+            buttonsizer = wx.StdDialogButtonSizer()
+            buttonsizer.AddButton(self.btnOK)
+            buttonsizer.AddButton(self.btnCancel)
+            buttonsizer.Realize()
+            self.SetButtonSizer(buttonsizer)
+            
+            self.Fit()
+            self.SetMinSize(self.GetSize())
+
+            self.CentreOnParent()
+            
+            wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+
+            self.ShowModal()
+
+        def btnOKClicked(self, event):
+            if len(self.txtObj.GetValue()): 
+                self.parent.CurrentObj = self.txtObj.GetValue()
+                self.EndModal(wx.ID_OK)
+            else:
+                wx.MessageDialog(self, _("Please enter some text for your objective, or click Cancel to quit."), _("Empty Objective"), wx.ICON_INFORMATION | wx.OK).ShowModal() 
+
+    class EClassHyperlinkEditorDialog(sc.SizedDialog):
+        """
+        Class: eclass.EClassHyperlinkEditorDialog(wxDialog)
+        Last Updated: 9/24/002
+        Description: Dialog for editing hyperlink hotwords.
+
+        Attributes:
+        - parent: the parent window which called the dialog
+        - term: the hotword to be edited
+        - txtName: textbox to edit hotword name
+        - selectFile: SelectBox to choose the file to link to
+        - btnOK: OK button
         
-        self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
-        self.btnOK.SetDefault()
-        self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
+        Methods:
+        -btnOKClicked: Updates hotword information and closes dialog
+        """
 
-        buttonsizer = wx.StdDialogButtonSizer()
-        buttonsizer.AddButton(self.btnOK)
-        buttonsizer.AddButton(self.btnCancel)
-        buttonsizer.Realize()
-        self.SetButtonSizer(buttonsizer)
-        
-        self.Fit()
-        self.SetMinSize(self.GetSize())
+        def __init__(self, parent, term):
+            sc.SizedDialog.__init__ (self, parent, -1, _("Hyperlink Editor"),
+                             wx.DefaultPosition,
+                               wx.DefaultSize,
+                               wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
-        self.CentreOnParent()
-        
-        wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+            self.parent = parent
+            self.term = term
+            
+            pane = self.GetContentsPane()
+            # make it a grid sizer
+            pane.SetSizerType("form")
+            
+            self.lblName = wx.StaticText(pane, -1, _("Name"))
+            self.lblName.SetSizerProps({"halign":"left", "valign":"center"})
+            
+            self.txtName = wx.TextCtrl(pane, -1, term.name)
+            self.txtName.SetSizerProps({"expand":True, "proportion":1,"align":"center"})
+            self.txtName.SetFocus()
+            self.txtName.SetSelection(0, -1)
+            
+            #spacer = sc.SizedPanel(pane, -1)
+            #spacer.SetSizerProp("expand", "true")
+            
+            wx.StaticText(pane, -1, _("Link Address")).SetSizerProp("valign", "center")
+            self.selectFile = picker.SelectBox(pane, term.url, _("File"))
+            
+            self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
+            self.btnOK.SetDefault()
+            self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
+            
+            self.buttonsizer = wx.StdDialogButtonSizer()
+            self.buttonsizer.AddButton(self.btnOK)
+            self.buttonsizer.AddButton(self.btnCancel)
+            self.buttonsizer.Realize()
+            self.SetButtonSizer(self.buttonsizer)
+            
+            self.LoadState("HyperlinkEditor")
 
-        self.ShowModal()
+            self.Fit()
+            self.SetMinSize(self.GetSize())
 
-    def btnOKClicked(self, event):
-        if len(self.txtObj.GetValue()): 
-            self.parent.CurrentObj = self.txtObj.GetValue()
+            wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+
+            self.CentreOnParent()
+
+            self.ShowModal()
+
+        def btnOKClicked(self, event):
+            self.term.name = self.txtName.GetValue()
+            self.term.url = self.selectFile.textbox.GetValue()
+            self.SaveState("HyperlinkEditor")
             self.EndModal(wx.ID_OK)
-        else:
-            wx.MessageDialog(self, _("Please enter some text for your objective, or click Cancel to quit."), _("Empty Objective"), wx.ICON_INFORMATION | wx.OK).ShowModal() 
 
-class EClassHyperlinkEditorDialog(sc.SizedDialog):
-    """
-    Class: eclass.EClassHyperlinkEditorDialog(wxDialog)
-    Last Updated: 9/24/002
-    Description: Dialog for editing hyperlink hotwords.
+    #--------------------------- E-Class Page Editor Class ------------------------------------
+    class EditorDialog (sc.SizedDialog):
+        """
+        Class: EditorDialog
+        Last Updated: 10/21/02
+        Description: This dialog lets users edit the selected EClassPage. 
 
-    Attributes:
-    - parent: the parent window which called the dialog
-    - term: the hotword to be edited
-    - txtName: textbox to edit hotword name
-    - selectFile: SelectBox to choose the file to link to
-    - btnOK: OK button
-    
-    Methods:
-    -btnOKClicked: Updates hotword information and closes dialog
-    """
+        Attributes:
+        - item: the ConNode selected on the main EClass editor, or an EClassPage
+        - parent: the parent window that called this dialog
+        - mainform: the main window of the application - needed to update status messages
+        - ProjectDir: the root directory of the currently selected node
+        - CurrentObj: the currently-selected objective
 
-    def __init__(self, parent, term):
-        sc.SizedDialog.__init__ (self, parent, -1, _("Hyperlink Editor"),
-                         wx.DefaultPosition,
-                           wx.DefaultSize,
-                           wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+        Methods:
+        - btnEditTextClicked: opens a text file in the HTML editing application, if selected
+        - btnNewFileClicked: creates a new text file on disk
+        - LoadTerms: clears the hotword list and reloads hotwords
+        - LoadObjectives: clears the objective list and reloads objectives
+        - AddTerm: Adds a hotword to the hotword list, opens the hotword editor, and updates the hotword list
+        - btnAddTermClicked: Opens the new hotword dialog
+        - btnEditObjectiveClicked: Opens the objective editor and updates the objective list
+        - EditTerm: Edits an existing hotword, and updates the hotword list
+        - btnRemoveTermClicked: Removes the currently selected hotword
+        - btnRemoveObjectiveClicked: Removes the currently selected objective
+        - btnOKClicked: Saves page settings, writes page to disk, and closes the dialog
+        """
 
-        self.parent = parent
-        self.term = term
-        
-        pane = self.GetContentsPane()
-        # make it a grid sizer
-        pane.SetSizerType("form")
-        
-        self.lblName = wx.StaticText(pane, -1, _("Name"))
-        self.lblName.SetSizerProps({"halign":"left", "valign":"center"})
-        
-        self.txtName = wx.TextCtrl(pane, -1, term.name)
-        self.txtName.SetSizerProps({"expand":True, "proportion":1,"align":"center"})
-        self.txtName.SetFocus()
-        self.txtName.SetSelection(0, -1)
-        
-        #spacer = sc.SizedPanel(pane, -1)
-        #spacer.SetSizerProp("expand", "true")
-        
-        wx.StaticText(pane, -1, _("Link Address")).SetSizerProp("valign", "center")
-        self.selectFile = picker.SelectBox(pane, term.url, _("File"))
-        
-        self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
-        self.btnOK.SetDefault()
-        self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
-        
-        self.buttonsizer = wx.StdDialogButtonSizer()
-        self.buttonsizer.AddButton(self.btnOK)
-        self.buttonsizer.AddButton(self.btnCancel)
-        self.buttonsizer.Realize()
-        self.SetButtonSizer(self.buttonsizer)
-        
-        self.LoadState("HyperlinkEditor")
+        def __init__(self, parent, item):
+            busy = wx.BusyCursor()
+            self.item = item
+            self.parent = parent
+            self.filename = None
+            self.CurrentObj = None
+            loaded = True 
+            self.isHotword = False 
 
-        self.Fit()
-        self.SetMinSize(self.GetSize())
-
-        wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
-
-        self.CentreOnParent()
-
-        self.ShowModal()
-
-    def btnOKClicked(self, event):
-        self.term.name = self.txtName.GetValue()
-        self.term.url = self.selectFile.textbox.GetValue()
-        self.SaveState("HyperlinkEditor")
-        self.EndModal(wx.ID_OK)
-
-#--------------------------- E-Class Page Editor Class ------------------------------------
-class EditorDialog (sc.SizedDialog):
-    """
-    Class: EditorDialog
-    Last Updated: 10/21/02
-    Description: This dialog lets users edit the selected EClassPage. 
-
-    Attributes:
-    - item: the ConNode selected on the main EClass editor, or an EClassPage
-    - parent: the parent window that called this dialog
-    - mainform: the main window of the application - needed to update status messages
-    - ProjectDir: the root directory of the currently selected node
-    - CurrentObj: the currently-selected objective
-
-    Methods:
-    - btnEditTextClicked: opens a text file in the HTML editing application, if selected
-    - btnNewFileClicked: creates a new text file on disk
-    - LoadTerms: clears the hotword list and reloads hotwords
-    - LoadObjectives: clears the objective list and reloads objectives
-    - AddTerm: Adds a hotword to the hotword list, opens the hotword editor, and updates the hotword list
-    - btnAddTermClicked: Opens the new hotword dialog
-    - btnEditObjectiveClicked: Opens the objective editor and updates the objective list
-    - EditTerm: Edits an existing hotword, and updates the hotword list
-    - btnRemoveTermClicked: Removes the currently selected hotword
-    - btnRemoveObjectiveClicked: Removes the currently selected objective
-    - btnOKClicked: Saves page settings, writes page to disk, and closes the dialog
-    """
-
-    def __init__(self, parent, item):
-        busy = wx.BusyCursor()
-        self.item = item
-        self.parent = parent
-        self.filename = None
-        self.CurrentObj = None
-        loaded = True 
-        self.isHotword = False 
-
-        try:
-            #check if ConNode or if EClassPage
-            import ims.contentpackage
-            self.page = EClassPage(self)
-            
-            name = None
-            if isinstance(item, conman.conman.ConNode):
-                self.filename = item.content.filename
-    
-                name = item.content.metadata.name
+            try:
+                #check if ConNode or if EClassPage
+                import ims.contentpackage
+                self.page = EClassPage(self)
                 
-            elif isinstance(item, ims.contentpackage.Item):
-                import ims.utils
-                resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, item)
-                self.filename = eclassutils.getEClassPageForIMSResource(resource)
-                name = item.title.text
-            else:
-                self.page = item.page
-                self.isHotword = True
-
-            if self.filename and len(self.filename) > 0:
-                self.page.LoadPage(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
-                
-            if name:
-                self.page.name = name
-                
-        except RuntimeError, e:
-            global log
-            message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
-            wx.MessageDialog(parent, message, _("Error loading page"), wx.OK).ShowModal()
-            log.error(message)
-            del busy
-            return
+                name = None
+                if isinstance(item, conman.conman.ConNode):
+                    self.filename = item.content.filename
         
-        #authorname = ""
-        #if self.isHotword:
-        #    authorname = self.page.author
-        #else:
-        #    if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
-        #        self.item.content.metadata.lifecycle.addContributor(self.page.author, "Author")
-
-        #    author = self.item.content.metadata.lifecycle.getAuthor()
-        #    if author:
-        #        authorname = author.entity.fname.value
-                
-        #credits = ""
-        #if self.isHotword:
-        #    credits = self.page.credit
-        #else:
-        #    if self.page.credit and self.item.content.metadata.rights.description == "":
-        #        self.item.content.metadata.rights.description = self.page.credit
-
-        #   credits = self.item.content.metadata.rights.description
-
-        
-        sc.SizedDialog.__init__ (self, parent, -1, _("EClass Page Editor"),
-                         wx.DefaultPosition,
-                           wx.DefaultSize,
-                           wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-                           
-        pane = self.GetContentsPane()
-
-        topPane = sc.SizedPanel(pane, -1)
-        topPane.SetSizerType("form")
-        topPane.SetSizerProps({"expand":True})
-        #topPane.SetSizerProps({"hgrow": 100})
-        
-        self.lblTitle = wx.StaticText(topPane, -1, _("Name"))
-        self.txtTitle = wx.TextCtrl(topPane, -1, self.page.name)
-        self.txtTitle.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
-        
-        #self.lblAuthor = wx.StaticText(topPane, -1, _("Author"))
-        #self.txtAuthor = wx.TextCtrl(topPane, -1, authorname)
-        #self.txtAuthor.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
-        
-        #self.lblCredit = wx.StaticText(topPane, -1, _("Credit"))
-        #self.txtCredit = wx.TextCtrl(topPane, -1, credits, style=wx.TE_MULTILINE)
-        #self.txtCredit.SetSize(wx.Size(self.txtCredit.GetSize()[0], 80))
-        #self.txtCredit.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
-
-        midPane = sc.SizedPanel(pane, -1)
-        midPane.SetSizerType("grid", {"cols": 2})
-        midPane.SetSizerProp("expand", True)
-        
-        # Left-hand side
-        midleftPane = sc.SizedPanel(midPane, -1)
-        midleftPane.SetSizerType("form")
-        midleftPane.SetSizerProp("expand", True)
-        midleftPane.SetSizerProp("proportion", 1)
-        
-        wx.StaticText(midleftPane, -1, _("Image:")).SetSizerProps({"halign": "right", "valign":"center"})
-        self.selectImage = picker.SelectBox(midleftPane, self.page.media.image, _("Graphics"))
-        
-        wx.StaticText(midleftPane, -1, _("Video:")).SetSizerProps({"halign": "right", "valign":"center"})
-        self.selectVideo = picker.SelectBox(midleftPane, self.page.media.video, _("Video"))
-        
-        sc.SizedPanel(midleftPane, -1) #spacer
-        self.chkVideoAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
-        if wx.Platform == "__WXMAC__":
-            self.chkVideoAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
-        #self.chkVideoAutostart.SetSizerProp("all", 0)
-        if self.page.media.videoautostart == True:
-            self.chkVideoAutostart.SetValue(True)
-        
-        wx.StaticText(midleftPane, -1, _("Audio:")).SetSizerProps({"halign": "right", "valign":"center"})
-        self.selectAudio = picker.SelectBox(midleftPane, self.page.media.audio, _("Audio"))
-        sc.SizedPanel(midleftPane, -1) #spacer
-        self.chkAudioAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
-        if wx.Platform == "__WXMAC__":
-            self.chkAudioAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
-        if self.page.media.audioautostart == True:
-            self.chkAudioAutostart.SetValue(True)
-
-        midrightPane = sc.SizedPanel(midPane, -1)
-        midrightPane.SetSizerType("form")
-        midrightPane.SetSizerProp("expand", True)
-        
-        wx.StaticText(midrightPane, -1, _("Text:")).SetSizerProps({"halign": "right", "valign":"center"})
-        self.selectText = picker.SelectBox(midrightPane, self.page.media.text, _("Text"))
-        sc.SizedPanel(midrightPane, -1)
-        btnPane = sc.SizedPanel(midrightPane, -1)
-        btnPane.SetSizerType("horizontal")
-        self.btnNewFile = wx.Button(btnPane,-1,_("New"))
-        if wx.Platform == "__WXMAC__":
-            self.btnNewFile.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
-        self.btnEditText = wx.Button(btnPane,-1,_("Edit"))
-        if wx.Platform == "__WXMAC__":
-            self.btnEditText.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
-
-        wx.StaticText(midrightPane, -1, _("Presentation:")).SetSizerProps({"halign": "right", "valign":"center"})
-        self.selectPowerPoint = picker.SelectBox(midrightPane, self.page.media.powerpoint, "Present")
-        
-        bottomPane = sc.SizedPanel(pane, -1)
-        bottomPane.SetSizerType("grid", {"cols": 2})
-        bottomPane.SetSizerProps({"expand": True, "proportion":1})
-        
-        wx.StaticText(bottomPane, -1, _("Hotwords"))
-        wx.StaticText(bottomPane, -1, _("Objectives"))
-
-        self.lstTerms = wx.ListBox(bottomPane, -1)
-        self.lstTerms.SetSizerProps({"expand": True, "proportion":1})
-        self.LoadTerms()
-
-        self.lstObjectives = wx.ListBox(bottomPane, -1)
-        self.lstObjectives.SetSizerProps({"expand": True, "proportion":1})
-        self.LoadObjectives()
-        
-        hwBtnPane = sc.SizedPanel(bottomPane, -1)
-        hwBtnPane.SetSizerType("horizontal")
-        hwBtnPane.SetSizerProps({"halign": "center"})
-        
-        self.btnAddTerm = wx.Button(hwBtnPane,-1,_("Add"))
-        self.btnEditTerm = wx.Button(hwBtnPane,-1,_("Edit"))
-        self.btnRemoveTerm = wx.Button(hwBtnPane,-1,_("Remove"))
-
-        objBtnPane = sc.SizedPanel(bottomPane, -1)
-        objBtnPane.SetSizerType("horizontal")
-        objBtnPane.SetSizerProps({"halign": "center"})
-        self.btnAddObjective = wx.Button(objBtnPane,-1,_("Add"))
-        self.btnEditObjective = wx.Button(objBtnPane,-1,_("Edit"))
-        self.btnRemoveObjective = wx.Button(objBtnPane,-1,_("Remove"))
-
-        self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
-        self.btnOK.SetDefault()
-        self.txtTitle.SetSelection(0, -1)
-        self.txtTitle.SetFocus()
-        self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
-
-        self.okcancelsizer = wx.StdDialogButtonSizer()
-        self.okcancelsizer.AddButton(self.btnOK)
-        self.okcancelsizer.AddButton(self.btnCancel)
-        self.okcancelsizer.Realize()
-        self.SetButtonSizer(self.okcancelsizer)
-
-        self.Fit()
-        self.SetMinSize(self.GetSize())
-        
-        self.PromptToConvertFiles()
-
-        wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
-        wx.EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
-        wx.EVT_BUTTON(self.btnEditText, self.btnEditText.GetId(), self.btnEditTextClicked)
-        wx.EVT_BUTTON(self.btnEditTerm, self.btnEditTerm.GetId(), self.btnEditTermClicked)
-        wx.EVT_BUTTON(self.btnEditObjective, self.btnEditObjective.GetId(), self.btnEditObjectiveClicked)
-        wx.EVT_BUTTON(self.btnRemoveTerm, self.btnRemoveTerm.GetId(), self.btnRemoveTermClicked)
-        wx.EVT_BUTTON(self.btnRemoveObjective, self.btnRemoveObjective.GetId(), self.btnRemoveObjectiveClicked)
-        wx.EVT_BUTTON(self.btnAddTerm, self.btnAddTerm.GetId(), self.btnAddTermClicked)
-        wx.EVT_BUTTON(self.btnAddObjective, self.btnAddObjective.GetId(), self.btnAddObjectiveClicked)
-        #wx.EVT_KEY_UP(self, self.checkKey)
-        wx.EVT_LISTBOX_DCLICK(self.lstTerms, self.lstTerms.GetId(), self.btnEditTermClicked)
-        wx.EVT_LISTBOX_DCLICK(self.lstObjectives, self.lstObjectives.GetId(), self.btnEditObjectiveClicked)
-        #wx.EVT_RESULT(self, self.NewHotwordLoaded)
-        picker.EVT_FILE_SELECTED(self.selectImage, self.OnFileSelected)
-        picker.EVT_FILE_SELECTED(self.selectAudio, self.OnFileSelected)
-        picker.EVT_FILE_SELECTED(self.selectVideo, self.OnFileSelected)
-        picker.EVT_FILE_SELECTED(self.selectText, self.OnFileSelected)
-        picker.EVT_FILE_SELECTED(self.selectPowerPoint, self.OnFileSelected)
-
-        self.CentreOnParent()
-
-        del busy
-        
-    def PromptToConvertFiles(self):
-        convertFiles = []
-        audioFile = os.path.join(settings.ProjectDir, "pub", "Audio", self.page.media.audio)
-        if mmedia.canConvertFile(self.page.media.audio) and not mmedia.wasConverted(audioFile):
-            convertFiles.append(self.page.media.audio)
-        
-        videoFile = os.path.join(settings.ProjectDir, "pub", "Video", self.page.media.video)
-        if mmedia.canConvertFile(self.page.media.video) and not mmedia.wasConverted(videoFile):
-            convertFiles.append(self.page.media.video)
-            
-        if mmedia.findFFMpeg() != "" and convertFiles != []:
-            dlg = gui.media_convert.ConvertMediaDialog(self, convertFiles)
-            if dlg.ShowModal() == wx.ID_OK:
-                files = dlg.GetSelectedFiles()
-                for afile in files:
-                    filepath = os.path.join(settings.ProjectDir, "pub", "Video", afile)
-                    if not os.path.exists(filepath):
-                        filepath = os.path.join(settings.ProjectDir, "pub", "Audio", afile)
-                    if os.path.exists(filepath):
-                        mmedia.convertFile(filepath)
-        
-    def OnFileSelected(self, event):
-        select_box = event.sender
-        type = event.sender.type
-        basename = os.path.basename(event.filename)
-        
-        subdir = type
-        if type.lower() in ["audio", "video"]:
-            subdir = os.path.join("pub", type)
-        
-        dirname = os.path.join(settings.ProjectDir, subdir)
-        if not os.path.exists(dirname):
-            dirname = os.path.join(settings.ProjectDir, "File")
-        fileutils.CopyFile(basename, os.path.dirname(event.filename), dirname)
-        filename = os.path.join(dirname, basename)
-        if settings.AppSettings["ShortenFilenames"].lower() == "yes":
-            newfile = fileutils.getShortenedFilename(filename)
-            os.rename(filename, newfile)
-            filename = newfile
-        if type.lower() == "text" and os.path.splitext(event.filename)[1].find(".htm") != -1:
-            copyDependentFilesAndUpdateLinks(event.filename, filename)
-            
-        event.sender.SetValue(os.path.basename(filename))
-
-    def checkKey(self, event):
-        if event.keyCode == wx.RETURN:
-            self.btnOKClicked(event)
-
-    def btnEditTextClicked(self, event):
-        guiutils.openInHTMLEditor(os.path.join(settings.ProjectDir, "Text", self.selectText.GetValue()))
-
-    def btnNewFileClicked(self, event):
-        savefile = False
-
-        f = wx.FileDialog(self, _("New HTML Page"), os.path.join(settings.ProjectDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wx.FD_SAVE)
-        if f.ShowModal() == wx.ID_OK:
-            filename = f.GetPath()
-            if os.path.exists(filename):
-                msg = wx.MessageDialog(self, _("A file with this name already exists. Would you like to overwrite it?"), _("Overwrite File?"), wx.YES_NO)
-                answer = msg.ShowModal()
-                if answer == wx.ID_YES:
-                    savefile = True
-                    if filename.find(".htm") == -1:
-                        filename += ".html"
-            else:
-                savefile = True
-
-            if savefile:
-                try: 
-                    created = html.CreateNewFile(filename)
-                    if created:
-                        self.selectText.SetValue(os.path.basename(filename))
-                except IOError, e:
-                    wx.MessageBox(`e`)
-                except:
-                    raise
+                    name = item.content.metadata.name
                     
-        f.Destroy()
+                elif isinstance(item, ims.contentpackage.Item):
+                    import ims.utils
+                    resource = ims.utils.getIMSResourceForIMSItem(appdata.currentPackage, item)
+                    self.filename = eclassutils.getEClassPageForIMSResource(resource)
+                    name = item.title.text
+                else:
+                    self.page = item.page
+                    self.isHotword = True
 
-    def LoadTerms(self):
-        self.lstTerms.Clear()
-        for term in self.page.terms:
-            self.lstTerms.Append(term.name, term)
-
-    def LoadObjectives(self):
-        self.lstObjectives.Clear()
-        for obj in self.page.objectives:
-            self.lstObjectives.Append(obj)
-
-    def AddTerm(self, myterm):
-        self.lstTerms.Append(myterm.name, myterm)
-        self.page.terms.append(myterm)
-        self.lstTerms.SetSelection(self.lstTerms.GetCount() - 1)
-        self.EditTerm()
-        self.LoadTerms()
-
-    def btnAddTermClicked(self,event):
-        myterm = NewTermDialog(self)
-        myterm.ShowModal()
-        myterm.Destroy()
-
-    def btnAddObjectiveClicked(self,event):
-        self.CurrentObj = ""
-        EClassObjectiveEditorDialog(self)
-        if len(self.CurrentObj) > 0:
-            self.page.objectives.append(self.CurrentObj)
-        self.LoadObjectives()
-
-    def btnEditTermClicked(self,event):
-        self.EditTerm()
-
-    def btnEditObjectiveClicked(self,event):
-        if self.lstObjectives.GetSelection() == -1:
-            return
+                if self.filename and len(self.filename) > 0:
+                    self.page.LoadPage(os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename)))
+                    
+                if name:
+                    self.page.name = name
+                    
+            except RuntimeError, e:
+                global log
+                message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
+                wx.MessageDialog(parent, message, _("Error loading page"), wx.OK).ShowModal()
+                log.error(message)
+                del busy
+                return
             
-        index = self.page.objectives.index(self.lstObjectives.GetStringSelection())
-        self.CurrentObj = self.page.objectives[index]
-        result = EClassObjectiveEditorDialog(self).GetReturnCode()
-        if result == wx.ID_OK:
-            self.page.objectives[index] = self.CurrentObj
-            self.LoadObjectives()
-        else:
-            print "Error: result =", result
+            #authorname = ""
+            #if self.isHotword:
+            #    authorname = self.page.author
+            #else:
+            #    if self.page.author and not self.item.content.metadata.lifecycle.getAuthor():
+            #        self.item.content.metadata.lifecycle.addContributor(self.page.author, "Author")
 
-    def EditTerm(self):
-        if self.lstTerms.GetSelection() == -1:
-            return
-            
-        myterm = self.lstTerms.GetClientData(self.lstTerms.GetSelection())
-        if myterm.type == "URL":
-            EClassHyperlinkEditorDialog(self, myterm)
-        else:
-            dialog = EditorDialog(self, myterm)
-            dialog.ShowModal()
-        self.LoadTerms()
+            #    author = self.item.content.metadata.lifecycle.getAuthor()
+            #    if author:
+            #        authorname = author.entity.fname.value
+                    
+            #credits = ""
+            #if self.isHotword:
+            #    credits = self.page.credit
+            #else:
+            #    if self.page.credit and self.item.content.metadata.rights.description == "":
+            #        self.item.content.metadata.rights.description = self.page.credit
 
-    def btnRemoveTermClicked(self,event):   
-        if self.lstTerms.GetSelection() == -1:
-            return
+            #   credits = self.item.content.metadata.rights.description
+
             
-        myterm = self.lstTerms.GetClientData(self.lstTerms.GetSelection())
-        result = wx.MessageDialog(self, _("Are you sure you want to delete the term '%(term)s'?") % {"term":myterm.name}, _("Delete Term?"), wx.YES_NO).ShowModal()  
-        if result == wx.ID_YES:
-            self.page.terms.remove(myterm)
+            sc.SizedDialog.__init__ (self, parent, -1, _("EClass Page Editor"),
+                             wx.DefaultPosition,
+                               wx.DefaultSize,
+                               wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+                               
+            pane = self.GetContentsPane()
+
+            topPane = sc.SizedPanel(pane, -1)
+            topPane.SetSizerType("form")
+            topPane.SetSizerProps({"expand":True})
+            #topPane.SetSizerProps({"hgrow": 100})
+            
+            self.lblTitle = wx.StaticText(topPane, -1, _("Name"))
+            self.txtTitle = wx.TextCtrl(topPane, -1, self.page.name)
+            self.txtTitle.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
+            
+            #self.lblAuthor = wx.StaticText(topPane, -1, _("Author"))
+            #self.txtAuthor = wx.TextCtrl(topPane, -1, authorname)
+            #self.txtAuthor.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
+            
+            #self.lblCredit = wx.StaticText(topPane, -1, _("Credit"))
+            #self.txtCredit = wx.TextCtrl(topPane, -1, credits, style=wx.TE_MULTILINE)
+            #self.txtCredit.SetSize(wx.Size(self.txtCredit.GetSize()[0], 80))
+            #self.txtCredit.SetSizerProps({"expand":True}) # SetSizerProp("hgrow", 100)
+
+            midPane = sc.SizedPanel(pane, -1)
+            midPane.SetSizerType("grid", {"cols": 2})
+            midPane.SetSizerProp("expand", True)
+            
+            # Left-hand side
+            midleftPane = sc.SizedPanel(midPane, -1)
+            midleftPane.SetSizerType("form")
+            midleftPane.SetSizerProp("expand", True)
+            midleftPane.SetSizerProp("proportion", 1)
+            
+            wx.StaticText(midleftPane, -1, _("Image:")).SetSizerProps({"halign": "right", "valign":"center"})
+            self.selectImage = picker.SelectBox(midleftPane, self.page.media.image, _("Graphics"))
+            
+            wx.StaticText(midleftPane, -1, _("Video:")).SetSizerProps({"halign": "right", "valign":"center"})
+            self.selectVideo = picker.SelectBox(midleftPane, self.page.media.video, _("Video"))
+            
+            sc.SizedPanel(midleftPane, -1) #spacer
+            self.chkVideoAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
+            if wx.Platform == "__WXMAC__":
+                self.chkVideoAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+            #self.chkVideoAutostart.SetSizerProp("all", 0)
+            if self.page.media.videoautostart == True:
+                self.chkVideoAutostart.SetValue(True)
+            
+            wx.StaticText(midleftPane, -1, _("Audio:")).SetSizerProps({"halign": "right", "valign":"center"})
+            self.selectAudio = picker.SelectBox(midleftPane, self.page.media.audio, _("Audio"))
+            sc.SizedPanel(midleftPane, -1) #spacer
+            self.chkAudioAutostart = wx.CheckBox(midleftPane, -1, _("Play on load"))
+            if wx.Platform == "__WXMAC__":
+                self.chkAudioAutostart.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+            if self.page.media.audioautostart == True:
+                self.chkAudioAutostart.SetValue(True)
+
+            midrightPane = sc.SizedPanel(midPane, -1)
+            midrightPane.SetSizerType("form")
+            midrightPane.SetSizerProp("expand", True)
+            
+            wx.StaticText(midrightPane, -1, _("Text:")).SetSizerProps({"halign": "right", "valign":"center"})
+            self.selectText = picker.SelectBox(midrightPane, self.page.media.text, _("Text"))
+            sc.SizedPanel(midrightPane, -1)
+            btnPane = sc.SizedPanel(midrightPane, -1)
+            btnPane.SetSizerType("horizontal")
+            self.btnNewFile = wx.Button(btnPane,-1,_("New"))
+            if wx.Platform == "__WXMAC__":
+                self.btnNewFile.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+            self.btnEditText = wx.Button(btnPane,-1,_("Edit"))
+            if wx.Platform == "__WXMAC__":
+                self.btnEditText.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+
+            wx.StaticText(midrightPane, -1, _("Presentation:")).SetSizerProps({"halign": "right", "valign":"center"})
+            self.selectPowerPoint = picker.SelectBox(midrightPane, self.page.media.powerpoint, "Present")
+            
+            bottomPane = sc.SizedPanel(pane, -1)
+            bottomPane.SetSizerType("grid", {"cols": 2})
+            bottomPane.SetSizerProps({"expand": True, "proportion":1})
+            
+            wx.StaticText(bottomPane, -1, _("Hotwords"))
+            wx.StaticText(bottomPane, -1, _("Objectives"))
+
+            self.lstTerms = wx.ListBox(bottomPane, -1)
+            self.lstTerms.SetSizerProps({"expand": True, "proportion":1})
             self.LoadTerms()
 
-    def btnRemoveObjectiveClicked(self,event):  
-        if self.lstObjectives.GetSelection() == -1:
-            return
-        index = self.page.objectives.index(self.lstObjectives.GetStringSelection())
-        obj = self.page.objectives[index]
-        result = wx.MessageDialog(self, _("Are you sure you want to delete the objective '%(objective)s'?") % {"objective":obj}, _("Delete Objective?"), wx.YES_NO).ShowModal()  
-        if result == wx.ID_YES:
-            self.page.objectives.remove(obj)
+            self.lstObjectives = wx.ListBox(bottomPane, -1)
+            self.lstObjectives.SetSizerProps({"expand": True, "proportion":1})
+            self.LoadObjectives()
+            
+            hwBtnPane = sc.SizedPanel(bottomPane, -1)
+            hwBtnPane.SetSizerType("horizontal")
+            hwBtnPane.SetSizerProps({"halign": "center"})
+            
+            self.btnAddTerm = wx.Button(hwBtnPane,-1,_("Add"))
+            self.btnEditTerm = wx.Button(hwBtnPane,-1,_("Edit"))
+            self.btnRemoveTerm = wx.Button(hwBtnPane,-1,_("Remove"))
+
+            objBtnPane = sc.SizedPanel(bottomPane, -1)
+            objBtnPane.SetSizerType("horizontal")
+            objBtnPane.SetSizerProps({"halign": "center"})
+            self.btnAddObjective = wx.Button(objBtnPane,-1,_("Add"))
+            self.btnEditObjective = wx.Button(objBtnPane,-1,_("Edit"))
+            self.btnRemoveObjective = wx.Button(objBtnPane,-1,_("Remove"))
+
+            self.btnOK = wx.Button(self,wx.ID_OK,_("OK"))
+            self.btnOK.SetDefault()
+            self.txtTitle.SetSelection(0, -1)
+            self.txtTitle.SetFocus()
+            self.btnCancel = wx.Button(self,wx.ID_CANCEL,_("Cancel"))
+
+            self.okcancelsizer = wx.StdDialogButtonSizer()
+            self.okcancelsizer.AddButton(self.btnOK)
+            self.okcancelsizer.AddButton(self.btnCancel)
+            self.okcancelsizer.Realize()
+            self.SetButtonSizer(self.okcancelsizer)
+
+            self.Fit()
+            self.SetMinSize(self.GetSize())
+            
+            self.PromptToConvertFiles()
+
+            wx.EVT_BUTTON(self.btnOK, self.btnOK.GetId(), self.btnOKClicked)
+            wx.EVT_BUTTON(self.btnNewFile, self.btnNewFile.GetId(), self.btnNewFileClicked)
+            wx.EVT_BUTTON(self.btnEditText, self.btnEditText.GetId(), self.btnEditTextClicked)
+            wx.EVT_BUTTON(self.btnEditTerm, self.btnEditTerm.GetId(), self.btnEditTermClicked)
+            wx.EVT_BUTTON(self.btnEditObjective, self.btnEditObjective.GetId(), self.btnEditObjectiveClicked)
+            wx.EVT_BUTTON(self.btnRemoveTerm, self.btnRemoveTerm.GetId(), self.btnRemoveTermClicked)
+            wx.EVT_BUTTON(self.btnRemoveObjective, self.btnRemoveObjective.GetId(), self.btnRemoveObjectiveClicked)
+            wx.EVT_BUTTON(self.btnAddTerm, self.btnAddTerm.GetId(), self.btnAddTermClicked)
+            wx.EVT_BUTTON(self.btnAddObjective, self.btnAddObjective.GetId(), self.btnAddObjectiveClicked)
+            #wx.EVT_KEY_UP(self, self.checkKey)
+            wx.EVT_LISTBOX_DCLICK(self.lstTerms, self.lstTerms.GetId(), self.btnEditTermClicked)
+            wx.EVT_LISTBOX_DCLICK(self.lstObjectives, self.lstObjectives.GetId(), self.btnEditObjectiveClicked)
+            #wx.EVT_RESULT(self, self.NewHotwordLoaded)
+            picker.EVT_FILE_SELECTED(self.selectImage, self.OnFileSelected)
+            picker.EVT_FILE_SELECTED(self.selectAudio, self.OnFileSelected)
+            picker.EVT_FILE_SELECTED(self.selectVideo, self.OnFileSelected)
+            picker.EVT_FILE_SELECTED(self.selectText, self.OnFileSelected)
+            picker.EVT_FILE_SELECTED(self.selectPowerPoint, self.OnFileSelected)
+
+            self.CentreOnParent()
+
+            del busy
+            
+        def PromptToConvertFiles(self):
+            convertFiles = []
+            audioFile = os.path.join(settings.ProjectDir, "pub", "Audio", self.page.media.audio)
+            if mmedia.canConvertFile(self.page.media.audio) and not mmedia.wasConverted(audioFile):
+                convertFiles.append(self.page.media.audio)
+            
+            videoFile = os.path.join(settings.ProjectDir, "pub", "Video", self.page.media.video)
+            if mmedia.canConvertFile(self.page.media.video) and not mmedia.wasConverted(videoFile):
+                convertFiles.append(self.page.media.video)
+                
+            if mmedia.findFFMpeg() != "" and convertFiles != []:
+                dlg = gui.media_convert.ConvertMediaDialog(self, convertFiles)
+                if dlg.ShowModal() == wx.ID_OK:
+                    files = dlg.GetSelectedFiles()
+                    for afile in files:
+                        filepath = os.path.join(settings.ProjectDir, "pub", "Video", afile)
+                        if not os.path.exists(filepath):
+                            filepath = os.path.join(settings.ProjectDir, "pub", "Audio", afile)
+                        if os.path.exists(filepath):
+                            mmedia.convertFile(filepath)
+            
+        def OnFileSelected(self, event):
+            select_box = event.sender
+            type = event.sender.type
+            basename = os.path.basename(event.filename)
+            
+            subdir = type
+            if type.lower() in ["audio", "video"]:
+                subdir = os.path.join("pub", type)
+            
+            dirname = os.path.join(settings.ProjectDir, subdir)
+            if not os.path.exists(dirname):
+                dirname = os.path.join(settings.ProjectDir, "File")
+            fileutils.CopyFile(basename, os.path.dirname(event.filename), dirname)
+            filename = os.path.join(dirname, basename)
+            if settings.AppSettings["ShortenFilenames"].lower() == "yes":
+                newfile = fileutils.getShortenedFilename(filename)
+                os.rename(filename, newfile)
+                filename = newfile
+            if type.lower() == "text" and os.path.splitext(event.filename)[1].find(".htm") != -1:
+                copyDependentFilesAndUpdateLinks(event.filename, filename)
+                
+            event.sender.SetValue(os.path.basename(filename))
+
+        def checkKey(self, event):
+            if event.keyCode == wx.RETURN:
+                self.btnOKClicked(event)
+
+        def btnEditTextClicked(self, event):
+            guiutils.openInHTMLEditor(os.path.join(settings.ProjectDir, "Text", self.selectText.GetValue()))
+
+        def btnNewFileClicked(self, event):
+            savefile = False
+
+            f = wx.FileDialog(self, _("New HTML Page"), os.path.join(settings.ProjectDir, "Text"), "", _("HTML Files") + " (*.html)|*.html", wx.FD_SAVE)
+            if f.ShowModal() == wx.ID_OK:
+                filename = f.GetPath()
+                if os.path.exists(filename):
+                    msg = wx.MessageDialog(self, _("A file with this name already exists. Would you like to overwrite it?"), _("Overwrite File?"), wx.YES_NO)
+                    answer = msg.ShowModal()
+                    if answer == wx.ID_YES:
+                        savefile = True
+                        if filename.find(".htm") == -1:
+                            filename += ".html"
+                else:
+                    savefile = True
+
+                if savefile:
+                    try: 
+                        created = html.CreateNewFile(filename)
+                        if created:
+                            self.selectText.SetValue(os.path.basename(filename))
+                    except IOError, e:
+                        wx.MessageBox(`e`)
+                    except:
+                        raise
+                        
+            f.Destroy()
+
+        def LoadTerms(self):
+            self.lstTerms.Clear()
+            for term in self.page.terms:
+                self.lstTerms.Append(term.name, term)
+
+        def LoadObjectives(self):
+            self.lstObjectives.Clear()
+            for obj in self.page.objectives:
+                self.lstObjectives.Append(obj)
+
+        def AddTerm(self, myterm):
+            self.lstTerms.Append(myterm.name, myterm)
+            self.page.terms.append(myterm)
+            self.lstTerms.SetSelection(self.lstTerms.GetCount() - 1)
+            self.EditTerm()
+            self.LoadTerms()
+
+        def btnAddTermClicked(self,event):
+            myterm = NewTermDialog(self)
+            myterm.ShowModal()
+            myterm.Destroy()
+
+        def btnAddObjectiveClicked(self,event):
+            self.CurrentObj = ""
+            EClassObjectiveEditorDialog(self)
+            if len(self.CurrentObj) > 0:
+                self.page.objectives.append(self.CurrentObj)
             self.LoadObjectives()
 
-    def btnOKClicked(self,event):
-        busy = wx.BusyCursor()
-        self.page.name = self.txtTitle.GetValue()
-        
-        if isinstance(self.item, conman.conman.ConNode):
-            self.item.content.metadata.name = self.page.name
-        elif isinstance(self.item, ims.contentpackage.Item):
-            self.item.title.text = self.page.name
-        else:
-            self.item.name = self.page.name
+        def btnEditTermClicked(self,event):
+            self.EditTerm()
 
-        #self.page.author = self.txtAuthor.GetValue()
-        #if self.isHotword:
-        #    self.page.author = self.txtAuthor.GetValue()
-        #else:
-        #    author = self.item.content.metadata.lifecycle.getAuthor()
-        #    if not author:
-        #        self.item.content.metadata.lifecycle.addContributor(self.txtAuthor.GetValue(), "Author")
-        #        author = self.item.content.metadata.lifecycle.getAuthor()
-        
-        #    author.entity.fname.value = self.txtAuthor.GetValue()
-        #    if author.entity.filename == "":
-        #        afilename = os.path.join(settings.PrefDir, "Contacts", fileutils.MakeFileName2(author.entity.fname.value) + ".vcf")
-        #        author.entity.filename = afilename
-            
-        #    author.entity.saveAsFile()
-
-        #if self.isHotword:
-        #    self.page.credit = self.txtCredit.GetValue()
-        #else:
-        #    self.item.content.metadata.rights.description = self.txtCredit.GetValue()
-        
-        self.page.media.image = self.selectImage.GetValue()
-        self.page.media.video = self.selectVideo.GetValue()
-        if self.chkVideoAutostart.IsChecked():
-            self.page.media.videoautostart = 1
-        else:
-            self.page.media.videoautostart = 0
-
-        self.page.media.audio = self.selectAudio.GetValue()
-        if self.chkAudioAutostart.IsChecked():
-            self.page.media.audioautostart = 1
-        else:
-            self.page.media.audioautostart = 0      
-        #self.page.media.Introduction = self.selectIntroduction.filename
-        self.page.media.text = self.selectText.GetValue()
-        self.page.media.powerpoint = self.selectPowerPoint.GetValue()
-        
-        missingfiles = []
-        filenames = []
-        if len(self.page.media.image) > 0:
-            filenames.append(os.path.join(settings.ProjectDir, "Graphics", self.page.media.image))
-        if len(self.page.media.video) > 0:
-            filenames.append(os.path.join(settings.ProjectDir, "pub", "Video", self.page.media.video))
-        if len(self.page.media.audio) > 0:
-            filenames.append(os.path.join(settings.ProjectDir, "pub", "Audio", self.page.media.audio))
-        if len(self.page.media.text) > 0:
-            filenames.append(os.path.join(settings.ProjectDir, "Text", self.page.media.text))
-        if len(self.page.media.powerpoint) > 0:
-            filenames.append(os.path.join(settings.ProjectDir, "Present", self.page.media.powerpoint))
-
-        for file in filenames:
-            if not os.path.exists(file):
-                missingfiles.append(file)
-
-        if len(missingfiles) > 0:
-            filelist = ""
-            for file in missingfiles:
-                filelist = filelist + file + "\n"
-
-            message = _("The following files could not be found:\n\n %(filelist)s \n\nWould you still like to save and exit this page?") % {"filelist":filelist}
-            result = wx.MessageDialog(self, message, _("Missing files"), wx.YES_NO).ShowModal()
-            if result == wx.ID_NO:
+        def btnEditObjectiveClicked(self,event):
+            if self.lstObjectives.GetSelection() == -1:
                 return
-
-        if self.filename:
-            filename = os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))
-            try:
-                self.page.SaveAsXML(filename)
-            except IOError, e:
-                global log
-                message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
-                log.error(message)
-                wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
-                return
-            
                 
-            
-        self.EndModal(wx.ID_OK)
-
-class NewTermDialog(sc.SizedDialog):
-    """
-    Class: eclass.NewTermDialog(wx.Dialog)
-    Last Updated: 9/24/02
-    Description: This dialog creates a new term using the options specified by the user.
-    
-    Attributes:
-    - parent: the window that called the dialog
-    - txtName: textbox for storing hotword name
-    - cmbType: combobox for hotword type
-    - btnOK: OK button
-
-    Methods:
-    - btnOKClicked: Creates the new term, passes control back to the claling window, and closes the dialog
-    """
-    def __init__(self, parent):
-        sc.SizedDialog.__init__ (self, parent, -1, _("Create New Hotword"),
-                         wx.DefaultPosition,
-                           wx.DefaultSize, 
-                           wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-
-        self.parent = parent
-        pane = self.GetContentsPane()
-        pane.SetSizerType("form")
-        
-        wx.StaticText(pane, -1, _("Name"))
-        self.txtName = wx.TextCtrl(pane, -1, "", wx.Point(40, 10), wx.Size(160, -1))
-        
-        wx.StaticText(pane, -1, _("Type"))
-        choices = [_("EClass Page"), _("Link to File")]
-        self.cmbType = wx.Choice(pane, -1, wx.Point(40, 30), wx.Size(160, -1), choices)
-        self.cmbType.SetSelection(1)
-        
-        self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
-
-        self.Fit()
-        self.SetMinSize(self.GetSize())
-
-        wx.EVT_BUTTON(self, wx.ID_OK, self.btnOKClicked)
-        
-    def btnOKClicked(self, event):
-        myterm = EClassTerm()
-        if not self.txtName.GetValue() == "":
-            myterm.name = self.txtName.GetValue()
-            type = self.cmbType.GetStringSelection()
-            if type == _("EClass Page"):
-                myterm.type = "Page"
-                myterm.NewPage()
+            index = self.page.objectives.index(self.lstObjectives.GetStringSelection())
+            self.CurrentObj = self.page.objectives[index]
+            result = EClassObjectiveEditorDialog(self).GetReturnCode()
+            if result == wx.ID_OK:
+                self.page.objectives[index] = self.CurrentObj
+                self.LoadObjectives()
             else:
-                myterm.type = "URL"
+                print "Error: result =", result
+
+        def EditTerm(self):
+            if self.lstTerms.GetSelection() == -1:
+                return
+                
+            myterm = self.lstTerms.GetClientData(self.lstTerms.GetSelection())
+            if myterm.type == "URL":
+                EClassHyperlinkEditorDialog(self, myterm)
+            else:
+                dialog = EditorDialog(self, myterm)
+                dialog.ShowModal()
+            self.LoadTerms()
+
+        def btnRemoveTermClicked(self,event):   
+            if self.lstTerms.GetSelection() == -1:
+                return
+                
+            myterm = self.lstTerms.GetClientData(self.lstTerms.GetSelection())
+            result = wx.MessageDialog(self, _("Are you sure you want to delete the term '%(term)s'?") % {"term":myterm.name}, _("Delete Term?"), wx.YES_NO).ShowModal()  
+            if result == wx.ID_YES:
+                self.page.terms.remove(myterm)
+                self.LoadTerms()
+
+        def btnRemoveObjectiveClicked(self,event):  
+            if self.lstObjectives.GetSelection() == -1:
+                return
+            index = self.page.objectives.index(self.lstObjectives.GetStringSelection())
+            obj = self.page.objectives[index]
+            result = wx.MessageDialog(self, _("Are you sure you want to delete the objective '%(objective)s'?") % {"objective":obj}, _("Delete Objective?"), wx.YES_NO).ShowModal()  
+            if result == wx.ID_YES:
+                self.page.objectives.remove(obj)
+                self.LoadObjectives()
+
+        def btnOKClicked(self,event):
+            busy = wx.BusyCursor()
+            self.page.name = self.txtTitle.GetValue()
+            
+            if isinstance(self.item, conman.conman.ConNode):
+                self.item.content.metadata.name = self.page.name
+            elif isinstance(self.item, ims.contentpackage.Item):
+                self.item.title.text = self.page.name
+            else:
+                self.item.name = self.page.name
+
+            #self.page.author = self.txtAuthor.GetValue()
+            #if self.isHotword:
+            #    self.page.author = self.txtAuthor.GetValue()
+            #else:
+            #    author = self.item.content.metadata.lifecycle.getAuthor()
+            #    if not author:
+            #        self.item.content.metadata.lifecycle.addContributor(self.txtAuthor.GetValue(), "Author")
+            #        author = self.item.content.metadata.lifecycle.getAuthor()
+            
+            #    author.entity.fname.value = self.txtAuthor.GetValue()
+            #    if author.entity.filename == "":
+            #        afilename = os.path.join(settings.PrefDir, "Contacts", fileutils.MakeFileName2(author.entity.fname.value) + ".vcf")
+            #        author.entity.filename = afilename
+                
+            #    author.entity.saveAsFile()
+
+            #if self.isHotword:
+            #    self.page.credit = self.txtCredit.GetValue()
+            #else:
+            #    self.item.content.metadata.rights.description = self.txtCredit.GetValue()
+            
+            self.page.media.image = self.selectImage.GetValue()
+            self.page.media.video = self.selectVideo.GetValue()
+            if self.chkVideoAutostart.IsChecked():
+                self.page.media.videoautostart = 1
+            else:
+                self.page.media.videoautostart = 0
+
+            self.page.media.audio = self.selectAudio.GetValue()
+            if self.chkAudioAutostart.IsChecked():
+                self.page.media.audioautostart = 1
+            else:
+                self.page.media.audioautostart = 0      
+            #self.page.media.Introduction = self.selectIntroduction.filename
+            self.page.media.text = self.selectText.GetValue()
+            self.page.media.powerpoint = self.selectPowerPoint.GetValue()
+            
+            missingfiles = []
+            filenames = []
+            if len(self.page.media.image) > 0:
+                filenames.append(os.path.join(settings.ProjectDir, "Graphics", self.page.media.image))
+            if len(self.page.media.video) > 0:
+                filenames.append(os.path.join(settings.ProjectDir, "pub", "Video", self.page.media.video))
+            if len(self.page.media.audio) > 0:
+                filenames.append(os.path.join(settings.ProjectDir, "pub", "Audio", self.page.media.audio))
+            if len(self.page.media.text) > 0:
+                filenames.append(os.path.join(settings.ProjectDir, "Text", self.page.media.text))
+            if len(self.page.media.powerpoint) > 0:
+                filenames.append(os.path.join(settings.ProjectDir, "Present", self.page.media.powerpoint))
+
+            for file in filenames:
+                if not os.path.exists(file):
+                    missingfiles.append(file)
+
+            if len(missingfiles) > 0:
+                filelist = ""
+                for file in missingfiles:
+                    filelist = filelist + file + "\n"
+
+                message = _("The following files could not be found:\n\n %(filelist)s \n\nWould you still like to save and exit this page?") % {"filelist":filelist}
+                result = wx.MessageDialog(self, message, _("Missing files"), wx.YES_NO).ShowModal()
+                if result == wx.ID_NO:
+                    return
+
+            if self.filename:
+                filename = os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))
+                try:
+                    self.page.SaveAsXML(filename)
+                except IOError, e:
+                    global log
+                    message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
+                    log.error(message)
+                    wx.MessageDialog(self, message, _("File Write Error"), wx.OK).ShowModal()
+                    return
+                
+                    
+                
             self.EndModal(wx.ID_OK)
-            self.parent.AddTerm(myterm)
-        else:
-            wx.MessageDialog(self, _("Please enter a name for your hotword, or click Cancel to exit without creating a hotword."), _("Please enter a name"), wx.OK).ShowModal()  
+
+    class NewTermDialog(sc.SizedDialog):
+        """
+        Class: eclass.NewTermDialog(wx.Dialog)
+        Last Updated: 9/24/02
+        Description: This dialog creates a new term using the options specified by the user.
+        
+        Attributes:
+        - parent: the window that called the dialog
+        - txtName: textbox for storing hotword name
+        - cmbType: combobox for hotword type
+        - btnOK: OK button
+
+        Methods:
+        - btnOKClicked: Creates the new term, passes control back to the claling window, and closes the dialog
+        """
+        def __init__(self, parent):
+            sc.SizedDialog.__init__ (self, parent, -1, _("Create New Hotword"),
+                             wx.DefaultPosition,
+                               wx.DefaultSize, 
+                               wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+
+            self.parent = parent
+            pane = self.GetContentsPane()
+            pane.SetSizerType("form")
+            
+            wx.StaticText(pane, -1, _("Name"))
+            self.txtName = wx.TextCtrl(pane, -1, "", wx.Point(40, 10), wx.Size(160, -1))
+            
+            wx.StaticText(pane, -1, _("Type"))
+            choices = [_("EClass Page"), _("Link to File")]
+            self.cmbType = wx.Choice(pane, -1, wx.Point(40, 30), wx.Size(160, -1), choices)
+            self.cmbType.SetSelection(1)
+            
+            self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL))
+
+            self.Fit()
+            self.SetMinSize(self.GetSize())
+
+            wx.EVT_BUTTON(self, wx.ID_OK, self.btnOKClicked)
+            
+        def btnOKClicked(self, event):
+            myterm = EClassTerm()
+            if not self.txtName.GetValue() == "":
+                myterm.name = self.txtName.GetValue()
+                type = self.cmbType.GetStringSelection()
+                if type == _("EClass Page"):
+                    myterm.type = "Page"
+                    myterm.NewPage()
+                else:
+                    myterm.type = "URL"
+                self.EndModal(wx.ID_OK)
+                self.parent.AddTerm(myterm)
+            else:
+                wx.MessageDialog(self, _("Please enter a name for your hotword, or click Cancel to exit without creating a hotword."), _("Please enter a name"), wx.OK).ShowModal()  
 
 def strict(char):
     print "Unicode Error on character: " + chr(char)

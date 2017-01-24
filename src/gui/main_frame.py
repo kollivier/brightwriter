@@ -440,8 +440,8 @@ class MainFrame2(frameClass):
 
     def RegisterTreeHandlers(self):
         app = wx.GetApp()
-        app.AddHandlerForID(ID_CUT, self.OnCut)
-        app.AddHandlerForID(ID_COPY, self.OnCopy)
+        # app.AddHandlerForID(ID_CUT, self.OnCut)
+        # app.AddHandlerForID(ID_COPY, self.OnCopy)
         app.AddHandlerForID(ID_PASTE_BELOW, self.OnPaste)
         app.AddHandlerForID(ID_PASTE_CHILD, self.OnPaste)
         #app.AddHandlerForID(ID_PASTE, self.OnPaste)

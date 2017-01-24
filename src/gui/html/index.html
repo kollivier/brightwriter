@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="robots" content="noindex, nofollow">
     <title>Using CKEditor API</title>
+    <link rel="stylesheet" href="jqtree.css">
     <style>
         html, body {
             height: 100%;
@@ -12,12 +13,41 @@
             margin: 0 !important;
             padding: 0 !important;
         }
+        #tree1 {
+            float: left;
+            width: 20%;
+            height: 100vh;
+        }
+        #editor1 {
+            float: right;
+            width: 80%;
+        }
     </style>
     <script src="jquery-3.1.1.min.js"></script>
+    <script src="tree.jquery.js"></script>
     <script src="ckeditor/ckeditor.js"></script>
+    <script>
+        var data = [
+            {
+                name: 'The Book',
+                children: [
+                    { name: 'Chapter 1', children: [{ name: "Section 1" }, { name: "Section 2" }]  },
+                    { name: 'Chapter 2', children: [{ name: "Section 1" }] }
+                ]
+            }
+        ];
+
+        $(function() {
+            $('#tree1').tree({
+                data: data,
+                dragAndDrop: true
+            });
+        });
+    </script>
 </head>
 
 <body>
+    <div id="tree1"></div>
 
     <textarea cols="100" id="editor1" name="editor1" rows="10">     &lt;p&gt;This is some &lt;strong&gt;sample text&lt;/strong&gt;.     You are using &lt;a href="http://ckeditor.com/"&gt;CKEditor&lt;/a&gt;.&lt;/p&gt;
     </textarea>

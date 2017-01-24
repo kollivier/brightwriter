@@ -1,0 +1,12 @@
+{
+    "version": "1.0.0", 
+    "name": "BrightWriter", 
+    "identifier": "com.kosoftworks.brightwriter",
+    "requirements": {
+        "common": ["chardet", "beautifulsoup4"],
+        "android": ["python2","kivy","pyjnius","android"]
+    },
+    "whitelist_file": {
+        "android": "whitelist.txt"
+    }
+}

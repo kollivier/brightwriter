@@ -15,8 +15,11 @@ logfile = None
 app_name = "BrightWriter"
 
 # NOTE: Do not load any non-system modules in this file, nor set up logging.
+import logging
 import os
 import sys
+
+import pew
 
 
 def getUserHomeDir():
@@ -34,7 +37,9 @@ def getUserHomeDir():
 
 def getAppDataDir():
     prefdir = ""
-    if sys.platform.startswith('win'):
+    if pew.platform in ['ios', 'android']:
+        prefdir = os.path.abspath(os.path.join('.', app_name.lower()))
+    elif sys.platform.startswith('win'):
         if "APPDATA" in os.environ:
             prefdir = os.environ["APPDATA"]
             if not os.path.exists(prefdir):
@@ -45,7 +50,7 @@ def getAppDataDir():
 
     else:
         prefdir = os.path.join(os.path.expanduser("~"), "." + app_name.lower())
-
+    logging.info("prefs dir is %s" % prefdir)
     return prefdir
 
 
