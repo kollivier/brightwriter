@@ -64,16 +64,26 @@ import externals.BeautifulSoup
 import encodings
 encodings.aliases.aliases['macintosh'] = 'mac_roman'
 
-#imports for packaging tools
-if sys.platform.startswith("win"):
+use_wx = True
+try:
     import wx
     import wxblox.events as events
     import guiutils
     import gui.error_viewer as error_viewer
-    oldexcepthook = sys.excepthook
-    sys.excepthook = error_viewer.guiExceptionHook
+except Exception, e:
+    logging.warning("Unable to import wxPython.")
+    import traceback
+    logging.warning(traceback.format_exc(e))
+
+oldexcepthook = sys.excepthook
+sys.excepthook = error_viewer.guiExceptionHook
+
+#imports for packaging tools
+if sys.platform.startswith("win"):
     import ctypes
     import ctypes.wintypes
+
+if use_wx:
     import wx.stc
     import wx.lib.pubsub
 
@@ -88,7 +98,7 @@ except:
 settings.AppDir = rootdir
 
 
-if sys.platform.startswith("win"):
+if use_wx:
     class BuilderApp(wx.App, events.AppEventHandlerMixin):
         def OnInit(self):
             events.AppEventHandlerMixin.__init__(self)
@@ -184,11 +194,13 @@ for arg in sys.argv:
     elif arg == "--webkit":
         settings.webkit = True
 
-if not sys.platform.startswith("win"):
+if use_wx:
+    app = BuilderApp(0)
+    app.MainLoop()
+else:
+    logging.info("Loading PyEverywhere GUI")
     import gui.app
 
     app = gui.app.Application()
     app.run()
-else:
-    app = BuilderApp(0)
-    app.MainLoop()
+

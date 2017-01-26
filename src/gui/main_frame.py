@@ -377,7 +377,7 @@ class MainFrame2(frameClass):
         # we make this the fallback handler in case no other handlers are set.
         self.RegisterTreeHandlers()
 
-        filename = os.path.abspath(os.path.join("gui", "html", "index.html"))
+        filename = os.path.abspath(os.path.join(settings.AppDir, "gui", "html", "index.html"))
         self.browser.LoadPage(filename)
 
         if self._mgr:
@@ -506,8 +506,8 @@ class MainFrame2(frameClass):
         app.AddUIHandlerForID(ID_PROPS, self.UpdateProjectCommand)
         app.AddUIHandlerForID(ID_LINKCHECK, self.UpdatePageCommand)
         
-        app.AddUIHandlerForID(ID_CUT, self.UpdatePageCommand)
-        app.AddUIHandlerForID(ID_COPY, self.UpdatePageCommand)
+        # app.AddUIHandlerForID(ID_CUT, self.UpdatePageCommand)
+        # app.AddUIHandlerForID(ID_COPY, self.UpdatePageCommand)
         # app.AddUIHandlerForID(ID_PASTE, self.UpdatePageCommand)
         app.AddUIHandlerForID(ID_FIND_IN_PROJECT, self.UpdatePageCommand)
         
@@ -962,7 +962,7 @@ class MainFrame2(frameClass):
     def OnTreeSelChanging(self, event):
         self.CheckIfSaveNeeded(event)
 
-    def CheckIfSaveNeeded(self, event=None):
+    def CheckIfSaveNeeded(self, event):
         if not self.projectTree.GetCurrentTreeItemData():
             return
 
@@ -970,7 +970,7 @@ class MainFrame2(frameClass):
 
         if dirty == "true":
             result = wx.MessageDialog(self, _("This document contains unsaved changes. Would you like to save them now?"), _("Save Changes?"), wx.YES | wx.NO | wx.CANCEL).ShowModal()
-            
+
             if result == wx.ID_CANCEL:
                 event.Veto()
             elif result == wx.ID_NO:
@@ -1214,7 +1214,7 @@ class MainFrame2(frameClass):
         fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
 
     def ShutDown(self, event):
-        self.CheckIfSaveNeeded()
+        self.CheckIfSaveNeeded(event)
 
         if self.imscp and self.imscp.isDirty():
             self.SaveProject()

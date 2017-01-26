@@ -81,7 +81,27 @@ if "cef" in browserlist:
                 return self.controller.ProcessAppURL(url)
 
             return False
-        
+
+        def OnKeyEvent(self, browser, event, eventHandle):
+            if event["type"] == cefpython.KEYEVENT_KEYUP:
+                # OnKeyEvent is called twice for F5/Esc keys, with event
+                # type KEYEVENT_RAWKEYDOWN and KEYEVENT_KEYUP.
+                # Normal characters a-z should have KEYEVENT_CHAR.
+                return False
+            if sys.platform.startswith("darwin"):
+                print("OnKeyEvent, modifiers = %r, keyCode = %r" % (event["modifiers"], event["native_key_code"]))
+                if event["modifiers"] == 128:
+                    if event["native_key_code"] == 7:
+                        browser.GetFocusedFrame().Cut()
+                        return True
+                    elif event["native_key_code"] == 8:
+                        browser.GetFocusedFrame().Copy()
+                        return True
+                    elif event["native_key_code"] == 9:
+                        browser.GetFocusedFrame().Paste()
+                        return True
+            return False
+
         def OnLoadEnd(self, browser, frame, httpStatusCode):
             if frame == browser.GetMainFrame():
                 self.loaded = True
