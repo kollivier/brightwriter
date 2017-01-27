@@ -98,7 +98,10 @@ def guiExceptionHook(exctype, value, trace):
     if not wx.GetApp():
         app = wx.PySimpleApp()
         app.MainLoop()
-    
+
+    showErrorDialog(errorText)
+ 
+def showErrorDialog(errorText=""):
     errorShowing = False
     for win in wx.GetTopLevelWindows():
         if isinstance(win, ErrorDialog):
@@ -134,6 +137,10 @@ def guiExceptionHook(exctype, value, trace):
                 "error": errorText,
                 "application_log": log
             }
+
+            chromium_log = os.path.join(settings.getAppDataDir(), "chromium.log")
+            if os.path.exists(chromium_log):
+                report["application_log"] += "\n\nChromium Logs:\n" + open(chromium_log).read()
 
             if hasattr(sys, "frozen") or result == wx.ID_OK:
                 logging.info("posting error report")

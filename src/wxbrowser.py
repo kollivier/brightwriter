@@ -12,6 +12,8 @@ import wx
 
 from wx.lib.pubsub import pub
 
+import settings
+
 browserlist = []
 
 logging.info("Loading wxBrowser")
@@ -43,7 +45,7 @@ if sys.platform.startswith("darwin"):
 if "cef" in browserlist:
     settings = {
         "log_severity": cefpython.LOGSEVERITY_INFO,
-        "log_file": "chromium.log",
+        "log_file": os.path.join(settings.getAppDataDir(), "chromium.log"),
     }
     cefwx.Initialize(settings)
     
@@ -226,6 +228,7 @@ class wxBrowser(wx.Window):
         self.currenturl = url
         self.editable = False  # Disable editing behavior when we reload.
         logging.info("Loading URL %r" % url)
+        logging.info("engine = %s" % self.engine)
         if self.engine in ["webkit", "webview"]:
             url = "file://" + url
             url = url.replace(" ", "%20")
@@ -234,8 +237,14 @@ class wxBrowser(wx.Window):
             self.browser.Navigate(url)
         elif self.engine == "cef":
             if not os.path.exists(url):
+                logging.warning("File %s doesn't exist, not loading." % url)
                 return
-            self.browser.GetBrowser().GetMainFrame().LoadUrl("file://" + url)
+            prefix = "file://"
+            if sys.platform.startswith("win"):
+                prefix += "/"  # Windows has a third slash before a file URL
+            url = prefix + url
+            logging.info("full URL is %s" % url)
+            self.browser.GetBrowser().GetMainFrame().LoadUrl(url)
         else:
             self.browser.LoadPage(url)
 

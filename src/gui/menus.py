@@ -121,7 +121,7 @@ def getHelpMenu():
     HelpMenu = wx.Menu()
     HelpMenu.Append(wx.ID_ABOUT, _("About %(appname)s" % {"appname": settings.app_name}), _("About %(appname)s" % {"appname": settings.app_name}))
     HelpMenu.Append(ID_HELP, _("Help"), _("%(appname)s Help" % {"appname": settings.app_name}))
-    HelpMenu.Append(ID_BUG, _("Provide Feedback"), _("Submit feature requests or bugs"))
+    HelpMenu.Append(ID_BUG, _("Send Bug Report"), _("Submit a bug or request for improvement"))
     
     return HelpMenu
     

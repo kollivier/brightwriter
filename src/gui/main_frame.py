@@ -956,8 +956,7 @@ class MainFrame2(frameClass):
         props.Destroy()
         
     def OnReportBug(self, event):
-        import webbrowser
-        webbrowser.open_new("http://sourceforge.net/tracker/?group_id=67634")
+        gui.error_viewer.showErrorDialog()
 
     def OnTreeSelChanging(self, event):
         self.CheckIfSaveNeeded(event)
