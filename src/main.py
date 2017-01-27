@@ -1,29 +1,43 @@
 import datetime
 import glob
+import logging
 import os
 import shutil
 import string
 import sys
 
+if hasattr(sys, 'frozen'):
+    class StdErrLog:
+        def __init__(self):
+            self.log = ""
+
+        def write(self, msg):
+            self.log += msg + "\n"
+
+    class StdOutLog:
+        def __init__(self):
+            self.log = ""
+
+        def write(self, msg):
+            self.log += msg + "\n"
+
+    sys.stdout = StdOutLog()
+    sys.stderr = StdErrLog()
+
+logging.basicConfig(format="%(asctime)s\t%(levelname)s\t%(message)s", level=logging.DEBUG)
+
 import settings
 settings.logfile = os.path.join(settings.getAppDataDir(), 'BrightWriter.log')
-
-import logging
 logging.info("Settings imported")
 
 formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
-# logging.basicConfig(filename=settings.logfile, filemode='w', format="%(asctime)s\t%(levelname)s\t%(message)s", level=logging.DEBUG)
+file_handler = logging.FileHandler(filename=settings.logfile, mode='w')
+file_handler.setFormatter(formatter)
+logging.getLogger().addHandler(file_handler)
+
 log = logging # .getLogger('BrightWriter')
 # log.setLevel(logging.DEBUG)
 
-class SysErrLog:
-    def __init__(self, log):
-        self.log = log
-
-    def write(self, msg):
-        self.log.error(msg)
-
-# sys.stderr = SysErrLog(log)
 logging.info("Importing version")
 import version
 
