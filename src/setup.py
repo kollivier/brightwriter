@@ -43,7 +43,7 @@ py2app_options = dict(
     plist=myplist,
     optimize=2,
     strip=False,
-    packages=["wx"],
+    packages=["wx", "cefpython3"],
 )
 
 def allFilesRecursive(dir):
@@ -74,9 +74,10 @@ source_files = []
 for subdir in subdirs:
     source_files.extend(allFilesRecursive(rootdir + subdir))
 
+import cefpython3
+cefp = os.path.dirname(cefpython3.__file__)
+
 if sys.platform.startswith("win"):
-    import cefpython3
-    cefp = os.path.dirname(cefpython3.__file__)
     source_files.extend([('', ['%s/icudt.dll' % cefp,
           '%s/cef.pak' % cefp,
           '%s/cefclient.exe' % cefp,
@@ -103,8 +104,12 @@ if sys.platform.startswith("darwin"):
     if 'osx_identity' in globals():
         to_sign = []
         output_path = os.path.abspath("dist/BrightWriter.app")
+        os.remove(os.path.join(output_path, "Contents", "Frameworks", "subprocess"))
         to_sign.extend(glob.glob(os.path.join(output_path, "Contents", "Frameworks", "*.framework")))
         to_sign.extend(glob.glob(os.path.join(output_path, "Contents", "Frameworks", "*.dylib")))
+        to_sign.extend(glob.glob(os.path.join(output_path, "Contents", "Frameworks", "*.so")))
+        to_sign.extend(glob.glob(os.path.join(output_path, "Contents", "Resources", "lib", "python2.7", "cefpython3", "*.dylib")))
+        to_sign.extend(glob.glob(os.path.join(output_path, "Contents", "Resources", "lib", "python2.7", "cefpython3", "*.so")))
         exes = ["Python"]
         for exe in exes:
             to_sign.append(os.path.join(output_path, 'Contents', 'MacOS', exe))

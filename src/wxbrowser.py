@@ -43,11 +43,22 @@ if sys.platform.startswith("darwin"):
         pass
     
 if "cef" in browserlist:
+    cef_dir = os.path.dirname(cefpython.__file__)
+    log_filename = os.path.join(settings.getAppDataDir(), "chromium.log")
+    if os.path.exists(log_filename):
+        os.remove(log_filename)
     settings = {
+        "debug": True,
         "log_severity": cefpython.LOGSEVERITY_INFO,
-        "log_file": os.path.join(settings.getAppDataDir(), "chromium.log"),
+        "log_file": log_filename,
     }
+    if hasattr(sys, 'frozen') and 'darwin' in sys.platform:
+        cef_dir = os.path.join(os.getcwd(), "lib", "python2.7", "cefpython3")
+        settings["resources_dir_path"] = os.path.join(cef_dir, "Resources")
+        settings["browser_subprocess_path"] = os.path.join(cef_dir, "subprocess")
+        settings["locale_pak"] = os.path.join(cef_dir, "Resources", "en.lproj", "locale.pak")
     cefwx.Initialize(settings)
+    logging.info("CEFPython initialized.")
     
     # @atexit.register
     def ShutDown():
