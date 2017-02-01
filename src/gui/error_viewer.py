@@ -205,7 +205,7 @@ class ErrorLogViewer(sc.SizedDialog):
                     self.errList.append(errArray)
                     index = self.errList.index(errArray)
                     self.listCtrl.InsertStringItem(self.itemCount, errArray[0])
-                    if len(errArray) > 1:
+                    if len(errArray) > 2:
                         self.listCtrl.SetStringItem(self.itemCount, 1, "%s : %s" % (errArray[1], errArray[2]))
                     self.listCtrl.SetItemData(self.itemCount, index)
                     self.itemCount += 1
