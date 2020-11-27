@@ -37,9 +37,7 @@ def getUserHomeDir():
 
 def getAppDataDir():
     prefdir = ""
-    if pew.platform in ['ios', 'android']:
-        prefdir = os.path.abspath(os.path.join('.', app_name.lower()))
-    elif sys.platform.startswith('win'):
+    if sys.platform.startswith('win'):
         if "APPDATA" in os.environ:
             prefdir = os.environ["APPDATA"]
             if not os.path.exists(prefdir):

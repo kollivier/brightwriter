@@ -54,8 +54,6 @@ import pew
 
 logging.info("About to set rootdir.")
 cwd = os.path.dirname(sys.argv[0])
-if pew.platform in ['ios', 'android']:
-    cwd = os.path.abspath('.')
 
 logging.info("Setting rootdir.")
 rootdir = os.path.abspath(cwd)
