@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import sys
 
@@ -6,10 +7,10 @@ log = logging.getLogger('EClass')
 
 themeList = None
 
-import BaseTheme
-import Default_frames
-import epub
-import IMS_Package
+from . import BaseTheme
+from . import Default_frames
+from . import epub
+from . import IMS_Package
 
 
 class ThemeList:

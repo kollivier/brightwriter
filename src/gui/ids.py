@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import wx
 
 ID_NEW = wx.NewId()
@@ -52,4 +53,4 @@ ID_REPLACE = wx.NewId()
 ID_REPLACE_FIND = wx.NewId()
 ID_REPLACE_ALL = wx.NewId()
 
-from editactions import *
+from .editactions import *

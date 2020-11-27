@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 import shutil
@@ -39,7 +40,7 @@ try:
     webkit_available = True
 except:
     import traceback
-    print traceback.print_exc()
+    print(traceback.print_exc())
     webkit_available = False
 
 def _(text):
@@ -461,7 +462,7 @@ class EditorFrame (sc.SizedFrame):
         try:
             if not encoding:
                 encoding = htmlutils.getCurrentEncoding()
-            print "encoding to %s" % encoding
+            print("encoding to %s" % encoding)
             source = source.encode(encoding)
         except:
             raise
@@ -484,7 +485,7 @@ class EditorFrame (sc.SizedFrame):
         evt.Veto() # don't allow it
 
 def strict(char):
-    print "Unicode Error on character: " + chr(char)
+    print("Unicode Error on character: " + chr(char))
 
 class MyApp(wx.App, events.AppEventHandlerMixin, wx.lib.mixins.inspection.InspectionMixin):
     def OnInit(self):

@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 #import conman.conman as conman
 import settings
@@ -18,7 +20,7 @@ import sys
 import utils
 import settings
 
-from core import BaseHTMLPublisher
+from .core import BaseHTMLPublisher
 
 import logging
 log = logging.getLogger('EClass')
@@ -57,7 +59,7 @@ htmlpage = u"""
 
 def CreateNewFile(filename, name="New Page"):
     if os.path.exists(filename):
-        raise IOError, "File already exists!"
+        raise IOError("File already exists!")
     file = htmlpage
     file = file.replace("New Page", TextToHTMLChar(name))
     dirname = os.path.dirname(filename)
@@ -132,7 +134,7 @@ if sys.platform.startswith('win') and __name__ != "__main__":
                 size = wx.Display().ClientArea.Size
                 size.x = size.x / 2
                 size.y = size.y / 2
-                print "size is %s" % size
+                print("size is %s" % size)
                 self.frame = EditorFrame(self.parent, self.filename, size=size)
                 #self.frame.currentItem = self.currentItem
                 self.frame.Show()

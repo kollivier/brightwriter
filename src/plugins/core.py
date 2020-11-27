@@ -1,3 +1,5 @@
+from __future__ import print_function
+import os
 import string
 import types
 
@@ -7,8 +9,11 @@ import eclassutils
 import ims
 import ims.contentpackage
 import settings
+import themes
 import utils
 
+from bs4 import BeautifulSoup, Tag
+from xmlutils import *
 # base plugin data types
 
 
@@ -112,7 +117,7 @@ class BaseHTMLPublisher:
             return creditText
 
     def EncodeHTMLToCharset(self, myhtml, convert_encoding):
-        if type(myhtml) == types.UnicodeType:
+        if type(myhtml) == str:
             try:
                 myhtml = myhtml.encode(convert_encoding)
             except:
@@ -178,12 +183,10 @@ class BaseHTMLPublisher:
         except IOError: 
             message = "There was an error writing the file", filename + " to disk. Please check that you have enough hard disk space to write this file and that you have permission to write to the file."
             import traceback
-            print `traceback.print_exc()`
-            print `message`
-            raise IOError, message
-            return false
-        except:
+            print(repr(traceback.print_exc()))
+            print(repr(message))
             raise
+
         return myhtml
 
     def GetLinks(self):

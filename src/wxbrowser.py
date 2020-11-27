@@ -1,3 +1,4 @@
+from __future__ import print_function
 import atexit
 import json
 import logging
@@ -30,7 +31,7 @@ try:
         import cefpython3.wx.chromectrl as cefwx
         browserlist.append("cef")
         logging.info("CEFPython loaded")
-except Exception, e:
+except Exception as e:
     import traceback
     logging.error("Unable to import CEFPython")
     logging.error(traceback.format_exc(e))
@@ -205,7 +206,7 @@ class wxBrowser(wx.Window):
                 return
         else:
             if self.browser is None:
-                print "Error: No browser could be found."
+                print("Error: No browser could be found.")
 
         self.engine = preferredBrowser
         self.browser.SetFocus()

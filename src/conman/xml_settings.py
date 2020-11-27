@@ -1,3 +1,4 @@
+from __future__ import print_function
 #xml_settings.py - script for loading and saving Python app settings as XML. Settings are represented internally as a 
 #Python dictionary. Does not currently support dictionaries or lists
 #Version: 0.
@@ -21,7 +22,7 @@ class XMLSettings:
         self.filename = ""
 
     def __getitem__(self, key):
-        if not self.settings.has_key(key):
+        if key not in self.settings:
             self.settings[key] = "" 
         return self.settings[key]
 
@@ -100,7 +101,7 @@ class XMLSettings:
 def Test():
     settings = XMLSettings()
     settings.LoadFromXML("xmltest1.xml")
-    print `settings`
+    print(repr(settings))
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

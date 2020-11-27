@@ -1,4 +1,5 @@
-from BaseTheme import *
+from __future__ import absolute_import
+from .BaseTheme import *
 themename = "epub"
 import settings
 

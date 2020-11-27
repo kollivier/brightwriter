@@ -1,3 +1,4 @@
+from __future__ import print_function
 #files.py - misc file functions needed by conman
 
 #Author - Kevin Ollivier
@@ -77,7 +78,7 @@ def CopyFiles(indir, outdir, recurse=0, callback=None):
 					try:
 						os.mkdir(myoutdir)
 					except: 
-						print "Could not make directory: " + myoutdir
+						print("Could not make directory: " + myoutdir)
 			
 				if os.path.isdir(myoutdir):
 					CopyFiles(os.path.join(indir,item) ,myoutdir, 1, callback)
@@ -113,9 +114,9 @@ def getShortenedFilename(filename):
     counter = 1
     while os.path.exists(os.path.join(dirname, myfilename)):
         if counter > 9:
-            myfilename = myname[:-2] + `counter` + myext
+            myfilename = myname[:-2] + repr(counter) + myext
         else:
-            myfilename = myname[:-1] + `counter` + myext
+            myfilename = myname[:-1] + repr(counter) + myext
         counter = counter + 1
         #print "new filename is: " + myfilename + "\n"
     return os.path.join(dirname, myfilename)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import wx
 import persistence
 import wx.lib.sized_controls as sc
@@ -41,9 +42,9 @@ class ActivityMonitor(sc.SizedDialog):
             job = item.tasks[0].activeJob()
             if job:
                 logfile = os.path.join(job.LOGBASE, job.label)
-                print `logfile`
+                print(repr(logfile))
                 if os.path.exists(logfile):
-                    print "opening..."
+                    print("opening...")
                     text = utils.openFile(utils.escapeFilename(logfile), "r").read()
                     dlg = wx.lib.dialogs.ScrolledMessageDialog(self, text, _("Log Contents"))
                     dlg.ShowModal()

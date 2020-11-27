@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import wx
 import wx.lib.sized_controls as sc
 import wx.stc
 
 from wx.lib.pubsub import pub
 
-import sourcedelegate
+from . import sourcedelegate
 
 class SourceEditDialog(sc.SizedDialog):
     def __init__(self, *a, **kw):

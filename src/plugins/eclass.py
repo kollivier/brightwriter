@@ -1,3 +1,4 @@
+from __future__ import print_function
 import string
 import os
 import conman
@@ -300,10 +301,11 @@ class EClassPage(plugins.PluginData):
         except:
             message = _("There was an error updating the file '%(filename)s'. Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.") % {"filename": filename}
             log.error(message)
-            raise IOError, message
+            raise
+
         try:
             import types
-            if type(myxml) != types.UnicodeType:
+            if type(myxml) != str:
                 #import locale
                 #encoding = locale.getdefaultlocale()[1]
                 myxml = unicode(myxml, encoding)
@@ -316,7 +318,7 @@ class EClassPage(plugins.PluginData):
         except:
             message = utils.getStdErrorMessage("IOError", {"filename":filename, "type":"write"})
             log.error(message)
-            raise IOError, message
+            raise
 
         return ""
 
@@ -373,7 +375,7 @@ class EClassPage(plugins.PluginData):
         <Audio>%s</Audio>
         <AudioAutostart>%s</AudioAutostart>
         <Text>%s</Text>
-        <PowerPoint>%s</PowerPoint>""" % (TextToXMLChar(self.media.image), TextToXMLChar(self.media.video), `self.media.videoautostart`, TextToXMLChar(self.media.audio), `self.media.audioautostart`, TextToXMLChar(self.media.text), TextToXMLChar(self.media.powerpoint))
+        <PowerPoint>%s</PowerPoint>""" % (TextToXMLChar(self.media.image), TextToXMLChar(self.media.video), repr(self.media.videoautostart), TextToXMLChar(self.media.audio), repr(self.media.audioautostart), TextToXMLChar(self.media.text), TextToXMLChar(self.media.powerpoint))
         return mymedia
 
     def _TermsAsXML(self):
@@ -887,7 +889,7 @@ if sys.platform.startswith('win'):
                 if name:
                     self.page.name = name
                     
-            except RuntimeError, e:
+            except RuntimeError as e:
                 global log
                 message = _("There was an error loading the EClass page '%(page)s'. The error reported by the system is: %(error)s") % {"page":os.path.join(parent.ProjectDir, "EClass", self.filename), "error":str(e)}
                 wx.MessageDialog(parent, message, _("Error loading page"), wx.OK).ShowModal()
@@ -1135,8 +1137,8 @@ if sys.platform.startswith('win'):
                         created = html.CreateNewFile(filename)
                         if created:
                             self.selectText.SetValue(os.path.basename(filename))
-                    except IOError, e:
-                        wx.MessageBox(`e`)
+                    except IOError as e:
+                        wx.MessageBox(repr(e))
                     except:
                         raise
                         
@@ -1185,7 +1187,7 @@ if sys.platform.startswith('win'):
                 self.page.objectives[index] = self.CurrentObj
                 self.LoadObjectives()
             else:
-                print "Error: result =", result
+                print("Error: result =", result)
 
         def EditTerm(self):
             if self.lstTerms.GetSelection() == -1:
@@ -1298,7 +1300,7 @@ if sys.platform.startswith('win'):
                 filename = os.path.join(settings.ProjectDir, "EClass", os.path.basename(self.filename))
                 try:
                     self.page.SaveAsXML(filename)
-                except IOError, e:
+                except IOError as e:
                     global log
                     message = utils.getStdErrorMessage("IOError", {"type":"write", "filename":filename})
                     log.error(message)
@@ -1365,7 +1367,7 @@ if sys.platform.startswith('win'):
                 wx.MessageDialog(self, _("Please enter a name for your hotword, or click Cancel to exit without creating a hotword."), _("Please enter a name"), wx.OK).ShowModal()  
 
 def strict(char):
-    print "Unicode Error on character: " + chr(char)
+    print("Unicode Error on character: " + chr(char))
 
 if __name__ == "__main__":
     pass

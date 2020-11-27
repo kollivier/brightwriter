@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import wx
 import wx.lib.pydocview
-import menus
-import events
+from . import menus
+from . import events
 
 class UtilityManagerMixin:
     """
@@ -16,7 +17,7 @@ class UtilityManagerMixin:
         self.utilityViews = {}
     
     def AddUtilityView(self, view, direction):
-        if not self.utilityViews.has_key(direction):
+        if direction not in self.utilityViews:
             self.utilityViews[direction] = []
             
         if not window in self.utilityViews[direction]:

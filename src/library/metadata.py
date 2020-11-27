@@ -38,7 +38,7 @@ class FileMetadata:
             if field[0:length] == fullns:
                 field = field[length:]
             
-        if append and self.metadata.has_key(field):
+        if append and field in self.metadata:
             self.metadata[field].append(value)
         else:
             self.metadata[field] = [value]

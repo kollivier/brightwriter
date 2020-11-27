@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import absolute_import
 import sys, cPickle
 import string, time, cStringIO, os, re, glob, csv, shutil
 import json
@@ -62,12 +64,9 @@ try:
 except:
     pass
 
-import htmledit.htmlattrs as htmlattrs
-import htmledit.templates as templates
-
-import editordelegate
+from . import editordelegate
 import htmlutils
-import source_edit_dialog
+from . import source_edit_dialog
 
 
 class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
@@ -79,7 +78,7 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
     def CopyFileIfNeeded(self, filepath, overwrite="ask", subdir=""):
         # if it's not an absolute path to a file, we assume it's a URL or relative path
         if not os.path.exists(filepath):
-            print "File %s does not exist." % filepath
+            print("File %s does not exist." % filepath)
             return filepath
             
         basepath = urllib.unquote(self.parent.baseurl.replace("file://", ""))
@@ -417,7 +416,7 @@ class MainFrame2(frameClass):
             self.LoadEClass(settings.AppSettings["LastOpened"])
         
     def OnFindReplace(self, event):
-        import find_replace_dialog
+        from . import find_replace_dialog
         
         if not self.find_dialog:
             self.find_dialog = find_replace_dialog.FindReplaceDialog(self, -1, _("Find and Replace"))
@@ -834,7 +833,7 @@ class MainFrame2(frameClass):
             if cutitem in cutparentitem.items:
                 cutparentitem.items.remove(cutitem)
             else:
-                print cutitem
+                print(cutitem)
             self.projectTree.Delete(self.CutNode)
             self.CutNode = None
 
@@ -1134,7 +1133,7 @@ class MainFrame2(frameClass):
         self.SaveProject()
 
         callback = GUIFileCopyCallback(self)
-        maxfiles = fileutils.getNumFiles(settings.ProjectDir)
+        self.maxfiles = fileutils.getNumFiles(settings.ProjectDir)
         self.filesCopied = 0
         self.dialog = wx.ProgressDialog(_("Copying CD Files"), _("Preparing to copy CD files...") + "                            ", maxfiles, style=wx.PD_APP_MODAL)
 
@@ -1308,7 +1307,7 @@ class MainFrame2(frameClass):
                 
             if settings.ProjectSettings:
                 settings.ProjectSettings.SaveAsXML(os.path.join(settings.ProjectDir, "settings.xml"))
-        except IOError, e:
+        except IOError as e:
             message = _("Could not save EClass project file. Error Message is:")
             self.log.error(message)
             wx.MessageBox(message + str(e), _("Could Not Save File"))

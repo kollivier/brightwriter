@@ -1,3 +1,4 @@
+from __future__ import print_function
 import locale
 import logging
 import platform
@@ -40,12 +41,12 @@ def print_exc_plus(exctype, value, trace):
                                              frame.f_lineno,
                                              frame.f_code.co_name)
         for key, keyvalue in frame.f_locals.items():
-            exception += "        %s = " % `key`
+            exception += "        %s = " % repr(key)
             #We have to be careful not to cause a new error in our error
             #printer! Calling str() on an unknown object could cause an
             #error we don't want.
             try:
-                valuestring = `keyvalue`
+                valuestring = repr(keyvalue)
                 if len(valuestring) > 500:
                     valuestring = valuestring[:500]
                 exception += valuestring
@@ -69,21 +70,21 @@ Language: %s
     return info
 
 def exceptionHook(exctype, value, trace):
-    print exceptionAsString(exctype, value, trace)
+    print(exceptionAsString(exctype, value, trace))
     
 class errorCallbacks:
     def displayError(self, message):
-        print "ERROR: " + message
+        print("ERROR: " + message)
         if log:
             log.error(message)
         
     def displayWarning(self, message):
-        print "WARNING: " + message
+        print("WARNING: " + message)
         if log:
             log.warn(message)
             
     def displayInformation(self, message):
-        print "INFO: " + message
+        print("INFO: " + message)
         if log:
             log.info(message)
 

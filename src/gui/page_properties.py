@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import string
 
@@ -16,7 +17,7 @@ import htmlutils
 import ims
 import ims.contentpackage
 import plugins
-import select_box as picker
+from . import select_box as picker
 import settings
 import utils
 

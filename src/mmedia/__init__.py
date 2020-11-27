@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import sys, os, string
-import HTMLTemplates
+from . import HTMLTemplates
 import tasks
 import utils
 import settings
 import shutil
-import flvreader
+from . import flvreader
 
 convertable_formats = ["wav", "wma"] # ["mpg", "mpeg", "mp4", "avi", "wav", "wmv", "wma", "asf", "mov"]
 

@@ -5,6 +5,7 @@
 # Organization: Tulane University
 # License: BrightWriter Open Source License
 
+from __future__ import print_function
 import string, os, sys
 from xmlobjects import *
 
@@ -28,10 +29,10 @@ class LangStringTag(Tag):
         # for languages, en == en-US, but en-US != en (necessarily), so
         # we should check if the base language key exists if the specific
         # dialect/subset we're looking for is not found.
-        if self.strings.has_key(key):
+        if key in self.strings:
             return self.strings[key]
         else:
-            if self.strings.has_key(basekey):
+            if basekey in self.strings:
                 return self.strings[basekey]
             else:
                 return ""
@@ -433,7 +434,7 @@ class IMSContentPackageTests(unittest.TestCase):
         thisdir = os.path.dirname(__file__)
         filename = self.metadataFilename
         if not os.path.exists(filename):
-            print "Filename not found. Have you downloaded and installed the IMS Content Packaging examples?"
+            print("Filename not found. Have you downloaded and installed the IMS Content Packaging examples?")
             return
             
         self.cp.loadFromXML(filename)
@@ -617,7 +618,7 @@ class IMSContentPackageTests(unittest.TestCase):
         
         filename = self.metadataFilename
         if not os.path.exists(filename):
-            print "Filename not found. Have you downloaded and installed the IMS Content Packaging examples?"
+            print("Filename not found. Have you downloaded and installed the IMS Content Packaging examples?")
             return
             
         self.cp.loadFromXML(filename)

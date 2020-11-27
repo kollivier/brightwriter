@@ -1,3 +1,4 @@
+from __future__ import print_function
 #----------------------------------------------------------------------
 # Name:        taskrunner.py
 # Purpose:     Classes that can manage running of external processes,
@@ -229,19 +230,19 @@ class TaskRunner(object):
                     if job and job.finished():
                         if job.returnCode() != 0:
                             rc = job.returnCode()
-                            print "'%s' JOB RETURNED FAILURE CODE! (%d)" % (job.label, rc)
+                            print("'%s' JOB RETURNED FAILURE CODE! (%d)" % (job.label, rc))
                             self.rc = rc
                             self.stopAllJobs()
                             return rc
                         else:
-                            task.next()
+                            next(task)
         except KeyboardInterrupt:
-            print "STOPPING JOBS..."
+            print("STOPPING JOBS...")
             self.stopAllJobs()
             return 1
 
         except:
-            print "Unknown exception..."
+            print("Unknown exception...")
             self.stopAllJobs()
             raise
 
@@ -316,7 +317,7 @@ if __name__ == "__main__":
 
     for task in tr.tasks:
         for job in task.jobs:
-            print job.label
+            print(job.label)
 
-    print tr.run()
+    print(tr.run())
 

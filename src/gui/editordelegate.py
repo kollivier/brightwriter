@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import glob
 import json
 import logging
@@ -7,13 +9,13 @@ import wx
 
 from wx.lib.pubsub import pub
 
-from editactions import *
-from editdialogs import *
+from .editactions import *
+from .editdialogs import *
 
 import settings
 
-import htmledit.htmlattrs as htmlattrs
-import htmledit.templates as templates
+from .htmledit import htmlattrs
+from .htmledit import templates
 
 
 def _(text):
@@ -321,7 +323,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
             audioHTML = templates.jmediaplayer_audio
             audioHTML = audioHTML.replace("__AUDIO__.MP3", mp3audio)
 
-            print "Inserting %s" % audioHTML
+            print("Inserting %s" % audioHTML)
             self.webview.ExecuteEditCommand("InsertHTML", audioHTML)
         dlg.Destroy()
 

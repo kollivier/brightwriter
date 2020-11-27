@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import sys, string, os
 import utils
 import guiutils
@@ -7,7 +8,7 @@ import wx
 import persistence
 import wx.lib.sized_controls as sc
 import settings
-import autolist
+from . import autolist
 
 import index
 

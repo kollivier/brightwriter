@@ -1,10 +1,12 @@
+from __future__ import print_function
+from __future__ import absolute_import
 # conman.py - open source content management tool
 # Designer: Kevin Ollivier
 # Organization: Tulane University
 # License: BrightWriter Open Source License
 import string, os, sys
-import xml_settings
-import vcard
+from . import xml_settings
+from . import vcard
 import plugins
 from xmlutils import *
 import locale
@@ -177,14 +179,14 @@ class ConMan (ConManData):
                 myfile = utils.openFile(filename, "w")
                 myfile.write(data)
                 myfile.close()
-                print "Ugh, smart quotes..."
+                print("Ugh, smart quotes...")
                 
             if USE_MINIDOM:
                 doc = minidom.parse(utils.openFile(filename))
             else:
                 doc = FromXmlFile(filename)
         except:
-            return "The EClass project file cannot be loaded. The error message is: " + `sys.exc_value.args`
+            return "The EClass project file cannot be loaded. The error message is: " + repr(sys.exc_value.args)
 
         manifest = doc.getElementsByTagName("manifest")[0]
         if manifest.attributes:
@@ -378,7 +380,7 @@ class ConMan (ConManData):
                     name = titleNode[0].childNodes[0].nodeValue
 
             #Content should already be loaded, so try to get the item first             
-            if self.updatedids.has_key(contentid):
+            if contentid in self.updatedids:
                 mycontent = self.content.GetItem(self.updatedids[contentid], self.language)
                 #mycontent.id = self.updatedids[contentid]
             else:
@@ -458,13 +460,13 @@ class ConMan (ConManData):
             self.settings.SaveAsXML(os.path.join(self.directory, "settings.xml"))
         except:
             message = "There was an error saving the file " + os.path.join(self.directory, "settings.xml") + ". Please check to make sure you have write access to this file and try saving again."
-            print message
+            print(message)
             self.exporting = False
-            raise IOError, message
+            raise
 
         try:
             import types
-            if type(myxml) != types.UnicodeType:
+            if type(myxml) != str:
                 import locale
                 encoding = locale.getdefaultlocale()[1]
                 myxml = unicode(myxml, encoding)
@@ -475,9 +477,9 @@ class ConMan (ConManData):
             myfile.close()
         except:
             message = "There was an error saving the file" + filename + ". Please check to make sure you have write access to this file and try saving again."
-            print message
+            print(message)
             self.exporting = False
-            raise IOError, message
+            raise
         
         self.exporting = False
 
@@ -843,7 +845,7 @@ class ContentList(ConManData):
 if __name__ == "__main__":
     mypub = ConMan()
     mypub.LoadFromXML("C:\\My Documents\\conman\\test.xml")
-    print str(mypub)
+    print(str(mypub))
     #mypub = ConMan()
     #mypub.NewPub("myhome", "English")
     #mypub.AddChild("Node1", "content1")

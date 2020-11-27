@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import string
 
 import wx
 import wx.lib.filebrowsebutton as filebrowse
 import wx.lib.sized_controls as sc
 
-import htmledit.htmlattrs as htmlattrs
+from .htmledit import htmlattrs
 
 
 def _(text):

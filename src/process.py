@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os, sys, string
 
 try:
@@ -8,8 +9,8 @@ except:
 	pass
 	
 if len(sys.argv) < 2:
-	print "Need program arguments to run"
+	print("Need program arguments to run")
 else:
 	command = string.join(sys.argv[1:], " ")
-	print command
+	print(command)
 	os.system(command)

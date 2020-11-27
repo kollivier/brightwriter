@@ -1,3 +1,4 @@
+from __future__ import print_function
 import string, os
 
 class VCard:
@@ -75,7 +76,7 @@ class VCard:
 
 	def saveAsFile(self):
 		if self.filename == "":
-			print "No filename, can't save to disk."
+			print("No filename, can't save to disk.")
 			return
 		
 		try:
@@ -83,7 +84,7 @@ class VCard:
 			myfile.write(self.asString())
 			myfile.close()
 		except:
-			print "Unable to write file %s to disk." % (self.filename)
+			print("Unable to write file %s to disk." % (self.filename))
 
 
 	def asString(self):

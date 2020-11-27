@@ -1,3 +1,4 @@
+from __future__ import print_function
 from struct import unpack
 from datetime import datetime
 
@@ -6,10 +7,10 @@ def getFlvDimensions(filename):
     height = 240 
 
     metadata = FLVReader(filename)
-    if metadata.has_key("width"):
+    if "width" in metadata:
         width = metadata["width"]
     
-    if metadata.has_key("height"):
+    if "height" in metadata:
         height = metadata["height"]
         
     return (width, height)
@@ -54,9 +55,9 @@ class FLVReader(dict):
         timeStamp = self.read24bit()
         unknown = self.readint()
         if tagType == self.AUDIO:
-            print "Can't handle audio tags yet"
+            print("Can't handle audio tags yet")
         elif tagType == self.VIDEO:
-            print "Can't handle video tags yet"
+            print("Can't handle video tags yet")
         elif tagType == self.META:
             endpos = self.file.tell() + dataSize
             event = self.readAMFData()
@@ -66,7 +67,7 @@ class FLVReader(dict):
             # We are complete
             self.update(metaData)
         elif tagType == self.UNDEFINED:
-            print "Can't handle undefined tags yet"
+            print("Can't handle undefined tags yet")
 
     def readint(self):
       data = self.file.read(4)
@@ -142,9 +143,9 @@ if __name__ == '__main__':
     import sys
     from pprint import pprint
     if len(sys.argv) == 1:
-        print 'Usage: %s filename [filename]...' % sys.argv[0]
-        print 'Where filename is a .flv file'
-        print 'eg. %s myfile.flv' % sys.argv[0]
+        print('Usage: %s filename [filename]...' % sys.argv[0])
+        print('Where filename is a .flv file')
+        print('eg. %s myfile.flv' % sys.argv[0])
     for fn in sys.argv[1:]:
         x = FLVReader(fn)
         pprint(x)

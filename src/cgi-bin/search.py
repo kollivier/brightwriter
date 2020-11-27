@@ -1,3 +1,4 @@
+from __future__ import print_function
 import cgi
 import cgitb; cgitb.enable()
 import string
@@ -33,24 +34,24 @@ else:
     myform = cgi.FieldStorage()
     for item in myform:
         form[item] = myform[item].value
-    print "Content-type: text/html" # identify response as HTML
+    print("Content-type: text/html") # identify response as HTML
 
 content = """
 """
 
-if form.has_key("term"):
+if "term" in form:
     content = content + "<h3>Search Results</h3>"
     import os
     field = "contents"
 
-    if form.has_key("searchtype"):
+    if "searchtype" in form:
         if form["searchtype"] == "Titles":
             field = "title"
         elif form["searchtype"] == "Keywords":
             field = "keywords"
 
     startitem = 1
-    if form.has_key("page"):
+    if "page" in form:
         startitem = 1 + (numresults_perpage * (int(form["page"]) - 1))
 
     if 1:
@@ -86,7 +87,7 @@ if form.has_key("term"):
     if 0:
         content = content + "Error running Lucene search. The error message returned by the server is: <br><br><code>"
         import traceback
-        content = content + `traceback.print_exc()` + "</code>"
+        content = content + repr(traceback.print_exc()) + "</code>"
         
 else:
     content = content + """
@@ -121,6 +122,6 @@ if os.path.exists(templatefile):
     mypage = string.replace(mypage, "--[name]--", "EClass Search Page")
     mypage = string.replace(mypage, "--[credit]--", "")
     mypage = string.replace(mypage, "--[content]--", content)
-    print mypage
+    print(mypage)
 else:
-    print content
+    print(content)

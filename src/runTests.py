@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os, sys
 
 rootdir = os.path.abspath(sys.path[0])
@@ -45,16 +46,16 @@ results = unittest.TestResult()
 alltests.run(results)
 
 if results.wasSuccessful():
-    print "%d tests passed!" % (results.testsRun)
+    print("%d tests passed!" % (results.testsRun))
 else:
-    print "\n%d tests failed!\n" % (len(results.failures))
+    print("\n%d tests failed!\n" % (len(results.failures)))
     for error in results.failures:
-        print "------ " + str(error[0]) + " ------"
-        print error[1]
+        print("------ " + str(error[0]) + " ------")
+        print(error[1])
         
     for error in results.errors:
-        print "------ " + str(error[0]) + " ------"
-        print error[1]
+        print("------ " + str(error[0]) + " ------")
+        print(error[1])
     sys.exit(1)
 
 if hasFigleaf:

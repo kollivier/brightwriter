@@ -1,3 +1,4 @@
+from __future__ import print_function
 #####################################
 # indexer.py - controls the indexing and searching
 # of Lucene indexes
@@ -60,13 +61,13 @@ class IndexingCallback:
         
     def indexingStarted(self, numFiles):
         self.numFiles = numFiles
-        print "Indexing files in %s" % (self.index)
+        print("Indexing files in %s" % (self.index))
         
     def fileIndexingStarted(self, filename):
-        print "%s: Indexing %s" % (self.index, filename)
+        print("%s: Indexing %s" % (self.index, filename))
         
     def indexingComplete(self):
-        print "Finished indexing %s" % (self.index)
+        print("Finished indexing %s" % (self.index))
 
 class Index:
     def __init__(self, indexdir, rootFolder="", log_errors=True):
@@ -113,7 +114,7 @@ class Index:
             store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
             self.writer = PyLucene.IndexWriter(store, PyLucene.StandardAnalyzer(), newindex)
             #writer.close()
-        except Exception, e:
+        except Exception as e:
             message = e.getJavaException().getMessage()
             lockFile = ""
             lockError = "Lock obtain timed out: SimpleFSLock@"
@@ -193,7 +194,7 @@ class Index:
                 if field in ["url", "last_modified", "filesize"]:
                     continue
                 values = metadata[field]
-                if not type(values) in [types.ListType, types.TupleType]:
+                if not type(values) in [list, tuple]:
                     values = [values]
                 if field == "contents":
                     if not indexText:
@@ -215,10 +216,10 @@ class Index:
                 except:
                     import traceback
                     if self.log_errors:
-                        indexLog.write(`traceback.print_exc()`)#pass
+                        indexLog.write(repr(traceback.print_exc()))#pass
                     
                 if mytext == "":
-                    print "No text indexed for file: " + filename
+                    print("No text indexed for file: " + filename)
                     if self.log_errors:
                         indexLog.write("No text indexed for file: " + filename)
 
@@ -226,11 +227,11 @@ class Index:
                             
             try:
                 props = os.stat(fullpath)
-                doc.add(PyLucene.Field("last_modified", `props[stat.ST_MTIME]`, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
-                doc.add(PyLucene.Field("filesize", `props[stat.ST_SIZE]`, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
+                doc.add(PyLucene.Field("last_modified", repr(props[stat.ST_MTIME]), PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
+                doc.add(PyLucene.Field("filesize", repr(props[stat.ST_SIZE]), PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
             except:
                 import traceback
-                print `traceback.print_exc()`
+                print(repr(traceback.print_exc()))
 
             newIndex = not self.indexExists()
             store = PyLucene.FSDirectory.getDirectory(self.indexdir, False)
@@ -252,7 +253,7 @@ class Index:
                 #return
             
             for field in metadata:
-                if allMetadata.has_key(field):
+                if field in allMetadata:
                     del allMetadata[field]
                 
             allMetadata.update(metadata)
@@ -264,7 +265,7 @@ class Index:
         if self.indexExists():
             self.openIndex()
             filename = filename.replace(self.folder + os.sep, "")        
-            if self.filenameIDs.has_key(filename):
+            if filename in self.filenameIDs:
                 id = self.filenameIDs[filename]
                 doc = self.reader.document(id)
                 return (id, doc)
@@ -284,7 +285,7 @@ class Index:
             if not field.name() in metadata:
                 metadata[field.name()] = field.stringValue()
             else:
-                if isinstance(metadata[field.name()], types.StringTypes):
+                if isinstance(metadata[field.name()], (str,)):
                     metadata[field.name()] = [metadata[field.name()]]
                 metadata[field.name()].append(field.stringValue())
         return metadata
@@ -299,19 +300,19 @@ class Index:
     def updateFile(self, filename, metadata={}, force=False):
         myfilename, filedata = self.getFileInfo(filename)
         needsUpdate = True #always true if file doesn't exist
-        if not force and filedata and filedata.has_key('filesize'):
+        if not force and filedata and 'filesize' in filedata:
             needsUpdate = False # file exists, use metadata to determine update.
             try:
                 fullpath=os.path.join(self.folder, filename)
                 props = os.stat(fullpath)
                 
-                if filedata.has_key("last_modified") and `props[stat.ST_MTIME]` != filedata["last_modified"]:
+                if "last_modified" in filedata and repr(props[stat.ST_MTIME]) != filedata["last_modified"]:
                     needsUpdate = True
-                if `props[stat.ST_SIZE]` != filedata["filesize"]:
+                if repr(props[stat.ST_SIZE]) != filedata["filesize"]:
                     needsUpdate = True
             except:
                 import traceback
-                print `traceback.print_exc()`
+                print(repr(traceback.print_exc()))
             
         if needsUpdate:
             self.removeFile(filename)
@@ -368,7 +369,7 @@ class Index:
             moreTerms = True
             while moreTerms:
                 termList.append(terms.term())
-                moreTerms = terms.next()
+                moreTerms = next(terms)
             
             info["Terms"] = termList 
         return info
@@ -379,7 +380,7 @@ class Index:
         
         result_list = []
         for result in results:
-            if not type(result[field]) in [types.ListType, types.TupleType]:
+            if not type(result[field]) in [list, tuple]:
                 result[field] = [result[field]]
             for subject in result[field]:
                 if not subject.strip() in result_list:
@@ -425,7 +426,7 @@ class Index:
                     os.remove(thefilename)
             except:
                 import traceback
-                print traceback.print_exc()
+                print(traceback.print_exc())
                 if os.path.exists(thefilename):
                     os.remove(thefilename)
                 return "", ""
@@ -588,7 +589,7 @@ class IndexingTests(unittest.TestCase):
         updatedMetadata = self.index.getFileInfo(filename)[1]
         #print "updatedMetadata = " + `updatedMetadata`
         
-        self.assert_(updatedMetadata.has_key("testing"))
+        self.assert_("testing" in updatedMetadata)
         self.assertEqual(len(updatedMetadata), len(metadata) + len(newMetadata))
         self.assertEqual(updatedMetadata["testing"], newMetadata["testing"])
 

@@ -1,8 +1,10 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import string, sys, os
 import wx
 import wx.lib.sized_controls as sc
 import persistence
-import autolist
+from . import autolist
 
 import errno
 import fileutils
@@ -18,25 +20,25 @@ import encrypt
 
 class FTPEventCallback:
     def uploadCanceled(self):
-        print "Upload canceled."
+        print("Upload canceled.")
         
     def uploadFileStarted(self, thefile):
-        print "Starting upload for %s" % thefile
+        print("Starting upload for %s" % thefile)
         
     def uploadFileProgressEvent(self, thefile, percent):
-        print "Uploading %s... %s%% complete" % (thefile, str(percent))
+        print("Uploading %s... %s%% complete" % (thefile, str(percent)))
         
     def uploadFileFailed(self, thefile, error):
-        print "Upload for %s failed. Error message is: \n" % (thefile, error)
+        print("Upload for %s failed. Error message is: \n" % (thefile, error))
     
     def uploadFileCompleted(self, thefile):
-        print "Successfully uploaded %s" % thefile
+        print("Successfully uploaded %s" % thefile)
         
     def uploadFinished(self):
-        print "Upload is complete."
+        print("Upload is complete.")
         
     def dirCreated(self, dir):
-        print "Created directory: %s" % dir
+        print("Created directory: %s" % dir)
     
 class FTPDialogEventCallback:
     def __init__(self, parent):
@@ -130,7 +132,7 @@ class ftpService:
                 rsize, rmtime = self.getFileInfo(rfile)
                 mtime = os.path.getmtime(filename)
                 self.clockskew = rmtime - mtime - uploadTime
-                print "clock skew is %r" % self.clockskew
+                print("clock skew is %r" % self.clockskew)
                 self.connection.delete(rfile)
         finally:
             if os.path.exists(filename):
@@ -154,7 +156,7 @@ class ftpService:
             mtime = int(time.mktime(time.strptime(mtime[3:].strip(), '%Y%m%d%H%M%S')))
         except:
             import traceback
-            print traceback.print_exc()
+            print(traceback.print_exc())
             
         return [size, mtime]
         
@@ -170,7 +172,7 @@ class ftpService:
             # file is the same, consider it uploaded.
             return True
         else:
-            print "Uploading %s" % sourcename
+            print("Uploading %s" % sourcename)
 
         self.connection.voidcmd('TYPE I')
         mysocket = self.connection.transfercmd('STOR ' + destname)
@@ -202,7 +204,7 @@ class ftpService:
                         resp = mysocket.sendall(block)
                         bytesuploaded = bytesuploaded + len(block)
                         block = None
-                    except socket.error, e:
+                    except socket.error as e:
                         if e[0] != errno.EAGAIN:
                             raise
                         
@@ -368,7 +370,7 @@ class FTPUpload:
                     self.filelist.remove(item)
                     self.callback.uploadFileCompleted(destname)
 
-            except ftplib.all_errors, e:
+            except ftplib.all_errors as e:
                 raise
 
         self.ftpService.close()
@@ -407,7 +409,7 @@ class FTPUpload:
                 self.ftpService.mkd(myitem)
                 self.callback.dirCreated(myitem)
                 self.ftpService.cwd(myitem)
-            except ftplib.all_errors, e:
+            except ftplib.all_errors as e:
                 raise
                 
 
@@ -483,8 +485,8 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
         self.fileList.DeleteItem(0)
         self.filesUploaded += 1
         filePercentUploaded = int((float(self.filesUploaded)/float(self.itemCount))* 100.0)
-        print "FilesUploaded: %s, TotalFiles: %s" % (self.filesUploaded, self.itemCount)
-        print "FilePercentUploaded is: " + `filePercentUploaded`
+        print("FilesUploaded: %s, TotalFiles: %s" % (self.filesUploaded, self.itemCount))
+        print("FilePercentUploaded is: " + repr(filePercentUploaded))
         self.projGauge.SetValue(filePercentUploaded)
 
     def OnNewFile(self, filename):
@@ -576,7 +578,7 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
         info = sys.exc_info()
         lines = traceback.format_exception(info[0], info[1], info[2])
         name = str(info[0])
-        print name
+        print(name)
         message = ""
         if name.find("IOError") != -1:
             message = utils.getStdErrorMessage(name, {"filename":info[1].filename})
@@ -584,14 +586,14 @@ class FTPUploadDialog(sc.SizedDialog, FTPUpload):
             message = self.getFtpErrorMessage(info[1])
         elif name.find("socket") != -1:
             errortext = str(info[1])
-            print "Type is: " + `type(info[1])`
+            print("Type is: " + repr(type(info[1])))
             if len(info[1]) == 2:
                 errortext = info[1][1]
             message = _("Socket Error: ") + errortext 
         else:
             message = str(info[1])
         
-        wx.MessageBox(`message`)
-        self.parent.log.error(`message`)
+        wx.MessageBox(repr(message))
+        self.parent.log.error(repr(message))
         self.ftpService.close()
         self.OnUploadCanceled()

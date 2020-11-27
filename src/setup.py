@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 from distutils.core import setup
 
 import logging
@@ -48,7 +49,7 @@ py2app_options = dict(
 
 def allFilesRecursive(dir):
     fileList = []
-    print dir
+    print(dir)
     for root, subFolders, files in os.walk(dir):
         if root.find(".svn") == -1:
             dirfiles = [root.replace(rootdir, ""),[]]

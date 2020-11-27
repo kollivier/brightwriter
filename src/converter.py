@@ -1,3 +1,4 @@
+from __future__ import print_function
 import getopt,sys, os, string
 import cStringIO, tempfile, glob, time
 import settings
@@ -57,7 +58,7 @@ class DocConverter:
                 return "", ""
         except:
             import traceback
-            print traceback.print_exc()
+            print(traceback.print_exc())
             return "", ""
             
 class WordDocConverter:
@@ -137,7 +138,7 @@ class WordDocConverter:
             pythoncom.CoUninitialize()
 
             import traceback
-            print traceback.print_exc()
+            print(traceback.print_exc())
             return "", ""
 
 class CommandLineDocConverter:
@@ -197,7 +198,7 @@ class CommandLineDocConverter:
             command = "pdftohtml"
             args = ["-noframes", "-stdout", filename]
         else:
-            print "Cannot convert file because of unknown extension: " + filename
+            print("Cannot convert file because of unknown extension: " + filename)
             
         if os.path.exists( os.path.join(path, "bin") ):
             path = os.path.join(path, "bin")
@@ -214,7 +215,7 @@ class CommandLineDocConverter:
             seconds = 0.0
             
             if not os.path.exists(filename):
-                print "File '%s' doesn't exist!" % filename
+                print("File '%s' doesn't exist!" % filename)
  
             if sys.platform.startswith("win"):
                 htmlfile = win32api.GetShortPathName(htmlfile)
@@ -222,7 +223,7 @@ class CommandLineDocConverter:
             command = command.encode( utils.getCurrentEncoding() )
             
             mycommand = [command] + args
-            print "Running command: '%s'" % string.join(mycommand, " ")
+            print("Running command: '%s'" % string.join(mycommand, " "))
             myprocess = killableprocess.Popen( mycommand, stdout=subprocess.PIPE, env=env)
             
             import time
@@ -251,8 +252,8 @@ class CommandLineDocConverter:
         except:
             import traceback
             if traceback.print_exc() != None:
-                print traceback.print_exc()
-            print "Unable to convert document: " + filename #if we can't convert, oh well ;-)
+                print(traceback.print_exc())
+            print("Unable to convert document: " + filename) #if we can't convert, oh well ;-)
 
         return htmlfile, outformat
 

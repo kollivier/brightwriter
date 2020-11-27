@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import mimetypes
 import os
@@ -6,8 +7,8 @@ import tempfile
 import uuid
 import zipfile
 
-import ncx
-import opf
+from . import ncx
+from . import opf
 
 import fileutils
 import settings

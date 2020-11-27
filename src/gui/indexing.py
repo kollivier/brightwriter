@@ -1,3 +1,4 @@
+from __future__ import print_function
 import string, sys, os
 import wx
 import wx.lib.sized_controls as sc
@@ -14,13 +15,13 @@ except:
 
 class IndexingCallback:
 	def indexingFinished(self):
-		print "Indexing complete."
+		print("Indexing complete.")
 	
 	def indexingCanceled(self):
-		print "Indexing cancelled."
+		print("Indexing cancelled.")
 		
 	def update(self, text):
-		print text
+		print(text)
 		
 class IndexingGUICallback:
 	def __init__(self, parent):

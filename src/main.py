@@ -82,7 +82,7 @@ try:
     import wxblox.events as events
     import guiutils
     import gui.error_viewer as error_viewer
-except Exception, e:
+except Exception as e:
     logging.warning("Unable to import wxPython.")
     import traceback
     logging.warning(traceback.format_exc(e))
@@ -196,7 +196,7 @@ if use_wx:
                     errCards.append(string.join(card, " "))
 
             if errOccurred:
-                message = _("EClass could not load the following vCards from your Contacts folder: %(badCards)s. You may want to try deleting these cards and re-creating or re-importing them.") % {"badCards":`errCards`}
+                message = _("EClass could not load the following vCards from your Contacts folder: %(badCards)s. You may want to try deleting these cards and re-creating or re-importing them.") % {"badCards":repr(errCards)}
                 wx.MessageBox(message)
 
 

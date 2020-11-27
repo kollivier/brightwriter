@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys, os
 import string
 import ConfigParser
@@ -101,7 +102,7 @@ if len(sys.argv) > 1:
         progname = os.path.basename(sys.executable)
         if progname.find("librarian") == -1:
             progname = os.path.basename(__file__)
-        print "Usage: %s <operation> <value>" % progname
+        print("Usage: %s <operation> <value>" % progname)
         sys.exit(1)
 else:
     isCGI = True
@@ -125,22 +126,22 @@ if isCGI:
     
     sort = "0-Z"
     sortBy = ""
-    if form.has_key("sort"):
+    if "sort" in form:
         sort = form["sort"].value
     
-    if form.has_key("sortby"):
+    if "sortby" in form:
         sortBy = form["sortby"].value.lower()
     
-    if form.has_key("collection"):
+    if "collection" in form:
         collection = form["collection"].value
     
-    if form.has_key("page"):
+    if "page" in form:
         page = form["page"].value
         
-    if form.has_key("language"):
+    if "language" in form:
         language = form["language"].value
     
-    if form.has_key("query"):
+    if "query" in form:
         query = form["query"].value
         field = form["field"].value.lower()
         
@@ -148,7 +149,7 @@ if isCGI:
             query = "%s:[%s]" % (field, sort.replace("-", " TO ") )
         
         results_pageno = 1
-        if form.has_key("results_pageno"):
+        if "results_pageno" in form:
             results_pageno = int(form["results_pageno"].value)
         
         indexer = manager.getIndex(collection)
@@ -175,7 +176,7 @@ if isCGI:
         for result in page_results:
             url = result["url"]
             title = result["url"]
-            if result.has_key("title"):
+            if "title" in result:
                 title = result["title"]
                 
             content += """<p><a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a></p>\n""" % \
@@ -195,7 +196,7 @@ if isCGI:
         field = ""
         sort = "0-Z"
         
-        if form.has_key("field"):
+        if "field" in form:
             field = form["field"].value.lower()
         
         indexer = manager.getIndex(collection)
@@ -208,17 +209,17 @@ if isCGI:
 
     elif page == "viewitem":
         contentsdir = manager.getIndexProp(collection, "content_directory")
-        if form.has_key("item"):
+        if "item" in form:
             item = form["item"].value
             fullpath = os.path.join(contentsdir, item)
             if os.path.exists(fullpath):
                 type = mimetypes.guess_type(item)[0]
                 props = os.stat(fullpath)
-                print "Content-Type: %s" % (type)
-                print "Content-Length: %d" % (props[stat.ST_SIZE])
-                print "Content-Disposition: inline; filename = \"%s\"" % os.path.basename(fullpath)
-                print ""
-                print utils.openFile(fullpath, "rb").read()
+                print("Content-Type: %s" % (type))
+                print("Content-Length: %d" % (props[stat.ST_SIZE]))
+                print("Content-Disposition: inline; filename = \"%s\"" % os.path.basename(fullpath))
+                print("")
+                print(utils.openFile(fullpath, "rb").read())
                 sys.exit(0)
                 
             content += "Could not locate the file %s." % fullpath
@@ -260,9 +261,9 @@ if isCGI:
         htmlfields = getHTMLFieldList(indexer)
         meld.field._content = htmlfields
         
-    print "Content-Type: text/html"
-    print ""
-    print str(meld)
+    print("Content-Type: text/html")
+    print("")
+    print(str(meld))
             
 else:
     command = sys.argv[1].lower().strip()
@@ -271,8 +272,8 @@ else:
         folder = sys.argv[3].strip()
         try:
             manager.addIndex(name, folder)
-        except index_manager.IndexExistsError, text:
-            print text
+        except index_manager.IndexExistsError as text:
+            print(text)
             
     elif command == "index":
         name = sys.argv[2].strip()
@@ -290,7 +291,7 @@ else:
         result_list = indexer.getUniqueFieldValues(field)
         
         for result in result_list:
-            print result
+            print(result)
     
     elif command == "export":
         name = sys.argv[2].strip()
@@ -303,24 +304,24 @@ else:
         indexer = manager.getIndex(name)
     
         if indexer:
-            print "searching for term: %s" % term
+            print("searching for term: %s" % term)
             results = indexer.search("contents", term)
-            print "Search returned %d results." % len(results)
+            print("Search returned %d results." % len(results))
             for result in results:
-                print result["url"]
+                print(result["url"])
                 
     elif command == "list":
-        print "Available collections:"
+        print("Available collections:")
         for collection in manager.getIndexList():
-            print "-\t%s" % collection
+            print("-\t%s" % collection)
             
     elif command == "info": 
         name = sys.argv[2].strip()
         indexer = manager.getIndex(name)
         info = indexer.getIndexInfo()
-        print "Index Name: %s" % (name)
-        print "Number of Documents: %s" % (info["NumDocs"])
-        print "Metadata Fields: %s" % (info["MetadataFields"])
+        print("Index Name: %s" % (name))
+        print("Number of Documents: %s" % (info["NumDocs"]))
+        print("Metadata Fields: %s" % (info["MetadataFields"]))
         
     elif command == "export":
         name = sys.argv[2].strip()
@@ -330,7 +331,7 @@ else:
         if os.path.exists(content_dir):
             shutil.rmtree(content_dir)
             
-        print "Please wait, copying files..."
+        print("Please wait, copying files...")
         
         shutil.copytree(folder, content_dir)
    

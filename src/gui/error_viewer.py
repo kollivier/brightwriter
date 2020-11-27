@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import os
 import sys
@@ -10,7 +11,7 @@ import guiutils
 import wx
 import wx.lib.sized_controls as sc
 
-import autolist
+from . import autolist
 import errors
 import settings
 import version
@@ -146,7 +147,7 @@ def showErrorDialog(errorText=""):
                 logging.info("posting error report")
                 server.post_error_report(report)
             success = True
-        except Exception, e:
+        except Exception as e:
             import traceback
             logging.error(traceback.format_exc(e))
             success = False

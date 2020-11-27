@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import sys
 
@@ -8,7 +9,7 @@ def installEClassGettext():
     localedir = os.path.join(os.path.abspath(rootdir), 'locale')
     if not os.path.exists(localedir):
         localedir = os.path.join(os.path.abspath('.'), 'locale')
-    print localedir
+    print(localedir)
     import gettext
     gettext.install('eclass', localedir)
     lang_dict = {

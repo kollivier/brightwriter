@@ -1,3 +1,4 @@
+from __future__ import print_function
 hasTaskRunner=False
 
 try:
@@ -19,7 +20,7 @@ def addTask(command, args=[], env=os.environ):
     
         job = Job(os.path.basename(command), command, args, env)
         name = command + " " + string.join(args, " ")
-        print name
+        print(name)
         manager = TaskRunner([Task(job)], name=name)
         job.LOGBASE = utils.escapeFilename(settings.PrefDir)
         thread = TaskRunnerThread(manager)

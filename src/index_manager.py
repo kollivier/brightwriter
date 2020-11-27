@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys, os
 import ConfigParser
 
@@ -40,7 +41,7 @@ def walker(archive, dirname, names):
         fullpath = os.path.join(dirname, name)
         if os.path.isfile(fullpath):
             arcpath = fullpath.replace(tempdir, "")
-            print "Adding %s to archive" % (arcpath)            
+            print("Adding %s to archive" % (arcpath))            
             archive.add(fullpath, arcpath)
 
 class IndexManager:
@@ -88,7 +89,7 @@ class IndexManager:
             
     def getIndex(self, name):
         if self.indexes.has_section(name):
-            if self.openIndexes.has_key(name):
+            if name in self.openIndexes:
                 return self.openIndexes[name]
                 
             folder = self.getIndexProp(name, CONTENT_DIR)
@@ -118,7 +119,7 @@ class IndexManager:
         
     def exportIndex(self, name, dir="."):
         if self.indexes.has_section(name):
-            print "Exporting index properties for %s" % name
+            print("Exporting index properties for %s" % name)
 
             global tempdir
             global tarName
@@ -135,11 +136,11 @@ class IndexManager:
                 
             exportConfig.write(open(os.path.join(tempdir, "indexes.cfg"), "w"))
             
-            print "Copying index files (this may take a while)..."
+            print("Copying index files (this may take a while)...")
             import shutil
             shutil.copytree(self.getIndexProp(name, INDEX_DIR), os.path.join(tempdir, INDEX_DIR))
             
-            print "Copying content files (this may take a while)..."
+            print("Copying content files (this may take a while)...")
             shutil.copytree(self.getIndexProp(name, INDEX_DIR), os.path.join(tempdir, CONTENT_DIR))
             
             tarName = utils.createSafeFilename(name)
@@ -151,7 +152,7 @@ class IndexManager:
             
     def importIndex(self, name, archive):
         name = os.path.splitext(os.path.basename(archive))[0]
-        print "importing library %s... " % name
+        print("importing library %s... " % name)
         
         
     def removeIndex(self, name, deleteIndexFiles=True):

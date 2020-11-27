@@ -1,3 +1,4 @@
+from __future__ import print_function
 #####################################
 # indexer.py - controls the indexing and searching
 # of Lucene indexes
@@ -96,4 +97,4 @@ class SearchEngine:
 			self.IndexDoc(rootnode)
 		except:
 			import traceback
-			print traceback.print_exc()
+			print(traceback.print_exc())

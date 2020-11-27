@@ -1,3 +1,4 @@
+from __future__ import print_function
 import string, sys, os
 import plugins
 import settings
@@ -44,9 +45,9 @@ class EditorDialog:
         myFilename = os.path.join(settings.ProjectDir, filename)
         result = False
 
-        print myFilename
+        print(myFilename)
         if os.path.exists(myFilename):
-            print "File exists!"
+            print("File exists!")
             result = guiutils.sendCommandToApplication(myFilename, "open")
 
         if not result:

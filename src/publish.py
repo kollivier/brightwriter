@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Script for publishing EClass from the command line.
 import sys, os
 
@@ -30,7 +31,7 @@ settings.AppDir = rootdir
 
 class CLFileCopyCallback:
     def fileChanged(self, filename):
-        print "Copying %s" % filename
+        print("Copying %s" % filename)
 
 class EClassExporter:
     def __init__(self, filename, pubdir=None, format="html"):
@@ -55,7 +56,7 @@ class EClassExporter:
     def ExportToWeb(self):
         if not self.pubdir:
             if settings.ProjectSettings["WebSaveDir"] == '':
-                print "ERROR: No output directory specified. Exiting."
+                print("ERROR: No output directory specified. Exiting.")
                 sys.exit(1)
             else:
                 self.pubdir = settings.ProjectSettings["WebSaveDir"]
@@ -72,17 +73,17 @@ if __name__ == "__main__":
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
-        print "You must specify an EClass to publish. Exiting."
+        print("You must specify an EClass to publish. Exiting.")
         
     eclass = args[0]
     if not os.path.isfile(eclass):
         eclass = os.path.join(eclass, "imsmanifest.xml")
         if not os.path.exists(eclass):
-            print "Could not find EClass at %s. Exiting" % sys.argv[1]
+            print("Could not find EClass at %s. Exiting" % sys.argv[1])
             sys.exit(1)
     
     # publish to the 
     exporter = EClassExporter(eclass, options.output_dir)
     exporter.ExportToWeb()
     
-    print "Finished publishing %s!" % eclass
+    print("Finished publishing %s!" % eclass)

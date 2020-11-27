@@ -1,3 +1,4 @@
+from __future__ import print_function
 from HTMLParser import HTMLParser
 from xmlutils import *
 
@@ -175,9 +176,9 @@ def copyDependentFilesAndUpdateLinks(oldfile, filename):
             if result:
                 html = html.replace(link, urllib.quote(destLink))
             else:
-                print "unable to copy file: " + sourcefile
+                print("unable to copy file: " + sourcefile)
         else:
-            print "cannot find source file: " + sourcefile
+            print("cannot find source file: " + sourcefile)
                 
     output = utils.openFile(filename, "w")
     output.write(html.encode(encoding))

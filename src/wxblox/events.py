@@ -1,3 +1,4 @@
+from __future__ import print_function
 #----------------------------------------------------------------------
 # Name:        wxblox/events.py
 # Purpose:     These mixins implement a push and pop menu/UI update event handler system
@@ -103,7 +104,7 @@ class AppEventHandlerMixin:
         if id in self.handlers:
             handler = self.handlers[id]
             if handler:
-                print "handler is: " + `handler`
+                print("handler is: " + repr(handler))
                 return handler(event)
            
         return False

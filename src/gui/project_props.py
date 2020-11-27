@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import string, sys, os
 import wx
 import wx.lib.sized_controls as sc
@@ -9,7 +10,7 @@ import ims
 import ims.contentpackage
 import appdata
 
-import select_box as picker
+from . import select_box as picker
 
 class ProjectPropsDialog(sc.SizedDialog):
     def __init__(self, parent):

@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 from xmlutils import *
 
 import appdata
@@ -9,12 +11,12 @@ import sys
 
 from externals.BeautifulSoup import BeautifulSoup
 
-from core import *
+from .core import *
 
-import eclass
-import file
-import html
-import quiz
+from . import eclass
+from . import file
+from . import html
+from . import quiz
 
 pluginList = []
 
@@ -87,7 +89,7 @@ class PluginTests(unittest.TestCase):
         LoadPlugins()
 
         self.testdir = os.path.join(rootdir, "testFiles", "eclassTest", "TestEClass")
-        print self.testdir
+        print(self.testdir)
         appdata.currentPackage = self.cp = ims.contentpackage.ContentPackage()
         self.cp.loadFromXML(os.path.join(self.testdir, "imsmanifest.xml"))
 
@@ -114,7 +116,7 @@ class PluginTests(unittest.TestCase):
 
         pub_path = os.path.join(self.testdir, pub_filename)
         self.assert_(os.path.exists(pub_path))
-        print pub_path
+        print(pub_path)
         soup = BeautifulSoup(open(pub_path).read())
 
         html = """<p>Hello world!

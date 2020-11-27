@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys, os, string
 import settings
 import utils
@@ -120,7 +121,7 @@ def sendCommandToApplication(filename, action="open", application=""):
     if command != "":
         #command = unicode(command, "utf-8")
         ranCommand = True
-        print `command`
+        print(repr(command))
         wx.Execute(command.encode("utf-8"))
     
     return ranCommand

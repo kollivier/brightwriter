@@ -1,8 +1,10 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import string, os, sys, re
 import wx
 import wx.lib.sized_controls as sc
 import persistence
-import autolist
+from . import autolist
 import utils
 import guiutils
 import settings
@@ -62,12 +64,12 @@ class LinkChecker(sc.SizedDialog):
                 request.add_header('User-Agent','EClass Link Checker/1.0 +http://www.eclass.net/') 
                 opener.open(request)
                 wx.CallAfter(self.linkList.SetStringItem, item, 1, _("OK"))
-            except urllib2.URLError, e:
-                print "link is: " + link
+            except urllib2.URLError as e:
+                print("link is: " + link)
                 if hasattr(e, 'reason'):
-                    print 'We failed to reach a server.'
-                    print 'Reason: ', e.reason
+                    print('We failed to reach a server.')
+                    print('Reason: ', e.reason)
                 elif hasattr(e, 'code'):
-                    print 'The server couldn\'t fulfill the request.'
-                    print 'Error code: ', e.code
+                    print('The server couldn\'t fulfill the request.')
+                    print('Error code: ', e.code)
                 wx.CallAfter(self.linkList.SetStringItem, item, 1, _("Broken"))

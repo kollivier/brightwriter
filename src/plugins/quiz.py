@@ -1,3 +1,4 @@
+from __future__ import print_function
 import string
 import os
 import locale
@@ -143,7 +144,7 @@ class QuizPage(plugins.PluginData):
             for item in items:
                 self._GetItem(item)
 
-        print `len(self.items)`
+        print(repr(len(self.items)))
         
 
     def _GetItem(self, root):
@@ -279,10 +280,11 @@ class QuizPage(plugins.PluginData):
         except:
             message = _("There was an error updating the file %(filename)s. Please check to make sure you did not enter any invalid characters (i.e. Russian, Chinese/Japanese, Arabic) and try updating again.") % {"filename":filename}
             log.error(message)
-            raise IOError, message
+            raise
+
         try:
             import types
-            if type(myxml) != types.UnicodeType:
+            if type(myxml) != str:
                 import locale
                 encoding = locale.getdefaultlocale()[1]
                 myxml = unicode(myxml, encoding)
@@ -336,7 +338,7 @@ class QuizPage(plugins.PluginData):
         counter = 1
         for item in self.items:
             if item.id == "":
-                item.id = "Q" + `counter` 
+                item.id = "Q" + repr(counter) 
             
             itemstr = itemstr + """
         <item ident="%s">
@@ -499,8 +501,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             global log
             message = _("Could not copy Quiz files from %(directory)s to your EClass. Please check that you have enough hard disk space to write this file and that you have permission to write to the directory.") % {"directory":os.path.join(settings.AppDir, "plugins", "Quiz", "Files")}
             log.error(message)
-            raise IOError, message
-            return ""   
+            raise
         return ""
 
     def _ItemsAsHTML(self):
@@ -533,7 +534,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             <td width="50"><div id="%s_answer"><img id="%s_answerimg" src="../Graphics/Quiz/blank.gif" height="32" width="32"></div></td>
             <td width="60%%"><div id="%s_question">
             <h3><b>%s. %s</b></h3>              
-            """ % (item.id, item.id, item.id, `counter`, item.presentation.text)
+            """ % (item.id, item.id, item.id, repr(counter), item.presentation.text)
             choicecounter = 0
             script = script + """
                 answer = document.getElementById("%s_answer");
@@ -692,7 +693,7 @@ if sys.platform.startswith('win'):
                 self.filename = os.path.join(settings.ProjectDir, filename)
                 try:
                     self.quiz.LoadPage(self.filename)
-                except IOError, msg:
+                except IOError as msg:
                     message = utils.getStdErrorMessage("IOError", {"type":"write", "filename": self.filename})
                     global log
                     log.error(message)
@@ -806,12 +807,12 @@ if sys.platform.startswith('win'):
                 counter = 0
                 for choice in question.presentation.choices:
                     if counter < 6:
-                        eval("self.txtAnswer" + `(counter + 1)` + ".SetValue(u\"" + choice.text + "\")")
+                        eval("self.txtAnswer" + repr((counter + 1)) + ".SetValue(u\"" + choice.text + "\")")
                         for cond in question.conditions:
                             if cond.title == "Correct":
                                 for var in cond.variables:
                                     if var.value == choice.id and var.condition == "equal":
-                                        eval("self.chkCorrect" + `(counter + 1)` + ".SetValue(True)")
+                                        eval("self.chkCorrect" + repr((counter + 1)) + ".SetValue(True)")
                     counter = counter + 1
                     
                 for itemfeedback in self.question.feedback:
@@ -838,8 +839,8 @@ if sys.platform.startswith('win'):
             correctAnswer = False
             numAnswers = 0
             for counter in range(1, 6):
-                exec("chkCorrect = self.chkCorrect" + `counter`)
-                exec("txtAnswer = self.txtAnswer" + `counter`)
+                exec("chkCorrect = self.chkCorrect" + repr(counter))
+                exec("txtAnswer = self.txtAnswer" + repr(counter))
                 
                 if chkCorrect.GetValue() == True:
                     correctAnswer = True
@@ -860,12 +861,12 @@ if sys.platform.startswith('win'):
                 return False
 
             for counter in range(1, 6):
-                exec("txtAnswer = self.txtAnswer" + `counter`)
-                exec("chkCorrect = self.chkCorrect" + `counter`)
+                exec("txtAnswer = self.txtAnswer" + repr(counter))
+                exec("chkCorrect = self.chkCorrect" + repr(counter))
 
                 if not len(txtAnswer.GetValue()) == 0:
                     newchoice = QuizItemChoice()
-                    newchoice.id = "A" + `counter`
+                    newchoice.id = "A" + repr(counter)
 
                     newchoice.text = txtAnswer.GetValue()                   
 

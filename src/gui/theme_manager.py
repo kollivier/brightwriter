@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import string, sys, os
 import shutil
 
@@ -11,7 +13,7 @@ import fileutils
 import utils
 import settings
 
-import editbox
+from . import editbox
 
 class ThemeManager(sc.SizedDialog):
     def __init__(self, parent):
@@ -80,7 +82,7 @@ class ThemeManager(sc.SizedDialog):
     def OnThemeChanged(self, event):
         themename = self.lstThemeList.GetListBox().GetStringSelection()
         shutil.rmtree(self.themeTempDir)
-        print "selection is %s" % themename
+        print("selection is %s" % themename)
         # load the theme preview
         self.oldProjectDir = settings.ProjectDir 
         settings.ProjectDir = self.themeDir
@@ -88,9 +90,9 @@ class ThemeManager(sc.SizedDialog):
         publisher = self.currentTheme.HTMLPublisher(self, dir=self.themeTempDir)
         result = publisher.Publish()
         if result:
-            print 'loading page?'
+            print('loading page?')
             filename = os.path.join(self.themeTempDir, "index.htm")
-            print `os.path.exists(filename)`
+            print(repr(os.path.exists(filename)))
             self.browser.LoadPage(filename)
         settings.ProjectDir = self.oldProjectDir
 

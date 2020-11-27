@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import wx
 import wx.lib.sized_controls as sc
 
 from wx.lib.pubsub import pub
 
-from ids import *
+from .ids import *
 
 class WebViewFindReplaceController(wx.EvtHandler):
     def __init__(self, webview):
