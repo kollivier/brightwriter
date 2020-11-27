@@ -346,7 +346,8 @@ class wxBrowser(wx.Window):
         # Handle the JSON data, which is the Python dict: {foo: 'bar'}
         print("value = %r" % json_value)
         data = json.loads(json_value)
-        self.callback(data['value'])
+        if self.callback:
+            self.callback(data['value'])
         self.callback = None
 
     def EvaluateJavaScript(self, script, callback=None):
