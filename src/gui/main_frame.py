@@ -204,6 +204,10 @@ class MainFrame2(frameClass):
         self.dirtyNodes = []
         self.dirty = False
 
+        # Used to check if page content has changed since it was loaded, to know if we need to
+        #  present the save dialog.
+        self.contents_on_load = None
+
         settings.ThirdPartyDir = os.path.join(settings.AppDir, "3rdparty", utils.getPlatformName())
         langdict = {"English":"en", "Espanol": "sp", "Francais":"fr"}
         lang = "English"
@@ -959,24 +963,38 @@ class MainFrame2(frameClass):
         gui.error_viewer.showErrorDialog()
 
     def OnTreeSelChanging(self, event):
+        self.should_change = None
         self.CheckIfSaveNeeded(event)
+        while self.should_change is None:
+            wx.SafeYield()
 
-    def CheckIfSaveNeeded(self, event):
-        if not self.projectTree.GetCurrentTreeItemData():
-            return
+        if not self.should_change:
+            event.Veto()
 
-        dirty = self.browser.EvaluateJavaScript("dirty")
+    def SaveIfContentsChanged(self, data):
+        from lxml.html.diff import htmldiff
+        diff = htmldiff(self.contents_on_load, data)
+        contents_changed = '<ins>' in diff or '<del>' in diff
+        dirty = contents_changed or self.dirty
 
-        if dirty == "true":
+        self.should_change = True
+        if dirty:
             result = wx.MessageDialog(self, _("This document contains unsaved changes. Would you like to save them now?"), _("Save Changes?"), wx.YES | wx.NO | wx.CANCEL).ShowModal()
 
             if result == wx.ID_CANCEL:
-                event.Veto()
+                self.should_change = False
             elif result == wx.ID_NO:
                 self.dirty = False
             elif result == wx.ID_YES:
-                self.SaveWebPage()
-            
+                self.DoSaveWebPage(data)
+
+    def CheckIfSaveNeeded(self, event):
+        if not self.projectTree.GetCurrentTreeItemData():
+            self.should_change = True
+            return
+
+        self.browser.EvaluateJavaScript("GetContents()", callback=self.SaveIfContentsChanged)
+
     def OnTreeSelChanged(self, event):
         self.Preview()
         event.Skip()
@@ -1299,10 +1317,9 @@ class MainFrame2(frameClass):
         self.SaveWebPage()
 
     def SaveWebPage(self):
-        data = self.browser.EvaluateJavaScript("GetContents()", callback=self.DoSaveWebPage)
+        self.browser.EvaluateJavaScript("GetContents()", callback=self.DoSaveWebPage)
 
     def DoSaveWebPage(self, data):
-        print("data = %r" % data)
         source = htmlutils.ensureValidXHTML(data)
 
         if self.filename.endswith(".xhtml"):
@@ -1336,7 +1353,6 @@ class MainFrame2(frameClass):
         
         self.selectedFileLastModifiedTime = os.path.getmtime(self.filename)
         self.dirty = False
-        self.browser.EvaluateJavaScript("dirty = false;")
 
     def NewContentPackage(self):
         """
@@ -1558,9 +1574,9 @@ class MainFrame2(frameClass):
         return None
 
     def Preview(self):
-        print("Preview called")
         filename = self.GetContentFilenameForSelectedItem()
-        
+        logging.info("Preview called for {}".format(filename))
+
         if filename:
             try:
                 self.selectedFileLastModifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
@@ -1580,6 +1596,7 @@ class MainFrame2(frameClass):
                     fileurl = os.path.dirname(filename) + "/"
                     self.baseurl = 'file://' + fileurl
                     html = htmlutils.getUnicodeHTMLForFile(filename)
+                    self.contents_on_load = html
                     js = 'SetContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
                     logging.info("js = %s" % js)
                     self.browser.EvaluateJavaScript(js)
@@ -1588,7 +1605,8 @@ class MainFrame2(frameClass):
                 else:
                     self.browser.LoadPage(filename)
             else:
-                self.browser.SetPage(utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>"), "")
+                page_html = utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>")
+                self.browser.SetPage(page_html, "")
 
         else:
             self.browser.SetPage(utils.createHTMLPageWithBody(""), "")
