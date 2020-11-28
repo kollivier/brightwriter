@@ -72,7 +72,7 @@ def newXMLNode(doc, name, text="", attrs={}):
 	node = doc.createElement(name)
 	if not text == "":
 		node.appendChild(doc.createTextNode(text))
-	for attr in attrs.keys():
+	for attr in list(attrs.keys()):
 		if attrs[attr] != "":
 			node.setAttribute(attr, attrs[attr])
 

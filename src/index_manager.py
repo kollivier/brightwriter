@@ -1,6 +1,9 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import sys, os
-import ConfigParser
+import configparser
 
 import index
 import utils
@@ -44,9 +47,9 @@ def walker(archive, dirname, names):
             print("Adding %s to archive" % (arcpath))            
             archive.add(fullpath, arcpath)
 
-class IndexManager:
+class IndexManager(object):
     def __init__(self, cfgFile=""):
-        self.indexes = ConfigParser.ConfigParser()
+        self.indexes = configparser.ConfigParser()
         self.indexFile = cfgFile
         self.indexes.read(self.indexFile)
         self.indexesDir = os.path.join(os.path.dirname(cfgFile), "indexes")
@@ -126,7 +129,7 @@ class IndexManager:
             global extension
             
             tempdir = tempfile.mkdtemp()
-            exportConfig = ConfigParser.ConfigParser()
+            exportConfig = configparser.ConfigParser()
             exportConfig.add_section(name)
             for opt in self.indexes.options(name):
                 exportConfig.set(name, opt, self.getIndexProp(name, opt))

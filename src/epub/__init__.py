@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from builtins import str
+from builtins import object
 import logging
 import mimetypes
 import os
@@ -72,7 +74,7 @@ class Container(xmlobjects.RootTag):
         
         self.children = [self.rootfiles]
 
-class EPubPackage:
+class EPubPackage(object):
     def __init__(self, name=""):
         self.name = name
         self.mimetype = "application/epub+zip"
@@ -88,8 +90,8 @@ class EPubPackage:
         counter = 0
         
         title = imspackage.metadata.lom.general.title
-        if len(title.keys()) > 0:
-            firstitem = title.keys()[0]
+        if len(list(title.keys())) > 0:
+            firstitem = list(title.keys())[0]
             self.name = title[firstitem]
             self.opf.metadata.title.text = self.name
             

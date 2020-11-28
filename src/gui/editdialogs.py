@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from builtins import chr
+from past.builtins import basestring
 import string
 
 import wx
@@ -156,7 +158,7 @@ class LinkPropsDialog(TagEditorDialog):
         self.fileURL.SetSizerProps(expand=True)
 
         wx.StaticText(pane, -1, _("Open in"))
-        target = wx.ComboBox(pane, -1, choices=htmlattrs.attr_values["A"]["target"].keys(), name="target")
+        target = wx.ComboBox(pane, -1, choices=list(htmlattrs.attr_values["A"]["target"].keys()), name="target")
         target.SetSizerProps(expand=True)
 
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
@@ -249,7 +251,7 @@ class OLPropsDialog(TagEditorDialog):
         pane.SetSizerType("form")
         
         wx.StaticText(pane, -1, _("List Type"))
-        wx.Choice(pane, -1, choices=htmlattrs.attr_values["OL"]["type"].keys(), name="type")
+        wx.Choice(pane, -1, choices=list(htmlattrs.attr_values["OL"]["type"].keys()), name="type")
 
         wx.StaticText(pane, -1, _("Start at"))
         self.spnStartNum = wx.SpinCtrl(pane, -1, "1", name="start")
@@ -271,7 +273,7 @@ class ULPropsDialog(TagEditorDialog):
         pane.SetSizerType("form")
 
         wx.StaticText(pane, -1, _("List Type"))
-        wx.Choice(pane, -1, choices=htmlattrs.attr_values["UL"]["type"].keys(), name="type")
+        wx.Choice(pane, -1, choices=list(htmlattrs.attr_values["UL"]["type"].keys()), name="type")
         
         self.SetButtonSizer(self.CreateStdDialogButtonSizer(wx.OK | wx.CANCEL))
         
@@ -298,7 +300,7 @@ class ImagePropsDialog(TagEditorDialog):
         self.txtDescription = wx.TextCtrl(pane, -1, name="alt")
         self.txtDescription.SetSizerProps(expand=True)
         wx.StaticText(pane, -1, _("Image Alignment"))
-        choice = wx.Choice(pane, -1, choices=htmlattrs.attr_values['IMG']['align'].keys(), name="align")
+        choice = wx.Choice(pane, -1, choices=list(htmlattrs.attr_values['IMG']['align'].keys()), name="align")
         choice.SetStringSelection(_("Default"))
 
         wx.StaticText(pane, -1, _("Width"))
@@ -322,10 +324,10 @@ class RowPropsDialog(TagEditorDialog):
         pane.SetSizerType("form")
 
         wx.StaticText(pane, -1, _("Horizontal Alignment"))
-        wx.Choice(pane, -1, choices=htmlattrs.attr_values['TR']['align'].keys(), name="align")
+        wx.Choice(pane, -1, choices=list(htmlattrs.attr_values['TR']['align'].keys()), name="align")
     
         wx.StaticText(pane, -1, _("Vertical Alignment:"))
-        wx.Choice(pane, -1, choices=htmlattrs.attr_values['TR']['valign'].keys(), name="valign")
+        wx.Choice(pane, -1, choices=list(htmlattrs.attr_values['TR']['valign'].keys()), name="valign")
         
         wx.StaticText(pane, -1, _("Background Color"))
         wx.TextCtrl(pane, -1, name="bgcolor")
@@ -346,10 +348,10 @@ class CellPropsDialog(TagEditorDialog):
         pane.SetSizerType("form")
 
         wx.StaticText(pane, -1, _("Horizontal Alignment"))
-        wx.Choice(pane, -1, choices=htmlattrs.attr_values['TD']['align'].keys(), name="align")
+        wx.Choice(pane, -1, choices=list(htmlattrs.attr_values['TD']['align'].keys()), name="align")
     
         wx.StaticText(pane, -1, _("Vertical Alignment:"))
-        wx.Choice(pane, -1, choices=htmlattrs.attr_values['TD']['valign'].keys(), name="valign")
+        wx.Choice(pane, -1, choices=list(htmlattrs.attr_values['TD']['valign'].keys()), name="valign")
         
         wx.StaticText(pane, -1, _("Background Color"))
         wx.TextCtrl(pane, -1, name="bgcolor")
@@ -375,7 +377,7 @@ class TablePropsDialog(TagEditorDialog):
         #alignment options
 #
         wx.StaticText(pane, -1, _("Alignment"))
-        wx.Choice(pane, -1, choices=htmlattrs.attr_values["TABLE"]["align"].keys(), name="align")
+        wx.Choice(pane, -1, choices=list(htmlattrs.attr_values["TABLE"]["align"].keys()), name="align")
 
         wx.StaticText(pane, -1, _("Border"))
         wx.SpinCtrl(pane, -1, "0", name="border")

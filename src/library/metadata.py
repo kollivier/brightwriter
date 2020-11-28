@@ -1,3 +1,5 @@
+from builtins import range
+from builtins import object
 import sys, os
 import xml.dom.minidom
 import utils
@@ -5,7 +7,7 @@ import utils
 metadata_ns = ["dc", "dls"]
 
 
-class ExtraMetadataFields:
+class ExtraMetadataFields(object):
     def __init__(self, filename):
         self.filename = filename
         self.fields = []
@@ -25,7 +27,7 @@ class ExtraMetadataFields:
                 self.fields.append(line.strip())
             md_file.close()
 
-class FileMetadata:
+class FileMetadata(object):
     def __init__(self):
         self.metadata = {}
         

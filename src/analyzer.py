@@ -1,6 +1,9 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import sys, os, string, re
 import unittest
-import urlparse
+import urllib.parse
 import htmlutils
 import stat
 
@@ -38,7 +41,7 @@ def findAllMatches(re_string, text, start=0):
 
     return results
 
-class ContentAnalyzer:
+class ContentAnalyzer(object):
     def __init__(self):
         self.filename = ""
         self.mediafiles = []
@@ -85,7 +88,7 @@ class ContentAnalyzer:
                 
     def __ParseLinks(self):
         for link in self.links + self.mediafiles:
-            parsedLink = urlparse.urlparse(link)
+            parsedLink = urllib.parse.urlparse(link)
             if parsedLink[1] == "" and not link.split(":")[0] in ignored_protocols:
                 self.fileLinks.append(link)
             else:

@@ -1,5 +1,8 @@
-import string, os, sys
-import types 
+from builtins import object
+import os
+import shutil
+import tempfile
+
 
 USE_MINIDOM=0
 try:
@@ -20,14 +23,14 @@ def newXMLNode(doc, name, text=None, attrs={}, ns=None):
     if text:
         node.appendChild(doc.createTextNode(text))
     
-    for attr in attrs.keys():
+    for attr in list(attrs.keys()):
         if attrs[attr] != "":
             node.setAttribute(attr, attrs[attr])
 
     return node
     
 
-class Tag:
+class Tag(object):
     def __init__(self, name="", text=None, attrs=None, children=None, ns=None, maxlength=-1):
         self.namespace = ns
         self.name = name
@@ -87,7 +90,7 @@ class Tag:
         
     def fromXML(self, node, strictMode=False):
         if node.attributes:
-            for (name, value) in node.attributes.items():            
+            for (name, value) in list(node.attributes.items()):            
                 self.attrs[name] = value
         
         self.namespace = node.namespaceURI
@@ -149,7 +152,7 @@ class Tag:
             
         return None
 
-class TagList:
+class TagList(object):
     def __init__(self, name="", tagClass=None, **kwargs):
         self.name = name
         self.tagClass = tagClass
@@ -292,10 +295,26 @@ class RootTag(Tag):
         
         import codecs
         data = doc.toprettyxml("\t", encoding="utf-8")
-        myfile = open(filename, "w")
-        myfile.write(codecs.BOM_UTF8)
-        myfile.write(data)
-        myfile.close()
+        if data:
+            try:
+                # write to temp file first, so if anything goes wrong during the write
+                # process, we don't lose data.
+                fd, temp_file = tempfile.mkstemp()
+                os.close(fd)
+                myfile = open(temp_file, "wb")
+                myfile.write(codecs.BOM_UTF8)
+                myfile.write(data)
+                myfile.close()
+                if os.path.exists(temp_file):
+                    shutil.copy2(temp_file, filename)
+            except IOError:
+                # calling code will report the error
+                pass
+            finally:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+        else:
+            return False
         
         if not os.path.exists(filename):
             return False

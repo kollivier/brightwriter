@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 #----------------------------------------------------------------------
 # Name:        taskrunner.py
 # Purpose:     Classes that can manage running of external processes,
@@ -13,6 +14,9 @@ from __future__ import print_function
 # Licence:     wxWindows license
 #----------------------------------------------------------------------
 
+from builtins import next
+from past.utils import old_div
+from builtins import object
 import sys
 import os
 import signal
@@ -27,7 +31,7 @@ __all__ = ["Job", "Task", "TaskRunner", "TaskRunnerThread"]
 #----------------------------------------------------------------------
 
 # For environment settings
-class Config:
+class Config(object):
     def asDict(self):
         return self.__dict__.copy()
 
@@ -36,7 +40,7 @@ class Config:
             f = file(filename, "w")
         else:
             f = outfile
-        for k, v in self.__dict__.items():
+        for k, v in list(self.__dict__.items()):
             f.write('%s="%s"\n' % (k, v))
             
     def read(self, filename="config"):
@@ -106,8 +110,8 @@ class Job(object):
         if not now:
             now = time.time()
         elapsed_time = now-self.startTime
-        mins = elapsed_time/60
-        hours = mins/60
+        mins = old_div(elapsed_time,60)
+        hours = old_div(mins,60)
         seconds = (elapsed_time - mins) % 60
         return "%d:%d:%d" % (hours, mins, seconds)
 
@@ -177,7 +181,7 @@ class Task(object):
         else:
             return self.jobs[self.active]
 
-    def next(self):
+    def __next__(self):
         self.active += 1
         if self.active < len(self.jobs):
             self.jobs[self.active].start()
@@ -278,8 +282,8 @@ class TaskRunnerThread(threading.Thread):
         if not now:
             now = time.time()
         elapsed_time = now-self.startTime
-        mins = elapsed_time/60
-        hours = mins/60
+        mins = old_div(elapsed_time,60)
+        hours = old_div(mins,60)
         seconds = (elapsed_time - mins) % 60
         return "%d:%d:%d" % (hours, mins, seconds)
         

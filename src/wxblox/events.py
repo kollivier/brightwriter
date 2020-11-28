@@ -14,10 +14,11 @@ from __future__ import print_function
 # Licence:     wxWindows license
 #----------------------------------------------------------------------
 
+from builtins import object
 import sys, os
 import wx
 
-class AppEventManager:
+class AppEventManager(object):
     ui_events = [   
                     wx.ID_NEW, wx.ID_OPEN, wx.ID_CLOSE_ALL, wx.ID_CLOSE,
                     wx.ID_REVERT, wx.ID_SAVE, wx.ID_SAVEAS, wx.ID_UNDO,
@@ -37,7 +38,7 @@ class AppEventManager:
             app.AddHandlerForID(eventID, self.ProcessEvent)
             app.AddUIHandlerForID(eventID, self.ProcessUpdateUIEvent)
 
-class AppEventHandlerMixin:
+class AppEventHandlerMixin(object):
     """
     The purpose of the AppEventHandlerMixin is to provide a centralized
     location to manage menu and toolbar events. In an IDE which may have

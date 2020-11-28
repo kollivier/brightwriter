@@ -48,7 +48,7 @@ class ContactsDialog(sc.SizedDialog):
 
     def LoadContacts(self):
         self.lstContacts.Clear()
-        for name in appdata.vcards.keys():
+        for name in list(appdata.vcards.keys()):
             if not string.strip(name) == "":
                 self.lstContacts.Append(name, appdata.vcards[name])
 

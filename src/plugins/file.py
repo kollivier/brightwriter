@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 import string, sys, os
 import plugins
 import settings
@@ -26,7 +27,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         return
 
 
-class EditorDialog:
+class EditorDialog(object):
     def __init__(self, parent, item):
         self.item = item
         self.parent = parent

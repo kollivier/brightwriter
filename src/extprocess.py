@@ -1,3 +1,4 @@
+from builtins import object
 import os, sys, string
 
 # -------------------------------------------------------------------------
@@ -9,7 +10,7 @@ import os, sys, string
 if sys.platform == 'win32':
     import win32api, win32con, win32process
     
-    class ExtProcess:
+    class ExtProcess(object):
         def __init__(self, cmd):
             cmd2 = ' '.join(['"%s"' % x for x in cmd])
             procArgs = (None,  # appName
@@ -36,7 +37,7 @@ if sys.platform == 'win32':
     
 else: # Unix/Mac
     
-    class ExtProcess:
+    class ExtProcess(object):
         def __init__(self, cmd):
             self.pid = os.spawnv(os.P_NOWAIT, cmd[0], cmd)
         

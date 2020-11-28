@@ -1,5 +1,6 @@
 from __future__ import print_function
 # Script for publishing EClass from the command line.
+from builtins import object
 import sys, os
 
 rootdir = os.path.abspath(sys.path[0])
@@ -29,11 +30,11 @@ import themes
 
 settings.AppDir = rootdir
 
-class CLFileCopyCallback:
+class CLFileCopyCallback(object):
     def fileChanged(self, filename):
         print("Copying %s" % filename)
 
-class EClassExporter:
+class EClassExporter(object):
     def __init__(self, filename, pubdir=None, format="html"):
         self.imscp = None
         self.imscp = ims.contentpackage.ContentPackage()

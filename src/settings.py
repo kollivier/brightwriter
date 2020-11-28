@@ -1,3 +1,5 @@
+from future import standard_library
+standard_library.install_aliases()
 AppDir = ""
 ThirdPartyDir = ""
 ProjectDir = ""
@@ -64,7 +66,7 @@ def getDocumentsDir():
     docsfolder = ""
     if sys.platform.startswith('win'):
         try:
-            import _winreg as wreg
+            import winreg as wreg
             key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, "Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders")
             my_documents_dir = wreg.QueryValueEx(key, 'Personal')[0]
             key.Close()

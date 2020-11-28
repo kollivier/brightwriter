@@ -1,7 +1,14 @@
 from __future__ import print_function
+from __future__ import division
+from past.builtins import cmp
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import sys, os
 import string
-import ConfigParser
+import configparser
 import mimetypes
 import stat
 import encodings
@@ -26,7 +33,7 @@ lang_dict = {
 import index
 import index_manager
 import utils
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import settings
 import library.metadata
 import PyMeld
@@ -157,7 +164,7 @@ if isCGI:
         if sortBy != "":
             results.sort( lambda x, y: cmp(x[sortBy], y[sortBy]) )
             
-        numpages = len(results) / 30
+        numpages = old_div(len(results), 30)
         if len(results) % 30 > 0:
             numpages += 1
             
@@ -180,13 +187,13 @@ if isCGI:
                 title = result["title"]
                 
             content += """<p><a class="hit_link" href="%s?collection=%s&page=viewitem&item=%s">%s</a></p>\n""" % \
-                        (appname, urllib.quote(collection), urllib.quote(url), title)
+                        (appname, urllib.parse.quote(collection), urllib.parse.quote(url), title)
         
         if numpages > 1:
             content += "<p>Result Pages: "
             for pageno in range(1, numpages+1):
                 content += """<a href="%s?collection=%s&field=%s&query=%s&results_pageno=%d&language=%s">%d</a> """ % (appname, 
-                            urllib.quote(collection), urllib.quote(field), urllib.quote(query), pageno, language, pageno)
+                            urllib.parse.quote(collection), urllib.parse.quote(field), urllib.parse.quote(query), pageno, language, pageno)
             content += "</p>"
         
     elif page == "search":
@@ -204,7 +211,7 @@ if isCGI:
         
         for result in results:                
             content += """<p><a class="hit_link" href="%s?collection=%s&page=search&field=%s&query=%s&language=%s">%s</a></p>\n""" % \
-                            (appname, urllib.quote(collection), urllib.quote(field), urllib.quote(result), urllib.quote(language), result)
+                            (appname, urllib.parse.quote(collection), urllib.parse.quote(field), urllib.parse.quote(result), urllib.parse.quote(language), result)
         
 
     elif page == "viewitem":
@@ -239,7 +246,7 @@ if isCGI:
     else:
         content = getContentPage("index", collection)
         for section in manager.getIndexList():
-            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=indexinfo&language=%s">Info</a>)</p>\n""" % (appname, urllib.quote(section), language,  section, appname, urllib.quote(section), language)
+            content += """<p><a href="%s?collection=%s&page=search&language=%s">%s</a> (<a href="%s?collection=%s&page=indexinfo&language=%s">Info</a>)</p>\n""" % (appname, urllib.parse.quote(section), language,  section, appname, urllib.parse.quote(section), language)
         
     meld = None
     

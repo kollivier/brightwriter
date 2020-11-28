@@ -4,6 +4,7 @@
 # Author: Kevin Ollivier
 ##########################################
 
+from builtins import str
 import sys, os, string
 import settings
 import shutil
@@ -292,4 +293,4 @@ def getUUID():
     """
     Generates and returns a random UUID as a unicode text object.
     """
-    return unicode(uuid.uuid4())
+    return str(uuid.uuid4())

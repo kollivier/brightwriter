@@ -11,6 +11,7 @@
 # Licence:     wxWindows license
 #----------------------------------------------------------------------
 
+from builtins import object
 import wx
 
 # TODO: Find a better place for these...        
@@ -18,14 +19,14 @@ SAVEALL_ID = wx.NewId()
 VIEW_TOOLBAR_ID = wx.NewId()
 VIEW_STATUSBAR_ID = wx.NewId()
 
-class Menu:
+class Menu(object):
     def __init__(self, name, items=[]):
         self.name = name
         # we don't use a dict because a dict's keys are sorted by their hash values
         # which is often not the same as the actual order the items were defined in.
         self.items = items
         
-class MenuItem:
+class MenuItem(object):
     def __init__(self, name, id=wx.NewId(), description="", hotkey="", type=wx.ITEM_NORMAL,
                     image=None, handlerFunc=None):
         self.id = id
@@ -36,7 +37,7 @@ class MenuItem:
         self.image = image
         self.handlerFunc=handlerFunc
 
-class MenuManager:
+class MenuManager(object):
     def CreateMenuBar(self):
         global menus
         global menuItems

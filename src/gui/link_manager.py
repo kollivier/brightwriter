@@ -1,5 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
 import string, os, sys, re
 import wx
 import wx.lib.sized_controls as sc
@@ -53,10 +55,10 @@ class LinkChecker(sc.SizedDialog):
                 self.itemCount = self.itemCount + 1
 
     def ConnectToLink(self, item, link):
-            import urllib2
+            import urllib.request, urllib.error, urllib.parse
             try:
-                request = urllib2.Request(link)
-                opener = urllib2.build_opener()
+                request = urllib.request.Request(link)
+                opener = urllib.request.build_opener()
                 # some providers, such as Wikipedia, will block requests
                 # when a user agent isn't specified, or if it's a defualt
                 # user agent for automated bots. So we need to specify our
@@ -64,7 +66,7 @@ class LinkChecker(sc.SizedDialog):
                 request.add_header('User-Agent','EClass Link Checker/1.0 +http://www.eclass.net/') 
                 opener.open(request)
                 wx.CallAfter(self.linkList.SetStringItem, item, 1, _("OK"))
-            except urllib2.URLError as e:
+            except urllib.error.URLError as e:
                 print("link is: " + link)
                 if hasattr(e, 'reason'):
                     print('We failed to reach a server.')

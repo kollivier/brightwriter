@@ -5,6 +5,9 @@ from __future__ import print_function
 #Author: Kevin Ollivier
 #Date: 4/5/01
 
+from builtins import str
+from builtins import range
+from builtins import object
 USE_MINIDOM=0
 try:
     from xml.dom.ext.reader.Sax import FromXmlFile
@@ -16,7 +19,7 @@ if USE_MINIDOM:
 
 import sys
 
-class XMLSettings:
+class XMLSettings(object):
     def __init__(self):
         self.settings = {}
         self.filename = ""
@@ -43,12 +46,12 @@ class XMLSettings:
 
     def __repr__(self):
         text = ""
-        for key in self.settings.keys():
+        for key in list(self.settings.keys()):
             text = text + key + "=" + str(self.settings[key]) + "\n"
         return text
         
     def keys(self):
-        return self.settings.keys()
+        return list(self.settings.keys())
 
     def Add(self, key, value):
         self.settings[key] = value
@@ -82,7 +85,7 @@ class XMLSettings:
         doc = minidom.Document()
         root = doc.createElement("Settings")
         
-        for key in self.settings.keys():
+        for key in list(self.settings.keys()):
             setting = doc.createElement("Setting")
             setting.setAttribute("name", key)
             setting.setAttribute("value", self.settings[key])
@@ -92,7 +95,7 @@ class XMLSettings:
         
         import codecs
         data = doc.toprettyxml("\t", encoding="utf-8")
-        myfile = open(filename, "w")
+        myfile = open(filename, "wb")
         myfile.write(codecs.BOM_UTF8)
         myfile.write(data)
         myfile.close()

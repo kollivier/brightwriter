@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 import string, sys, os
 import wx
 import wx.lib.sized_controls as sc
@@ -13,7 +14,7 @@ try:
 except:
 	pass
 
-class IndexingCallback:
+class IndexingCallback(object):
 	def indexingFinished(self):
 		print("Indexing complete.")
 	
@@ -23,7 +24,7 @@ class IndexingCallback:
 	def update(self, text):
 		print(text)
 		
-class IndexingGUICallback:
+class IndexingGUICallback(object):
 	def __init__(self, parent):
 		self.parent = parent
 		

@@ -122,8 +122,6 @@ def showErrorDialog(errorText=""):
             description = error.descriptionText.GetValue()
 
         try:
-            from rest import brightsparc
-            server = brightsparc.BrightSparcClient()
             log = ""
             if os.path.exists(settings.logfile):
                 log = open(settings.logfile, "r").read()
@@ -145,11 +143,11 @@ def showErrorDialog(errorText=""):
 
             if hasattr(sys, "frozen") or result == wx.ID_OK:
                 logging.info("posting error report")
-                server.post_error_report(report)
+                # FIXME: Add Sentry error logging here.
             success = True
         except Exception as e:
             import traceback
-            logging.error(traceback.format_exc(e))
+            logging.error(traceback.format_exc())
             success = False
 
         error.Destroy()
@@ -189,7 +187,7 @@ class ErrorLogViewer(sc.SizedDialog):
         self.LoadErrorLog()
         self.Fit()
         self.SetMinSize(self.GetSize())
-        wx.EVT_ACTIVATE(self, self.OnActivate)
+        self.Bind(wx.EVT_ACTIVATE, self.OnActivate)
         
     def OnActivate(self, evt):
         self.LoadErrorLog()

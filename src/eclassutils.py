@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import os
 import shutil
 import unittest
@@ -12,7 +14,7 @@ import htmlutils
 import plugins
 import utils
 
-import externals.BeautifulSoup as bs
+import bs4
 
 
 def createEClass(dirname):
@@ -95,7 +97,7 @@ def getItemUUIDWithNamespace():
 
 def updateManifestLinkedFiles(imsresource, htmlfile, html):
     basedir = os.path.dirname(htmlfile)
-    soup = bs.BeautifulSoup(html)
+    soup = bs4.BeautifulSoup(html)
     hrefs = soup.findAll(href=True)
     links = []
     for href in hrefs:
@@ -143,7 +145,7 @@ def updateManifestLinkedFiles(imsresource, htmlfile, html):
             imsresource.files.append(imsfile)
 
 
-class EClass:
+class EClass(object):
     """
     The purpose of this class is to handle issues specific to EClass
     that do not necessarily fall under IMSCP functionality. Such as

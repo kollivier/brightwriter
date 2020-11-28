@@ -1,11 +1,15 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import atexit
 import json
 import logging
 import os
+import platform
 import sys
 import time
-import urlparse
+import urllib.parse
 import utils
 import webbrowser
 
@@ -28,13 +32,13 @@ except:
 try:
     if True:  # not sys.platform.startswith("darwin"):
         from cefpython3 import cefpython
-        import cefpython3.wx.chromectrl as cefwx
+        WindowUtils = cefpython.WindowUtils()
         browserlist.append("cef")
         logging.info("CEFPython loaded")
 except Exception as e:
     import traceback
     logging.error("Unable to import CEFPython")
-    logging.error(traceback.format_exc(e))
+    logging.error(traceback.format_exc())
 
 if sys.platform.startswith("darwin"):
     try:
@@ -53,19 +57,21 @@ if "cef" in browserlist:
         "log_severity": cefpython.LOGSEVERITY_INFO,
         "log_file": log_filename,
     }
-    if hasattr(sys, 'frozen') and 'darwin' in sys.platform:
-        cef_dir = os.path.join(os.getcwd(), "lib", "python2.7", "cefpython3")
-        settings["resources_dir_path"] = os.path.join(cef_dir, "Resources")
-        settings["browser_subprocess_path"] = os.path.join(cef_dir, "subprocess")
-        settings["locale_pak"] = os.path.join(cef_dir, "Resources", "en.lproj", "locale.pak")
-    cefwx.Initialize(settings)
+    if 'darwin' in sys.platform:
+        cefpython_dir = os.path.dirname(os.path.abspath(cefpython.__file__))
+        cef_framework_dir = os.path.join(cefpython_dir, 'Chromium Embedded Framework.framework')
+        settings['external_message_pump'] = True
+        settings['framework_dir_path'] = cef_framework_dir
+        settings["resources_dir_path"] = os.path.join(cef_framework_dir, 'Resources')
+        settings["browser_subprocess_path"] = os.path.join(cefpython_dir, 'subprocess')
+    cefpython.Initialize(settings)
     logging.info("CEFPython initialized.")
     
-    # @atexit.register
+    @atexit.register
     def ShutDown():
         cefpython.Shutdown()
     
-    class ClientHandler:
+    class ClientHandler(object):
         # --------------------------------------------------------------------------
         # RequestHandler
         # --------------------------------------------------------------------------
@@ -84,7 +90,7 @@ if "cef" in browserlist:
             # create its own popup window yet.
             return True
 
-        def OnBeforeBrowse(self, browser, frame, request, isRedirect):
+        def OnBeforeBrowse(self, browser, frame, request, user_gesture, is_redirect):
             url = request.GetUrl()
 
             if self.callback is not None:
@@ -96,7 +102,7 @@ if "cef" in browserlist:
 
             return False
 
-        def OnKeyEvent(self, browser, event, eventHandle):
+        def OnKeyEvent(self, browser, event, event_handle):
             if event["type"] == cefpython.KEYEVENT_KEYUP:
                 # OnKeyEvent is called twice for F5/Esc keys, with event
                 # type KEYEVENT_RAWKEYDOWN and KEYEVENT_KEYUP.
@@ -116,7 +122,7 @@ if "cef" in browserlist:
                         return True
             return False
 
-        def OnLoadEnd(self, browser, frame, httpStatusCode):
+        def OnLoadEnd(self, browser, frame, http_code):
             if frame == browser.GetMainFrame():
                 self.loaded = True
 
@@ -141,24 +147,24 @@ def getDefaultBrowser():
 
     return default
 
-class wxBrowser(wx.Window):
+class wxBrowser(wx.Panel):
     """
     Wrapper for the various HTML engines available in wxPython. It will first try to load
-    the standard browsers (Mozilla, then IE) and will default to wxHtmlWindow if neither is
+    the standard browsers (IE, Safari and Chrome) and will default to wxHtmlWindow if neither is
     available. Users can also specify the preferred browser in the constructor to choose a
     specific browser. However, if that browser is not available, a fallback will be automatically
     chosen. The developer can find out which engine they are using by checking the engine property.
 
     Example:
 
-    > mybrowser = wxBrowser(parent, -1, "Mozilla")
+    > mybrowser = wxBrowser(parent, -1, "webview")
     > mybrowser.LoadPage("http://www.google.com")
     > print mybrowser.engine
-    Mozilla
+    webview
 
     """
     def __init__(self, parent, id, preferredBrowser="", messageHandler=None):
-        wx.Window.__init__(self, parent, id, style=wx.WANTS_CHARS)
+        wx.Panel.__init__(self, parent, id, style=wx.WANTS_CHARS)
         self.parent = parent
         self.id = id
         self.browser = None
@@ -170,10 +176,10 @@ class wxBrowser(wx.Window):
         self.OnTitleChanged = lambda x: x
         self.OnProgress = lambda x: x
 
-        if preferredBrowser == "":
+        if not preferredBrowser:
             preferredBrowser = getDefaultBrowser()
             
-        assert preferredBrowser != ""
+        assert preferredBrowser
 
         logging.info("Preferred browser = %r" % preferredBrowser)
 
@@ -185,18 +191,36 @@ class wxBrowser(wx.Window):
             parent = self
             if sys.platform.startswith("darwin"):
                 parent = self.parent
-            self.browser = cefwx.ChromeWindow(parent, url="about:blank", timerMillis=25, useTimer=True, style=wx.WANTS_CHARS)
-            # self.browser.SetSizerProps(expand=True, proportion=1)
+                try:
+                    # noinspection PyUnresolvedReferences
+                    from AppKit import NSApp
+                    # Make the content view for the window have a layer.
+                    # This will make all sub-views have layers. This is
+                    # necessary to ensure correct layer ordering of all
+                    # child views and their layers. This fixes Window
+                    # glitchiness during initial loading on Mac (Issue #371).
+                    NSApp.windows()[0].contentView().setWantsLayer_(True)
+                except ImportError:
+                    logging.error("PyObjC needs to be installed to use Chromium on Mac.")
+            window_info = cefpython.WindowInfo()
+            settings = {
+                'dom_paste_disabled': False
+            }
+            (width, height) = parent.GetClientSize().Get()
+            window_info.SetAsChild(self.GetHandle(),
+                                   [0, 0, width, height])
+            self.browser = cefpython.CreateBrowserSync(window_info, settings=settings,
+                                                       url="about:blank")
 
-            # override the ChromeWindow __del__ handler, it calls Unbind when the
-            # wx control is in an indeterminate state, which leads to a crash,
-            # and in fact the Unbind call is not necessary.
-            def delhandler(self):
-                self.browser.CloseBrowser()
-            self.browser.__del__ = delhandler
             client = ClientHandler(self)
             client.callback = None
-            self.browser.GetBrowser().SetClientHandler(client)
+            self.browser.SetClientHandler(client)
+
+            self.timer = None
+            self.CreateCEFTimer()
+
+            self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
+            self.Bind(wx.EVT_SIZE, self.OnSize)
 
         elif preferredBrowser.lower() == "ie":
             if self._LoadIE():
@@ -209,29 +233,74 @@ class wxBrowser(wx.Window):
                 print("Error: No browser could be found.")
 
         self.engine = preferredBrowser
-        self.browser.SetFocus()
+        self.SetBrowserFocus()
 
-        self.Sizer = wx.BoxSizer(wx.VERTICAL)
-        self.Sizer.Add(self.browser, 1, wx.EXPAND)
+        if not self.engine == "cef":
+            self.Sizer = wx.BoxSizer(wx.VERTICAL)
+            self.Sizer.Add(self.browser, 1, wx.EXPAND)
+
+    def OnSetFocus(self, _):
+        if not self.browser or not self.engine == "cef":
+            return
+        if sys.platform.startswith("win"):
+            WindowUtils.OnSetFocus(self.GetHandle(),
+                                   0, 0, 0)
+        self.browser.SetFocus(True)
+
+    def OnSize(self, _):
+        logging.info("OnSize called...")
+        if not self.browser or not self.engine == "cef":
+            return
+        if platform.system() == "Windows":
+            WindowUtils.OnSize(self.GetHandle(),
+                               0, 0, 0)
+        elif platform.system() == "Linux":
+            (x, y) = (0, 0)
+            (width, height) = self.GetSize().Get()
+            self.browser.SetBounds(x, y, width, height)
+        self.browser.NotifyMoveOrResizeStarted()
+
+    def CreateCEFTimer(self):
+        # See also "Making a render loop":
+        # http://wiki.wxwidgets.org/Making_a_render_loop
+        # Another way would be to use EVT_IDLE in MainFrame.
+        self.timer = wx.Timer(self, -1)
+        self.Bind(wx.EVT_TIMER, self.OnCEFTimer, self.timer)
+        self.timer.Start(10)  # 10ms timer
+
+    def OnCEFTimer(self, event):
+        cefpython.MessageLoopWork()
+
+    def SetBrowserFocus(self):
+        if not self.browser:
+            return
+
+        if self.engine == "cef":
+            if sys.platform.startswith('win'):
+                WindowUtils.OnSetFocus(self.parent.GetHandle(),
+                                       0, 0, 0)
+            self.browser.SetFocus(True)
+        else:
+            self.browser.SetFocus()
+
+    def OnClose(self, _):
+        if self.browser and self.engine == "cef":
+            logging.info("Shutting down Chromium...")
+            self.browser.ParentWindowWillClose()
+            self.browser = None
 
     def EditorReady(self):
         print("Sending page loaded event?")
         pub.sendMessage("page_load_complete")
 
     def GoBack(self):
-        if self.engine == "mozilla":
-            if self.browser.CanGoBack():
-                self.browser.GoBack()
-        elif self.engine == "ie":
+        if self.engine == "ie":
             self.browser.GoBack()
         else:
             self.browser.HistoryBack()
 
     def GoForward(self):
-        if self.engine == "mozilla":
-            if self.browser.CanGoForward():
-                self.browser.GoForward()
-        elif self.engine == "ie":
+        if self.engine == "ie":
             self.browser.GoForward()
         else:
             self.browser.HistoryForward()
@@ -256,7 +325,7 @@ class wxBrowser(wx.Window):
                 prefix += "/"  # Windows has a third slash before a file URL
             url = prefix + url
             logging.info("full URL is %s" % url)
-            self.browser.GetBrowser().GetMainFrame().LoadUrl(url)
+            self.browser.GetMainFrame().LoadUrl(url)
         else:
             self.browser.LoadPage(url)
 
@@ -270,8 +339,8 @@ class wxBrowser(wx.Window):
             pub.sendMessage("page_load_complete")
 
     def ProcessAppURL(self, url):
-        data = urlparse.urlparse(url)
-        args = urlparse.parse_qs(data.query)
+        data = urllib.parse.urlparse(url)
+        args = urllib.parse.parse_qs(data.query)
         if data.scheme == "bw":
             if self.messageHandler and hasattr(self.messageHandler, data.netloc):
                 method = "self.messageHandler." + data.netloc + "(args)"
@@ -302,7 +371,7 @@ class wxBrowser(wx.Window):
         elif self.engine == "webview":
             self.browser.SetPage(text, baseurl)
         elif self.engine == "cef":
-            self.browser.GetBrowser().GetMainFrame().LoadString(text, baseurl)
+            self.browser.GetMainFrame().LoadString(text, baseurl)
 
     def GetPageSource(self):
         if self.engine == "webkit":
@@ -311,15 +380,15 @@ class wxBrowser(wx.Window):
     def GetBrowserName(self):
         if self.engine == "webkit":
             return "Safari"
+        elif self.engine == "cef":
+            return "Chromium"
         elif self.engine == "ie":
             return "Internet Explorer"
         else:
             return "HTML Window"
 
     def Reload(self):
-        if self.engine == "mozilla":
-            self.browser.Reload()
-        elif self.engine == "ie":
+        if self.engine == "ie":
             self.browser.Refresh(wxIEHTML_REFRESH_COMPLETELY)
         else:
             self.LoadPage(self.currenturl)
@@ -366,7 +435,7 @@ class wxBrowser(wx.Window):
             if callback:
                 self.callback = callback
                 script = "app.SendJSValue(JSON.stringify({value: %s}))" % script
-            self.browser.GetBrowser().GetMainFrame().ExecuteJavascript(script)
+            self.browser.GetMainFrame().ExecuteJavascript(script)
             return ""
 
     def ExecuteEditCommand(self, command, value=None):

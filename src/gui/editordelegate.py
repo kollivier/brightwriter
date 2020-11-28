@@ -1,5 +1,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from builtins import str
+from builtins import hex
+from builtins import range
 import glob
 import json
 import logging
@@ -191,7 +194,7 @@ class HTMLEditorDelegate(wx.EvtHandler):
         app.AddUIHandlerForID(ID_TEXT_REMOVE_STYLES, self.UpdateEditCommand)
         app.AddUIHandlerForID(ID_SPELLING_GUESS, self.UpdateEditCommand)
         
-        self.webview.browser.Bind(wx.EVT_CONTEXT_MENU, self.OnRightClick)
+        # self.webview.Bind(wx.EVT_CONTEXT_MENU, self.OnRightClick)
 
     def RemoveHandlers(self):
         app = wx.GetApp()

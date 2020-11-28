@@ -1,7 +1,10 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import sys, copy
 import os
 import re
-import StringIO
+import io
 import string
 import types
 from htmlutils import *
@@ -19,7 +22,7 @@ import wx
 
 import plugins
 
-from StringIO import StringIO
+from io import StringIO
 
 themename = "PDF"
 Elements = []
@@ -27,7 +30,7 @@ Elements = []
 import logging
 log = logging.getLogger('EClass')
 
-class PDFPublisher:
+class PDFPublisher(object):
     """
     Class: BaseTheme.BasePDFPublisher
     Last Updated: 9/24/02  

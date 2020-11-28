@@ -208,12 +208,12 @@ class PagePropertiesDialog (sc.SizedDialog):
     def UpdateAuthorList(self, event=None):
         oldvalue = self.txtAuthor.GetValue()
         self.txtAuthor.Clear()
-        for name in appdata.vcards.keys():
+        for name in list(appdata.vcards.keys()):
             self.txtAuthor.Append(name, appdata.vcards[name])
 
         oldorg = self.txtOrganization.GetValue()
         self.txtOrganization.Clear()
-        for name in appdata.vcards.keys():
+        for name in list(appdata.vcards.keys()):
             self.txtOrganization.Append(name, appdata.vcards[name])
 
         if oldvalue != "":
@@ -256,7 +256,7 @@ class PagePropertiesDialog (sc.SizedDialog):
 
     def CheckAuthor(self, event):
         text = self.txtAuthor.GetValue()
-        for name in self.parent.vcardlist.keys():
+        for name in list(self.parent.vcardlist.keys()):
             if string.find(name, text) == 0:
                 self.txtAuthor.SetValue(name)
             self.txtAuthor.SetInsertionPoint(len(text))
@@ -321,7 +321,7 @@ class PagePropertiesDialog (sc.SizedDialog):
         if role == "":
             role = "Author"
         newcard = None
-        if not name in appdata.vcards.keys():
+        if not name in list(appdata.vcards.keys()):
             newcard = vcard.VCard()
             newcard.fname.value = name
             newcard.filename = os.path.join(settings.PrefDir, "Contacts", fileutils.MakeFileName2(name) + ".vcf")

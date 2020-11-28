@@ -1,8 +1,11 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
 import os
 import sys
 import shutil
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import wx
 import wx.stc
@@ -299,7 +302,7 @@ class EditorFrame (sc.SizedFrame):
     def LoadPage(self, filename):
         if os.path.exists(filename):
             self.fileHistory.AddFileToHistory(filename)
-            fileurl = urllib.quote(os.path.dirname(filename)) + "/"
+            fileurl = urllib.parse.quote(os.path.dirname(filename)) + "/"
             self.baseurl = 'file://' + fileurl
             html = htmlutils.getUnicodeHTMLForFile(filename)
             

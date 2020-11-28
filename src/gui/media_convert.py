@@ -1,3 +1,4 @@
+from builtins import range
 import wx
 import wx.lib.sized_controls as sc
 import string, sys, os

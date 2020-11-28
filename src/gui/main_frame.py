@@ -2,12 +2,16 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
-import sys, cPickle
-import string, time, cStringIO, os, re, glob, csv, shutil
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
+import sys, pickle
+import string, time, io, os, re, glob, csv, shutil
 import json
 import logging
 import tempfile
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import zipfile
 
 # sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "htmleditor"))
@@ -17,14 +21,7 @@ import persistence
 import wx.lib.sized_controls as sc
 import time
 
-#wx.SystemOptions.SetOptionInt("mac.textcontrol-use-mlte", 1)
-
-hasmozilla = False
-
-import xml.dom.minidom
-
 import appdata
-import ftplib
 import settings
 
 use_launch = False # not hasattr(sys, 'frozen')
@@ -51,8 +48,6 @@ import analyzer
 import eclass_convert
 
 # modules that don't get picked up elsewhere...
-import uuid
-import xmlrpclib
 import wx.lib.agw.aui as aui
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
@@ -81,7 +76,7 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
             print("File %s does not exist." % filepath)
             return filepath
             
-        basepath = urllib.unquote(self.parent.baseurl.replace("file://", ""))
+        basepath = urllib.parse.unquote(self.parent.baseurl.replace("file://", ""))
         
         if subdir == "" and os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
             subdir = "images"
@@ -111,7 +106,7 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
             
         assert os.path.exists(os.path.join(basepath, filepath))
         
-        return urllib.quote(filepath)
+        return urllib.parse.quote(filepath)
 
 
 # Import the gui dialogs. They used to be embedded in editor.py
@@ -156,7 +151,7 @@ def getMimeTypeForHTML(html):
     return mimetype
 
 
-class GUIIndexingCallback:
+class GUIIndexingCallback(object):
     def __init__(self, parent):
         self.parent = parent
 
@@ -164,7 +159,7 @@ class GUIIndexingCallback:
         wx.CallAfter(self.parent.OnIndexFileChanged, totalFiles, statustext)
 
 
-class GUIFileCopyCallback:
+class GUIFileCopyCallback(object):
     def __init__(self, parent):
         self.parent = parent
 
@@ -269,7 +264,7 @@ class MainFrame2(frameClass):
 
         def AddToToolBar(self, id=-1, bitmap=wx.EmptyBitmap, label="", shortHelpString=""):
             if isinstance(self, aui.AuiToolBar):
-                self.AddSimpleTool(id, label, bitmap, short_help_string=shortHelpString)
+                self.AddTool(id, label, bitmap, disabled_bitmap=bitmap, kind=wx.ITEM_NORMAL, short_help_string=shortHelpString)
             else:
                 self.AddSimpleTool(id, bitmap, label, shortHelpString)
 
@@ -338,7 +333,6 @@ class MainFrame2(frameClass):
             self._mgr.AddPane(self.browser, aui.AuiPaneInfo().Center().Position(2).MinSize(400, 400).CaptionVisible(False))
         # self.browser.SetSize((400, 400))
         # self.browser.SetSizerProps(expand=True, proportion=1)
-        self.browser.MakeEditable(True)
         self.webdelegate = EClassHTMLEditorDelegate(source=self.browser, parent=self)
         #self.browser.ToggleContinuousSpellChecking()
         
@@ -347,7 +341,8 @@ class MainFrame2(frameClass):
             #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
         
         if not self._mgr:
-            self.splitter1.SplitVertically(self.projectTree, self.browser.browser, 200)
+            self.splitter1.SetMinimumPaneSize(200)
+            self.splitter1.SplitVertically(self.projectTree, self.browser, 300)
 
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
         
@@ -972,6 +967,7 @@ class MainFrame2(frameClass):
 
     def SaveIfContentsChanged(self, data):
         from lxml.html.diff import htmldiff
+        logging.info("types {}, {}".format(type(self.contents_on_load), type(data)))
         diff = htmldiff(self.contents_on_load, data)
         contents_changed = '<ins>' in diff or '<del>' in diff
         dirty = contents_changed or self.dirty
@@ -1249,8 +1245,8 @@ class MainFrame2(frameClass):
         if self._mgr:
             logging.info("Calling mgr.UnInit")
             self._mgr.UnInit()
-        if hasattr(wxbrowser, "ShutDown"):
-            wxbrowser.ShutDown()
+
+        self.browser.OnClose(event)
         self.Destroy()
         if event:
             event.Skip()
@@ -1594,7 +1590,7 @@ class MainFrame2(frameClass):
                 if ext.find("htm") != -1:
                     fileurl = os.path.dirname(filename) + "/"
                     self.baseurl = 'file://' + fileurl
-                    html = htmlutils.getUnicodeHTMLForFile(filename)
+                    html = htmlutils.getUnicodeHTMLForFile(filename).decode('utf-8')
                     self.contents_on_load = html
                     js = 'SetContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
                     logging.info("js = %s" % js)

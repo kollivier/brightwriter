@@ -1,18 +1,24 @@
 from __future__ import print_function
-from HTMLParser import HTMLParser
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from html.parser import HTMLParser
 from xmlutils import *
 
 import analyzer
 import bs4 as BeautifulSoup
-import cStringIO
+import io
 import fileutils
 import os
 import re
 import settings
 import string
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import utils
+
+import six
+
 
 def getCurrentEncoding():
     import locale
@@ -34,7 +40,7 @@ def GetFullPathForURL(url, basedir):
         # Using urlretrieve on a local file simply returns the filename
         # and does not copy or reproduce the file.
         try:
-            path = urllib.urlretrieve(url)[0]
+            path = urllib.request.urlretrieve(url)[0]
             
             if not os.path.exists(path):
                 path = basedir + "/" + path
@@ -174,7 +180,7 @@ def copyDependentFilesAndUpdateLinks(oldfile, filename):
                 os.makedirs(destdir)
             result = fileutils.CopyFile(depName, sourcedir, destdir)
             if result:
-                html = html.replace(link, urllib.quote(destLink))
+                html = html.replace(link, urllib.parse.quote(destLink))
             else:
                 print("unable to copy file: " + sourcefile)
         else:
@@ -211,16 +217,22 @@ def convNotSoSmartQuotesToHtmlEntity(x):
                 "\x9A":"&scaron;",
                 "\x9B":"&rsaquo;",
                 "\x9C":"&oelig;"}
-    for i in d.keys():
+    for i in list(d.keys()):
         x=x.replace(i,d[i])
     return x
 
 def GetEncoding(myhtml):
     """Checks for document HTML encoding and returns it if found."""
     import re
-    match = re.search("""<meta.*?content=["]?text/html;\s*charset=([^\"]*)["]?""", myhtml, re.IGNORECASE)
+    test_html = myhtml
+    if isinstance(test_html, six.text_type):
+        # since checking a byte string will be the common case for determining encoding,
+        # convert unicode objects into a bytestring before searching. if a charset other than
+        # utf-8 is used, this test will still work since the meta tag data is all ASCII.
+        test_html = myhtml.encode("utf-8", errors="replace")
+    match = re.search(b"""<meta.*?content=["]?text/html;\s*charset=([^\"]*)["]?""", test_html, re.IGNORECASE)
     if match:
-        return match.group(1).lower() #python encodings always in lowercase
+        return match.group(1).lower().decode("utf-8") #python encodings always in lowercase
     else:
         return None
 

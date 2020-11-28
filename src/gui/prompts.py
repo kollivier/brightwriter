@@ -1,9 +1,10 @@
+from builtins import object
 import wx
 
 import logging
 log = logging.getLogger('EClass')
 
-class GUIErrorCallbacks:
+class GUIErrorCallbacks(object):
     def displayError(self, message, title=_("BrightWriter Error")):
         wx.MessageBox(message, style=wx.OK|wx.ICON_ERROR)
         if log:

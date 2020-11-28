@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 import locale
 import logging
 import platform
@@ -18,7 +19,7 @@ def getTraceback():
     return string.join(list, "")
 
 def exceptionAsString(exctype, value):
-    return string.join(traceback.format_exception(exctype, value, None), "\n")  
+    return "\n".join(traceback.format_exception(exctype, value, None))
     
 # taken from http://code.activestate.com/recipes/52215/
 def print_exc_plus(exctype, value, trace):
@@ -40,19 +41,21 @@ def print_exc_plus(exctype, value, trace):
         exception += "File \"%s\", line %s, in %s\n" % (frame.f_code.co_filename,
                                              frame.f_lineno,
                                              frame.f_code.co_name)
-        for key, keyvalue in frame.f_locals.items():
-            exception += "        %s = " % repr(key)
-            #We have to be careful not to cause a new error in our error
-            #printer! Calling str() on an unknown object could cause an
-            #error we don't want.
-            try:
-                valuestring = repr(keyvalue)
-                if len(valuestring) > 500:
-                    valuestring = valuestring[:500]
-                exception += valuestring
-            except:
-                exception += "<ERROR WHILE PRINTING VALUE>"
-            exception += "\n"
+        print_locals = False
+        if print_locals:
+            for key, keyvalue in list(frame.f_locals.items()):
+                exception += "        %s = " % repr(key)
+                #We have to be careful not to cause a new error in our error
+                #printer! Calling str() on an unknown object could cause an
+                #error we don't want.
+                try:
+                    valuestring = repr(keyvalue)
+                    if len(valuestring) > 500:
+                        valuestring = valuestring[:500]
+                    exception += valuestring
+                except:
+                    exception += "<ERROR WHILE PRINTING VALUE>"
+                exception += "\n"
         exception += "\n"
             
     exception += exceptionAsString(exctype, value)        
@@ -72,7 +75,7 @@ Language: %s
 def exceptionHook(exctype, value, trace):
     print(exceptionAsString(exctype, value, trace))
     
-class errorCallbacks:
+class errorCallbacks(object):
     def displayError(self, message):
         print("ERROR: " + message)
         if log:

@@ -3,10 +3,14 @@ from __future__ import print_function
 # indexer.py - controls the indexing and searching
 # of Lucene indexes
 #####################################
-import string, os, StringIO, formatter, locale, glob
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
+import string, os, io, formatter, locale, glob
 import PyLucene
 import converter
-from HTMLParser import HTMLParser, HTMLParseError
+from html.parser import HTMLParser, HTMLParseError
 import locale
 import settings
 import utils
@@ -14,7 +18,7 @@ import index
 import plugins
 import fileutils
 
-class SearchEngine:
+class SearchEngine(object):
 	def __init__(self, parent, indexdir, folder, callback = None):
 		self.parent = parent
 		
@@ -45,7 +49,7 @@ class SearchEngine:
 		
 		if self.publisher:
 			filename = self.publisher.GetFileLink(node.content.filename)
-		import urllib
+		import urllib.request, urllib.parse, urllib.error
 		filename = string.replace(filename, "\\", "/")
 
 		metadata["url"] = filename
@@ -78,8 +82,8 @@ class SearchEngine:
 				filename = string.replace(fullname, self.folder + os.sep, "")
 				filename = string.replace(filename, "\\", "/")
 				metadata = {}
-				metadata["title"] = unicode(os.path.basename(fullname))
-				metadata["url"] = unicode(filename)
+				metadata["title"] = str(os.path.basename(fullname))
+				metadata["url"] = str(filename)
 				
 				self.statustext = _("Indexing File: \n") + filename
 				if self.callback:

@@ -4,6 +4,9 @@ from __future__ import absolute_import
 # Designer: Kevin Ollivier
 # Organization: Tulane University
 # License: BrightWriter Open Source License
+from builtins import str
+from builtins import range
+from builtins import object
 import string, os, sys
 from . import xml_settings
 from . import vcard
@@ -21,7 +24,7 @@ except:
 if USE_MINIDOM:
     from xml.dom import minidom
 
-class ConManData:
+class ConManData(object):
     def __init__(self):
         self.encoding = utils.getCurrentEncoding()
         
@@ -469,7 +472,7 @@ class ConMan (ConManData):
             if type(myxml) != str:
                 import locale
                 encoding = locale.getdefaultlocale()[1]
-                myxml = unicode(myxml, encoding)
+                myxml = str(myxml, encoding)
             
             myxml = myxml.encode("utf-8")
             myfile = utils.openFile(filename, "wb")
@@ -517,7 +520,7 @@ class ConMan (ConManData):
             myres = myres + """<resource identifier="%s" href="%s">\n%s\n</resource>\n""" % (self.namespace + item.id, TextToXMLAttr(string.replace(filename, os.sep, "/")), item.metadata.asXMLString())
         return myres
 
-class ConNode:
+class ConNode(object):
     """
     Class: conman.ConNode()
     Last Updated: 9/24/02

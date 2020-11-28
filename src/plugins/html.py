@@ -1,5 +1,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 import os
 #import conman.conman as conman
 import settings
@@ -65,7 +68,7 @@ def CreateNewFile(filename, name="New Page"):
     dirname = os.path.dirname(filename)
     if not os.path.exists(dirname):
         os.makedirs(dirname)
-    output = open(filename, "w")
+    output = open(filename, "wb")
     output.write(file.encode("utf-8"))
     output.close()
 
@@ -108,7 +111,7 @@ if sys.platform.startswith('win') and __name__ != "__main__":
     import wx
     import wx.stc
 
-    class EditorDialog:
+    class EditorDialog(object):
         def __init__(self, parent, node):
             self.parent = parent
             self.node = node
@@ -132,8 +135,8 @@ if sys.platform.startswith('win') and __name__ != "__main__":
 
             if False:
                 size = wx.Display().ClientArea.Size
-                size.x = size.x / 2
-                size.y = size.y / 2
+                size.x = old_div(size.x, 2)
+                size.y = old_div(size.y, 2)
                 print("size is %s" % size)
                 self.frame = EditorFrame(self.parent, self.filename, size=size)
                 #self.frame.currentItem = self.currentItem

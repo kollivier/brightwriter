@@ -1,8 +1,11 @@
 #HTMLPublish.py - HTML Publishing utility
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import sys
 import os
 import re
-import StringIO
+import io
 #import pre as re
 import string
 import wx
@@ -17,7 +20,7 @@ import conman
 import eclassutils
 
 isPublic = True
-from StringIO import StringIO
+from io import StringIO
 
 themename = "Default (frames)"
 
@@ -38,7 +41,7 @@ errorLog = PublishErrorHandler()
 log = logging.getLogger('HTMLPublisher')
 log.addHandler(errorLog)
 
-class BaseHTMLPublisher:
+class BaseHTMLPublisher(object):
     """
     Class: HTMLPublish.HTMLPublisher
     Last Updated: 9/24/02  

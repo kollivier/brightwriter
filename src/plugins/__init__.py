@@ -9,7 +9,7 @@ import os
 import settings
 import sys
 
-from externals.BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 
 from .core import *
 

@@ -1,10 +1,12 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
 import json
 import logging
 import os
 import random
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import webbrowser
 
 import pew
@@ -31,7 +33,7 @@ class Application(pew.PEWApp):
         sys.excepthook = self.unhandled_exception
 
         index = os.path.abspath(os.path.join(thisdir, "gui", "html", "index.html"))
-        url = "file://%s" % urllib.quote(index)
+        url = "file://%s" % urllib.parse.quote(index)
         logging.debug("url: %r" % url)
         if not os.path.exists(index):
             raise Exception("Unable to load UI file")

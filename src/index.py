@@ -3,15 +3,21 @@ from __future__ import print_function
 # indexer.py - controls the indexing and searching
 # of Lucene indexes
 #####################################
-import sys, string, os, StringIO, formatter, locale, glob
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import next
+from builtins import range
+from builtins import object
+import sys, string, os, io, formatter, locale, glob
 import PyLucene
 import converter
-from HTMLParser import HTMLParser, HTMLParseError
+from html.parser import HTMLParser, HTMLParseError
 import locale
 import settings
 import utils
 import stat
-import ConfigParser
+import configparser
 import errors
 import types
 import shutil
@@ -54,7 +60,7 @@ def indexingWalker(indexer, dirname, names):
             
             indexer.addFile(fullpath, file_metadata)
 
-class IndexingCallback:
+class IndexingCallback(object):
     def __init__(self, index):
         self.index = index
         self.numFiles = 0
@@ -69,7 +75,7 @@ class IndexingCallback:
     def indexingComplete(self):
         print("Finished indexing %s" % (self.index))
 
-class Index:
+class Index(object):
     def __init__(self, indexdir, rootFolder="", log_errors=True):
         self.indexdir = indexdir
         self.folder = rootFolder
@@ -85,7 +91,7 @@ class Index:
         if not os.path.exists(self.indexdir):
             os.makedirs(self.indexdir)
         
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.read([os.path.join(settings.ProjectDir, "index_settings.cfg")])
         if config.has_option("Settings", "IgnoreFileTypes"):
             ignoreTypes = config.get("Settings", "IgnoreFileTypes")
@@ -411,7 +417,7 @@ class Index:
         else:                   
             try:
                 prefConverter = ""
-                if "PreferredConverter" in settings.AppSettings.keys():
+                if "PreferredConverter" in list(settings.AppSettings.keys()):
                     prefConverter = settings.AppSettings["PreferredConverter"]
                     
                 myconverter = converter.DocConverter()
@@ -450,9 +456,9 @@ class Index:
                     text = convert.text
 
         elif returnDataFormat == "unicodeTxt":
-            text = unicode(data)
+            text = str(data)
         else:
-            text = unicode(data)
+            text = str(data)
 
         return text
 

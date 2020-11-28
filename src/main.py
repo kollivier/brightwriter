@@ -1,3 +1,4 @@
+from builtins import object
 import datetime
 import glob
 import logging
@@ -7,14 +8,14 @@ import string
 import sys
 
 if hasattr(sys, 'frozen'):
-    class StdErrLog:
+    class StdErrLog(object):
         def __init__(self):
             self.log = ""
 
         def write(self, msg):
             self.log += msg + "\n"
 
-    class StdOutLog:
+    class StdOutLog(object):
         def __init__(self):
             self.log = ""
 
@@ -70,7 +71,6 @@ import conman.xml_settings as xml_settings
 import conman.vcard as vcard
 import gui
 import fileutils
-import externals.BeautifulSoup
 
 # workaround for http://bugs.python.org/issue843590
 import encodings
@@ -155,6 +155,7 @@ if use_wx:
                 try:
                     settings.AppSettings.LoadFromXML(os.path.join(settings.PrefDir, "settings.xml"))
                 except:
+                    raise
                     wx.MessageBox(_("Unable to load application preferences due to an error reading the file. Using default preferences."))
             
         def LoadLanguage(self):

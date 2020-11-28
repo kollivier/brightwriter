@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import object
 import os
 import sys
 
@@ -13,7 +14,7 @@ from . import epub
 from . import IMS_Package
 
 
-class ThemeList:
+class ThemeList(object):
     def __init__(self):
         self.themes = {}
         self.LoadThemes()
@@ -28,14 +29,14 @@ class ThemeList:
 
     def GetPublicThemeNames(self):
         result = []
-        for key in self.themes.keys():
+        for key in list(self.themes.keys()):
             if self.themes[key].isPublic:
                 result.append(key)
 
         return result
 
     def FindTheme(self, themename, returnDefault=True):
-        if themename in self.themes.keys():
+        if themename in list(self.themes.keys()):
             return self.themes[themename]
         elif returnDefault:
             return self.themes["epub"]

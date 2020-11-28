@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import object
 import os
 import string
 import types
@@ -17,7 +18,7 @@ from xmlutils import *
 # base plugin data types
 
 
-class Plugin:
+class Plugin(object):
     def __init__(self, modname, fullname, ext, mimetype, requires):
         self.modulename = modname
         self.fullname = fullname
@@ -27,13 +28,13 @@ class Plugin:
 
 
 # FIXME: left for now to keep compatibility with classes using it.
-class PluginData:
+class PluginData(object):
     def __init__(self):
         pass
 
 
 # a base publisher to be overridden by plugins
-class BaseHTMLPublisher:
+class BaseHTMLPublisher(object):
     """
     Class: conman.plugins.BaseHTMLPublisher()
     Last Updated: 11/25/03
@@ -81,7 +82,7 @@ class BaseHTMLPublisher:
 
             elif isinstance(self.node, ims.contentpackage.Item):
                 # FIXME: Address issues with multiple language text
-                lang = self.node.metadata.lom.rights.description.keys()
+                lang = list(self.node.metadata.lom.rights.description.keys())
                 if len(lang) > 0:
                     description = self.node.metadata.lom.rights.description[lang[0]]
                 contributors = self.node.metadata.lom.lifecycle.contributors
@@ -106,7 +107,7 @@ class BaseHTMLPublisher:
                     role = contrib.role
                     fname = contrib.entity.fname.value
                 elif isinstance(self.node, ims.contentpackage.Item):
-                    lang = contrib.role.value.keys()
+                    lang = list(contrib.role.value.keys())
                     if len(lang) > 0:
                         role = contrib.role.value[lang[0]]
                     fname = conman.vcard.VCard().parseString(contrib.centity.text)
@@ -239,11 +240,11 @@ class BaseHTMLPublisher:
         html = temp.read()
         temp.close()
         charset = "utf-8"
-        if 'charset' in self.data.keys():
+        if 'charset' in list(self.data.keys()):
             charset = self.data['charset']
         ext = os.path.splitext(template)[1]
         soup = BeautifulSoup(html)
-        for key in data.keys():
+        for key in list(data.keys()):
             value = data[key]
             key = key.lower()
             global metaTags

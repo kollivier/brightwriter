@@ -1,6 +1,8 @@
-from HTMLParser import HTMLParser
+from future import standard_library
+standard_library.install_aliases()
+from html.parser import HTMLParser
 
-import cStringIO
+import io
 import os
 import re
 import string

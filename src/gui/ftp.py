@@ -1,5 +1,9 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+from builtins import str
+from past.utils import old_div
+from builtins import object
 import string, sys, os
 import wx
 import wx.lib.sized_controls as sc
@@ -18,7 +22,7 @@ import utils
 import errors
 import encrypt
 
-class FTPEventCallback:
+class FTPEventCallback(object):
     def uploadCanceled(self):
         print("Upload canceled.")
         
@@ -40,7 +44,7 @@ class FTPEventCallback:
     def dirCreated(self, dir):
         print("Created directory: %s" % dir)
     
-class FTPDialogEventCallback:
+class FTPDialogEventCallback(object):
     def __init__(self, parent):
         self.parent = parent
     
@@ -65,7 +69,7 @@ class FTPDialogEventCallback:
     def dirCreated(self, dir):
         wx.CallAfter(self.parent.OnDirCreated, dir)
         
-class ftpService:
+class ftpService(object):
     def __init__(self, host, user="", passwd="", hostdir="", passive=False):
         self.host = host
         self.user = user
@@ -183,7 +187,7 @@ class ftpService:
             # TODO: What is this needed for?
             #callback.uploadFileProgressEvent(destname, self.filepercent)
 
-        onepercent = bytes/100
+        onepercent = old_div(bytes,100)
         if onepercent == 0:
             onepercent = 1
         if mysocket:
@@ -225,7 +229,7 @@ class ftpService:
         
 
 #--------------------------- FTP Upload Dialog Class --------------------------------------
-class FTPUpload:
+class FTPUpload(object):
     def __init__(self, parent, rootdir):
         self.filelist = []
         self.dirlist = []

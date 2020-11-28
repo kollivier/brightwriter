@@ -46,7 +46,7 @@ class LangStringTag(Tag):
         del self.strings[key]
         
     def keys(self):
-        return self.strings.keys()
+        return list(self.strings.keys())
         
     def validate(self):
         for key in self.strings:
@@ -62,7 +62,7 @@ class LangStringTag(Tag):
             language="x-none"
             text=None
             if astring.attributes:
-                for (name, value) in astring.attributes.items():
+                for (name, value) in list(astring.attributes.items()):
                     if name=="xml:lang":
                         language=value
                     else:
@@ -105,7 +105,7 @@ class VocabularyTag(Tag):
         self.children = [self.source, self.value]
         
     def validate(self):
-        for lang in self.value.keys():
+        for lang in list(self.value.keys()):
             if not self.value[lang] in self.vocab:
                 return False
             

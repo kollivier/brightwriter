@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from builtins import object
 import wx
 import wx.lib.pydocview
 from . import menus
 from . import events
 
-class UtilityManagerMixin:
+class UtilityManagerMixin(object):
     """
     IDEs often have a mixture of views, which represent documents, and what I call
     'utilities', which are helper views that might visualize a document in another way,
@@ -36,7 +37,7 @@ class UtilityManagerMixin:
     def SaveUtilityViews(self):
         pass
 
-class AppFrameManagerMixin:
+class AppFrameManagerMixin(object):
     """
     This class allows the application to switch UIs between MDI/AUI/MFI as desired by
     the app developer or user. 

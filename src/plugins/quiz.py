@@ -1,4 +1,8 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
 import string
 import os
 import locale
@@ -7,7 +11,7 @@ from xmlutils import *
 from htmlutils import *
 import plugins
 from fileutils import *
-from StringIO import StringIO
+from io import StringIO
 import utils 
 import settings
 import conman
@@ -287,7 +291,7 @@ class QuizPage(plugins.PluginData):
             if type(myxml) != str:
                 import locale
                 encoding = locale.getdefaultlocale()[1]
-                myxml = unicode(myxml, encoding)
+                myxml = str(myxml, encoding)
             
             myxml = myxml.encode("utf-8")
             

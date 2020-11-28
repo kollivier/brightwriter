@@ -1,4 +1,8 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import str
 import string
 import os
 import conman
@@ -7,7 +11,7 @@ import re
 import plugins
 from htmlutils import *
 from xmlutils import *
-from StringIO import StringIO
+from io import StringIO
 import utils
 import fileutils
 import mmedia
@@ -19,7 +23,7 @@ import eclassutils
 import ims.contentpackage
 import ims.utils
 
-import externals.BeautifulSoup as BeautifulSoup
+from bs4 import BeautifulSoup
 
 USE_MINIDOM=0
 try:
@@ -308,7 +312,7 @@ class EClassPage(plugins.PluginData):
             if type(myxml) != str:
                 #import locale
                 #encoding = locale.getdefaultlocale()[1]
-                myxml = unicode(myxml, encoding)
+                myxml = str(myxml, encoding)
             
             myxml = myxml.encode("utf-8")
             

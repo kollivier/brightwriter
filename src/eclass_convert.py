@@ -1,4 +1,5 @@
 
+from builtins import object
 import sys, os, shutil
 import utils
 import unittest
@@ -17,7 +18,7 @@ if not os.path.exists(settings.AppDir):
         
     settings.AppDir = rootdir
 
-class EClassIMSConverter:
+class EClassIMSConverter(object):
     def __init__(self, filename):
         self.filename=filename
         self.id_namespace = eclassutils.getResourceNamespace()

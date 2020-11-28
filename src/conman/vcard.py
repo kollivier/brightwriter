@@ -1,263 +1,264 @@
 from __future__ import print_function
+from builtins import object
 import string, os
 
-class VCard:
-	def __init__(self):
-		self.name = Name()
-		self.emails = []
-		self.title = Title()
-		self.fname = FormattedName()
-		self.organization = Organization()
-		self.version = "2.1"
-		self.filename = ""
-		self.otherprops = []
+class VCard(object):
+    def __init__(self):
+        self.name = Name()
+        self.emails = []
+        self.title = Title()
+        self.fname = FormattedName()
+        self.organization = Organization()
+        self.version = "2.1"
+        self.filename = ""
+        self.otherprops = []
 
-	def parseFile(self, filename):
-		self.filename = filename
-		infile = open(filename, "rb")
-		self.parseString(infile.read())
-		infile.close()
+    def parseFile(self, filename):
+        self.filename = filename
+        infile = open(filename, "r")
+        self.parseString(infile.read())
+        infile.close()
 
-	def parseString(self, vcardstring):
-		lines = string.split(vcardstring, "\r\n")
-		inVCard = False
+    def parseString(self, vcardstring):
+        lines = vcardstring.split("\r\n")
+        inVCard = False
 
-		counter = 0
-		filelength = len(lines)
-		while counter < filelength:
-			#if we're in the VCard, check for the END marker before parsing
-			line = lines[counter]
+        counter = 0
+        filelength = len(lines)
+        while counter < filelength:
+            #if we're in the VCard, check for the END marker before parsing
+            line = lines[counter]
 
-			if inVCard and string.find(line, "END:VCARD") == 0:
-				inVCard = False
+            if inVCard and line.find("END:VCARD") == 0:
+                inVCard = False
 
-			#only parse if we're in the VCard
-			if inVCard: 
-				while counter < filelength:
-					if len(lines[counter+1]) == 0:
-						counter = counter + 1
-						continue
-					if (lines[counter+1][0] in [" ", "\t"]): #it's a continuation of a previous line
-						line = line + "\r\n" + lines[counter+1]
-						counter = counter + 1
-					else:
-						break
+            #only parse if we're in the VCard
+            if inVCard:
+                while counter < filelength:
+                    if len(lines[counter+1]) == 0:
+                        counter = counter + 1
+                        continue
+                    if (lines[counter+1][0] in [" ", "\t"]): #it's a continuation of a previous line
+                        line = line + "\r\n" + lines[counter+1]
+                        counter = counter + 1
+                    else:
+                        break
 
-				if len(lines[counter+1]) == 0:
-					counter = counter + 1
-					continue
+                if len(lines[counter+1]) == 0:
+                    counter = counter + 1
+                    continue
 
-	  			propname = string.split(string.split(line, ":")[0], ";")[0]
-	  			if string.find(propname, ".") != -1:
-	  				propname = string.split(propname, ".")[1]
+                propname = line.split(":")[0].split(";")[0]
+                if propname.find(".") != -1:
+                    propname = propname.split(".")[1]
 
-				if string.find(propname, "VERSION") == 0:
-					self.version = string.split(line, ":")[1]
-	  			elif string.find(propname, "EMAIL") == 0:
-	  				self.emails.append(Email(line))
-	  			elif string.find(propname, "FN") == 0:
-	  				self.fname = FormattedName(line)
-	  			elif string.find(propname, "N") == 0:
-	  				self.name = Name(line)			
-	  			elif string.find(propname, "TITLE") == 0:
-	  				self.title = Title(line)
-	  			elif string.find(propname, "ORG") == 0:
-	  				self.organization = Organization(line)
-	  			else:
-	  				newprop = VCardProp()
-	  				newprop.parseString(line)
-	  				self.otherprops.append(newprop)	
-			
-			#if we're not in the VCard, check for the opening string
-			if not inVCard and string.find(line, "BEGIN:VCARD") == 0:
-				inVCard = True
+                if propname.find("VERSION") == 0:
+                    self.version = line.split(":")[1]
+                elif propname.find("EMAIL") == 0:
+                    self.emails.append(Email(line))
+                elif propname.find("FN") == 0:
+                    self.fname = FormattedName(line)
+                elif propname.find("N") == 0:
+                    self.name = Name(line)
+                elif propname.find("TITLE") == 0:
+                    self.title = Title(line)
+                elif propname.find("ORG") == 0:
+                    self.organization = Organization(line)
+                else:
+                    newprop = VCardProp()
+                    newprop.parseString(line)
+                    self.otherprops.append(newprop)
 
-			counter = counter + 1
+            #if we're not in the VCard, check for the opening string
+            if not inVCard and line.find("BEGIN:VCARD") == 0:
+                inVCard = True
 
-	def saveAsFile(self):
-		if self.filename == "":
-			print("No filename, can't save to disk.")
-			return
-		
-		try:
-			myfile = open(self.filename, "wb")
-			myfile.write(self.asString())
-			myfile.close()
-		except:
-			print("Unable to write file %s to disk." % (self.filename))
+            counter = counter + 1
+
+    def saveAsFile(self):
+        if self.filename == "":
+            print("No filename, can't save to disk.")
+            return
+
+        try:
+            myfile = open(self.filename, "w")
+            myfile.write(self.asString())
+            myfile.close()
+        except:
+            print("Unable to write file %s to disk." % (self.filename))
 
 
-	def asString(self):
-		content = """BEGIN:VCARD\r\n%(props)sEND:VCARD""" % {"props": self.getPropsAsString()}
-		return content
+    def asString(self):
+        content = """BEGIN:VCARD\r\n%(props)sEND:VCARD""" % {"props": self.getPropsAsString()}
+        return content
 
-	def getPropsAsString(self):
-		result = "VERSION:" + self.version + "\r\n"
-		result = result + self.name.asVCardString() 
-		if len(self.emails) > 0:
-			for email in self.emails:
-				result += email.asVCardString()
-		if self.title.value != "":
-			result += self.title.asVCardString()
-		if self.organization.name != "":
-			result += self.organization.asVCardString()
-		if self.fname.value != "":
-			result += self.fname.asVCardString()
-		if len(self.otherprops) > 0:
-			for prop in self.otherprops:
-				result += prop.asVCardString()
+    def getPropsAsString(self):
+        result = "VERSION:" + self.version + "\r\n"
+        result = result + self.name.asVCardString()
+        if len(self.emails) > 0:
+            for email in self.emails:
+                result += email.asVCardString()
+        if self.title.value != "":
+            result += self.title.asVCardString()
+        if self.organization.name != "":
+            result += self.organization.asVCardString()
+        if self.fname.value != "":
+            result += self.fname.asVCardString()
+        if len(self.otherprops) > 0:
+            for prop in self.otherprops:
+                result += prop.asVCardString()
 
-		return result
+        return result
 
-class VCardProp:
-	def __init__(self):
-		self.propName = ""
-		self.props = []
-		#for generic properties - we can store them
-		#but not edit them
-		self.fields = []
-		#Any VCard prop may be part of a group
-		#so we need to mark that and remember it
-		self.groupName = ""
+class VCardProp(object):
+    def __init__(self):
+        self.propName = ""
+        self.props = []
+        #for generic properties - we can store them
+        #but not edit them
+        self.fields = []
+        #Any VCard prop may be part of a group
+        #so we need to mark that and remember it
+        self.groupName = ""
 
-	def parseString(self, text):
-		text = self.parseProps(text)
-		self.fields = string.split(text, ";")
+    def parseString(self, text):
+        text = self.parseProps(text)
+        self.fields = text.split(";")
 
-	def parseProps(self, text):
-		propslist = string.split(text, ":", 1)
-		proplist = string.split(propslist[0], ";")
-		self.propName = proplist[0]
-		if string.find(self.propName, ".") != -1:
-			self.groupName, self.propName = string.split(self.propName, ".")
+    def parseProps(self, text):
+        propslist = text.split(":", 1)
+        proplist = propslist[0].split(";")
+        self.propName = proplist[0]
+        if self.propName.find(".") != -1:
+            self.groupName, self.propName = self.propName.split(".")
 
-		if len(proplist) > 1:
-			for prop in proplist[1:]:
-				self.props.append(prop)
-		
-		return propslist[1]
+        if len(proplist) > 1:
+            for prop in proplist[1:]:
+                self.props.append(prop)
 
-	def asVCardString(self):
-		return self.propsAsString() + ":" + string.join(self.fields, ";") + "\r\n"
+        return propslist[1]
 
-	def propsAsString(self):
-		result = self.propName
-		if len(self.props) > 0:
-			for prop in self.props:
-				result = result + ";"
-				result = result + prop
-		if self.groupName != "":
-			result = self.groupName + "." + result
-		return result
+    def asVCardString(self):
+        return self.propsAsString() + ":" + self.fields.join(";") + "\r\n"
+
+    def propsAsString(self):
+        result = self.propName
+        if len(self.props) > 0:
+            for prop in self.props:
+                result = result + ";"
+                result = result + prop
+        if self.groupName != "":
+            result = self.groupName + "." + result
+        return result
 
 class FormattedName(VCardProp):
-	def __init__(self, text=""):
-		VCardProp.__init__(self)
-		self.value = ""
-		self.propName = "FN"
+    def __init__(self, text=""):
+        VCardProp.__init__(self)
+        self.value = ""
+        self.propName = "FN"
 
-		if text != "":
-			self.parseString(text)
+        if text != "":
+            self.parseString(text)
 
-	def parseString(self, text):
-		text = self.parseProps(text)
-		self.value = text
+    def parseString(self, text):
+        text = self.parseProps(text)
+        self.value = text
 
-	def asVCardString(self):
-		return self.propsAsString() + ":" + self.value + "\r\n"
+    def asVCardString(self):
+        return self.propsAsString() + ":" + self.value + "\r\n"
 
 class Name(VCardProp):
-	def __init__(self, text=""):
-		VCardProp.__init__(self)
-		self.familyName = ""
-		self.givenName = ""
-		self.middleName = ""
-		self.prefix = ""
-		self.suffix = ""
-		self.propName = "N"
+    def __init__(self, text=""):
+        VCardProp.__init__(self)
+        self.familyName = ""
+        self.givenName = ""
+        self.middleName = ""
+        self.prefix = ""
+        self.suffix = ""
+        self.propName = "N"
 
-		if text != "":
-			self.parseString(text)
+        if text != "":
+            self.parseString(text)
 
-	def parseString(self, text):
-		text = self.parseProps(text)
-		fields = string.split(text, ";")
-		if len(fields) >= 1:
-			self.familyName = fields[0]
-		if len(fields) >= 2:
-			self.givenName = fields[1]
-		if len(fields) >= 3:
-			self.middleName = fields[2]
-		if len(fields) >= 4:
-			self.prefix = fields[3]
-		if len(fields) >= 5:
-			self.suffix = fields[4]
+    def parseString(self, text):
+        text = self.parseProps(text)
+        fields = text.split(";")
+        if len(fields) >= 1:
+            self.familyName = fields[0]
+        if len(fields) >= 2:
+            self.givenName = fields[1]
+        if len(fields) >= 3:
+            self.middleName = fields[2]
+        if len(fields) >= 4:
+            self.prefix = fields[3]
+        if len(fields) >= 5:
+            self.suffix = fields[4]
 
-	def asVCardString(self):
-		return self.propsAsString() + ":" + \
-			string.join([self.familyName, self.givenName, self.middleName, self.prefix, self.suffix], ";") + "\r\n"
+    def asVCardString(self):
+        return self.propsAsString() + ":" + \
+            ";".join([self.familyName, self.givenName, self.middleName, self.prefix, self.suffix]) + "\r\n"
 
 class Email(VCardProp):
-	def __init__(self, text=""):
-		VCardProp.__init__(self)
-		self.value = ""
-		self.propName = "EMAIL"
+    def __init__(self, text=""):
+        VCardProp.__init__(self)
+        self.value = ""
+        self.propName = "EMAIL"
 
-		if text != "":
-			self.parseString(text)
+        if text != "":
+            self.parseString(text)
 
-	def parseString(self, text):
-		text = self.parseProps(text)
-		self.value = text
+    def parseString(self, text):
+        text = self.parseProps(text)
+        self.value = text
 
-	def asVCardString(self):
-		return self.propsAsString() + ":" + self.value + "\r\n"
+    def asVCardString(self):
+        return self.propsAsString() + ":" + self.value + "\r\n"
 
 class Title(VCardProp):
-	def __init__(self, text=""):
-		VCardProp.__init__(self)
-		self.value = ""
-		self.propName = "TITLE"
+    def __init__(self, text=""):
+        VCardProp.__init__(self)
+        self.value = ""
+        self.propName = "TITLE"
 
-		if text != "":
-			self.parseString(text)
+        if text != "":
+            self.parseString(text)
 
-	def parseString(self, text):
-		text = self.parseProps(text)
-		self.value = text
+    def parseString(self, text):
+        text = self.parseProps(text)
+        self.value = text
 
-	def asVCardString(self):
-		return self.propsAsString() + ":" + self.value + "\r\n"
+    def asVCardString(self):
+        return self.propsAsString() + ":" + self.value + "\r\n"
 
 class Organization(VCardProp):
-	def __init__(self, text=""):
-		VCardProp.__init__(self)
-		self.name = ""
-		self.divisions = []
-		self.propName = "ORG"
+    def __init__(self, text=""):
+        VCardProp.__init__(self)
+        self.name = ""
+        self.divisions = []
+        self.propName = "ORG"
 
-		if text != "":
-			self.parseString(text)
+        if text != "":
+            self.parseString(text)
 
-	def parseString(self, text):
-		text = self.parseProps(text)
-		fields = string.split(text, ";")
-		self.name = fields[0]
-		if len(fields) > 1:
-			for field in fields:
-				self.divisions.append(field)
+    def parseString(self, text):
+        text = self.parseProps(text)
+        fields = string.split(text, ";")
+        self.name = fields[0]
+        if len(fields) > 1:
+            for field in fields:
+                self.divisions.append(field)
 
-	def asVCardString(self):
-		result = self.propsAsString() + ":" + self.name
-		if len(self.divisions) > 0:
-			for div in self.divisions:
-				result = result + ";" + div
-		
-		return result + "\r\n"
+    def asVCardString(self):
+        result = self.propsAsString() + ":" + self.name
+        if len(self.divisions) > 0:
+            for div in self.divisions:
+                result = result + ";" + div
+
+        return result + "\r\n"
 
 if __name__ == "__main__":
-	myvcard = VCard()
-	myvcard.parseFile("test.vcf")
-	output = open("test2.vcf", "wb")
-	output.write(myvcard.asString())
-	output.close()
+    myvcard = VCard()
+    myvcard.parseFile("test.vcf")
+    output = open("test2.vcf", "w")
+    output.write(myvcard.asString())
+    output.close()

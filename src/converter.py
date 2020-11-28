@@ -1,6 +1,9 @@
 from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import getopt,sys, os, string
-import cStringIO, tempfile, glob, time
+import io, tempfile, glob, time
 import settings
 import subprocess
 import killableprocess
@@ -26,7 +29,7 @@ except:
     
 docFormats = ["doc", "rtf", "ppt", "xls", "txt"]
 
-class DocConverter:
+class DocConverter(object):
     def __init__(self):
         self.infile = ""
         self.outformat = "html"
@@ -35,7 +38,7 @@ class DocConverter:
         try:
             global hasOOo
             #check for OOo first, we can only do this once EClass settings are loaded
-            if "OpenOffice" in settings.AppSettings.keys() and os.path.exists(settings.AppSettings["OpenOffice"]):
+            if "OpenOffice" in list(settings.AppSettings.keys()) and os.path.exists(settings.AppSettings["OpenOffice"]):
                 hasOOo = True
             ext = string.lower(os.path.splitext(filename)[1][1:])
             #print "ext = " + ext
@@ -61,7 +64,7 @@ class DocConverter:
             print(traceback.print_exc())
             return "", ""
             
-class WordDocConverter:
+class WordDocConverter(object):
     def __init__(self):
         self.infile = ""
         self.outformat = "html"
@@ -141,7 +144,7 @@ class WordDocConverter:
             print(traceback.print_exc())
             return "", ""
 
-class CommandLineDocConverter:
+class CommandLineDocConverter(object):
     def __init__(self):
         self.infile = ""
         self.outformat = "html"
@@ -262,7 +265,7 @@ class CommandLineDocConverter:
             for afile in glob.glob(os.path.join(path, "*." + ext)):
                 os.remove(os.path.join(path, afile))
         
-class OOoDocConverter:
+class OOoDocConverter(object):
     def __init__(self):
         self.infile = ""
         self.outformat = "html"
