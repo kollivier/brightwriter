@@ -1,0 +1,6 @@
+beautifulsoup4
+cefpython3
+flask
+future
+six
+wxPython==4.0.4

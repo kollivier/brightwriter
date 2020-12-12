@@ -6,23 +6,23 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import str
 from builtins import object
-import sys, pickle
-import string, time, io, os, re, glob, csv, shutil
 import json
 import logging
+import os
+import shutil
+import sys
 import tempfile
 import urllib.request, urllib.parse, urllib.error
 import zipfile
 
-# sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "htmleditor"))
-
 import wx
-import persistence
 import wx.lib.sized_controls as sc
-import time
 
 import appdata
 import settings
+
+import app_server
+import export.kolibri
 
 use_launch = False # not hasattr(sys, 'frozen')
 if use_launch:
@@ -75,14 +75,14 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
         if not os.path.exists(filepath):
             print("File %s does not exist." % filepath)
             return filepath
-            
+
         basepath = urllib.parse.unquote(self.parent.baseurl.replace("file://", ""))
-        
+
         if subdir == "" and os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
             subdir = "images"
-           
+
         destdir = os.path.join(basepath, subdir)
-        
+
         if not os.path.exists(destdir):
             os.makedirs(destdir)
         if filepath.find(basepath) == -1:
@@ -96,16 +96,16 @@ class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
                     copy = True
                 else:
                     copy = False
-                
+
             if copy:
                 shutil.copy2(filepath, newpath)
-            
+
             filepath = newpath.replace(basepath, "")
         else:
             filepath = filepath.replace(basepath, "")
-            
+
         assert os.path.exists(os.path.join(basepath, filepath))
-        
+
         return urllib.parse.quote(filepath)
 
 
@@ -339,7 +339,7 @@ class MainFrame2(frameClass):
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
             #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
-        
+
         if not self._mgr:
             self.splitter1.SetMinimumPaneSize(200)
             self.splitter1.SplitVertically(self.projectTree, self.browser, 300)
@@ -375,8 +375,10 @@ class MainFrame2(frameClass):
         # we make this the fallback handler in case no other handlers are set.
         self.RegisterTreeHandlers()
 
-        filename = os.path.abspath(os.path.join(settings.AppDir, "gui", "html", "index.html"))
-        self.browser.LoadPage(filename)
+        self.editor_url = os.path.abspath(os.path.join(settings.AppDir, "gui", "html", "index.html"))
+        self.browser.LoadPage(self.editor_url)
+
+        app_server.start_server()
 
         if self._mgr:
             self._mgr.Update()
@@ -465,6 +467,7 @@ class MainFrame2(frameClass):
         app.AddHandlerForID(ID_IMPORT_PACKAGE, self.OnImportIMS)
         app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
+        app.AddHandlerForID(ID_PUBLISH_KOLIBRI_STUDIO, self.PublishToKolibriStudio)
         #app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
         app.AddHandlerForID(ID_PUBLISH_IMS, self.PublishToIMS)
         app.AddHandlerForID(ID_PUBLISH_EPUB, self.PublishToEpub)
@@ -988,7 +991,10 @@ class MainFrame2(frameClass):
             self.should_change = True
             return
 
-        self.browser.EvaluateJavaScript("GetContents()", callback=self.SaveIfContentsChanged)
+        if os.path.splitext(self.browser.currenturl)[1] in ['.pdf', '.jpg', '.jpeg', '.gif', '.png']:
+            self.should_change = True
+        else:
+            self.browser.EvaluateJavaScript("GetContents()", callback=self.SaveIfContentsChanged)
 
     def OnTreeSelChanged(self, event):
         self.Preview()
@@ -1572,39 +1578,42 @@ class MainFrame2(frameClass):
         filename = self.GetContentFilenameForSelectedItem()
         logging.info("Preview called for {}".format(filename))
 
+        js = 'ShowErrorMessage("This item has no file associated with it.")'
+
         if filename:
             try:
                 self.selectedFileLastModifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
             except:
                 self.selectedFileLastModifiedTime = 0
             
-            filename = os.path.join(settings.ProjectDir, filename)
+            full_path = os.path.join(settings.ProjectDir, filename)
 
             #we shouldn't preview files that EClass can't view
-            ok_fileTypes = ["htm", "html", "gif", "jpg", "jpeg", "xhtml"]
+            ok_fileTypes = ["htm", "html", "gif", "jpg", "jpeg", "pdf", "xhtml"]
             if sys.platform == "win32":
                 ok_fileTypes.append("pdf")
     
-            ext = os.path.splitext(filename)[1][1:]
-            if os.path.exists(filename) and ext in ok_fileTypes:
-                if ext.find("htm") != -1:
-                    fileurl = os.path.dirname(filename) + "/"
+            ext = os.path.splitext(full_path)[1][1:]
+            if os.path.exists(full_path):
+                if not ext in ok_fileTypes:
+                    js = 'ShowErrorMessage("Unable to preview or edit file {}")'.format(full_path)
+                elif ext.find("htm") != -1:
+                    fileurl = os.path.dirname(full_path) + "/"
                     self.baseurl = 'file://' + fileurl
-                    html = htmlutils.getUnicodeHTMLForFile(filename).decode('utf-8')
+                    html = htmlutils.getUnicodeHTMLForFile(full_path).decode('utf-8')
                     self.contents_on_load = html
-                    js = 'SetContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
-                    logging.info("js = %s" % js)
+                    js = 'SetEditorContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
                     self.browser.EvaluateJavaScript(js)
                     # self.browser.SetPage(html, self.baseurl)
-                    self.filename = filename
+                    self.filename = full_path
                 else:
-                    self.browser.LoadPage(filename)
+                    if settings.ProjectDir in filename:
+                        filename = filename.replace(settings.ProjectDir, '')
+                    js = 'PreviewFile("{}")'.format(app_server.SERVER_URL + filename)
             else:
-                page_html = utils.createHTMLPageWithBody("<p>" + _("The page %(filename)s cannot be previewed inside EClass. Double-click on the page to view or edit it.") % {"filename": os.path.basename(filename)} + "</p>")
-                self.browser.SetPage(page_html, "")
+                js = 'ShowErrorMessage("The file {} cannot be found.")'.format(full_path)
 
-        else:
-            self.browser.SetPage(utils.createHTMLPageWithBody(""), "")
+        self.browser.EvaluateJavaScript(js)
 
     def Update(self, imsitem = None):
         if imsitem == None:
@@ -1643,6 +1652,14 @@ class MainFrame2(frameClass):
 
     def PublishToIMS(self, event):
         #zipname = os.path.join(settings.ProjectDir, "myzip.zip")
+        if self.DoIMSExport():
+            wx.MessageBox("Finished exporting!")
+
+    def PublishToKolibriStudio(self, event):
+        zip_file = self.DoIMSExport()
+        export.kolibri.export_project_to_kolibri_studio(zip_file)
+
+    def DoIMSExport(self):
         deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".zip"
         dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.FD_SAVE)
         if dialog.ShowModal() == wx.ID_OK: 
@@ -1674,5 +1691,6 @@ class MainFrame2(frameClass):
 
             myzip.close()
             os.rename(zipname, dialog.GetPath())
+            return dialog.GetPath()
 
-        wx.MessageBox("Finished exporting!")    
+        return None
