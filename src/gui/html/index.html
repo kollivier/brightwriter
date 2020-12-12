@@ -49,9 +49,18 @@
 
 <body>
     <div id="tree1"></div>
+    <div id="error-message" style="display: none;">
 
-    <textarea cols="100" id="editor1" name="editor1" rows="10">     &lt;p&gt;This is some &lt;strong&gt;sample text&lt;/strong&gt;.     You are using &lt;a href="http://ckeditor.com/"&gt;CKEditor&lt;/a&gt;.&lt;/p&gt;
-    </textarea>
+    </div>
+    <div id="file-preview" style="display: none; width: 100%; height: 100%">
+        <object id="previewer" width="100%" height="100%">
+
+        </object>
+    </div>
+    <div id="editor" style="display: block">
+        <textarea cols="100" id="editor1" name="editor1" rows="10">     &lt;p&gt;This is some &lt;strong&gt;sample text&lt;/strong&gt;.     You are using &lt;a href="http://ckeditor.com/"&gt;CKEditor&lt;/a&gt;.&lt;/p&gt;
+        </textarea>
+    </div>
 
     <script>
 
@@ -71,9 +80,27 @@
             console.log(msg);
         }
 
-        function SetContents(data) {
+        function ShowErrorMessage(message) {
+            $("#editor").css('display', 'none');
+            $("#error-message").css('display', 'block');
+            $("#file-preview").css('display', 'none');
+            $("#error-message").html(message);
+        }
+
+        function PreviewFile(url) {
+            $("#editor").css('display', 'none');
+            $("#error-message").css('display', 'none');
+            $("#file-preview").css('display', 'block');
+            $("#previewer").attr({'data': url});
+        }
+
+        function SetEditorContents(data) {
             // Get the editor instance that you want to interact with.
-            console.log("SetContents called");
+            console.log("SetEditorContents called");
+            $("#editor").css('display', 'block');
+            $("#error-message").css('display', 'none');
+            $("#file-preview").css('display', 'none');
+
             var editor = CKEDITOR.instances.editor1;
 
             // var data = JSON.parse(json);
