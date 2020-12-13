@@ -59,54 +59,8 @@ try:
 except:
     pass
 
-from . import editordelegate
 import htmlutils
 from . import source_edit_dialog
-
-
-class EClassHTMLEditorDelegate(editordelegate.HTMLEditorDelegate):
-    def __init__(self, source, parent, *a, **kw):
-        editordelegate.HTMLEditorDelegate.__init__(self, source, *a, **kw)
-        # FIXME: An ugly hack to get to the current filename.
-        self.parent = parent
-
-    def CopyFileIfNeeded(self, filepath, overwrite="ask", subdir=""):
-        # if it's not an absolute path to a file, we assume it's a URL or relative path
-        if not os.path.exists(filepath):
-            print("File %s does not exist." % filepath)
-            return filepath
-
-        basepath = urllib.parse.unquote(self.parent.baseurl.replace("file://", ""))
-
-        if subdir == "" and os.path.splitext(filepath)[1] in [".bmp", ".gif", ".jpg", ".png"]:
-            subdir = "images"
-
-        destdir = os.path.join(basepath, subdir)
-
-        if not os.path.exists(destdir):
-            os.makedirs(destdir)
-        if filepath.find(basepath) == -1:
-            newpath = os.path.join(destdir, os.path.basename(filepath))
-            copy = True
-            if overwrite == "never":
-                copy = False
-            if os.path.exists(newpath) and not newpath == filepath and overwrite == "ask" :
-                result = wx.MessageBox(_("The file %s already exists. Would you like to overwrite the existing file?") % newpath, _("Overwrite existing file?"), wx.YES_NO)
-                if result == wx.YES:
-                    copy = True
-                else:
-                    copy = False
-
-            if copy:
-                shutil.copy2(filepath, newpath)
-
-            filepath = newpath.replace(basepath, "")
-        else:
-            filepath = filepath.replace(basepath, "")
-
-        assert os.path.exists(os.path.join(basepath, filepath))
-
-        return urllib.parse.quote(filepath)
 
 
 # Import the gui dialogs. They used to be embedded in editor.py
@@ -331,14 +285,9 @@ class MainFrame2(frameClass):
         self.browser = wxbrowser.wxBrowser(parent, -1, messageHandler=self)
         if self._mgr:
             self._mgr.AddPane(self.browser, aui.AuiPaneInfo().Center().Position(2).MinSize(400, 400).CaptionVisible(False))
-        # self.browser.SetSize((400, 400))
-        # self.browser.SetSizerProps(expand=True, proportion=1)
-        self.webdelegate = EClassHTMLEditorDelegate(source=self.browser, parent=self)
-        #self.browser.ToggleContinuousSpellChecking()
         
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
-            #self.browser.Bind(wx.webview.EVT_WEBVIEW_CONTENTS_CHANGED, self.OnChanged)
 
         if not self._mgr:
             self.splitter1.SetMinimumPaneSize(200)
