@@ -11,7 +11,7 @@ def dirToZipFile(dir, myzip, rootdir, excludeDirs=[], excludeFiles=[], zipDir=No
                     outputPath = os.path.join(dir, file)
                     if zipDir:
                         outputPath = os.path.join(zipDir, outputPath)
-                    myzip.write(mypath.encode("utf-8"), outputPath.encode("utf-8"))
+                    myzip.write(mypath, outputPath)
             elif os.path.isdir(mypath):
                 dirToZipFile(os.path.join(dir, file), myzip, rootdir, 
                             excludeDirs, excludeFiles, zipDir, ignoreHidden)

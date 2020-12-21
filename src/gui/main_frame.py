@@ -11,6 +11,7 @@ import string, time, io, os, re, glob, csv, shutil
 import json
 import logging
 import tempfile
+import threading
 import urllib.request, urllib.parse, urllib.error
 import zipfile
 
@@ -23,6 +24,7 @@ import time
 
 import appdata
 import settings
+import export.kolibri
 
 use_launch = False # not hasattr(sys, 'frozen')
 if use_launch:
@@ -35,7 +37,8 @@ from convert.PDF import PDFPublisher
 import wxbrowser
 import ims
 import ims.contentpackage
-    
+import ims.zip_packaging
+
 import conman
 import epub
 import version
@@ -126,6 +129,7 @@ from gui.ftp import *
 from gui.indexing import *
 from gui.project_props import *
 from gui.activity_monitor import *
+from gui.task_dialog import TaskDialog, wxDoneEvent, wxLogHandler
 
 import gui.error_viewer
 import gui.media_convert
@@ -465,6 +469,7 @@ class MainFrame2(frameClass):
         app.AddHandlerForID(ID_IMPORT_PACKAGE, self.OnImportIMS)
         app.AddHandlerForID(ID_PUBLISH, self.PublishToWeb)
         app.AddHandlerForID(ID_PUBLISH_CD, self.PublishToCD)
+        app.AddHandlerForID(ID_PUBLISH_KOLIBRI_STUDIO, self.PublishToKolibriStudio)
         #app.AddHandlerForID(ID_PUBLISH_PDF, self.PublishToPDF)
         app.AddHandlerForID(ID_PUBLISH_IMS, self.PublishToIMS)
         app.AddHandlerForID(ID_PUBLISH_EPUB, self.PublishToEpub)
@@ -691,7 +696,10 @@ class MainFrame2(frameClass):
                 newresource = ims.contentpackage.Resource()
                 newresource.setFilename(packagefile)
                 newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
-                newresource.attrs["type"] = "webcontent"
+                if os.path.splitext(packagefile)[1].lower() in ['.html', '.xhtml', '.htm']:
+                    newresource.attrs["type"] = "webcontent"
+                else:
+                    newresource.attrs["type"] = "other"
                 
                 self.imscp.resources.append(newresource)
                 
@@ -1643,36 +1651,28 @@ class MainFrame2(frameClass):
 
     def PublishToIMS(self, event):
         #zipname = os.path.join(settings.ProjectDir, "myzip.zip")
+        if self.DoIMSExport():
+            wx.MessageBox("Finished exporting!")
+
+    def PublishToKolibriStudio(self, event):
+        def export_task():
+            zip_file = ims.zip_packaging.export_package_as_zip(os.path.dirname(self.imscp.filename))
+            export.kolibri.export_project_to_kolibri_studio(zip_file, handler)
+            os.remove(zip_file)
+            wx.PostEvent(dialog, wxDoneEvent(message="Task complete!"))
+
+
+        dialog = TaskDialog(task_func=export_task, parent=self)
+        handler = wxLogHandler(dialog)
+
+        dialog.ShowModal()
+        dialog.Destroy()
+
+
+    def DoIMSExport(self):
         deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".zip"
-        dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.FD_SAVE)
+        dialog = wx.FileDialog(self, _("Export IMS Content Package"), "", deffilename, _("IMS Content Package Files") + " (*.zip)|*.zip", wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
         if dialog.ShowModal() == wx.ID_OK: 
-            tempdir = tempfile.mkdtemp()
-            imsdir = os.path.dirname(os.path.join(tempdir, "IMSPackage"))
-            if not os.path.exists(imsdir):
-                os.makedirs(imsdir)
-            #imstheme = self.themes.FindTheme("IMS Package")
-            #publisher = imstheme.HTMLPublisher(self, imsdir)
-            #publisher.Publish()
+            return ims.zip_packaging.export_package_as_zip(os.path.dirname(self.imscp.filename), dialog.GetPath())
 
-            handle, zipname = tempfile.mkstemp()
-            os.close(handle)
-            if os.path.exists(dialog.GetPath()):
-                result = wx.MessageBox(_("The file %s already exists in this directory. Do you want to overwrite this file?") % dialog.GetFilename(), 
-                            _("Overwrite file?"), wx.YES_NO | wx.ICON_WARNING)
-                
-                if not result == wx.YES:
-                    return
-                    
-                os.remove(dialog.GetPath())
-        
-            assert(self.imscp.filename)
-            
-            myzip = zipfile.ZipFile(zipname, "w")
-            import utils.zip
-            utils.zip.dirToZipFile("", myzip, os.path.dirname(self.imscp.filename), 
-                            excludeDirs=["installers", "cgi-bin"], ignoreHidden=True)
-
-            myzip.close()
-            os.rename(zipname, dialog.GetPath())
-
-        wx.MessageBox("Finished exporting!")    
+        return None

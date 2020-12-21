@@ -88,7 +88,10 @@ except Exception as e:
     logging.warning(traceback.format_exc(e))
 
 oldexcepthook = sys.excepthook
-sys.excepthook = error_viewer.guiExceptionHook
+if getattr(sys, 'frozen', False):
+    # if we're running as an app, show the user a dialog when an error happens
+    # so they can report it, and potentially continue.
+    sys.excepthook = error_viewer.guiExceptionHook
 
 #imports for packaging tools
 if sys.platform.startswith("win"):
