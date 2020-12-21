@@ -6,7 +6,7 @@
 # License: BrightWriter Open Source License
 
 from __future__ import print_function
-import string, os, sys
+import os
 from xmlobjects import *
 
 class LangStringTag(Tag):
