@@ -30,7 +30,6 @@ class Application(pew.PEWApp):
         """
         Start your UI and app run loop here.
         """
-        sys.excepthook = self.unhandled_exception
 
         index = os.path.abspath(os.path.join(thisdir, "gui", "html", "index.html"))
         url = "file://%s" % urllib.parse.quote(index)

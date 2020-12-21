@@ -6,9 +6,12 @@ import tempfile
 from ricecooker.chefs import SushiChef
 from ricecooker.classes import licenses
 from ricecooker.classes.files import get_hash
+from ricecooker.config import LOGGER
 
 from imscp.core import extract_from_zip
 from imscp.ricecooker_utils import make_topic_tree_with_entrypoints
+
+from gui.task_dialog import wxLogHandler
 
 
 class BrightWriterExportChef(SushiChef):
@@ -50,14 +53,18 @@ class BrightWriterExportChef(SushiChef):
         return channel
 
 
-def export_project_to_kolibri_studio(imscp_zip):
+def export_project_to_kolibri_studio(imscp_zip, log_handler):
     """
     This code will run when the sushi chef is called from the command line.
     """
-    chef = BrightWriterExportChef()
-    chef.zip_path = imscp_zip
-    args, options = chef.parse_args_and_options()
-    args['command'] = 'uploadchannel'
-    args['token'] = os.environ.get('STUDIO_TOKEN')
-    chef.run(args, options)
-    logging.info("Run complete...")
+    LOGGER.addHandler(log_handler)
+    try:
+        chef = BrightWriterExportChef()
+        chef.zip_path = imscp_zip
+        args, options = chef.parse_args_and_options()
+        args['command'] = 'uploadchannel'
+        args['token'] = os.environ.get('STUDIO_TOKEN')
+        chef.run(args, options)
+        logging.info("Run complete...")
+    finally:
+        LOGGER.removeHandler(log_handler)
