@@ -51,7 +51,7 @@ import analyzer
 import eclass_convert
 
 # modules that don't get picked up elsewhere...
-import wx.lib.agw.aui as aui
+import wx.aui as aui
 import wx.lib.mixins.listctrl
 import wx.lib.newevent
 import wx.lib.pubsub
@@ -65,6 +65,7 @@ except:
 import htmlutils
 from . import source_edit_dialog
 
+use_aui = True
 
 # Import the gui dialogs. They used to be embedded in editor.py
 # so we will just import their contents for now to avoid conflicts.
@@ -142,7 +143,7 @@ command_ids = {
 #----------------------------- MainFrame Class ----------------------------------------------
 
 frameClass = wx.Frame
-if sys.platform.startswith("darwin"):
+if not use_aui:
     frameClass = sc.SizedFrame
 
 class MainFrame2(frameClass):
@@ -170,7 +171,7 @@ class MainFrame2(frameClass):
         
         self._mgr = None
         pane = None
-        if sys.platform.startswith("win"):
+        if use_aui:
             pane = self
             self._mgr = aui.AuiManager()
 
@@ -220,19 +221,17 @@ class MainFrame2(frameClass):
 
         self.treeimages = wx.ImageList(15, 15)
 
+        # NOTE: We used this function to enable us to create both AUI and native toolbars with
+        # the same code. We are not using AUI toolbars currently, but leaving this code for
+        # later refactoring after we finalize our UI for the release.
         def AddToToolBar(self, id=-1, bitmap=wx.EmptyBitmap, label="", shortHelpString=""):
             if isinstance(self, aui.AuiToolBar):
-                self.AddTool(id, label, bitmap, disabled_bitmap=bitmap, kind=wx.ITEM_NORMAL, short_help_string=shortHelpString)
+                self.AddTool(id, label, bitmap, bitmap, kind=wx.ITEM_NORMAL, short_help_string=shortHelpString)
             else:
                 self.AddSimpleTool(id, bitmap, label, shortHelpString)
 
-        
-        if self._mgr:
-            aui.AuiToolBar.AddToToolBar = AddToToolBar
-            self.toolbar = aui.AuiToolBar(pane, -1)
-        else:
-            wx.ToolBar.AddToToolBar = AddToToolBar
-            self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
+        wx.ToolBar.AddToToolBar = AddToToolBar
+        self.toolbar = self.CreateToolBar(wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_FLAT)
 
         #create toolbar
         self.toolbar.AddToToolBar(ID_NEW, bitmap=icnNewProject, label=_("New"), shortHelpString=_("Create a New Project"))
@@ -255,9 +254,6 @@ class MainFrame2(frameClass):
 
         self.toolbar.Realize()
 
-        if self._mgr:
-            self._mgr.AddPane(self.toolbar, aui.AuiPaneInfo().ToolbarPane().Top().Floatable(False).Gripper(False).Resizable(True))
-
         if sys.platform.startswith("darwin"):
             wx.App.SetMacPreferencesMenuItemId(ID_SETTINGS)
 
@@ -279,16 +275,22 @@ class MainFrame2(frameClass):
                     style=wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT | wx.TR_LINES_AT_ROOT | wx.SIMPLE_BORDER | wx.TR_EDIT_LABELS)
         
         if self._mgr:
-            self._mgr.AddPane(self.projectTree, aui.AuiPaneInfo().Caption("Table of Contents").MinSize(200, -1).Left().Position(1).CaptionVisible(False))
+            self._mgr.AddPane(self.projectTree, aui.AuiPaneInfo().Caption("Contents").Layer(1).Resizable(True).MinSize(200, -1).Left().MinimizeButton(True).CloseButton(False).Position(1).CaptionVisible(True))
         #self.projectTree.SetImageList(self.treeimages)
 
         #handle delete key
         accelerators = wx.AcceleratorTable([(wx.ACCEL_NORMAL, wx.WXK_DELETE, ID_TREE_REMOVE)])
         self.SetAcceleratorTable(accelerators)
 
-        self.browser = wxbrowser.wxBrowser(parent, -1, messageHandler=self)
         if self._mgr:
-            self._mgr.AddPane(self.browser, aui.AuiPaneInfo().Center().Position(2).MinSize(400, 400).CaptionVisible(False))
+            self.nb = aui.AuiNotebook(self, style=wx.aui.AUI_NB_TOP)
+            parent = self.nb
+
+        self.browser = wxbrowser.wxBrowser(parent, -1, messageHandler=self)
+
+        if self._mgr:
+            self.nb.AddPage(self.browser, "Edit")
+            self._mgr.AddPane(self.nb, aui.AuiPaneInfo().Center().Position(2).Layer(1).DockFixed(False).CaptionVisible(False))
         
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
