@@ -87,6 +87,7 @@ def getPageMenu(openWithMenu=None, isPopup=False):
     PageMenu.Append(ID_TREE_REMOVE, _("Remove Page"), _("Remove the current page"))     
     PageMenu.AppendSeparator()
     PageMenu.Append(ID_IMPORT_FILE, _("Import file..."))
+    PageMenu.Append(ID_IMPORT_FROM_URL, _("Import from URL..."))
     PageMenu.AppendSeparator()
 
     if isPopup:

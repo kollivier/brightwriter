@@ -61,7 +61,7 @@ def getTitleForPage(filename):
     if soup:
         title = soup.find('title')
         if title:
-            return title.string
+            return title.string.strip()
             
     return os.path.splitext(os.path.basename(filename))[0]
     

@@ -26,6 +26,8 @@ import export.kolibri
 import app_server
 import export.kolibri
 
+from webmixer.utils import guess_scraper
+
 use_launch = False # not hasattr(sys, 'frozen')
 if use_launch:
     import launch
@@ -85,6 +87,7 @@ from gui.indexing import *
 from gui.project_props import *
 from gui.activity_monitor import *
 from gui.task_dialog import TaskDialog, wxDoneEvent, wxLogHandler
+from gui.import_url import ImportURLDialog
 
 import gui.error_viewer
 import gui.media_convert
@@ -101,6 +104,8 @@ settings.plugins = plugins.pluginList
 
 from constants import *
 from gui.ids import *
+
+from ricecooker.utils.downloader import archive_page
 
 
 def getMimeTypeForHTML(html):
@@ -436,6 +441,7 @@ class MainFrame2(frameClass):
         app.AddHandlerForID(ID_LINKCHECK, self.OnLinkCheck)
         app.AddHandlerForID(ID_FIND, self.OnFindReplace)
         app.AddHandlerForID(ID_IMPORT_FILE, self.OnImportFile)
+        app.AddHandlerForID(ID_IMPORT_FROM_URL, self.OnImportFromURL)
         app.AddHandlerForID(ID_REFRESH_THEME, self.OnRefreshTheme)
         app.AddHandlerForID(ID_EDIT_SOURCE, self.OnEditSource)
         #wx.EVT_MENU(self, ID_UPLOAD_PAGE, self.UploadPage)
@@ -637,6 +643,73 @@ class MainFrame2(frameClass):
             publishErrorsDialog = gui.error_viewer.PublishErrorLogViewer(self, errorString)
             publishErrorsDialog.Show()
 
+    def OnImportFromURL(self, event):
+        parent = self.projectTree.GetCurrentTreeItem()
+        if parent:
+            parentitem = self.projectTree.GetCurrentTreeItemData()
+            try:
+                dialog = ImportURLDialog()
+                if dialog.ShowModal() == wx.ID_OK:
+                    content_dir = os.path.join(settings.ProjectDir, 'Content', 'imported_content')
+                    info = archive_page(dialog.url_ctrl.GetValue(), content_dir)
+                    info['root_dir'] = content_dir
+                    self.AddNewContentItem(info, parentitem)
+            finally:
+                dialog.Destroy()
+
+    def AddNewContentItem(self, content_info, parentitem):
+        main_file = content_info['index_path']
+        files = []
+        if 'resources' in content_info:
+            files.extend(content_info['resources'])
+        # TODO: if resources aren't explicitly specified and it's webcontent,
+        # scan the page for references and add any that are on disk.
+
+        new_resource = ims.contentpackage.Resource()
+        new_resource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+        if os.path.splitext(main_file)[1].lower() in ['.html', '.xhtml', '.htm']:
+            new_resource.attrs["type"] = "webcontent"
+        else:
+            new_resource.attrs["type"] = "other"
+
+        new_resource.setFilename(os.path.relpath(main_file, settings.ProjectDir))
+
+        for filename in files:
+            if filename.startswith('http'):
+                continue
+            new_file = ims.contentpackage.File()
+            abs_path = filename
+            if not os.path.isabs(abs_path):
+                if 'root_dir' in content_info:
+                    abs_path = os.path.join(content_info['root_dir'], abs_path)
+                else:
+                    abs_path = os.path.join(settings.ProjectDir, abs_path)
+            assert os.path.exists(abs_path), "Path {} doesn't exist".format(abs_path)
+
+            packagefile = os.path.relpath(abs_path, settings.ProjectDir)
+            new_file.attrs['href'] = packagefile
+
+            new_resource.files.append(new_file)
+
+        newitem = ims.contentpackage.Item()
+        assert os.path.basename(main_file) is not None and os.path.basename(main_file) != ""
+
+        titleString = os.path.basename(main_file)
+
+        if os.path.splitext(main_file)[1].find("htm") != -1:
+            titleString = htmlutils.getTitleForPage(os.path.join(settings.ProjectDir, main_file))
+
+        newitem.title.text = titleString
+        newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
+        newitem.attrs["identifierref"] = new_resource.attrs["identifier"]
+
+        self.imscp.resources.append(new_resource)
+
+        parentitem.items.append(newitem)
+        self.projectTree.AddIMSItemUnderCurrentItem(newitem)
+
+        self.EditItemProps()
+
     def OnImportFile(self, event):
         parent = self.projectTree.GetCurrentTreeItem()
         if parent:
@@ -645,33 +718,10 @@ class MainFrame2(frameClass):
             dialog = wx.FileDialog(self)
             if dialog.ShowModal() == wx.ID_OK:
                 packagefile = guiutils.importFile(dialog.GetPath())
-                
-                newresource = ims.contentpackage.Resource()
-                newresource.setFilename(packagefile)
-                newresource.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
-                if os.path.splitext(packagefile)[1].lower() in ['.html', '.xhtml', '.htm']:
-                    newresource.attrs["type"] = "webcontent"
-                else:
-                    newresource.attrs["type"] = "other"
-                
-                self.imscp.resources.append(newresource)
-                
-                newitem = ims.contentpackage.Item()
-                assert os.path.basename(packagefile) is not None and os.path.basename(packagefile) != ""
-                
-                titleString = os.path.basename(packagefile)
-                
-                if os.path.splitext(packagefile)[1].find("htm") != -1:
-                    titleString = htmlutils.getTitleForPage(os.path.join(settings.ProjectDir, packagefile))
-                
-                newitem.title.text = titleString
-                newitem.attrs["identifier"] = eclassutils.getItemUUIDWithNamespace()
-                newitem.attrs["identifierref"] = newresource.attrs["identifier"]
-                
-                parentitem.items.append(newitem)
-                self.projectTree.AddIMSItemUnderCurrentItem(newitem)
-                
-                self.EditItemProps()
+                content_info = {
+                    'index_path': packagefile
+                }
+                self.AddNewContentItem(content_info, parentitem)
 
     def OnImportIMS(self, event):
         dialog = wx.FileDialog(self, _("Select package to import"), "", "", _("Packages") + " (*.zip)|*.zip")
