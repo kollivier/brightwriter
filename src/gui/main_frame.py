@@ -651,7 +651,7 @@ class MainFrame2(frameClass):
                 dialog = ImportURLDialog()
                 if dialog.ShowModal() == wx.ID_OK:
                     content_dir = os.path.join(settings.ProjectDir, 'Content', 'imported_content')
-                    info = archive_page(dialog.url_ctrl.GetValue(), content_dir)
+                    info = archive_page(dialog.url_ctrl.GetValue(), content_dir, links_relative_to_root=False)
                     info['root_dir'] = content_dir
                     self.AddNewContentItem(info, parentitem)
             finally:
@@ -1603,11 +1603,13 @@ class MainFrame2(frameClass):
     
             ext = os.path.splitext(full_path)[1][1:]
             if os.path.exists(full_path):
+                if settings.ProjectDir in filename:
+                    filename = filename.replace(settings.ProjectDir, '')
                 if not ext in ok_fileTypes:
                     js = 'ShowErrorMessage("Unable to preview or edit file {}")'.format(full_path)
                 elif ext.find("htm") != -1:
                     fileurl = os.path.dirname(full_path) + "/"
-                    self.baseurl = 'file://' + fileurl
+                    self.baseurl = app_server.SERVER_URL + filename
                     html = htmlutils.getUnicodeHTMLForFile(full_path).decode('utf-8')
                     self.contents_on_load = html
                     js = 'SetEditorContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
@@ -1615,8 +1617,6 @@ class MainFrame2(frameClass):
                     # self.browser.SetPage(html, self.baseurl)
                     self.filename = full_path
                 else:
-                    if settings.ProjectDir in filename:
-                        filename = filename.replace(settings.ProjectDir, '')
                     js = 'PreviewFile("{}")'.format(app_server.SERVER_URL + filename)
             else:
                 js = 'ShowErrorMessage("The file {} cannot be found.")'.format(full_path)

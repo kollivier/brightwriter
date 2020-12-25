@@ -103,15 +103,9 @@
 
             var editor = CKEDITOR.instances.editor1;
 
-            // var data = JSON.parse(json);
-
-            // console.log("Data = " + JSON.stringify(data));
-
             if (data["basehref"]) {
                 CKEDITOR.config.baseHref = data["basehref"];
             }
-
-            console.log("data[content] = " + data["content"]);
 
             // Set editor content (replace current content).
             // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-setData
