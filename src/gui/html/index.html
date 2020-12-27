@@ -23,6 +23,10 @@
             float: right;
             width: 80%;
         }
+        #error-message {
+            padding: 20px;
+            font-family: Verdana;
+        }
     </style>
     <script src="jquery-3.1.1.min.js"></script>
     <script src="tree.jquery.js"></script>
@@ -73,6 +77,10 @@
         window.onresize = ResizeEditor;
         window.onload = ResizeEditor;
 
+        function RequestOpenInApplication(filename) {
+            fetch('/openInApplication?filename=' + encodeURI(filename));
+        }
+
         var isLoaded = false;
         var dataToLoad = null;
         // Helper function to display messages below CKEditor.
@@ -80,10 +88,31 @@
             console.log(msg);
         }
 
-        function ShowErrorMessage(message) {
+        function ShowError() {
             $("#editor").css('display', 'none');
             $("#error-message").css('display', 'block');
             $("#file-preview").css('display', 'none');
+        }
+
+        function ShowEditError(filename, apps_json) {
+            var message = "<h3>BrightSparc does not support editing for file: </br>" + filename + ".</h3>";
+            if (apps_json) {
+                var apps = JSON.parse(apps_json);
+                message += "<p>You may be able to edit this file using one of the following applications:</p>";
+                message += "<select>";
+                for (var i = 0; i < apps.length; i++) {
+                    message += '<option value="' + apps[i]['path'] + '">' + apps[i]['name'] + '</option>';
+                }
+                message += "</select>";
+            } else {
+                message += '<button onclick="RequestOpenInApplication(\'' + filename + '\')">Open with default application</button>';
+            }
+            ShowErrorMessage(message);
+
+        }
+
+        function ShowErrorMessage(message) {
+            ShowError();
             $("#error-message").html(message);
         }
 
@@ -162,9 +191,7 @@
             // http://docs.ckeditor.com/#!/api/CKEDITOR.editor-method-focus
             editor.focus();
         }
-    </script>
 
-    <script>
         // Attaching event listeners to the global CKEDITOR object.
         // The instanceReady event is fired when an instance of CKEditor has finished its initialization.
         CKEDITOR.on( 'instanceReady', function( ev ) {

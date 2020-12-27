@@ -311,18 +311,21 @@ class wxBrowser(wx.Panel):
         logging.info("Loading URL %r" % url)
         logging.info("engine = %s" % self.engine)
         if self.engine in ["webkit", "webview"]:
-            url = "file://" + url
+            if not url.startswith('http'):
+                url = "file://" + url
             url = url.replace(" ", "%20")
             self.browser.LoadURL(url)
         elif self.engine == "ie":
             self.browser.Navigate(url)
         elif self.engine == "cef":
-            if not os.path.exists(url):
-                logging.warning("File %s doesn't exist, not loading." % url)
-                return
-            prefix = "file://"
-            if sys.platform.startswith("win"):
-                prefix += "/"  # Windows has a third slash before a file URL
+            prefix = ''
+            if not url.startswith('http'):
+                prefix = "file://"
+                if sys.platform.startswith("win"):
+                    prefix += "/"  # Windows has a third slash before a file URL
+                if not os.path.exists(url):
+                    logging.warning("File %s doesn't exist, not loading." % url)
+                    return
             url = prefix + url
             logging.info("full URL is %s" % url)
             self.browser.GetMainFrame().LoadUrl(url)
@@ -414,7 +417,7 @@ class wxBrowser(wx.Panel):
 
     def SendJSValue(self, json_value):
         # Handle the JSON data, which is the Python dict: {foo: 'bar'}
-        print("value = %r" % json_value)
+        logging.debug("value = %r" % json_value[:500])
         data = json.loads(json_value)
         if self.callback:
             self.callback(data['value'])

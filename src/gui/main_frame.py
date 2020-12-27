@@ -52,6 +52,8 @@ import mmedia
 import analyzer
 import eclass_convert
 
+from launch import get_apps_for_filename, open_with_app
+
 # modules that don't get picked up elsewhere...
 import wx.aui as aui
 import wx.lib.mixins.listctrl
@@ -106,6 +108,10 @@ from constants import *
 from gui.ids import *
 
 from ricecooker.utils.downloader import archive_page
+
+# we shouldn't preview files that EClass can't view
+editable_file_types = ["htm", "html", "xhtml"]
+previewable_file_types = editable_file_types + ["gif", "jpg", "jpeg", "pdf"]
 
 
 def getMimeTypeForHTML(html):
@@ -197,6 +203,7 @@ class MainFrame2(frameClass):
         self.themes = themes.ThemeList()
         self.currentTheme = self.themes.FindTheme("epub")
         self.launchApps = []
+        self.loaded = False
         
         # Modeless dialog
         self.find_dialog = None
@@ -292,8 +299,10 @@ class MainFrame2(frameClass):
             parent = self.nb
 
         self.browser = wxbrowser.wxBrowser(parent, -1, messageHandler=self)
+        self.preview_browser = wxbrowser.wxBrowser(parent, -1)
 
         if self._mgr:
+            self.nb.AddPage(self.preview_browser, "Preview")
             self.nb.AddPage(self.browser, "Edit")
             self._mgr.AddPane(self.nb, aui.AuiPaneInfo().Center().Position(2).Layer(1).DockFixed(False).CaptionVisible(False))
         
@@ -335,10 +344,11 @@ class MainFrame2(frameClass):
         # we make this the fallback handler in case no other handlers are set.
         self.RegisterTreeHandlers()
 
-        self.editor_url = os.path.abspath(os.path.join(settings.AppDir, "gui", "html", "index.html"))
-        self.browser.LoadPage(self.editor_url)
-
         app_server.start_server()
+
+        self.editor_url = app_server.SERVER_URL + "app/index.html"
+        self.browser.LoadPage(self.editor_url)
+        self.preview_browser.LoadPage(self.editor_url)
 
         if self._mgr:
             self._mgr.Update()
@@ -366,11 +376,12 @@ class MainFrame2(frameClass):
 
     def OnPageLoaded(self):
         logging.info("Page loaded callback called")
-        self.browser.MakeEditable()
-        self.browser.EvaluateJavaScript("ResizeEditor()")
-        self.Preview()
-        if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
-            self.LoadEClass(settings.AppSettings["LastOpened"])
+        if not self.loaded:
+            self.loaded = True
+            self.browser.EvaluateJavaScript("ResizeEditor()")
+            self.Preview()
+            if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
+                self.LoadEClass(settings.AppSettings["LastOpened"])
         
     def OnFindReplace(self, event):
         from . import find_replace_dialog
@@ -973,7 +984,7 @@ class MainFrame2(frameClass):
         while self.should_change is None:
             wx.SafeYield()
 
-        if not self.should_change:
+        if self.should_change is not None and not self.should_change:
             event.Veto()
 
     def SaveIfContentsChanged(self, data):
@@ -995,14 +1006,10 @@ class MainFrame2(frameClass):
                 self.DoSaveWebPage(data)
 
     def CheckIfSaveNeeded(self, event):
-        if not self.projectTree.GetCurrentTreeItemData():
-            self.should_change = True
-            return
-
-        if os.path.splitext(self.browser.currenturl)[1] in ['.pdf', '.jpg', '.jpeg', '.gif', '.png']:
-            self.should_change = True
-        else:
+        if os.path.splitext(self.browser.currenturl)[1] in editable_file_types:
             self.browser.EvaluateJavaScript("GetContents()", callback=self.SaveIfContentsChanged)
+
+        self.should_change = True
 
     def OnTreeSelChanged(self, event):
         self.Preview()
@@ -1587,41 +1594,46 @@ class MainFrame2(frameClass):
         logging.info("Preview called for {}".format(filename))
 
         js = 'ShowErrorMessage("This item has no file associated with it.")'
+        preview_js = None
 
         if filename:
             try:
                 self.selectedFileLastModifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
             except:
                 self.selectedFileLastModifiedTime = 0
-            
-            full_path = os.path.join(settings.ProjectDir, filename)
 
-            #we shouldn't preview files that EClass can't view
-            ok_fileTypes = ["htm", "html", "gif", "jpg", "jpeg", "pdf", "xhtml"]
-            if sys.platform == "win32":
-                ok_fileTypes.append("pdf")
+            full_path = filename
+            if not os.path.isabs(full_path):
+                full_path = os.path.join(settings.ProjectDir, filename)
+            else:
+                if settings.ProjectDir in filename:
+                    filename = filename.replace(settings.ProjectDir, '')
+
+            flask_url = app_server.SERVER_URL + urllib.parse.quote(filename)
     
             ext = os.path.splitext(full_path)[1][1:]
             if os.path.exists(full_path):
-                if settings.ProjectDir in filename:
-                    filename = filename.replace(settings.ProjectDir, '')
-                if not ext in ok_fileTypes:
-                    js = 'ShowErrorMessage("Unable to preview or edit file {}")'.format(full_path)
-                elif ext.find("htm") != -1:
-                    fileurl = os.path.dirname(full_path) + "/"
-                    self.baseurl = app_server.SERVER_URL + filename
+                if not ext in editable_file_types:
+                    app_list = get_apps_for_filename(full_path)
+                    js = "ShowEditError('{}')".format(full_path)
+
+                if not ext in previewable_file_types:
+                    preview_js = 'ShowErrorMessage("<h3>Unable to preview file {}</h3>")'.format(full_path)
+                else:
+                    preview_js = 'PreviewFile("{}")'.format(flask_url)
+
+                if ext.find("htm") != -1:
+                    self.baseurl = flask_url
                     html = htmlutils.getUnicodeHTMLForFile(full_path).decode('utf-8')
                     self.contents_on_load = html
                     js = 'SetEditorContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
-                    self.browser.EvaluateJavaScript(js)
-                    # self.browser.SetPage(html, self.baseurl)
                     self.filename = full_path
-                else:
-                    js = 'PreviewFile("{}")'.format(app_server.SERVER_URL + filename)
             else:
-                js = 'ShowErrorMessage("The file {} cannot be found.")'.format(full_path)
+                js = 'ShowErrorMessage("<h3>The file {} cannot be found.</h3>")'.format(full_path)
 
         self.browser.EvaluateJavaScript(js)
+        if preview_js:
+            self.preview_browser.EvaluateJavaScript(preview_js)
 
     def Update(self, imsitem = None):
         if imsitem == None:

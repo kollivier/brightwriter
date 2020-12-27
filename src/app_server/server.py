@@ -1,5 +1,6 @@
 import logging
 import os
+import subprocess
 import sys
 
 import settings
@@ -21,9 +22,19 @@ static_dir = os.path.join(thisdir, 'frontend')
 flaskapp = Flask(__name__)
 flaskthread = None
 
+@flaskapp.route('/openInApplication')
+def open_in_application():
+    filename = request.args.get('filename')
+    if sys.platform.startswith('darwin'):
+        subprocess.call(['open', filename])
+
+    return jsonify({'success': True})
 
 @flaskapp.route('/<path:path>')
 def catch_all(path):
+    if path.startswith('app/'):
+        path = path.replace('app', os.path.join(settings.AppDir, 'gui', 'html'))
+        return send_file(path)
     full_path = os.path.abspath(os.path.join(settings.ProjectDir, path))
     if os.path.exists(full_path):
         return send_file(full_path)

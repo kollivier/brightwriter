@@ -2,6 +2,9 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str
+
+import subprocess
+
 from .core import *
 
 from AppKit import *
@@ -17,9 +20,12 @@ kLSRolesAll = 0xFFFFFFFF
 
 NSApplicationLoad()
 
-def getAppsForFilename(filename, role = "viewer"):
+def open_with_app(filename, app_path):
+    return subprocess.call(['open', '-a', app_path, filename])
+
+def get_apps_for_filename(filename, role = "viewer"):
     url = "file://" + urllib.parse.quote(filename)
-    appdict = {}
+    app_list = []
     
     role_constant = {
         "viewer": kLSRolesViewer,
@@ -34,8 +40,8 @@ def getAppsForFilename(filename, role = "viewer"):
         for appfile in result:
             appurl = NSURL.URLWithString_(str(appfile))
             name = LSCopyDisplayNameForURL(appurl, None)[1]
-            appfile = urllib.request.url2pathname(str(appurl))[:-1]
-            appfile = appfile.replace('file://localhost', '')
-            appdict[name] = Application(appfile, name)
+            parts = urllib.parse.urlparse(str(appurl))
+            appfile = urllib.request.url2pathname(parts.path)[:-1]
+            app_list.append({'path': appfile, 'name': name})
 
-    return appdict
+    return app_list
