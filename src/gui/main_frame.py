@@ -89,6 +89,7 @@ from gui.indexing import *
 from gui.project_props import *
 from gui.activity_monitor import *
 from gui.task_dialog import TaskDialog, wxDoneEvent, wxLogHandler
+from gui.kolibri_export import KolibriExportDialog
 from gui.import_url import ImportURLDialog
 
 import gui.error_viewer
@@ -1676,18 +1677,34 @@ class MainFrame2(frameClass):
             wx.MessageBox("Finished exporting!")
 
     def PublishToKolibriStudio(self, event):
-        def export_task():
+        def export_studio_task(data):
             zip_file = ims.zip_packaging.export_package_as_zip(os.path.dirname(self.imscp.filename))
-            export.kolibri.export_project_to_kolibri_studio(zip_file, handler)
+            export.kolibri.export_project_to_kolibri_studio(zip_file, data['studio_token'], handler)
             os.remove(zip_file)
             wx.PostEvent(dialog, wxDoneEvent(message="Task complete!"))
 
+        def export_local_task(data):
+            zip_file = ims.zip_packaging.export_package_as_zip(os.path.dirname(self.imscp.filename))
+            export.kolibri.export_project_to_kolibri_db(zip_file, data['directory'], handler)
+            os.remove(zip_file)
+            wx.PostEvent(dialog, wxDoneEvent(message="Task complete!"))
 
-        dialog = TaskDialog(task_func=export_task, parent=self)
-        handler = wxLogHandler(dialog)
-
-        dialog.ShowModal()
-        dialog.Destroy()
+        with KolibriExportDialog() as export_dialog:
+            if export_dialog.ShowModal() == wx.ID_OK:
+                export_data = {}
+                if export_dialog.export_studio_radio.GetValue() == True:
+                    export_data['task_func'] = export_studio_task
+                    export_data['task_args'] = {
+                        'studio_token': export_dialog.studio_token.GetValue().strip()
+                    }
+                elif export_dialog.export_kolibri_radio.GetValue() == True:
+                    export_data['task_func'] = export_local_task
+                    export_data['task_args'] = {
+                        'directory': export_dialog.dir_picker.GetPath()
+                    }
+                with TaskDialog(task_data=export_data, parent=self) as dialog:
+                    handler = wxLogHandler(dialog)
+                    dialog.ShowModal()
 
     def DoIMSExport(self):
         deffilename = fileutils.MakeFileName2(self.imscp.organizations[0].items[0].title.text) + ".zip"

@@ -46,12 +46,12 @@ class wxLogHandler(logging.Handler):
 
 
 class TaskDialog(sc.SizedDialog):
-    def __init__(self, task_func, parent=None):
-        sc.SizedDialog.__init__(self, parent, -1, _("Activity Monitor"),
+    def __init__(self, task_data, parent=None):
+        sc.SizedDialog.__init__(self, parent, -1, _("Task Monitor"),
                                 style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         pane = self.GetContentsPane()
 
-        self.task_func = task_func
+        self.task_data = task_data
         self.task_details = wx.TextCtrl(pane, -1, style=wx.TE_MULTILINE)
         self.task_details.SetSizerProps(proportion=1, expand=True)
         self.task_details.SetMinSize((500, 300))
@@ -72,7 +72,7 @@ class TaskDialog(sc.SizedDialog):
 
     def OnTaskButton(self, event):
         if not self.task_thread and self.task_button.GetLabelText() == _("Start"):
-            self.task_thread = threading.Thread(target=self.task_func)
+            self.task_thread = threading.Thread(target=self.task_data['task_func'], args=(self.task_data['task_args'],))
             self.task_thread.start()
             self.task_button.SetLabelText(_("Stop"))
         elif self.task_button.GetLabelText() == _("Stop"):
