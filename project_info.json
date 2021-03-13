@@ -3,11 +3,14 @@
     "name": "BrightWriter", 
     "identifier": "com.kosoftworks.brightwriter",
     "ui_root": "src/gui/html/index.html",
+    "asset_dirs": ["src/gui/html", "src/icons", "src/locale"],
     "requirements":
     {
         "common": ["chardet", "beautifulsoup4"],
         "android": ["python2","kivy","pyjnius","android"]
     },
+    "packages": ["ricecooker", "PIL", "pycountry", "wx"],
+    "excludes": ["selenium"],
     "whitelist_file":
     {
         "android": "whitelist.txt"

@@ -21,7 +21,6 @@ import wx.lib.sized_controls as sc
 
 import appdata
 import settings
-import export.kolibri
 
 import app_server
 import export.kolibri
@@ -180,7 +179,7 @@ class MainFrame2(frameClass):
             lang = settings.AppSettings["Language"]
         settings.LangDirName = langdict[lang]
         self.errorPrompts = prompts.errorPrompts
-        
+
         self._mgr = None
         pane = None
         if use_aui:
@@ -209,7 +208,6 @@ class MainFrame2(frameClass):
         # Modeless dialog
         self.find_dialog = None
 
-        import logging
         self.log = logging.getLogger('EClass')
 
         self.statusBar = None #self.CreateStatusBar()
@@ -737,19 +735,18 @@ class MainFrame2(frameClass):
 
     def OnImportIMS(self, event):
         dialog = wx.FileDialog(self, _("Select package to import"), "", "", _("Packages") + " (*.zip)|*.zip")
-        log = logging.getLogger('EClass')
         result = dialog.ShowModal()
         if result == wx.ID_OK:
             packagefile = dialog.GetPath()
             zip = zipfile.ZipFile(packagefile)
             if "imsmanifest.xml" in zip.namelist():
                 subdir = os.path.splitext(os.path.basename(packagefile))[0]
-                log.debug("Loading %s" % subdir)
+                self.log.debug("Loading %s" % subdir)
                 self.OpenIMSPackage(zip, subdir)
             else:
                 wx.MessageBox(_("This file does not appear to be a valid package."))
         else:
-            log.debug("Load cancelled, result is %r" % result)
+            self.log.debug("Load cancelled, result is %r" % result)
 
     def OpenIMSPackage(self, zip, subdir):
         eclassdir = os.path.join(settings.AppSettings["ProjectsFolder"], subdir)
@@ -760,8 +757,7 @@ class MainFrame2(frameClass):
             else:
                 return
         
-        log = logging.getLogger('EClass')
-        log.debug("Extracting files to %s" % eclassdir)
+        self.log.debug("Extracting files to %s" % eclassdir)
         zip.extractall(eclassdir)
         self.LoadEClass(os.path.join(eclassdir, "imsmanifest.xml"))
                 
@@ -990,7 +986,7 @@ class MainFrame2(frameClass):
 
     def SaveIfContentsChanged(self, data):
         from lxml.html.diff import htmldiff
-        logging.info("types {}, {}".format(type(self.contents_on_load), type(data)))
+        self.log.info("types {}, {}".format(type(self.contents_on_load), type(data)))
         diff = htmldiff(self.contents_on_load, data)
         contents_changed = '<ins>' in diff or '<del>' in diff
         dirty = contents_changed or self.dirty
@@ -1265,7 +1261,7 @@ class MainFrame2(frameClass):
             self.errorViewer.Destroy()
 
         if self._mgr:
-            logging.info("Calling mgr.UnInit")
+            self.log.info("Calling mgr.UnInit")
             self._mgr.UnInit()
 
         self.browser.OnClose(event)
@@ -1592,7 +1588,7 @@ class MainFrame2(frameClass):
 
     def Preview(self):
         filename = self.GetContentFilenameForSelectedItem()
-        logging.info("Preview called for {}".format(filename))
+        self.log.info("Preview called for {}".format(filename))
 
         js = 'ShowErrorMessage("This item has no file associated with it.")'
         preview_js = None

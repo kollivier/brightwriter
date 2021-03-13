@@ -4,3 +4,5 @@ flask
 future
 six
 wxPython==4.0.4
+colorlog
+django==1.11

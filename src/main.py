@@ -15,12 +15,18 @@ if hasattr(sys, 'frozen'):
         def write(self, msg):
             self.log += msg + "\n"
 
+        def flush(self):
+            pass
+
     class StdOutLog(object):
         def __init__(self):
             self.log = ""
 
         def write(self, msg):
             self.log += msg + "\n"
+
+        def flush(self):
+            pass
 
     sys.stdout = StdOutLog()
     sys.stderr = StdErrLog()
@@ -35,6 +41,7 @@ formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
 file_handler = logging.FileHandler(filename=settings.logfile, mode='w')
 file_handler.setFormatter(formatter)
 logging.getLogger().addHandler(file_handler)
+logging.getLogger('EClass').addHandler(file_handler)
 
 log = logging # .getLogger('BrightWriter')
 # log.setLevel(logging.DEBUG)
@@ -45,26 +52,19 @@ import version
 log.info("Starting %s %s" % (settings.app_name, version.asString()))
 log.info(datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"))
 
-logging.info("About to initialize translations...")
 # do this first because other modules may rely on _()
 import i18n
 lang_dict = i18n.installEClassGettext()
 
-logging.info("Translations initialized.")
 import pew
 
-logging.info("About to set rootdir.")
 cwd = os.path.dirname(sys.argv[0])
 
-logging.info("Setting rootdir.")
 rootdir = os.path.abspath(cwd)
 
-logging.info("rootdir = %r" % rootdir)
 # os.path.dirname will chop the last dir if the path is to a directory
 if not os.path.isdir(rootdir):
     rootdir = os.path.dirname(rootdir)
-
-logging.info("rootdir is now %r" % rootdir)
 
 import settings, appdata, errors
 import conman.xml_settings as xml_settings
@@ -214,7 +214,6 @@ if use_wx:
     app = BuilderApp(0)
     app.MainLoop()
 else:
-    logging.info("Loading PyEverywhere GUI")
     import gui.app
 
     app = gui.app.Application()
