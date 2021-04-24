@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import os
-import string
 
 import wx
 import wx.lib.sized_controls as sc
@@ -257,7 +256,7 @@ class PagePropertiesDialog (sc.SizedDialog):
     def CheckAuthor(self, event):
         text = self.txtAuthor.GetValue()
         for name in list(self.parent.vcardlist.keys()):
-            if string.find(name, text) == 0:
+            if name.find(text) == 0:
                 self.txtAuthor.SetValue(name)
             self.txtAuthor.SetInsertionPoint(len(text))
             self.txtAuthor.SetSelection(len(text), len(name))

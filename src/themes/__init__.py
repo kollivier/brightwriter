@@ -39,7 +39,7 @@ class ThemeList(object):
         if themename in list(self.themes.keys()):
             return self.themes[themename]
         elif returnDefault:
-            return self.themes["epub"]
+            return self.themes["Default (frames)"]
         else:
             return None
 

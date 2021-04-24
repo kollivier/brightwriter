@@ -3,7 +3,6 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import chr
 from builtins import str
-import string
 import os
 import conman
 import locale
@@ -484,7 +483,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         filename = os.path.basename(filename)
         filename = filename[:28]
         filename = filename + ".htm"
-        filename = string.replace(filename, " ", "_")
+        filename = filename.replace(" ", "_")
         return filename
 
     def GetData(self):
@@ -511,7 +510,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         for term in mypage.terms:
             myfilename = ""
             if term.type == "Page":
-                myfilename = string.replace(os.path.basename(filename), ".ecp", "")
+                myfilename = os.path.basename(filename).replace(".ecp", "")
                 myfilename = myfilename + "_" + fileutils.MakeFileName2(term.page.name + ".html")
                 html = self._CreateEClassPage(term.page, myfilename, True)
             elif term.type == "URL":
@@ -523,18 +522,12 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         myhtml = u""
         sourcefile = os.path.join(settings.ProjectDir, "Text", mypage.media.text)
         if len(mypage.media.text) > 0 and os.path.exists(sourcefile):
-            myfile = None
-            convert = False
-            if string.find(os.path.splitext(string.lower(mypage.media.text))[1], "htm") != -1:
+            if os.path.splitext(mypage.media.text.lower())[1].find("htm") != -1:
                 myhtml = GetBody(utils.openFile(sourcefile, 'rb'))
             else: 
                 #It might be a Word/RTF document, try to convert...
-                convert = True
-                
                 myhtml = self._ConvertFile(sourcefile)
 
-        else:
-            myhtml = u""
         objtext = ""
         
         self.data['name'] = mypage.name
@@ -566,7 +559,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
             mydir = os.path.dirname(outfile)
             if not os.path.exists(mydir):
                 os.makedirs(mydir)
-            myfile = utils.openFile(outfile, "w")
+            myfile = utils.openFile(outfile, "wb")
             myhtml = self.EncodeHTMLToCharset(myhtml, "utf8")
             myfile.write(myhtml)
             myfile.close()
@@ -600,7 +593,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         return myhtml
 
     def _InsertTerms(self, myhtml, termlist):
-        soup = BeautifulSoup.BeautifulSoup(myhtml)
+        soup = BeautifulSoup(myhtml)
         for term in termlist:
             term_regex = re.compile(re.escape(term[0]).replace("\ ", "\s+"))
             results = soup.findAll(text=term_regex)

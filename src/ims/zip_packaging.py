@@ -28,7 +28,6 @@ def export_package_as_zip(project_dir, zip_filename=None):
         myzip.close()
         if zip_filename:
             os.rename(zipname, zip_filename)
-            os.remove(zipname)
         else:
             zip_filename = zipname
     finally:

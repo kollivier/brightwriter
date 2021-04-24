@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from builtins import str
 from builtins import range
 from builtins import object
-import string, os, sys
+import os, sys
 from . import xml_settings
 from . import vcard
 import plugins
@@ -30,9 +30,9 @@ class ConManData(object):
         
     def __setattr__(self, name, value):
         # make sure internally we're always using Unicode
-        if not name == "encoding":
+        try:
             self.__dict__[name] = utils.makeUnicode(value, self.encoding)
-        else:
+        except:
             self.__dict__[name] = value 
 
 class ConMan (ConManData):
@@ -195,9 +195,9 @@ class ConMan (ConManData):
         if manifest.attributes:
             for i in range(0, len(manifest.attributes)):
                 attr = manifest.attributes.item(i)
-                if attr.name == "identifier" and string.find(attr.value, self.namespace) != -1:
-                    self.id = string.replace(attr.value, self.namespace, "")
-                    self.id = string.replace(self.id, "-", "")
+                if attr.name == "identifier" and attr.value.find(self.namespace) != -1:
+                    self.id = attr.value.replace(self.namespace, "")
+                    self.id = self.id.replace("-", "")
 
             if self.id == "":
                 self.id = utils.getUUID()
@@ -224,9 +224,9 @@ class ConMan (ConManData):
         if toc.attributes:
             for i in range(0, len(toc.attributes)):
                 attr = toc.attributes.item(i)
-                if attr.name == "identifier" and string.find(attr.value, self.namespace) != -1:
-                    self.orgid = string.replace(attr.value, self.namespace, "")
-                    self.orgid = string.replace(self.orgid, "-", "")
+                if attr.name == "identifier" and attr.value.find(self.namespace) != -1:
+                    self.orgid = attr.value.replace(self.namespace, "")
+                    self.orgid = self.orgid.replace("-", "")
 
             if self.orgid == "":
                 self.orgid = utils.getUUID()
@@ -244,8 +244,8 @@ class ConMan (ConManData):
                     #print len(resource.attributes)
                     attr = resource.attributes.item(i)
                     if attr.name == "identifier":
-                        myid = string.replace(attr.value, self.namespace, "")
-                        myid = string.replace(myid, "-", "")
+                        myid = attr.value.replace(self.namespace, "")
+                        myid = myid.replace("-", "")
                         #if len(myid) < 32: #Created before IMS identifiers used
                         #   self.updatedids[myid] = utils.getUUID()
                         #   myid = self.updatedids[myid]
@@ -263,7 +263,7 @@ class ConMan (ConManData):
                     ext = os.path.splitext(myres.filename)[1]
                     if ext.lower() == ".ecp" or ext.lower() == ".quiz":
                         myres.filename = "EClass/" + myres.filename
-                    elif string.find(ext.lower(), "htm") != -1:
+                    elif ext.lower().find("htm") != -1:
                         myres.filename = "Text/" + myres.filename
                     else:
                         myres.filename = "File/" + myres.filename 
@@ -322,7 +322,7 @@ class ConMan (ConManData):
                                 #nasty hack alert - minidom is converting line endings
                                 #but vcard is specific about what line endings it uses
                                 #so I need to "unconvert" them here
-                                myvcard.parseString(string.replace(entity[0].childNodes[0].nodeValue, "\n", "\r\n"))
+                                myvcard.parseString(entity[0].childNodes[0].nodeValue.replace("\n", "\r\n"))
                                 newContrib.entity = myvcard
 
                             date = contrib.getElementsByTagName("Datetime")
@@ -356,14 +356,14 @@ class ConMan (ConManData):
                 attr = root.attributes.item(i)
                 if attr.name == "identifier":
                     id = XMLAttrToText(attr.value)
-                    id = string.replace(id, self.namespace, "")
-                    id = string.replace(id, "-", "")
+                    id = id.replace(self.namespace, "")
+                    id = id.replace("-", "")
                     if len(id) < 32: #Not a UUID, used previous ID system
                         id = utils.getUUID()
                 elif attr.name == "identifierref":
                     contentid = XMLAttrToText(attr.value)
-                    contentid = string.replace(contentid, self.namespace, "")
-                    contentid = string.replace(contentid, "-", "")
+                    contentid = contentid.replace(self.namespace, "")
+                    contentid = contentid.replace("-", "")
                 elif attr.name == "title":
                     name = XMLAttrToText(attr.value)
                 elif attr.name == "description":
@@ -402,7 +402,7 @@ class ConMan (ConManData):
             #Test to make sure the first element isn't added as a child
             if parent:
                 mynode = parent.AddChild(id, mycontent, self.directory)
-                if not string.find(mycontent.filename, "imsmanifest.xml") == -1:
+                if not mycontent.filename.find("imsmanifest.xml") == -1:
                     mypub = ConMan()
                     mypub.LoadFromXML(mycontent.filename)
                     mynode.pub = mypub
@@ -517,7 +517,7 @@ class ConMan (ConManData):
             fileext = os.path.splitext(filename)[1][1:]
             if self.exporting and fileext in ["htm", "html", "ecp", "quiz"]:
                 filename = "pub/" + publisher.GetFilename(filename)
-            myres = myres + """<resource identifier="%s" href="%s">\n%s\n</resource>\n""" % (self.namespace + item.id, TextToXMLAttr(string.replace(filename, os.sep, "/")), item.metadata.asXMLString())
+            myres = myres + """<resource identifier="%s" href="%s">\n%s\n</resource>\n""" % (self.namespace + item.id, TextToXMLAttr(filename.replace(os.sep, "/")), item.metadata.asXMLString())
         return myres
 
 class ConNode(object):

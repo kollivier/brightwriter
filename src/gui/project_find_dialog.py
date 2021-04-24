@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import sys, string, os
+import sys, os
 import utils
 import guiutils
 import time

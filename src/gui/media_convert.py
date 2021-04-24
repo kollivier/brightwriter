@@ -1,7 +1,7 @@
 from builtins import range
 import wx
 import wx.lib.sized_controls as sc
-import string, sys, os
+import sys, os
     
 class ConvertMediaDialog(sc.SizedDialog):
     def __init__(self, parent, files=[]):

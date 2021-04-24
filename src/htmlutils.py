@@ -12,7 +12,6 @@ import fileutils
 import os
 import re
 import settings
-import string
 import sys
 import urllib.request, urllib.parse, urllib.error
 import utils
@@ -252,76 +251,20 @@ def GetBody(myhtml):
     Return values:
     Returns the data between the <BODY></BODY> tags of the HTML page
             """
-    inbody = 0
-    inscript = 0
-    bodystart = 0
-    bodyend = 0
-    text = ""
-    uppercase = 1
-    encoding = None
-    htmltext = myhtml.readlines()
-    for html in htmltext:
-        if not encoding and string.find(html.lower(), "<meta") != -1:
-            encoding = GetEncoding(html)
-        #if we're inside a script, mark it so that we can test if body tag is inside the script
-        scriptstart = string.find(html, "<SCRIPT")
-        if scriptstart == -1:
-            scriptstart = string.find(html, "<script")
-
-        if not string.find(html.lower(), "</script>") == -1:
-            inscript = 0
-
-        #check for start of body in upper and lowercase
-        bodystart = string.find(string.lower(html), "<body")
-
-        #if body is found, mark the end of it
-        if not bodystart == -1:
-            bodystart = string.find(html, ">", bodystart)
-
-        #if we've found both a body tag and a script tag, find which one comes first
-        #if script is first, this isn't the "real" body tag
-        if (not inbody and bodystart != -1) and scriptstart != -1:
-            if bodystart > scriptstart:
-                inscript = 1
-
-        #if we are not in a script, and we've found the body tag, capture the text
-        if inscript == 0 and (not bodystart == -1 or inbody):
-            inbody = 1
-            bodyend = string.find(string.lower(html), "</body>")
-                
-            #if both <BODY> and </BODY> are on same line, grab it all
-            if not bodystart == -1 and not bodyend == -1:
-                text = text + html[bodystart+1:bodyend]
-                bodystart = -1
-                bodyend = -1
-                inbody = 0
-            elif not bodyend == -1:
-                #if bodyend == 0:
-                #   bodyend = 1 #a hack because -1 means everything
-                inbody = 0
-                text = text + html[0:bodyend] 
-                bodyend = -1
-            elif not bodystart == -1:
-                text = text + html[bodystart+1:-1] 
-                bodystart = -1
-            elif inbody == 1:
-                text = text + html
-        html = myhtml.readline()
     
-    if not encoding:
-        encoding = utils.guessEncodingForText(text)
+    # if encoding and encoding.lower() in ["windows-1252", "iso-8859-1", "iso-8859-2"]:
+    #     text = convNotSoSmartQuotesToHtmlEntity(text)
     
-    if encoding and encoding.lower() in ["windows-1252", "iso-8859-1", "iso-8859-2"]:
-        text = convNotSoSmartQuotesToHtmlEntity(text)
+    # text = utils.makeUnicode(text, encoding, 'xmlcharrefreplace')
     
-    text = utils.makeUnicode(text, encoding, 'xmlcharrefreplace')
-    
-    soup = BeautifulSoup.BeautifulSoup('\n'.join(htmltext))
+    soup = BeautifulSoup.BeautifulSoup(myhtml)
+    # get BeautifulSoup to explicitly declare the encoding
+    text = soup.body.prettify(encoding='utf-8').decode('utf-8')
     if soup.html.head:
         scripts = soup.html.head.findAll('script')
         scripts.reverse() # since we're prepending, we need to do it in reverse order
         for script in scripts:
-            text = script + text
+            text = str(script) + text
     
     return text
 

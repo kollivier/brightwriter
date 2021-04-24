@@ -3,10 +3,6 @@ standard_library.install_aliases()
 from builtins import object
 import sys, copy
 import os
-import re
-import io
-import string
-import types
 from htmlutils import *
 from fileutils import *
 import settings
@@ -96,7 +92,7 @@ class PDFPublisher(object):
         bookfile = "#HTMLDOC\n"
         pdffile = self.pdffile
         if sys.platform == "win32":
-            pdffile = string.replace(self.pdffile, "\\", "/")
+            pdffile = self.pdffile.replace("\\", "/")
         bookfile = bookfile + "-f \"" + pdffile + "\" -t pdf --no-toc --no-links --compression=9 --jpeg=90 --verbose\n" 
         for afile in self.files:
             if afile != "" and os.path.exists(afile):

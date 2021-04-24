@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import string, sys, os
+import sys, os
 import wx
 import wx.lib.sized_controls as sc
 import persistence

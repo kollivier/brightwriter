@@ -1,5 +1,5 @@
 from builtins import object
-import os, sys, string
+import os, sys
 
 # -------------------------------------------------------------------------
 # ExtProcess helper class

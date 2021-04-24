@@ -3,8 +3,6 @@ import datetime
 import glob
 import logging
 import os
-import shutil
-import string
 import sys
 
 if hasattr(sys, 'frozen'):
@@ -197,7 +195,7 @@ if use_wx:
                 except:
                     errors.appErrorLog.write("Error loading vCard '%s'" % (card))
                     errOccurred = True
-                    errCards.append(string.join(card, " "))
+                    errCards.append(card.join(" "))
 
             if errOccurred:
                 message = _("EClass could not load the following vCards from your Contacts folder: %(badCards)s. You may want to try deleting these cards and re-creating or re-importing them.") % {"badCards":repr(errCards)}

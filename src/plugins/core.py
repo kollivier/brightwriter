@@ -1,7 +1,6 @@
 from __future__ import print_function
 from builtins import object
 import os
-import string
 import types
 
 import appdata
@@ -16,6 +15,9 @@ import utils
 from bs4 import BeautifulSoup, Tag
 from xmlutils import *
 # base plugin data types
+
+
+metaTags = ["name", "description", "keywords", "credit", "author", "url"]
 
 
 class Plugin(object):
@@ -94,11 +96,11 @@ class BaseHTMLPublisher(object):
             thisauthor = ""
 
             if description != "":
-                creditstring = string.replace(description, "\r\n", "<br>")  # mac
-                creditstring = string.replace(creditstring, "\n", "<br>")  # win
-                creditstring = string.replace(creditstring, "\r", "<br>")  # unix
+                creditstring = description.replace("\r\n", "<br>")  # mac
+                creditstring = creditstring.replace("\n", "<br>")  # win
+                creditstring = creditstring.replace("\r", "<br>")  # unix
                 creditstring = creditstring + "<h5 align=\'center\'>[ <a href=\'javascript:window.close()\'>" + _("Close") + "</a> ]</h5>"
-                creditstring = string.replace(creditstring, "'", "\\'")
+                creditstring = creditstring.replace("'", "\\'")
                 creditText = """[ <b><a href="javascript:openCredit('newWin','%s')">%s</a></b> ]""" % (TextToHTMLChar(creditstring), _("Credit"))
 
             for contrib in contributors:
@@ -251,7 +253,7 @@ class BaseHTMLPublisher(object):
             if key in metaTags:
                 tag = soup.find("meta", attrs={"http_equiv": key})
                 if not tag:
-                    tag = Tag(soup, "meta")
+                    tag = soup.new_tag("meta")
                     tag['http-equiv'] = key
                     soup.html.head.insert(0, tag)
 

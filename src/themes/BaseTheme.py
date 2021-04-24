@@ -7,7 +7,6 @@ import os
 import re
 import io
 #import pre as re
-import string
 import wx
 import fileutils
 from htmlutils import *

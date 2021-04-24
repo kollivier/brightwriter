@@ -661,7 +661,7 @@ class MainFrame2(frameClass):
                 dialog = ImportURLDialog()
                 if dialog.ShowModal() == wx.ID_OK:
                     content_dir = os.path.join(settings.ProjectDir, 'Content', 'imported_content')
-                    info = archive_page(dialog.url_ctrl.GetValue(), content_dir, links_relative_to_root=False)
+                    info = archive_page(dialog.url_ctrl.GetValue(), content_dir, relative_links=True)
                     info['root_dir'] = content_dir
                     self.AddNewContentItem(info, parentitem)
             finally:
@@ -1422,6 +1422,7 @@ class MainFrame2(frameClass):
             return
             
         try:
+            self.selectedFileLastModifiedTime = 0
             converter = eclass_convert.EClassIMSConverter(filename)
             self.imscp = None
             if converter.IsEClass():
@@ -1477,9 +1478,7 @@ class MainFrame2(frameClass):
                         wx.YES_NO | wx.ICON_INFORMATION).ShowModal()
                     
                     if result == wx.ID_NO:
-                        wx.MessageBox(_("Please open this course in the latest 2.5 version of BrightWriter."))
-                        wx.GetApp().ExitMainLoop()
-                        sys.exit(0)
+                        wx.MessageBox(_("App will continue using the latest published version of the page."))
                         return
                         
                     publisher = self.currentTheme.HTMLPublisher(self)
@@ -1621,7 +1620,7 @@ class MainFrame2(frameClass):
 
                 if ext.find("htm") != -1:
                     self.baseurl = flask_url
-                    html = htmlutils.getUnicodeHTMLForFile(full_path).decode('utf-8')
+                    html = htmlutils.getUnicodeHTMLForFile(full_path)
                     self.contents_on_load = html
                     js = 'SetEditorContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
                     self.filename = full_path

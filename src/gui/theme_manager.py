@@ -1,6 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
-import string, sys, os
+import sys, os
 import shutil
 
 import wx
@@ -123,7 +123,8 @@ class ThemeManager(sc.SizedDialog):
                                     _("New Theme"), _("New Theme"))
         if dialog.ShowModal() == wx.ID_OK:
             themedir = os.path.join(settings.AppDir, "themes")
-            filename = string.replace(fileutils.MakeFileName2(dialog.GetValue()) + ".py", "-", "_")
+            filename = fileutils.MakeFileName2(dialog.GetValue()) + ".py"
+            filename = filename.replace("-", "_")
             foldername = utils.createSafeFilename(dialog.GetValue())
             try:
                 os.mkdir(os.path.join(themedir, foldername))
@@ -144,7 +145,7 @@ class HTMLPublisher(BaseHTMLPublisher):
     def __init__(self, parent):
         BaseHTMLPublisher.__init__(self, parent)
         self.themedir = os.path.join(settings.AppDir, "themes", themename)
-""" % (string.replace(dialog.GetValue(), "\"", "\\\""))
+""" % (dialog.GetValue().replace("\"", "\\\""))
 
 
             myfile.write(data)
@@ -157,8 +158,9 @@ class HTMLPublisher(BaseHTMLPublisher):
         dialog.Destroy()
 
     def OnDeleteTheme(self, event):
-        filename = string.replace(fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
-        modulename = string.replace(filename, ".py", "")
+        filename = fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py"
+        filename = filename.replace(" ", "_")
+        modulename = filename.replace(".py", "")
         if self.parent.currentTheme == [self.lstThemeList.GetStringSelection(), modulename]:
             wx.MessageBox(_("Cannot delete theme because it is currently in use for this EClass. To delete this theme, please change your EClass theme."))
             return 
@@ -186,10 +188,12 @@ class HTMLPublisher(BaseHTMLPublisher):
                                           _("New Theme"), "")
         if dialog.ShowModal() == wx.ID_OK:  
             themedir = os.path.join(settings.AppDir, "themes")
-            filename = string.replace(fileutils.MakeFileName2(dialog.GetValue()) + ".py", " ", "_")
-            otherfilename = string.replace(fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py", " ", "_")
-            otherfilename = string.replace(otherfilename, "(", "")
-            otherfilename = string.replace(otherfilename, ")", "")
+            filename = fileutils.MakeFileName2(dialog.GetValue()) + ".py"
+            filename = filename.replace(" ", "_")
+            otherfilename = fileutils.MakeFileName2(self.lstThemeList.GetStringSelection()) + ".py"
+            otherfilename = otherfilename.replace(" ", "_")
+            otherfilename = otherfilename.replace("(", "")
+            otherfilename = otherfilename.replace(")", "")
             foldername = utils.createSafeFilename(dialog.GetValue())
             try:
                 os.mkdir(os.path.join(themedir, foldername))
@@ -203,9 +207,9 @@ class HTMLPublisher(BaseHTMLPublisher):
             data = copyfile.read()
             copyfile.close()
 
-            oldthemeline = 'themename = "%s"' % (string.replace(self.lstThemeList.GetStringSelection(), "\"", "\\\""))
-            newthemeline = 'themename = "%s"' % (string.replace(dialog.GetValue(), "\"", "\\\""))
-            data = string.replace(data, oldthemeline, newthemeline) 
+            oldthemeline = 'themename = "%s"' % (self.lstThemeList.GetStringSelection().replace("\"", "\\\""))
+            newthemeline = 'themename = "%s"' % (dialog.GetValue().replace("\"", "\\\""))
+            data = data.replace(oldthemeline, newthemeline)
             myfile = utils.openFile(os.path.join(themedir, filename), "w")
             myfile.write(data)
             myfile.close()
@@ -224,7 +228,8 @@ class HTMLPublisher(BaseHTMLPublisher):
         if dialog.ShowModal() == wx.ID_OK:
             filename = dialog.GetPath()
             themezip = zipfile.ZipFile(filename, "w")
-            themepyfile = string.replace(themename + ".py", " ", "_")
+            themepyfile = themename + ".py"
+            themepyfile = themepyfile.replace(" ", "_")
             themezip.write(os.path.join(settings.AppDir, "themes", themepyfile), themepyfile)
             themefolder = utils.createSafeFilename(self.lstThemeList.GetStringSelection())
             self.AddDirToZip(themefolder, themezip)

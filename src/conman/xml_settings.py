@@ -63,7 +63,7 @@ class XMLSettings(object):
         self.settings = {}
         self.filename = filename
         if USE_MINIDOM:
-            doc = minidom.parse(open(filename))
+            doc = minidom.parseString(open(filename, 'rb').read().decode('utf-8'))
         else:
             doc = FromXmlFile(filename)
 

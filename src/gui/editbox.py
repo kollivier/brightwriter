@@ -1,4 +1,4 @@
-import sys, os, string
+import sys, os
 import settings
 import wx
 import wx.lib.sized_controls as sc

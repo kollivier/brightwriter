@@ -1,4 +1,4 @@
-import string, os, sys
+import os, sys
 import wx
 import version
 

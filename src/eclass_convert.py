@@ -24,8 +24,8 @@ class EClassIMSConverter(object):
         self.id_namespace = eclassutils.getResourceNamespace()
         
     def IsEClass(self):
-        myfile = utils.openFile(self.filename)
-        data = myfile.read()
+        myfile = utils.openFile(self.filename, mode='rb')
+        data = myfile.read().decode('utf-8')
         myfile.close()
         
         return data.find("<PublicationID>") != -1

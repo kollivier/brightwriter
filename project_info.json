@@ -1,15 +1,16 @@
 {
-    "version": "1.0.0", 
+    "version": "0.5.1",
     "name": "BrightWriter", 
     "identifier": "com.kosoftworks.brightwriter",
     "ui_root": "src/gui/html/index.html",
-    "asset_dirs": ["src/gui/html", "src/icons", "src/locale"],
+    "asset_dirs": ["src/gui/html", "src/icons", "src/locale", "src/themes"],
+    "icons": {"win": "src/icons/brightwriter.ico", "osx": "src/icons/brightwriter.icns"},
     "requirements":
     {
         "common": ["chardet", "beautifulsoup4"],
         "android": ["python2","kivy","pyjnius","android"]
     },
-    "packages": ["ricecooker", "PIL", "pycountry", "wx"],
+    "packages": ["cefpython3", "ricecooker", "PIL", "pycountry", "wx"],
     "excludes": ["selenium"],
     "whitelist_file":
     {

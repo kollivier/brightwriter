@@ -12,7 +12,6 @@ except:
 import os, threading
 import settings
 import utils
-import string
 
 activeTasks = []
         
@@ -21,7 +20,7 @@ def addTask(command, args=[], env=os.environ):
     if hasTaskRunner:
     
         job = Job(os.path.basename(command), command, args, env)
-        name = command + " " + string.join(args, " ")
+        name = command + " " + " ".join(args)
         print(name)
         manager = TaskRunner([Task(job)], name=name)
         job.LOGBASE = utils.escapeFilename(settings.PrefDir)

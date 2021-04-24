@@ -1,6 +1,6 @@
 from __future__ import print_function
 from builtins import object
-import string, sys, os
+import sys, os
 import plugins
 import settings
 import ims

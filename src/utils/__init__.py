@@ -5,7 +5,7 @@
 ##########################################
 
 from builtins import str
-import sys, os, string
+import sys, os
 import settings
 import shutil
 import chardet
@@ -31,10 +31,10 @@ def getStdErrorMessage(type = "IOError", args={}):
         return _("An unknown error has occurred.") + constants.errorInfoMsg
 
 def makeModuleName(text):
-    result = string.replace(text, "-", "_")
-    result = string.replace(result, "*", "")
-    result = string.replace(result, "/", "")
-    result = string.replace(result, "\\", "")
+    result = text.replace(text, "-", "_")
+    result = result.replace("*", "")
+    result = result.replace("/", "")
+    result = result.replace("\\", "")
 
 def createHTMLPageWithBody(text):
     retval = """
@@ -142,7 +142,7 @@ var level1ID = -1;
 var level2ID = -1;
 var level3ID = -1;
 """
-    text = text + """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (string.replace(name, "\"", "\\\""), filename, string.replace(name, "\"", "\\\""))
+    text = text + """level1ID = theMenu.addEntry(-1, "Book", "%s", "%s", "%s");\n""" % (name.replace("\"", "\\\""), filename, name.replace("\"", "\\\""))
     text = text + AddJoustItems(pub, 1)
     text = text + "theMenu.openAll();\n"
     text = text + "return theMenu; \n}"
@@ -197,7 +197,7 @@ def getCurrentEncoding():
     return encoding
     
 def makeUnicode(text, encoding="", errors='strict'):
-    if not isinstance(text, str):
+    if isinstance(text, str):
         return text
         
     # Always try latin1 first, since it sometimes gets misread / detected as other encodings

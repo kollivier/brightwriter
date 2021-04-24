@@ -7,7 +7,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import str
 from builtins import object
-import string, os, io, formatter, locale, glob
+import os, io, formatter, locale, glob
 import PyLucene
 import converter
 from html.parser import HTMLParser, HTMLParseError
@@ -50,7 +50,7 @@ class SearchEngine(object):
 		if self.publisher:
 			filename = self.publisher.GetFileLink(node.content.filename)
 		import urllib.request, urllib.parse, urllib.error
-		filename = string.replace(filename, "\\", "/")
+		filename = filename.replace("\\", "/")
 
 		metadata["url"] = filename
 		metadata["description"] = node.content.metadata.description
@@ -79,8 +79,8 @@ class SearchEngine(object):
 			if os.path.isdir(fullname):
 				self.IndexFolder(fullname)
 			elif os.path.isfile(fullname):
-				filename = string.replace(fullname, self.folder + os.sep, "")
-				filename = string.replace(filename, "\\", "/")
+				filename = fullname.replace(self.folder + os.sep, "")
+				filename = filename.replace("\\", "/")
 				metadata = {}
 				metadata["title"] = str(os.path.basename(fullname))
 				metadata["url"] = str(filename)

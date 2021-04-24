@@ -2,7 +2,7 @@ from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
 from builtins import object
-import getopt,sys, os, string
+import getopt,sys, os
 import io, tempfile, glob, time
 import settings
 import subprocess
@@ -40,7 +40,7 @@ class DocConverter(object):
             #check for OOo first, we can only do this once EClass settings are loaded
             if "OpenOffice" in list(settings.AppSettings.keys()) and os.path.exists(settings.AppSettings["OpenOffice"]):
                 hasOOo = True
-            ext = string.lower(os.path.splitext(filename)[1][1:])
+            ext = os.path.splitext(filename)[1][1:].lower()
             #print "ext = " + ext
             converter = None
             if ext in docFormats:
@@ -78,7 +78,7 @@ class WordDocConverter(object):
         formatNum = self.outfilters[outformat]
         try:
             pythoncom.CoInitializeEx(pythoncom.COINIT_APARTMENTTHREADED)
-            fileext = string.lower(os.path.splitext(filename)[1])
+            fileext = os.path.splitext(filename)[1].lower()
             if fileext == ".doc":
                 myapp = win32com.client.dynamic.Dispatch("Word.Application")
             if fileext == ".ppt":
@@ -156,7 +156,7 @@ class CommandLineDocConverter(object):
         htmlfile = htmlfile.encode( utils.getCurrentEncoding() )
         os.close(handle)
         thirdpartydir = settings.ThirdPartyDir
-        ext = string.lower(os.path.splitext(filename)[1])
+        ext = os.path.splitext(filename)[1].lower()
         path = ""
         command = ""
         html = ""
@@ -226,7 +226,7 @@ class CommandLineDocConverter(object):
             command = command.encode( utils.getCurrentEncoding() )
             
             mycommand = [command] + args
-            print("Running command: '%s'" % string.join(mycommand, " "))
+            print("Running command: '%s'" % " ".join(mycommand))
             myprocess = killableprocess.Popen( mycommand, stdout=subprocess.PIPE, env=env)
             
             import time

@@ -4,7 +4,7 @@ from __future__ import division
 from builtins import str
 from past.utils import old_div
 from builtins import object
-import string, sys, os
+import sys, os
 import wx
 import wx.lib.sized_controls as sc
 import persistence
@@ -274,9 +274,9 @@ class FTPUpload(object):
         #first, strip out any hardcoded path reference
         #print "Parentdir: " + parentdir
 
-        mydir = string.replace(indir, self.rootdir, "")
+        mydir = indir.replace(self.rootdir, "")
         if sys.platform.startswith("win"):
-            mydir = string.replace(mydir, "\\", "/")
+            mydir = mydir.replace("\\", "/")
 
         #now construct the subdir as relative to the start URL
         #for the EClass
@@ -298,7 +298,7 @@ class FTPUpload(object):
                 self.dirlist.append(uploaddir)
 
     def GenerateFileList(self, indir):
-        if self.useSearch == 0 and string.find(indir, "cgi-bin") != -1:
+        if self.useSearch == 0 and indir.find("cgi-bin") != -1:
             return
         uploaddir = self.GetUploadDirName(indir)
         if not uploaddir in self.dirlist:
@@ -307,14 +307,13 @@ class FTPUpload(object):
         for item in os.listdir(indir):
             myitem = os.path.join(indir, item)
             
-            if os.path.isfile(myitem) and not fileutils.isHidden(myitem) and string.find(item, "Karrigell") == -1 and string.find(item, "httpserver") == -1 and string.find(item, "ftppass.txt") == -1:
-                finalname = string.replace(myitem, self.rootdir, "")
+            if os.path.isfile(myitem) and not fileutils.isHidden(myitem) and item.find("Karrigell") == -1 and item.find("httpserver") == -1 and item.find("ftppass.txt") == -1:
+                finalname = myitem.replace(self.rootdir, "")
                 if wx.Platform == "__WXMSW__":
-                    finalname = string.replace(finalname, "\\", "/")
-                #finalname = string.replace(finalname, os.pathsep, "/")
-                if not self.useSearch and string.find(myitem, "cgi-bin") == -1:
+                    finalname = finalname.replace("\\", "/")
+                if not self.useSearch and myitem.find("cgi-bin") == -1:
                     # TODO: test for extensions instead of this
-                    if string.find(item, ".dll") == -1 and string.find(item, ".pyd") == -1 and string.find(item, ".exe") == -1:
+                    if item.find(".dll") == -1 and item.find(".pyd") == -1 and item.find(".exe") == -1:
                         self.filelist.append(finalname)
                 else:
                     self.filelist.append(finalname)
@@ -336,7 +335,7 @@ class FTPUpload(object):
 
         adir, aname = os.path.split(inputfile)
         if adir != "":
-            destdir = destdir + string.replace(adir, "\\", "/")
+            destdir = destdir + adir.replace("\\", "/")
             if not destdir[-1] == "/":
                 destdir = destdir + "/"
         

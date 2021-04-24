@@ -3,7 +3,6 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import str
 from builtins import range
-import string
 import os
 import locale
 import re
@@ -654,7 +653,7 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         filename = os.path.basename(filename)
         filename = filename[:28]
         filename = filename + ".htm"
-        filename = string.replace(filename, " ", "_")
+        filename = filename.replace(" ", "_")
         return filename
 
 

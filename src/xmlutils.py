@@ -6,15 +6,15 @@ escapeChars = [ ("&", "&amp;"), ("\"", "&quot;"), ("<", "&lt;"), (">", "&gt;") ]
 
 # taken from http://www.snee.com/bobdc.blog/2006/12/generating-a-single-globally-u.html
 def createXMLUUID():
-    b64uid = '00000000'    
+    b64uid = b'00000000'
     # Keep generating until we have one that starts with a letter. 
-    while (b64uid[0:1] < 'A') or \
-            (b64uid[0:1] > 'z') or \
-            ((b64uid[0:1] > 'Z') and (b64uid[0:1] < 'a')):
+    while (b64uid[0:1] < b'A') or \
+            (b64uid[0:1] > b'z') or \
+            ((b64uid[0:1] > b'Z') and (b64uid[0:1] < b'a')):
         uid = uuid.uuid4()
-        b64uid = base64.b64encode(uid.bytes,'-_')
+        b64uid = base64.b64encode(uid.bytes, b'-_')
     
-    return b64uid[0:22] # lose the "==" that finishes a base64 value
+    return b64uid[0:22].decode('utf-8') # lose the "==" that finishes a base64 value
 
 # Validation routines
 def TextToXMLChar(mytext):

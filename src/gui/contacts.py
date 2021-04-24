@@ -1,4 +1,4 @@
-import string, sys, os
+import sys, os
 import wx
 import wx.lib.sized_controls as sc
 import persistence
@@ -49,7 +49,7 @@ class ContactsDialog(sc.SizedDialog):
     def LoadContacts(self):
         self.lstContacts.Clear()
         for name in list(appdata.vcards.keys()):
-            if not string.strip(name) == "":
+            if not name.strip() == "":
                 self.lstContacts.Append(name, appdata.vcards[name])
 
     def OnSelection(self, event):

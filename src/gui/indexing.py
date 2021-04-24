@@ -1,6 +1,6 @@
 from __future__ import print_function
 from builtins import object
-import string, sys, os
+import sys, os
 import wx
 import wx.lib.sized_controls as sc
 import persistence
@@ -109,7 +109,7 @@ class UpdateIndexDialog(sc.SizedDialog):
 
 			outfile = os.path.join(eclassdir, "etc", "collect.cfg")
 			try:
-				collecttext = string.replace(collecttext, "**[title]**", self.parent.pub.name)
+				collecttext = collecttext.replace("**[title]**", self.parent.pub.name)
 				collectout = utils.openFile(outfile, "w")
 				collectout.write(collecttext)
 				collectout.close()

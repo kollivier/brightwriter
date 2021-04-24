@@ -7,12 +7,10 @@ from builtins import str
 from builtins import range
 from past.utils import old_div
 import sys, os
-import string
 import configparser
 import mimetypes
 import stat
 import encodings
-import string
 import shutil
 from user import home
 
@@ -236,7 +234,7 @@ if isCGI:
         info = indexer.getIndexInfo()
         content += "<b>Index Name:</b> %s<br/>\n" % (collection)
         content += "<b>Number of Documents:</b> %s<br/>\n" % (info["NumDocs"])
-        content += "<b>Metadata Fields:</b> %s<br/>\n" % ( string.join(info["MetadataFields"], ", ") )
+        content += "<b>Metadata Fields:</b> %s<br/>\n" % ( info["MetadataFields"].join(", ") )
         
     elif page != "":
         content = getContentPage(page, collection)

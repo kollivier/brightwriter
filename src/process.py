@@ -1,5 +1,5 @@
 from __future__ import print_function
-import os, sys, string
+import os, sys
 
 try:
 	#attempt to silence errors on Windows
@@ -11,6 +11,6 @@ except:
 if len(sys.argv) < 2:
 	print("Need program arguments to run")
 else:
-	command = string.join(sys.argv[1:], " ")
+	command = sys.argv[1:].join(" ")
 	print(command)
 	os.system(command)

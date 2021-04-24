@@ -1,5 +1,5 @@
 from __future__ import print_function
-import sys, os, string
+import sys, os
 import settings
 import utils
 import fileutils
@@ -68,7 +68,7 @@ def openInHTMLEditor(filename):
             if wx.Platform == "__WXMSW__":
                 import win32api
                 editor = "\"" + htmleditor + "\""
-                if not string.find(string.lower(editor), "mozilla") == -1:
+                if not editor.lower().find("mozilla") == -1:
                     editor = editor + " -edit" 
                 win32api.WinExec(editor + " \"" + filename + "\"")
                     
@@ -108,8 +108,8 @@ def sendCommandToApplication(filename, action="open", application=""):
                 app = win32api.GetShortPathName(application)
                 thisFile = win32api.GetShortPathName(filename)
             else:
-                app = string.replace(application, " ", "\\ ")
-                thisFile = string.replace(filename, " ", "\\ ")
+                app = application.replace(" ", "\\ ")
+                thisFile = filename.replace(" ", "\\ ")
         
         if app != "":
             command = app
@@ -135,7 +135,7 @@ def openFolderInGUI(folder):
     if wx.Platform == "__WXMSW__":
         win32api.ShellExecute(0, "open", folder, "", folder, 1)
     elif wx.Platform == "__WXMAC__":
-        result = os.popen("open " + string.replace(folder, " ", "\ "))
+        result = os.popen("open " + folder.replace(" ", "\ "))
         result.close()
 
 

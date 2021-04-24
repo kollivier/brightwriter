@@ -9,7 +9,7 @@ from builtins import str
 from builtins import next
 from builtins import range
 from builtins import object
-import sys, string, os, io, formatter, locale, glob
+import sys, os, io, formatter, locale, glob
 import PyLucene
 import converter
 from html.parser import HTMLParser, HTMLParseError
@@ -405,7 +405,7 @@ class Index(object):
             indexLog.write('GetTextFromFile: No filename!')
             return ""
 
-        ext = string.lower(os.path.splitext(filename)[1][1:])
+        ext = os.path.splitext(filename)[1][1:].lower()
         myconverter = None
 
         returnDataFormat = "text"
@@ -474,7 +474,7 @@ class TextConverter(HTMLParser):
         self.encoding = ""
 
     def handle_starttag(self, tag, attrs):
-        tagname = string.lower(tag)
+        tagname = tag.lower()
         if tagname in ["title", "h1", "h2", "h3", "h4"]:
             self.currentTag = tagname
 
@@ -483,25 +483,25 @@ class TextConverter(HTMLParser):
         isContentTypeTag = False
         if tagname == "meta":
             for attr in attrs:
-                if string.lower(attr[0]) == "http-equiv" and string.lower(attr[1]) == "content-type":
+                if attr[0].lower() == "http-equiv" and attr[1].lower() == "content-type":
                     isContentTypeTag = True
 
-                if isContentTypeTag == True and string.lower(attr[0]) == "content":
-                    values = string.split(attr[1], ";")
+                if isContentTypeTag == True and attr[0].lower() == "content":
+                    values = attr[1].split(";")
                     for value in values:
-                        myvalue = string.lower(value)
+                        myvalue = value.lower()
                         if myvalue.find("charset") != -1:
-                            self.encoding = string.split(myvalue, "=")[1]
+                            self.encoding = myvalue.split("=")[1]
                             
-                if string.lower(attr[0]) == "charset":
+                if attr[0].lower() == "charset":
                     self.encoding = attr[1]
             
             #see encodings/aliases.py - all aliases use underscores where
             #typically a dash is supposed to be.
-            self.encoding = string.replace(self.encoding, "-", "_")
+            self.encoding = self.encoding.replace("-", "_")
 
     def handle_endtag(self, tag):
-        tagname = string.lower(tag)
+        tagname = tag.lower()
         if tagname == self.currentTag:
             self.currentTag = ""
 

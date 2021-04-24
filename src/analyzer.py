@@ -1,7 +1,7 @@
 from future import standard_library
 standard_library.install_aliases()
 from builtins import object
-import sys, os, string, re
+import sys, os, re
 import unittest
 import urllib.parse
 import htmlutils

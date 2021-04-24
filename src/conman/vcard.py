@@ -1,6 +1,6 @@
 from __future__ import print_function
 from builtins import object
-import string, os
+import os
 
 class VCard(object):
     def __init__(self):
@@ -242,7 +242,7 @@ class Organization(VCardProp):
 
     def parseString(self, text):
         text = self.parseProps(text)
-        fields = string.split(text, ";")
+        fields = text.split(";")
         self.name = fields[0]
         if len(fields) > 1:
             for field in fields:

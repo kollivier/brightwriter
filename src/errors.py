@@ -3,7 +3,7 @@ from builtins import object
 import locale
 import logging
 import platform
-import sys, string, os
+import sys, os
 import settings
 import time
 import traceback
@@ -16,7 +16,7 @@ def getTraceback():
     import traceback
     type, value, trace = sys.exc_info()
     list = traceback.format_exception_only(type, value) + ["\n"] + traceback.format_tb(trace)
-    return string.join(list, "")
+    return "".join(list)
 
 def exceptionAsString(exctype, value):
     return "\n".join(traceback.format_exception(exctype, value, None))

@@ -3,7 +3,7 @@ import wx
 import persistence
 import wx.lib.sized_controls as sc
 import tasks
-import string, os
+import os
 
 class ActivityList(wx.ListBox):
     

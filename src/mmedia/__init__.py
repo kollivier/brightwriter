@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from builtins import str
-import sys, os, string
+import sys, os
 from . import HTMLTemplates
 import tasks
 import utils
@@ -21,7 +21,7 @@ media_players = {
 
 
 def splitExt(filename):
-    myfilename = string.lower(filename)
+    myfilename = filename.lower()
     base, ext = os.path.splitext(myfilename)
     return base, ext
 
@@ -39,7 +39,7 @@ def findFFMpeg():
     if os.path.exists(ffmpeg):
         return ffmpeg
     else:
-        pathlist = string.split(os.environ['PATH'], os.pathsep)
+        pathlist = os.environ['PATH'].split(os.pathsep)
         for dir in pathlist:
             ffmpeg = os.path.join(dir, "ffmpeg")
             if os.path.exists(ffmpeg):

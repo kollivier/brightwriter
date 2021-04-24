@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
-import string, os, sys, re
+import os, sys, re
 import wx
 import wx.lib.sized_controls as sc
 import persistence
@@ -40,7 +40,7 @@ class LinkChecker(sc.SizedDialog):
 
     def CheckLink(self, match):
         link = match.group(1)
-        if string.find(string.lower(link), "http://") == 0 or string.find(string.lower(link), "ftp://") == 0:
+        if link.lower().find("http://") == 0 or link.lower().find("ftp://") == 0:
             if link in self.links:
                 return
             else:
