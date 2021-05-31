@@ -160,7 +160,8 @@ if not use_aui:
 class MainFrame2(frameClass):
     def __init__(self, parent, ID, title):
         busy = wx.BusyCursor()
-        frameClass.__init__(self, parent, ID, title, size=(780, 580),
+        width, height = wx.GetDisplaySize()
+        frameClass.__init__(self, parent, ID, title, size=(max(600, width * 0.7), max(500, height * 0.7)),
                       style=wx.DEFAULT_FRAME_STYLE|wx.WANTS_CHARS)
 
         self.imscp = None
