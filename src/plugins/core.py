@@ -241,6 +241,7 @@ class BaseHTMLPublisher(object):
         temp = utils.openFile(template, "r")
         html = temp.read()
         temp.close()
+        html = html.format(**data)
         charset = "utf-8"
         if 'charset' in list(self.data.keys()):
             charset = self.data['charset']
@@ -260,8 +261,6 @@ class BaseHTMLPublisher(object):
                 tag['content'] = value
                 if key == 'name':
                     soup.html.head.title.insert(0, value)
-            elif key == 'content':
-                    soup.html.body.insert(0, value)
         
         html = soup.prettify(charset)
                 
