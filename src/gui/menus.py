@@ -105,8 +105,6 @@ def getPageMenu(openWithMenu=None, isPopup=False):
     PageMenu.Append(ID_UPLOAD_PAGE, _("Upload Page"), _("Upload Page to FTP Server"))
     PageMenu.AppendSeparator()
     PageMenu.Append(ID_TREE_EDIT, _("Page Properties"), _("Edit Page Properties"))
-    PageMenu.AppendSeparator()
-    PageMenu.Append(ID_EDIT_SOURCE, _("Edit Page Source"), _("Edit Page Source"))
     
     return PageMenu
     

@@ -959,9 +959,14 @@ class MainFrame2(frameClass):
         if dialog.ShowModal() == wx.ID_OK:
             manifest = os.path.join(dialog.GetPath(), "imsmanifest.xml")
             if os.path.exists(manifest):
-                self.LoadEClass(manifest)
+                try:
+                    self.LoadEClass(manifest)
+                except Exception as e:
+                    import traceback
+                    logging.error(traceback.format_exc())
+                    wx.MessageBox(_("Unexpected error when reading project file."), _("Error loading project"))
             else:
-                wx.MessageBox(_("This directory does not contain an eBook Project."))
+                wx.MessageBox(_("This directory does not contain an imsmanifest.xml project file."))
         
         dialog.Destroy()
 
@@ -1449,6 +1454,8 @@ class MainFrame2(frameClass):
     
                 if len(self.imscp.organizations) > 0:
                     self.projectTree.AddIMSItemsToTree(self.imscp.organizations[0])
+                else:
+                    raise Exception(_("No content tree found in project file."))
                 
                 self.currentTheme = self.themes.FindTheme("epub")
     
@@ -1498,11 +1505,8 @@ class MainFrame2(frameClass):
                 self.Preview()
                     
         
-        except:
+        finally:
             del busy
-            raise
-            
-        del busy
     
     def EditItem(self, event=None):
         selitem = self.projectTree.GetCurrentTreeItemData()

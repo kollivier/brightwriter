@@ -11,6 +11,8 @@ import guiutils
 import wx
 import wx.lib.sized_controls as sc
 
+from sentry_sdk import capture_exception, push_scope
+
 from . import autolist
 import errors
 import settings
@@ -93,14 +95,17 @@ class ErrorDialog(sc.SizedDialog):
 def guiExceptionHook(exctype, value, trace):
     errorText = errors.get_platform_info()
     errorText += errors.print_exc_plus(exctype, value, trace)
-
     logging.error(errorText)
     
     if not wx.GetApp():
         app = wx.PySimpleApp()
         app.MainLoop()
 
-    showErrorDialog(errorText)
+    should_report, message = showErrorDialog(errorText)
+    if should_report:
+        with push_scope() as scope:
+            scope.set_extra('description', message)
+            capture_exception(value)
  
 def showErrorDialog(errorText=""):
     errorShowing = False
@@ -143,23 +148,13 @@ def showErrorDialog(errorText=""):
 
             if hasattr(sys, "frozen") or result == wx.ID_OK:
                 logging.info("posting error report")
-                # FIXME: Add Sentry error logging here.
-            success = True
         except Exception as e:
             import traceback
             logging.error(traceback.format_exc())
-            success = False
 
         error.Destroy()
 
-        if result == wx.ID_OK:
-            logging.info("OK clicked, reporting error submission state.")
-            if success:
-                wx.MessageBox(_("Error report sent successfully! Thanks!"))
-            else:
-                wx.MessageBox(_("Unable to send error report. Error details can also be emailed to kevin@kosoftworks.com."))
-        
-        # wx.GetApp().ExitMainLoop()
+        return result == wx.ID_OK, description
 
 class ErrorLogViewer(sc.SizedDialog):
     def __init__(self, parent=None):
