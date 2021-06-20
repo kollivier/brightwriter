@@ -5,6 +5,6 @@ future
 six
 wxPython==4.0.4
 colorlog
-django==1.11
+django==2.2.24
 sentry-sdk
 sentry-sdk[flask]
