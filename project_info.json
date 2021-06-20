@@ -10,7 +10,7 @@
         "common": ["chardet", "beautifulsoup4"],
         "android": ["python2","kivy","pyjnius","android"]
     },
-    "packages": ["cefpython3", "django", "ricecooker", "PIL", "pycountry", "sentry_sdk", "wx"],
+    "packages": ["cefpython3", "certifi","django", "ricecooker", "PIL", "pycountry", "sentry_sdk", "wx"],
     "excludes": ["selenium"],
     "whitelist_file":
     {

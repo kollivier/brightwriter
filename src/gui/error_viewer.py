@@ -95,7 +95,8 @@ class ErrorDialog(sc.SizedDialog):
 def guiExceptionHook(exctype, value, trace):
     errorText = errors.get_platform_info()
     errorText += errors.print_exc_plus(exctype, value, trace)
-    logging.error(errorText)
+    # if we use the error level, Sentry will send an event for this.
+    logging.warning(errorText)
     
     if not wx.GetApp():
         app = wx.PySimpleApp()
@@ -106,6 +107,8 @@ def guiExceptionHook(exctype, value, trace):
         with push_scope() as scope:
             scope.set_extra('description', message)
             capture_exception(value)
+    else:
+        logging.warning("Exception not reported.")
  
 def showErrorDialog(errorText=""):
     errorShowing = False
