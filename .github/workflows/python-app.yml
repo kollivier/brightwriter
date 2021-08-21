@@ -38,6 +38,6 @@ jobs:
         pew build
         pew package
     - name: GH Release
-      uses: softprops/action-gh-release@v0.1.12
+      uses: actions/upload-artifact@v2.2.4
       with:
-        files: dist/osx/brightwriter-*.dmg
+        path: dist/osx/brightwriter-*.dmg
