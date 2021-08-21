@@ -4,6 +4,7 @@
 #
 #    pip-compile requirements.in
 #
+-e git+git://github.com/kollivier/pressurecooker.git@master#egg=pressurecooker  # via -r requirements.in, ricecooker
 -e git+git://github.com/kollivier/pyeverywhere.git@dev#egg=pyeverywhere  # via -r requirements.in
 -e git+git://github.com/kollivier/ricecooker.git@local_publish#egg=ricecooker  # via -r requirements.in
 anglerfish==2.5.0         # via css-html-js-minify
@@ -41,7 +42,7 @@ le-utils==0.1.31          # via pressurecooker, ricecooker
 lockfile==0.12.2          # via ricecooker
 lxml==4.6.3               # via ebooklib, le-pycaption
 mac-alias==2.2.0          # via dmgbuild, ds-store
-markupsafe==1.1.1         # via jinja2
+markupsafe==1.1.1         # via jinja2, ricecooker
 matplotlib==2.2.3         # via pressurecooker
 mock==2.0.0               # via ricecooker
 msgpack-python==0.5.6     # via cachecontrol
@@ -51,9 +52,8 @@ packaging==21.0           # via pytest
 pbr==5.6.0                # via mock
 pbxproj==3.2.3            # via pyeverywhere
 pdf2image==1.11.0         # via pressurecooker
-pillow==5.4.1             # via pdf2image, pressurecooker, ricecooker, wxpython
+pillow==7.2.0             # via -r requirements.in, pdf2image, pressurecooker, ricecooker, wxpython
 pluggy==0.13.1            # via pytest
-pressurecooker==0.0.30    # via ricecooker
 py==1.10.0                # via pytest
 pycountry==17.5.14        # via le-utils
 pyparsing==2.4.7          # via matplotlib, packaging

@@ -2,6 +2,7 @@ beautifulsoup4
 cefpython3
 flask
 future
+pillow==7.2.0
 six
 wxPython==4.0.4
 colorlog
@@ -10,4 +11,5 @@ sentry-sdk
 sentry-sdk[flask]
 -e git://github.com/kollivier/pyeverywhere.git@dev#egg=pyeverywhere
 -e git://github.com/kollivier/ricecooker.git@local_publish#egg=ricecooker
+-e git://github.com/kollivier/pressurecooker.git@master#egg=pressurecooker
 
