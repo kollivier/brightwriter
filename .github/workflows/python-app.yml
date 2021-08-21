@@ -40,4 +40,4 @@ jobs:
     - name: GH Release
       uses: actions/upload-artifact@v2.2.4
       with:
-        path: dist/osx/brightwriter-*.dmg
+        path: package/osx/brightwriter-*.dmg
