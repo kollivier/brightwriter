@@ -19,6 +19,8 @@ jobs:
       run: |
         curl -o /tmp/python3.6.pkg https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.9.pkg
         sudo installer -pkg /tmp/python3.6.pkg -target /
+        virtualenv -p python 3.6 .py36env
+        . .py36env/bin/activate
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements-mac.txt ]; then pip install -r requirements-mac.txt; fi
@@ -27,8 +29,10 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        . .py36env/bin/activate
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Build app
       run: |
+        . .py36env/bin/activate
         pew build
         pew package
