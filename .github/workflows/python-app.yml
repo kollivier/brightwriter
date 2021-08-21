@@ -20,6 +20,7 @@ jobs:
         curl -o /tmp/python3.6.pkg https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.9.pkg
         sudo installer -pkg /tmp/python3.6.pkg -target /
         echo "/Library/Frameworks/Python.framework/Versions/3.6/bin" >> $GITHUB_PATH
+        echo "PATH: ${PATH}"
         python3.6 -m pip install --upgrade pip
         pip3 install virtualenv
         virtualenv -p python3.6 .py36env
