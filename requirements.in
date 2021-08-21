@@ -8,3 +8,4 @@ colorlog
 django==1.11
 sentry-sdk
 sentry-sdk[flask]
+-e git://github.com/kollivier/pyeverywhere.git@dev#egg=pyeverywhere

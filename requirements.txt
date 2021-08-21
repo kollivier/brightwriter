@@ -4,19 +4,34 @@
 #
 #    pip-compile requirements.in
 #
+-e git+git://github.com/kollivier/pyeverywhere.git@dev#egg=pyeverywhere  # via -r requirements.in
 beautifulsoup4==4.9.3     # via -r requirements.in
+blinker==1.4              # via sentry-sdk
 cefpython3==66.0          # via -r requirements.in
+certifi==2021.5.30        # via requests, sentry-sdk
+charset-normalizer==2.0.4  # via requests
 click==7.1.2              # via flask
 colorlog==4.7.2           # via -r requirements.in
 django==1.11              # via -r requirements.in
-flask==1.1.2              # via -r requirements.in
+dmgbuild==1.5.2           # via pyeverywhere
+docopt==0.6.2             # via pbxproj
+ds-store==1.3.0           # via dmgbuild
+flask==1.1.2              # via -r requirements.in, sentry-sdk
 future==0.18.2            # via -r requirements.in
+idna==3.2                 # via requests
 itsdangerous==1.1.0       # via flask
 jinja2==2.11.3            # via flask
+mac-alias==2.2.0          # via dmgbuild
 markupsafe==1.1.1         # via jinja2
+openstep-parser==1.5.3    # via pbxproj
+pbxproj==3.2.3            # via pyeverywhere
 pillow==8.1.2             # via wxpython
 pytz==2021.1              # via django
-six==1.15.0               # via -r requirements.in, wxpython
+requests==2.26.0          # via pyeverywhere
+sentry-sdk[flask]==1.3.1  # via -r requirements.in
+six==1.15.0               # via -r requirements.in, pyeverywhere, virtualenv-api, wxpython
 soupsieve==2.2            # via beautifulsoup4
+urllib3==1.26.6           # via requests, sentry-sdk
+virtualenv-api==2.1.18    # via pyeverywhere
 werkzeug==1.0.1           # via flask
 wxpython==4.0.4           # via -r requirements.in
