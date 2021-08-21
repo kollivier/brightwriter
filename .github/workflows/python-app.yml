@@ -15,12 +15,10 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6
     - name: Install dependencies
       run: |
+        curl -o /tmp/python3.6.pkg https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.9.pkg
+        sudo installer -pkg /tmp/python3.6.pkg -target /
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements-mac.txt ]; then pip install -r requirements-mac.txt; fi
