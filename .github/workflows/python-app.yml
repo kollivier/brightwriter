@@ -20,7 +20,7 @@ jobs:
         curl -o /tmp/python3.6.pkg https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.9.pkg
         sudo installer -pkg /tmp/python3.6.pkg -target /
         echo "/Library/Frameworks/Python.framework/Versions/3.6/bin" >> $GITHUB_PATH
-        virtualenv -p python 3.6 .py36env
+        virtualenv -p python3.6 .py36env
         . .py36env/bin/activate
         python -m pip install --upgrade pip
         pip install flake8 pytest
