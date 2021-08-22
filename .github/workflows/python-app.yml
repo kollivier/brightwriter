@@ -17,13 +17,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.6
-      - name: Download InnoSetup
-        uses: wei/curl@v1.1.1
-        with:
-          args: -o is.exe https://jrsoftware.org/download.php/is.exe
       - name: Install dependencies
         run: |
-          .\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
+          choco install innossetup
           pip install flake8 pytest
           pip install -r requirements-win.txt
       - name: Build app
