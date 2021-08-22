@@ -23,7 +23,10 @@ import appdata
 import settings
 
 import app_server
-import export.kolibri
+try:
+    import export.kolibri
+except:
+    pass
 
 from webmixer.utils import guess_scraper
 
@@ -50,8 +53,6 @@ import constants
 import mmedia
 import analyzer
 import eclass_convert
-
-from launch import get_apps_for_filename, open_with_app
 
 # modules that don't get picked up elsewhere...
 import wx.aui as aui

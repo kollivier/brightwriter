@@ -1,4 +1,4 @@
 #!/usr/bin/env python
 
-def getAppsForFilename(filename, role = "viewer"):
+def get_apps_for_filename(filename, role = "viewer"):
     return {}
