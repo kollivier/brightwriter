@@ -18,9 +18,9 @@ jobs:
         with:
           python-version: 3.6
       - name: Download InnoSetup
-          uses: wei/curl@v1.1.1
-          with:
-            - args: -o is.exe https://jrsoftware.org/download.php/is.exe
+        uses: wei/curl@v1.1.1
+        with:
+          - args: -o is.exe https://jrsoftware.org/download.php/is.exe
 
       - name: Install dependencies
         run: |
