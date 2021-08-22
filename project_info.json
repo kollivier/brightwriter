@@ -10,8 +10,10 @@
         "common": ["chardet", "beautifulsoup4"],
         "android": ["python2","kivy","pyjnius","android"]
     },
+    "build_tool": {
+        "win": "pyinstaller"
+    },
     "packages": ["cefpython3", "certifi","django", "ricecooker", "PIL", "pycountry", "sentry_sdk", "wx"],
-    "excludes": ["selenium"],
     "whitelist_file":
     {
         "android": "whitelist.txt"
