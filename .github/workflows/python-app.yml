@@ -6,14 +6,13 @@ name: Python application
 on:
   push:
     branches: [ develop ]
-  pull_request:
-    branches: [ develop ]
 
 # this is where the magic happens, each job happens in parallel btw
 jobs:
   build_on_win:
     runs-on: windows-latest
     steps:
+      uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
