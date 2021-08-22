@@ -20,8 +20,7 @@ jobs:
       - name: Download InnoSetup
         uses: wei/curl@v1.1.1
         with:
-          - args: -o is.exe https://jrsoftware.org/download.php/is.exe
-
+          args: -o is.exe https://jrsoftware.org/download.php/is.exe
       - name: Install dependencies
         run: |
           .\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
