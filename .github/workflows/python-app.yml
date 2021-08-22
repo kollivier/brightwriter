@@ -11,6 +11,25 @@ on:
 
 # this is where the magic happens, each job happens in parallel btw
 jobs:
+  build_on_win:
+    runs-on: windows-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+        run: |
+          pip install flake8 pytest
+          if [ -f requirements-win.txt ]; then pip install -r requirements-win.txt; fi
+      - name: Build app
+        run: |
+          pew build
+          pew package
+      - name: GH Release
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: Windows (x64) installer
+          path: package/win/brightwriter-*.exe
   build_on_mac:
     runs-on: macOS-latest
     steps:
