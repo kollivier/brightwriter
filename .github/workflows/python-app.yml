@@ -19,6 +19,8 @@ jobs:
           python-version: 3.6
       - name: Install dependencies
         run: |
+          curl -o is.exe https://jrsoftware.org/download.php/is.exe
+          is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
           pip install flake8 pytest
           pip install -r requirements-win.txt
       - name: Build app
