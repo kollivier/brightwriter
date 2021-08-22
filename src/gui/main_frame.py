@@ -23,12 +23,14 @@ import appdata
 import settings
 
 import app_server
+
+KOLIBRI_EXPORT_AVAILABLE = False
 try:
     import export.kolibri
-except:
-    pass
-
-from webmixer.utils import guess_scraper
+    KOLIBRI_EXPORT_AVAILABLE = True
+except Exception as e:
+    logging.warning("Unable to import ricecooker")
+    logging.warning(e)
 
 use_launch = False # not hasattr(sys, 'frozen')
 if use_launch:
@@ -108,7 +110,13 @@ settings.plugins = plugins.pluginList
 from constants import *
 from gui.ids import *
 
-from ricecooker.utils.downloader import archive_page
+IMPORT_FROM_URL_AVAILABLE = False
+try:
+    from ricecooker.utils.downloader import archive_page
+    IMPORT_FROM_URL_AVAILABLE = True
+except Exception as e:
+    logging.warning("Unable to import ricecooker")
+    logging.warning(e)
 
 # we shouldn't preview files that EClass can't view
 editable_file_types = ["htm", "html", "xhtml"]
@@ -271,6 +279,12 @@ class MainFrame2(frameClass):
             wx.App.SetMacPreferencesMenuItemId(ID_SETTINGS)
 
         self.SetMenuBar(menus.getMenuBar())
+
+        if not IMPORT_FROM_URL_AVAILABLE:
+            self.GetMenuBar().Enable(ID_IMPORT_FROM_URL, False)
+
+        if not KOLIBRI_EXPORT_AVAILABLE:
+            self.GetMenuBar().Enable(ID_PUBLISH_KOLIBRI_STUDIO, False)
 
         #split the window into two - Treeview on one side, browser on the other
         parent = self
