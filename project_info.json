@@ -15,6 +15,7 @@
         "win": "pyinstaller"
     },
     "packages": ["cefpython3", "certifi","django", "ricecooker", "PIL", "pycountry", "sentry_sdk", "wx"],
+    "excludes": ["numpy"],
     "whitelist_file":
     {
         "android": "whitelist.txt"
