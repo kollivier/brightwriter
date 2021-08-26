@@ -44,6 +44,10 @@ jobs:
         /Library/Frameworks/Python.framework/Versions/3.6/bin/virtualenv -p python3.6 .py36env
         . .py36env/bin/activate
         pip install flake8 pytest
+        # lxml pypi binaries have a configuration that causes notarization to fail. Build our own
+        # until the fix is adopted upstream.
+        pip install cython
+        STATIC_DEPS=True; pip install git://github.com/kollivier/lxml.git@10_9
         pip install -r requirements-mac.txt
     - name: Lint with flake8
       run: |
@@ -71,7 +75,9 @@ jobs:
         MAC_CODESIGN_IDENTITY: ${{ secrets.MAC_CODESIGN_IDENTITY }}
       run: |
         . .py36env/bin/activate
-        pew build --sign
+        pew build
+        pew codesign
+        pew notarize --wait
         pew package
     - name: GH Release
       uses: actions/upload-artifact@v2.2.4
