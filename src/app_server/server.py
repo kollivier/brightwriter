@@ -34,13 +34,13 @@ def open_in_application():
 def catch_all(path):
     if path.startswith('app/'):
         path = path.replace('app', os.path.join(settings.AppDir, 'gui', 'html'))
-        return send_file(path)
+        return send_file(path, cache_timeout=0)
     full_path = os.path.abspath(os.path.join(settings.ProjectDir, path))
     if os.path.exists(full_path):
-        return send_file(full_path)
+        return send_file(full_path, cache_timeout=0)
     else:
         try:
-            return send_file(os.path.join(static_dir, path))
+            return send_file(os.path.join(static_dir, path), cache_timeout=0)
         except IOError:
             abort(404)
 

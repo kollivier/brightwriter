@@ -115,7 +115,7 @@ class ThemeManager(sc.SizedDialog):
 
             publisher = self.parent.currentTheme.HTMLPublisher(self.parent)
             result = publisher.Publish()
-            self.parent.Preview()
+            self.parent.LoadCurrentItemContent()
             self.updateTheme = False
 
     def OnNewTheme(self, event):

@@ -394,7 +394,7 @@ class MainFrame2(frameClass):
         if not self.loaded:
             self.loaded = True
             self.browser.EvaluateJavaScript("ResizeEditor()")
-            self.Preview()
+            self.LoadCurrentItemContent()
             if settings.AppSettings["LastOpened"] != "" and os.path.exists(settings.AppSettings["LastOpened"]):
                 self.LoadEClass(settings.AppSettings["LastOpened"])
         
@@ -599,7 +599,7 @@ class MainFrame2(frameClass):
         html = dialog.GetSource()
         
         if not html == self.browser.GetPageSource():
-            self.browser.SetPage(html, self.baseurl, getMimeTypeForHTML(html))
+            self.LoadCurrentItemContent()
             self.dirty = True
 
     def OnIdle(self, event):
@@ -654,7 +654,7 @@ class MainFrame2(frameClass):
         dialog.log.SetValue(errors)
         if dialog.ShowModal() == wx.ID_OK:
             html = dialog.newSource.GetText()
-            self.browser.SetPage(html, self.baseurl, getMimeTypeForHTML(html))
+            self.browser.LoadCurrentItemContent()
             self.dirty = True
             
         dialog.Destroy()
@@ -896,7 +896,7 @@ class MainFrame2(frameClass):
         self.projectTree.DeleteAllItems()
         settings.ProjectDir = ""
         settings.ProjectSettings = conman.xml_settings.XMLSettings()
-        self.Preview()
+        self.LoadCurrentItemContent()
 
     def OnManageThemes(self, event):
         ThemeManager(self).ShowModal()
@@ -1030,7 +1030,7 @@ class MainFrame2(frameClass):
         self.should_change = True
 
     def OnTreeSelChanged(self, event):
-        self.Preview()
+        self.LoadCurrentItemContent()
         event.Skip()
         
     def OnLaunchWithApp(self, event):
@@ -1387,6 +1387,7 @@ class MainFrame2(frameClass):
         
         self.selectedFileLastModifiedTime = os.path.getmtime(self.filename)
         self.dirty = False
+        self.PreviewCurrentItem()
 
     def NewContentPackage(self):
         """
@@ -1517,7 +1518,7 @@ class MainFrame2(frameClass):
                     
                     eclassutils.IMSRemoveEClassPages(self.imscp)
                 
-                self.Preview()
+                self.LoadCurrentItemContent()
                     
         
         finally:
@@ -1605,57 +1606,63 @@ class MainFrame2(frameClass):
         
         return None
 
-    def Preview(self):
+    def GetDiskPathForSelectedItem(self):
         filename = self.GetContentFilenameForSelectedItem()
-        self.log.info("Preview called for {}".format(filename))
+        if filename:
+            return os.path.join(settings.ProjectDir, filename)
 
-        js = 'ShowErrorMessage("This item has no file associated with it.")'
-        preview_js = None
+        return None
 
+    def LoadCurrentItemContent(self):
+        filename = self.GetDiskPathForSelectedItem()
+        self.log.info("LoadCurrentItemContent called for {}".format(filename))
+
+        js = None
         if filename:
             try:
-                self.selectedFileLastModifiedTime = os.path.getmtime(os.path.join(settings.ProjectDir, filename))
+                self.selectedFileLastModifiedTime = os.path.getmtime(filename)
             except:
                 self.selectedFileLastModifiedTime = 0
 
-            full_path = filename
-            if not os.path.isabs(full_path):
-                full_path = os.path.join(settings.ProjectDir, filename)
-            else:
-                if settings.ProjectDir in filename:
-                    filename = filename.replace(settings.ProjectDir, '')
-
-            flask_url = app_server.SERVER_URL + urllib.parse.quote(filename)
-    
-            ext = os.path.splitext(full_path)[1][1:]
-            if os.path.exists(full_path):
+            ext = os.path.splitext(filename)[1][1:]
+            if os.path.exists(filename):
                 if not ext in editable_file_types:
-                    app_list = get_apps_for_filename(full_path)
-                    js = "ShowEditError('{}')".format(full_path)
-
-                if not ext in previewable_file_types:
-                    preview_js = 'ShowErrorMessage("<h3>Unable to preview file {}</h3>")'.format(full_path)
-                else:
-                    preview_js = 'PreviewFile("{}")'.format(flask_url)
+                    js = "ShowEditError('{}')".format(filename)
 
                 if ext.find("htm") != -1:
-                    self.baseurl = flask_url
-                    html = htmlutils.getUnicodeHTMLForFile(full_path)
+                    html = htmlutils.getUnicodeHTMLForFile(filename)
                     self.contents_on_load = html
-                    js = 'SetEditorContents(%s);' % json.dumps({"content": html, "basehref": self.baseurl})
-                    self.filename = full_path
-            else:
-                js = 'ShowErrorMessage("<h3>The file {} cannot be found.</h3>")'.format(full_path)
+                    baseurl = os.path.dirname(filename).replace(settings.ProjectDir, '')
+                    js = 'SetEditorContents(%s);' % json.dumps({"content": html, "basehref": baseurl})
+                    self.filename = filename
 
-        self.browser.EvaluateJavaScript(js)
-        if preview_js:
-            self.preview_browser.EvaluateJavaScript(preview_js)
+                self.PreviewCurrentItem(filename)
+            else:
+                js = 'ShowErrorMessage("<h3>The file {} cannot be found.</h3>")'.format(filename)
+        else:
+            js = 'ShowErrorMessage("This item has no file associated with it.")'
+        if js:
+            self.log.info(f"Running JS {js}")
+            self.browser.EvaluateJavaScript(js)
+
+    def PreviewCurrentItem(self, filename=None):
+        if not filename:
+            filename = self.GetDiskPathForSelectedItem()
+        relative_path = filename.replace(settings.ProjectDir, '')
+        flask_url = app_server.SERVER_URL + urllib.parse.quote(relative_path)
+
+        ext = os.path.splitext(filename)[1][1:]
+        preview_js = 'PreviewFile("{}")'.format(flask_url)
+        if not ext in previewable_file_types:
+            preview_js = 'ShowErrorMessage("<h3>Unable to preview file {}</h3>")'.format(filename)
+
+        self.preview_browser.EvaluateJavaScript(preview_js)
 
     def Update(self, imsitem = None):
         if imsitem == None:
             imsitem = self.projectTree.GetCurrentTreeItemData()
 
-        # self.Preview()
+        self.PreviewCurrentItem()
         self.dirtyNodes.append(imsitem)
             
     def CopyWebFiles(self, output_dir):
