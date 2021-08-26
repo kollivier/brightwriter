@@ -73,6 +73,9 @@ jobs:
     - name: Build app
       env:
         MAC_CODESIGN_IDENTITY: ${{ secrets.MAC_CODESIGN_IDENTITY }}
+        MAC_DEV_ID_EMAIL: ${{ secrets.MAC_DEV_ID_EMAIL }}
+        MAC_APP_PASSWORD: ${{ secrets.MAC_APP_PASSWORD }}
+        MAC_NOTARIZATION_PROVIDER: ${{ secrets.MAC_NOTARIZATION_PROVIDER }}
       run: |
         . .py36env/bin/activate
         pew build
