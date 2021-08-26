@@ -47,7 +47,7 @@ jobs:
         # lxml pypi binaries have a configuration that causes notarization to fail. Build our own
         # until the fix is adopted upstream.
         pip install cython
-        STATIC_DEPS=True; pip install git://github.com/kollivier/lxml.git@10_9
+        STATIC_DEPS=True; pip install git+https://github.com/kollivier/lxml.git@10_9#egg=lxml
         pip install -r requirements-mac.txt
     - name: Lint with flake8
       run: |
