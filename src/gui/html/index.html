@@ -207,9 +207,11 @@
         // A reference to the editor object is returned by CKEDITOR.replace() allowing you to work with editor instances.
         var editor = CKEDITOR.replace( 'editor1', {
             fullPage: true,
-            extraPlugins: 'docprops,video,audio',
+            extraPlugins: 'docprops,filebrowser,video,audio',
             allowedContent: true,
             removePlugins: 'resize',
+            filebrowserBrowseUrl: '/selectFile',
+            filebrowserUploadUrl: '/uploader/upload.php'
         } );
 
         // We sometimes need to create our own native window, but the popup function doesn't give us the option to handle the URL

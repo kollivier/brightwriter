@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from .BaseTheme import *
 themename = "Default (frames)"
-import plugins
-import utils
 import fileutils
 import settings
 

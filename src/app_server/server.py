@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import sys
+import time
 
 import settings
 
@@ -43,6 +44,32 @@ def catch_all(path):
             return send_file(os.path.join(static_dir, path), cache_timeout=0)
         except IOError:
             abort(404)
+
+
+@flaskapp.route('/selectFile')
+def select_file():
+    global selected_file
+    selected_file = -1
+    def on_selected(filename):
+        global selected_file
+        if not filename:
+            selected_file = None
+            return
+        logging.info("Setting selected file to: {}".format(filename))
+        selected_file = filename
+
+    pew.ui.show_open_file_dialog(on_selected, {'directory': pew.get_app_docs_dir()})
+    while selected_file == -1:
+        time.sleep(0.1)
+
+    if not selected_file:
+        return jsonify({"success": False, "reason": "cancelled"})
+
+    basename = os.path.basename(selected_file)
+    file_uri = "/{}".format(basename)
+
+    return jsonify({"success": True, "selected_file": file_uri }), 202
+
 
 def start_server():
     logging.info("Calling start_server...")

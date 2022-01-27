@@ -4,6 +4,7 @@ import glob
 import logging
 import os
 import sys
+import traceback
 
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -45,7 +46,6 @@ logging.basicConfig(format="%(asctime)s\t%(levelname)s\t%(message)s", level=logg
 
 import settings
 settings.logfile = os.path.join(settings.getAppDataDir(), 'BrightWriter.log')
-logging.info("Settings imported")
 
 formatter = logging.Formatter("%(asctime)s\t%(levelname)s\t%(message)s")
 file_handler = logging.FileHandler(filename=settings.logfile, mode='w')
@@ -56,7 +56,6 @@ logging.getLogger('EClass').addHandler(file_handler)
 log = logging # .getLogger('BrightWriter')
 # log.setLevel(logging.DEBUG)
 
-logging.info("Importing version")
 import version
 
 log.info("Starting %s %s" % (settings.app_name, version.asString()))
@@ -67,7 +66,6 @@ import i18n
 lang_dict = i18n.installEClassGettext()
 
 import pew
-
 cwd = os.path.dirname(sys.argv[0])
 
 rootdir = os.path.abspath(cwd)
@@ -75,16 +73,6 @@ rootdir = os.path.abspath(cwd)
 # os.path.dirname will chop the last dir if the path is to a directory
 if not os.path.isdir(rootdir):
     rootdir = os.path.dirname(rootdir)
-
-import settings, appdata, errors
-import conman.xml_settings as xml_settings
-import conman.vcard as vcard
-import gui
-import fileutils
-
-# workaround for http://bugs.python.org/issue843590
-import encodings
-encodings.aliases.aliases['macintosh'] = 'mac_roman'
 
 use_wx = True
 try:
@@ -94,8 +82,20 @@ try:
     import gui.error_viewer as error_viewer
 except Exception as e:
     logging.warning("Unable to import wxPython.")
-    import traceback
-    logging.warning(traceback.format_exc(e))
+    logging.warning(traceback.format_exc())
+
+import appdata
+import errors
+import settings
+import conman.xml_settings as xml_settings
+import conman.vcard as vcard
+
+import gui
+import fileutils
+
+# workaround for http://bugs.python.org/issue843590
+import encodings
+encodings.aliases.aliases['macintosh'] = 'mac_roman'
 
 oldexcepthook = sys.excepthook
 if getattr(sys, 'frozen', False):
@@ -121,7 +121,6 @@ except:
     pass
 
 settings.AppDir = rootdir
-
 
 if use_wx:
     class BuilderApp(wx.App, events.AppEventHandlerMixin):

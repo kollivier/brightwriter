@@ -1,18 +1,17 @@
 from __future__ import print_function
 from __future__ import absolute_import
+import logging
 from xmlutils import *
 
 import appdata
 import ims
 import ims.contentpackage
-import os
 import settings
 import sys
 
 from bs4 import BeautifulSoup
 
 from .core import *
-
 from . import eclass
 from . import file
 from . import html
@@ -56,7 +55,7 @@ def GetPlugin(name):
 
 
 def GetExtensionsForPlugin(name):
-    plugin = self.GetPlugin(name)
+    plugin = GetPlugin(name)
     if plugin:
         return plugin.plugin_info["Extension"]
 

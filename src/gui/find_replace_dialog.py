@@ -26,27 +26,27 @@ class WebViewFindReplaceController(wx.EvtHandler):
             self.webview.ExecuteEditCommand("InsertText", text)
     
     def OnFindNext(self, message):
-        find_text, match_case = message.data
+        find_text, match_case = message
         self.FindText(find_text, match_case)
         if not self.hasResult:
             wx.Bell()
 
     def OnFindPrevious(self, message):
-        find_text, match_case = message.data
+        find_text, match_case = message
         self.FindText(find_text, match_case, forward=False)
         if not self.hasResult:
             wx.Bell()
 
     def OnReplace(self, message):
-        self.ReplaceText(message.data)
+        self.ReplaceText(message)
     
     def OnReplaceFind(self, message):
-        find_text, replace_text, match_case = message.data
+        find_text, replace_text, match_case = message
         self.ReplaceText(replace_text)
         self.FindText(find_text, match_case)
 
     def OnReplaceAll(self, message):
-        find_text, replace_text, match_case = message.data
+        find_text, replace_text, match_case = message
         self.ReplaceText(replace_text)
         self.FindText(find_text, match_case)
         while self.hasResult:
@@ -93,16 +93,16 @@ class FindReplaceDialog(sc.SizedDialog):
         self.Fit()
         
     def OnFindNext(self, event):
-        pub.sendMessage(('find_replace', 'find_next'), (self.find_text.GetValue(), self.case_checkbox.IsChecked()))
+        pub.sendMessage(('find_replace', 'find_next'), message=(self.find_text.GetValue(), self.case_checkbox.IsChecked()))
 
     def OnFindPrevious(self, event):
-        pub.sendMessage(('find_replace', 'find_previous'), (self.find_text.GetValue(), self.case_checkbox.IsChecked()))
+        pub.sendMessage(('find_replace', 'find_previous'), message=(self.find_text.GetValue(), self.case_checkbox.IsChecked()))
 
     def OnReplace(self, event):
-        pub.sendMessage(('find_replace', 'replace'), self.replace_text.GetValue())
+        pub.sendMessage(('find_replace', 'replace'), message=self.replace_text.GetValue())
 
     def OnReplaceFind(self, event):
-        pub.sendMessage(('find_replace', 'replace_find'), (self.find_text.GetValue(), self.replace_text.GetValue(), self.case_checkbox.IsChecked()))
+        pub.sendMessage(('find_replace', 'replace_find'), message=(self.find_text.GetValue(), self.replace_text.GetValue(), self.case_checkbox.IsChecked()))
 
     def OnReplaceAll(self, event):
-        pub.sendMessage(('find_replace', 'replace_all'), (self.find_text.GetValue(), self.replace_text.GetValue(), self.case_checkbox.IsChecked()))
+        pub.sendMessage(('find_replace', 'replace_all'), message=(self.find_text.GetValue(), self.replace_text.GetValue(), self.case_checkbox.IsChecked()))
