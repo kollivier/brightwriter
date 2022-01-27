@@ -80,8 +80,8 @@ jobs:
         . .py36env/bin/activate
         pew build
         pew codesign
-        pew notarize --wait
         pew package
+        pew notarize --wait
     - name: GH Release
       uses: actions/upload-artifact@v2.2.4
       with:
