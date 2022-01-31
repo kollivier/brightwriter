@@ -258,6 +258,8 @@ def GetBody(myhtml):
     # text = utils.makeUnicode(text, encoding, 'xmlcharrefreplace')
     
     soup = BeautifulSoup.BeautifulSoup(myhtml)
+    if not soup.body:
+        raise Exception(f"No body found for {myhtml}")
     # get BeautifulSoup to explicitly declare the encoding
     text = soup.body.prettify(encoding='utf-8').decode('utf-8')
     if soup.html.head:

@@ -1495,28 +1495,31 @@ class MainFrame2(frameClass):
                     self.projectTree.Expand(firstItem)
                     self.projectTree.SelectItem(firstItem, True)
 
-                # convert EClass pages into straight HTML
-                if eclassutils.IMSHasEClassPages(self.imscp):
-                    result = wx.MessageDialog(self, 
-                        _("In order to support modern formats such as ePub, the EClass Page format used in previous versions has been replaced with an inline document editor. This EClass needs to be converted to use the new format."), _("EClass Page Format No Longer Supported"), 
-                        wx.YES_NO | wx.ICON_INFORMATION).ShowModal()
-                    
-                    if result == wx.ID_NO:
-                        wx.MessageBox(_("App will continue using the latest published version of the page."))
-                        return
-                        
-                    publisher = self.currentTheme.HTMLPublisher(self)
-                    result = publisher.Publish()
-                    errors = publisher.GetErrors()
-                
-                    if errors:
-                        errorString = '\n\n'.join(errors)
-                        publishErrorsDialog = gui.error_viewer.PublishErrorLogViewer(self, errorString)
-                        publishErrorsDialog.Show()
-                        
-                    shutil.copy(os.path.join(settings.ProjectDir, "imsmanifest.xml"), os.path.join(settings.ProjectDir, "imsmanifest-backup.xml"))
-                    
-                    eclassutils.IMSRemoveEClassPages(self.imscp)
+                # Remove EClass files from the project or convert any without pub files.
+                # Disabled because it needs more work, and this may be a very uncommonly needed feature.
+                # Will revisit if there is a lot of need for this.
+                # Without this, the old EClass files are simply ignored.
+                # if eclassutils.IMSHasEClassPages(self.imscp):
+                #     result = wx.MessageDialog(self,
+                #         _("In order to support modern formats such as ePub, the EClass Page format used in previous versions has been replaced with an inline document editor. This EClass needs to be converted to use the new format."), _("EClass Page Format No Longer Supported"),
+                #         wx.YES_NO | wx.ICON_INFORMATION).ShowModal()
+                #
+                #     if result == wx.ID_NO:
+                #         wx.MessageBox(_("App will continue using the latest published version of the page."))
+                #         return
+                #
+                #     publisher = self.currentTheme.HTMLPublisher(self)
+                #     result = publisher.Publish()
+                #     errors = publisher.GetErrors()
+                #
+                #     if errors:
+                #         errorString = '\n\n'.join(errors)
+                #         publishErrorsDialog = gui.error_viewer.PublishErrorLogViewer(self, errorString)
+                #         publishErrorsDialog.Show()
+                #
+                #     shutil.copy(os.path.join(settings.ProjectDir, "imsmanifest.xml"), os.path.join(settings.ProjectDir, "imsmanifest-backup.xml"))
+                #
+                #     eclassutils.IMSRemoveEClassPages(self.imscp)
                 
                 self.LoadCurrentItemContent()
                     
@@ -1584,10 +1587,16 @@ class MainFrame2(frameClass):
                             
                             self.imscp.resources.remove(resource)
                             break
+                next_focus = self.projectTree.GetNextSibling(selection)
+                if not next_focus:
+                    next_focus = self.projectTree.GetPrevSibling(selection)
                 
                 self.projectTree.Delete(selection)
-                self.Update()
                 self.SaveProject()
+
+                if next_focus:
+                    self.projectTree.SelectItem(next_focus)
+                    self.Update()
 
     def GetIMSResourceForSelectedItem(self):
         resource = None

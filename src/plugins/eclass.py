@@ -523,7 +523,11 @@ class HTMLPublisher(plugins.BaseHTMLPublisher):
         sourcefile = os.path.join(settings.ProjectDir, "Text", mypage.media.text)
         if len(mypage.media.text) > 0 and os.path.exists(sourcefile):
             if os.path.splitext(mypage.media.text.lower())[1].find("htm") != -1:
-                myhtml = GetBody(utils.openFile(sourcefile, 'rb'))
+                try:
+                    myhtml = GetBody(utils.openFile(sourcefile, 'rb'))
+                except:
+                    print(f'Error publishing {filename}')
+                    raise
             else: 
                 #It might be a Word/RTF document, try to convert...
                 myhtml = self._ConvertFile(sourcefile)
