@@ -317,8 +317,8 @@ class MainFrame2(frameClass):
         self.preview_browser = wxbrowser.wxBrowser(parent, -1)
 
         if self._mgr:
-            self.nb.AddPage(self.preview_browser, "Preview")
             self.nb.AddPage(self.browser, "Edit")
+            self.nb.AddPage(self.preview_browser, "Preview")
             self._mgr.AddPane(self.nb, aui.AuiPaneInfo().Center().Position(2).Layer(1).DockFixed(False).CaptionVisible(False))
         
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
