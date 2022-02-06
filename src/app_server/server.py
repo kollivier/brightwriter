@@ -9,6 +9,8 @@ import settings
 import pew
 import pew.ui
 
+from wx.lib.pubsub import pub
+
 from flask import abort, Flask, jsonify, request, send_file
 
 from .constants import SERVER_PORT
@@ -22,6 +24,12 @@ static_dir = os.path.join(thisdir, 'frontend')
 
 flaskapp = Flask(__name__)
 flaskthread = None
+
+@flaskapp.route('/onHTMLChanged')
+def on_html_changed():
+    pub.sendMessage('html_content_changed')
+
+    return jsonify({'success': True})
 
 @flaskapp.route('/openInApplication')
 def open_in_application():

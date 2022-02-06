@@ -232,6 +232,7 @@
         // Helper variable to count the number of detected changes in CKEditor.
         var changesNum = 0;
         editor.on( 'change', function( evt ) {
+            fetch('/onHTMLChanged');
             ShowMessage( 'The number of changes in <em>' + this.name + '</em>: <b>' + ++changesNum + '</b>.' );
         });
     </script>

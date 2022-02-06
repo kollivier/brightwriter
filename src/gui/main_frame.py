@@ -323,6 +323,7 @@ class MainFrame2(frameClass):
         
         self.Bind(wx.EVT_MENU, self.OnCleanHTML, id=ID_CLEANUP_HTML)
         pub.subscribe(self.OnPageLoaded, 'page_load_complete')
+        pub.subscribe(self.OnContentChanged, 'html_content_changed')
 
         if not self._mgr:
             self.splitter1.SetMinimumPaneSize(200)
@@ -361,12 +362,19 @@ class MainFrame2(frameClass):
 
         app_server.start_server()
 
+        self.save_timer = None
+
         self.editor_url = app_server.SERVER_URL + "app/index.html"
         self.browser.LoadPage(self.editor_url)
         self.preview_browser.LoadPage(self.editor_url)
 
         if self._mgr:
             self._mgr.Update()
+
+    def OnContentChanged(self):
+        if not self.save_timer:
+            self.save_timer = threading.Timer(5, self.SaveWebPage)
+            self.save_timer.start()
 
     def BrowseFiles(self, args):
         print("browseFiles called with args %r" % args)
@@ -998,34 +1006,20 @@ class MainFrame2(frameClass):
 
     def OnTreeSelChanging(self, event):
         self.should_change = None
-        self.CheckIfSaveNeeded(event)
+        self.SaveIfNeeded(event)
         while self.should_change is None:
             wx.SafeYield()
 
         if self.should_change is not None and not self.should_change:
             event.Veto()
 
-    def SaveIfContentsChanged(self, data):
-        from lxml.html.diff import htmldiff
-        self.log.info("types {}, {}".format(type(self.contents_on_load), type(data)))
-        diff = htmldiff(self.contents_on_load, data)
-        contents_changed = '<ins>' in diff or '<del>' in diff
-        dirty = contents_changed or self.dirty
-
-        self.should_change = True
-        if dirty:
-            result = wx.MessageDialog(self, _("This document contains unsaved changes. Would you like to save them now?"), _("Save Changes?"), wx.YES | wx.NO | wx.CANCEL).ShowModal()
-
-            if result == wx.ID_CANCEL:
-                self.should_change = False
-            elif result == wx.ID_NO:
-                self.dirty = False
-            elif result == wx.ID_YES:
-                self.DoSaveWebPage(data)
-
-    def CheckIfSaveNeeded(self, event):
-        if os.path.splitext(self.browser.currenturl)[1] in editable_file_types:
-            self.browser.EvaluateJavaScript("GetContents()", callback=self.SaveIfContentsChanged)
+    def SaveIfNeeded(self, event):
+        filename = self.GetContentFilenameForSelectedItem()
+        ext_type = os.path.splitext(filename)[1][1:]
+        if ext_type in editable_file_types:
+            # We block here because this function is called when switching pages or shutting down
+            # so we don't want to continue until save completes.
+            self.SaveWebPage(block=True)
 
         self.should_change = True
 
@@ -1265,7 +1259,7 @@ class MainFrame2(frameClass):
         fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
 
     def ShutDown(self, event):
-        self.CheckIfSaveNeeded(event)
+        self.SaveIfNeeded(event)
 
         if self.imscp and self.imscp.isDirty():
             self.SaveProject()
@@ -1350,8 +1344,25 @@ class MainFrame2(frameClass):
     def OnSave(self, event):
         self.SaveWebPage()
 
-    def SaveWebPage(self):
+    def SaveWebPage(self, block=False):
+        if self.save_timer:
+            self.save_timer.cancel()
+            self.save_timer = None
+
+        self.page_saved = False
         self.browser.EvaluateJavaScript("GetContents()", callback=self.DoSaveWebPage)
+        if block:
+            timeout = 10
+            elapsed = 0
+            import time
+            start = time.time()
+            while not self.page_saved:
+                wx.GetApp().Yield(True)
+                if time.time() - start > 10:
+                    raise Exception("Page failed to save")
+
+            if not self.page_saved:
+                raise Exception("Error saving page.")
 
     def DoSaveWebPage(self, data):
         source = htmlutils.ensureValidXHTML(data)
@@ -1387,7 +1398,8 @@ class MainFrame2(frameClass):
         
         self.selectedFileLastModifiedTime = os.path.getmtime(self.filename)
         self.dirty = False
-        self.PreviewCurrentItem()
+        self.page_saved = True
+        wx.CallAfter(self.PreviewCurrentItem)
 
     def NewContentPackage(self):
         """
@@ -1651,7 +1663,7 @@ class MainFrame2(frameClass):
         else:
             js = 'ShowErrorMessage("This item has no file associated with it.")'
         if js:
-            self.log.info(f"Running JS {js}")
+            self.log.info(f"Running JS {js[:100]}")
             self.browser.EvaluateJavaScript(js)
 
     def PreviewCurrentItem(self, filename=None):
