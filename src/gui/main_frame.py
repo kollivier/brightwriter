@@ -1736,9 +1736,15 @@ class MainFrame2(frameClass):
             if export_dialog.ShowModal() == wx.ID_OK:
                 export_data = {}
                 if export_dialog.export_studio_radio.GetValue() == True:
+                    token = export_dialog.studio_token.GetValue().strip()
+                    if not token:
+                        wx.MessageBox("Please enter a valid API token in order to upload to Studio.")
+                        return
+                    settings.ProjectSettings['StudioAPIToken'] = token
+                    settings.ProjectSettings.SaveAsXML()
                     export_data['task_func'] = export_studio_task
                     export_data['task_args'] = {
-                        'studio_token': export_dialog.studio_token.GetValue().strip()
+                        'studio_token': token
                     }
                 elif export_dialog.export_kolibri_radio.GetValue() == True:
                     export_data['task_func'] = export_local_task

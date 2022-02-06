@@ -38,7 +38,8 @@ class wxLogHandler(logging.Handler):
         try:
             msg = self.format(record)
             evt = wxLogEvent(message=msg, levelname=record.levelname)
-            wx.PostEvent(self.wx_target, evt)
+            if self.wx_target:
+                wx.PostEvent(self.wx_target, evt)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
@@ -76,7 +77,8 @@ class TaskDialog(sc.SizedDialog):
             self.task_thread.start()
             self.task_button.SetLabelText(_("Stop"))
         elif self.task_button.GetLabelText() == _("Stop"):
-            self.task_thread.raise_exception()
+            del self.task_thread
+            self.task_thread = None
             self.task_button.SetLabelText(_("Close"))
         else:
             self.EndModal(wx.ID_CANCEL)

@@ -59,9 +59,10 @@ class XMLSettings(object):
     def Remove(self, key):
         del self.settings[key]
 
-    def LoadFromXML(self, filename):
+    def LoadFromXML(self, filename=None):
         self.settings = {}
         self.filename = filename
+
         if USE_MINIDOM:
             doc = minidom.parseString(open(filename, 'rb').read().decode('utf-8'))
         else:
@@ -80,10 +81,16 @@ class XMLSettings(object):
                         myvalue = attr.value
                 self.settings[myname] = myvalue
 
-    def SaveAsXML(self, filename):
+    def SaveAsXML(self, filename=None):
         XML = """<?xml version="1.0" encoding="utf-8"?>\n<Settings>"""
         doc = minidom.Document()
         root = doc.createElement("Settings")
+
+        if filename:
+            self.filename = filename
+
+        if not self.filename:
+            raise IOError("No filename set for XMLSettings file!")
         
         for key in list(self.settings.keys()):
             setting = doc.createElement("Setting")
@@ -95,11 +102,11 @@ class XMLSettings(object):
         
         import codecs
         data = doc.toprettyxml("\t", encoding="utf-8")
-        myfile = open(filename, "wb")
+        myfile = open(self.filename, "wb")
         myfile.write(codecs.BOM_UTF8)
         myfile.write(data)
         myfile.close()
-        return None
+        return True
 
 def Test():
     settings = XMLSettings()

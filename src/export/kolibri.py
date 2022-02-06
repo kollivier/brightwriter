@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import tempfile
+import uuid
 
 from ricecooker.chefs import SushiChef
 from ricecooker.classes import licenses
@@ -33,6 +34,11 @@ class BrightWriterExportChef(SushiChef):
         Create ChannelNode and build topic tree.
         """
         # create channel
+        if not settings.ProjectSettings["UUID"]:
+            settings.ProjectSettings["UUID"] = str(uuid.uuid4())
+            settings.ProjectSettings.SaveAsXML()
+        self.channel_info['CHANNEL_SOURCE_ID'] = settings.ProjectSettings["UUID"]
+
         channel = self.get_channel()
 
         license = licenses.CC_BY_SALicense(copyright_holder="CeDeC")
