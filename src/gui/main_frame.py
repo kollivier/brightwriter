@@ -25,12 +25,6 @@ import settings
 import app_server
 
 KOLIBRI_EXPORT_AVAILABLE = False
-try:
-    import export.kolibri
-    KOLIBRI_EXPORT_AVAILABLE = True
-except Exception as e:
-    logging.warning("Unable to import ricecooker")
-    logging.warning(e)
 
 use_launch = False # not hasattr(sys, 'frozen')
 if use_launch:
@@ -109,6 +103,14 @@ settings.plugins = plugins.pluginList
 
 from constants import *
 from gui.ids import *
+
+try:
+    import export.kolibri
+    KOLIBRI_EXPORT_AVAILABLE = True
+except Exception as e:
+    logging.warning("Unable to import ricecooker")
+    import traceback
+    logging.warning('\n'.join(traceback.format_stack()))
 
 IMPORT_FROM_URL_AVAILABLE = False
 try:
@@ -1015,6 +1017,9 @@ class MainFrame2(frameClass):
 
     def SaveIfNeeded(self, event):
         filename = self.GetContentFilenameForSelectedItem()
+        if not filename:
+            self.should_change = True
+            return
         ext_type = os.path.splitext(filename)[1][1:]
         if ext_type in editable_file_types:
             # We block here because this function is called when switching pages or shutting down
@@ -1259,30 +1264,32 @@ class MainFrame2(frameClass):
         fileutils.CopyFile("autorun.inf", os.path.join(settings.AppDir, "autorun"),pubdir)
 
     def ShutDown(self, event):
-        self.SaveIfNeeded(event)
+        try:
+            self.SaveIfNeeded(event)
 
-        if self.imscp and self.imscp.isDirty():
-            self.SaveProject()
+            if self.imscp and self.imscp.isDirty():
+                self.SaveProject()
 
-        settings.AppSettings.SaveAsXML(os.path.join(settings.PrefDir,"settings.xml"))
-        
-        # TODO: Make these utility windows and have their state saved and loaded
-        # at app startup, shutdown
-        if self.activityMonitor:
-            self.activityMonitor.SaveState("ActivityMonitor")
-            self.activityMonitor.Destroy()
-        if self.errorViewer:
-            self.errorViewer.SaveState("ErrorLogViewer")
-            self.errorViewer.Destroy()
+            settings.AppSettings.SaveAsXML(os.path.join(settings.PrefDir,"settings.xml"))
 
-        if self._mgr:
-            self.log.info("Calling mgr.UnInit")
-            self._mgr.UnInit()
+            # TODO: Make these utility windows and have their state saved and loaded
+            # at app startup, shutdown
+            if self.activityMonitor:
+                self.activityMonitor.SaveState("ActivityMonitor")
+                self.activityMonitor.Destroy()
+            if self.errorViewer:
+                self.errorViewer.SaveState("ErrorLogViewer")
+                self.errorViewer.Destroy()
 
-        self.browser.OnClose(event)
-        self.Destroy()
-        if event:
-            event.Skip()
+            if self._mgr:
+                self.log.info("Calling mgr.UnInit")
+                self._mgr.UnInit()
+
+            self.browser.OnClose(event)
+            self.Destroy()
+        finally:
+            if event:
+                event.Skip()
         
     def SaveProject(self, event=None):
         """
@@ -1721,10 +1728,13 @@ class MainFrame2(frameClass):
 
     def PublishToKolibriStudio(self, event):
         def export_studio_task(data):
-            zip_file = ims.zip_packaging.export_package_as_zip(os.path.dirname(self.imscp.filename))
-            export.kolibri.export_project_to_kolibri_studio(zip_file, data['studio_token'], handler)
-            os.remove(zip_file)
-            wx.PostEvent(dialog, wxDoneEvent(message="Task complete!"))
+            try:
+                zip_file = ims.zip_packaging.export_package_as_zip(os.path.dirname(self.imscp.filename))
+                export.kolibri.export_project_to_kolibri_studio(zip_file, data['studio_token'], handler)
+                os.remove(zip_file)
+                wx.PostEvent(dialog, wxDoneEvent(message="Task complete!"))
+            except Exception as e:
+                logging.error(e)
 
         def export_local_task(data):
             zip_file = ims.zip_packaging.export_package_as_zip(os.path.dirname(self.imscp.filename))
@@ -1740,8 +1750,8 @@ class MainFrame2(frameClass):
                     if not token:
                         wx.MessageBox("Please enter a valid API token in order to upload to Studio.")
                         return
-                    settings.ProjectSettings['StudioAPIToken'] = token
-                    settings.ProjectSettings.SaveAsXML()
+                    settings.AppSettings['StudioAPIToken'] = token
+                    settings.AppSettings.SaveAsXML()
                     export_data['task_func'] = export_studio_task
                     export_data['task_args'] = {
                         'studio_token': token

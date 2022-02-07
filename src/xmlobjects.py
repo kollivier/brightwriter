@@ -296,6 +296,7 @@ class RootTag(Tag):
         import codecs
         data = doc.toprettyxml("\t", encoding="utf-8")
         if data:
+            temp_file = None
             try:
                 # write to temp file first, so if anything goes wrong during the write
                 # process, we don't lose data.
@@ -311,7 +312,7 @@ class RootTag(Tag):
                 # calling code will report the error
                 pass
             finally:
-                if os.path.exists(temp_file):
+                if temp_file and os.path.exists(temp_file):
                     os.remove(temp_file)
         else:
             return False

@@ -102,11 +102,12 @@ def export_project_to_kolibri_studio(imscp_zip, token, log_handler):
     try:
         chef = BrightWriterExportChef()
         chef.zip_path = imscp_zip
+        os.environ['STUDIO_TOKEN'] = token
         args, options = chef.parse_args_and_options()
         args['command'] = 'uploadchannel'
         args['token'] = token
         chef.run(args, options)
-        logging.info("Run complete...")
+        logging.info("Upload to Studio complete...")
     finally:
         os.chdir(old_dir)
         LOGGER.removeHandler(log_handler)

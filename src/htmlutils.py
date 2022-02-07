@@ -56,7 +56,8 @@ def getTitleForPage(filename):
     """
     Returns the text of the <title> tag in the HTML page if it has one, returns None otherwise.
     """
-    soup = BeautifulSoup.BeautifulSoup(open(filename).read())
+    content = open(filename, encoding='utf-8').read()
+    soup = BeautifulSoup.BeautifulSoup(content)
     if soup:
         title = soup.find('title')
         if title:

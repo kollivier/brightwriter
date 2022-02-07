@@ -22,7 +22,7 @@ class KolibriExportDialog(sc.SizedDialog):
         label.SetSizerProps(align="center")
         self.studio_token = wx.TextCtrl(token_panel, -1)
         self.studio_token.SetMinSize((10*32, 24))
-        self.studio_token.SetValue(settings.ProjectSettings['StudioAPIToken'] or '')
+        self.studio_token.SetValue(settings.AppSettings['StudioAPIToken'] or '')
         self.studio_token.SetSizerProps(expand=True, proportion=1, align="center")
         token_panel.Fit()
         token_panel.SetMinSize(token_panel.GetSize())
