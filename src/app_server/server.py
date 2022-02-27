@@ -13,6 +13,7 @@ from wx.lib.pubsub import pub
 
 from flask import abort, Flask, jsonify, request, send_file
 
+from fileutils import copy_file_if_changed, get_project_file_location
 from .constants import SERVER_PORT
 
 thisdir = os.path.dirname(os.path.abspath(__file__))
@@ -73,10 +74,16 @@ def select_file():
     if not selected_file:
         return jsonify({"success": False, "reason": "cancelled"})
 
-    basename = os.path.basename(selected_file)
-    file_uri = "/{}".format(basename)
+    dest_file = get_project_file_location(selected_file)
+    copy_file_if_changed(selected_file, dest_file)
 
-    return jsonify({"success": True, "selected_file": file_uri }), 202
+    start_dir = settings.ProjectDir
+    if settings.current_project_file:
+        start_dir = os.path.dirname(settings.current_project_file)
+
+    relative_path = os.path.relpath(dest_file, start=start_dir)
+
+    return jsonify({"success": True, "selected_file": relative_path }), 202
 
 
 def start_server():

@@ -13,6 +13,7 @@ utf8_html = True
 encoding = "iso-8859-1"
 webkit = False
 logfile = None
+current_project_file = None
 
 app_name = "BrightWriter"
 

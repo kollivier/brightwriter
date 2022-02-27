@@ -66,6 +66,10 @@ import i18n
 lang_dict = i18n.installEClassGettext()
 
 import pew
+import pew.options
+pew.options.preferred_platforms = ['wx']
+
+import pew.ui
 cwd = os.path.dirname(sys.argv[0])
 
 rootdir = os.path.abspath(cwd)
@@ -123,8 +127,8 @@ except:
 settings.AppDir = rootdir
 
 if use_wx:
-    class BuilderApp(wx.App, events.AppEventHandlerMixin):
-        def OnInit(self):
+    class BuilderApp(pew.ui.PEWApp, events.AppEventHandlerMixin):
+        def init_ui(self):
             events.AppEventHandlerMixin.__init__(self)
             
             self.SetAppName(settings.app_name)
@@ -147,7 +151,7 @@ if use_wx:
             self.SetTopWindow(self.frame)
             return True
             
-        def OnExit(self):
+        def shutdown(self):
             sys.excepthook = oldexcepthook
             return 0
             
@@ -220,8 +224,8 @@ for arg in sys.argv:
         settings.webkit = True
 
 if use_wx:
-    app = BuilderApp(0)
-    app.MainLoop()
+    app = BuilderApp()
+    app.run()
 else:
     import gui.app
 

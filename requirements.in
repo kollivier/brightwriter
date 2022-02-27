@@ -16,3 +16,4 @@ sentry-sdk[flask]
 -e git://github.com/kollivier/ricecooker.git@local_publish#egg=ricecooker
 -e git://github.com/kollivier/pressurecooker.git@master#egg=pressurecooker
 -e git://github.com/kollivier/webmixer.git@master#egg=webmixer
+-e git://github.com/kollivier/kolibri-content-tools.git@main#egg=kolibri_content_tools

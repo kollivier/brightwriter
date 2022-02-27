@@ -14,9 +14,9 @@ def getFileMenu():
     FileMenu.Append(ID_IMPORT_PACKAGE, _("Import Package"))
     
     PubMenu = wx.Menu()
-    PubMenu.Append(ID_PUBLISH, _("To web site"), _("Publish EClass to a web server"))
-    PubMenu.Append(ID_PUBLISH_CD, _("To CD-ROM"), _("Publish EClass to a CD-ROM"))
-    PubMenu.Append(ID_PUBLISH_KOLIBRI_STUDIO, _("To Kolibri Studio"))
+    PubMenu.Append(ID_PUBLISH, _("To web site"), _("Publish to a web server"))
+    PubMenu.Append(ID_PUBLISH_CD, _("To CD-ROM"), _("Publish to a CD-ROM"))
+    PubMenu.Append(ID_PUBLISH_KOLIBRI_STUDIO, _("To Kolibri"))
     #PubMenu.Append(ID_PUBLISH_PDF, _("To PDF"))
     PubMenu.Append(ID_PUBLISH_IMS, _("IMS Content Package"))
     PubMenu.Append(ID_PUBLISH_EPUB, _("ePub Package"))

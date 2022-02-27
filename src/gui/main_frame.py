@@ -1643,6 +1643,7 @@ class MainFrame2(frameClass):
 
     def LoadCurrentItemContent(self):
         filename = self.GetDiskPathForSelectedItem()
+        settings.current_project_file = filename
         self.log.info("LoadCurrentItemContent called for {}".format(filename))
 
         js = None
