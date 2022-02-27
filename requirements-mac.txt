@@ -10,6 +10,7 @@
 -e git+git://github.com/kollivier/pyeverywhere.git@dev#egg=pyeverywhere  # via -r requirements.txt
 -e git+git://github.com/kollivier/ricecooker.git@local_publish#egg=ricecooker  # via -r requirements.txt, imscp-le, webmixer
 -e git+git://github.com/kollivier/webmixer.git@master#egg=webmixer  # via -r requirements.txt
+altgraph==0.17.2          # via macholib, modulegraph, py2app
 anglerfish==2.5.0         # via -r requirements.txt, css-html-js-minify
 appdirs==1.4.4            # via -r requirements.txt, pyppeteer
 attrs==21.2.0             # via -r requirements.txt, pytest
@@ -58,9 +59,11 @@ le-utils==0.1.31          # via -r requirements.txt, kolibri-content-tools, pres
 lockfile==0.12.2          # via -r requirements.txt, ricecooker
 lxml==4.4.1               # via -r requirements.txt, ebooklib, imscp-le, le-pycaption
 mac-alias==2.2.0          # via -r requirements.txt, dmgbuild, ds-store
+macholib==1.15.2          # via py2app
 markupsafe==1.1.1         # via -r requirements.txt, jinja2, ricecooker
 matplotlib==2.2.3         # via -r requirements.txt, pressurecooker
 mock==2.0.0               # via -r requirements.txt, ricecooker
+modulegraph==0.19.2       # via py2app
 msgpack-python==0.5.6     # via -r requirements.txt, cachecontrol
 numpy==1.15.4             # via -r requirements.txt, matplotlib, pressurecooker
 oauthlib==3.1.1           # via -r requirements.txt, requests-oauthlib, webmixer
@@ -72,6 +75,7 @@ pdf2image==1.11.0         # via -r requirements.txt, pressurecooker
 pillow==7.2.0             # via -r requirements.txt, pdf2image, pressurecooker, ricecooker, wxpython
 pluggy==0.13.1            # via -r requirements.txt, pytest
 protobuf==3.17.3          # via -r requirements.txt, google-api-core, googleapis-common-protos
+py2app==0.14              # via -r requirements-mac.in
 py==1.10.0                # via -r requirements.txt, pytest
 pyasn1-modules==0.2.8     # via -r requirements.txt, google-auth
 pyasn1==0.4.8             # via -r requirements.txt, pyasn1-modules, rsa
