@@ -14,8 +14,10 @@
     "build_tool": {
         "win": "pyinstaller"
     },
-    "packages": ["cefpython3", "certifi","django", "ricecooker", "PIL", "pycountry", "sentry_sdk", "websockets", "wx"],
-    "excludes": [],
+    "pyinstaller": {
+        "hooks_dirs": ["packaging/pyinstaller/hooks"]
+    },
+    "packages": ["cefpython3", "certifi","django", "le_utils", "ricecooker", "PIL", "pycountry", "sentry_sdk", "websockets", "wx"],
     "whitelist_file":
     {
         "android": "whitelist.txt"
