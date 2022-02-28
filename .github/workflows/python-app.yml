@@ -22,6 +22,8 @@ jobs:
           choco install innossetup
           pip install flake8 pytest
           pip install -r requirements-win.txt
+      - name: Run code checks
+        run: pytest src/tests
       - name: Build app
         run: |
           pew build
@@ -50,13 +52,14 @@ jobs:
         pip install cython
         pip uninstall -y lxml
         STATIC_DEPS=True; pip install git+https://github.com/kollivier/lxml.git@10_9#egg=lxml
-    - name: Lint with flake8
+    - name: Run code checks
       run: |
         # stop the build if there are Python syntax errors or undefined names
         # flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         . .py36env/bin/activate
         flake8 . --exclude .py36env --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        pytest src/tests
     - name: Install the Apple certificate and provisioning profile
       env:
         BUILD_CERTIFICATE_BASE64: ${{ secrets.MAC_CODESIGN_CERT }}
