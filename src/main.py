@@ -9,16 +9,16 @@ import traceback
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-sentry_sdk.init(
-    "https://f5dfdfdbe04048b69759bbec9f38400e@o837302.ingest.sentry.io/5813499",
-    integrations=[FlaskIntegration()],
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production.
-    traces_sample_rate=1.0
-)
-
 if hasattr(sys, 'frozen'):
+    sentry_sdk.init(
+        "https://f5dfdfdbe04048b69759bbec9f38400e@o837302.ingest.sentry.io/5813499",
+        integrations=[FlaskIntegration()],
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0
+    )
+
     class StdErrLog(object):
         def __init__(self):
             self.log = ""
