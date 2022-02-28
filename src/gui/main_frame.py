@@ -25,6 +25,13 @@ import settings
 import app_server
 
 KOLIBRI_EXPORT_AVAILABLE = False
+try:
+    import export.kolibri
+    KOLIBRI_EXPORT_AVAILABLE = True
+except Exception as e:
+    logging.warning("Unable to import ricecooker")
+    logging.warning(e)
+    raise
 
 use_launch = False # not hasattr(sys, 'frozen')
 if use_launch:
@@ -720,7 +727,7 @@ class MainFrame2(frameClass):
                     abs_path = os.path.join(content_info['root_dir'], abs_path)
                 else:
                     abs_path = os.path.join(settings.ProjectDir, abs_path)
-            assert os.path.exists(abs_path), "Path {} doesn't exist".format(abs_path)
+            assert os.path.exists(abs_path), "Path {} for {} doesn't exist".format(abs_path, filename)
 
             packagefile = os.path.relpath(abs_path, settings.ProjectDir)
             new_file.attrs['href'] = packagefile

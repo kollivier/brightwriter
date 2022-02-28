@@ -14,6 +14,7 @@ altgraph==0.17.2          # via macholib, modulegraph, py2app
 anglerfish==2.5.0         # via -r requirements.txt, css-html-js-minify
 appdirs==1.4.4            # via -r requirements.txt, pyppeteer
 attrs==21.2.0             # via -r requirements.txt, pytest
+attrs==21.2.0             # via -r requirements.txt, pytest
 beautifulsoup4==4.8.2     # via -r requirements.txt, imscp-le, kolibri-content-tools, le-pycaption, pressurecooker, ricecooker, webmixer
 blinker==1.4              # via -r requirements.txt, sentry-sdk
 cachecontrol==0.12.0      # via -r requirements.txt, ricecooker
