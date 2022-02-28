@@ -8,7 +8,7 @@ Instructional Design principles.
 
 ## Requirements
 
-Python 2.7
+Python 3.6
 
 ## Getting Started
 
@@ -21,7 +21,7 @@ After checking out the source code, setup your environment for building BrightWr
 
 ### Install pip dependencies 
 
-    pip install -f deps/<platform>/requirements.txt
+    pip install -f requirements-{platform}.txt
 
 ### Install wxPython Phoenix
 
